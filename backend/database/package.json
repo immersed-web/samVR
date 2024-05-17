@@ -1,37 +1,29 @@
 {
   "name": "database",
   "version": "1.0.0",
+  "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "module": "./dist/esm/index.js",
   "author": "Gunnar Oledal",
   "license": "MIT",
-  "prisma": {
-    "seed": "ts-node ./seed.ts",
-    "schema": "./prisma/schema.prisma"
-  },
   "scripts": {
-    "build": "tsup",
-    "build:watch": "tsup --watch",
-    "clean": "tsc --build --clean",
-    "generate": "prisma generate",
-    "migrate:deploy": "dotenv -e ../../.env -- prisma migrate deploy",
-    "migrate": "dotenv -e ../../.env -- prisma migrate dev",
-    "migrate:reset": "dotenv -e ../../.env -- prisma migrate reset",
-    "seed": "dotenv -e ../../.env -- prisma db seed",
-    "seed:dev": " dotenv -e ../../.env -v DEVELOPMENT=true -- prisma db seed",
-    "studio": "dotenv -e ../../.env -- prisma studio",
-    "db:push": "dotenv -e ../../.env -- prisma db push",
-    "db:reset": "dotenv -e ../../.env -- prisma db push --force-reset"
+    "introspect": "dotenv -e ../../.env drizzle-kit introspect",
+    "generate": "dotenv -e ../../.env drizzle-kit generate",
+    "migrate": "dotenv -e ../../.env drizzle-kit migrate",
+    "push": "dotenv -e ../../.env drizzle-kit push",
+    "studio": "dotenv -e ../../.env drizzle-kit studio",
+    "queryTest": "dotenv -e ../../.env tsx ./src/test.ts",
+    "clearDB": "dotenv -e ../../.env tsx ./src/drop_all.ts"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.0",
-    "prisma": "4",
-    "ts-node": "^10.9.1",
-    "zod-prisma-types": "^2.8.1"
+    "drizzle-kit": "^0.21.2"
   },
   "dependencies": {
-    "@prisma/client": "4",
-    "bcrypt": "^5.0.1"
+    "bcrypt": "^5.0.1",
+    "drizzle-orm": "^0.30.10",
+    "postgres": "^3.4.4",
+    "tsx": "^4.10.4"
   }
 }

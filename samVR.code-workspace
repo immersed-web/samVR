@@ -3,7 +3,6 @@
     {
       "path": "./app"
     },
-    // {"path": "./app_webpack"},
     {
       "path": "./backend"
     },
@@ -17,56 +16,20 @@
   ],
   "settings": {
     "editor.formatOnSave": true,
-    "eslint.format.enable": true,
-    "editor.defaultFormatter": "dbaeumer.vscode-eslint",
     "files.watcherExclude": {
       "**/.git/objects/**": true,
       "**/.git/subtree-cache/**": true,
       "**/node_modules/*/**": true,
       "**/.hg/store/**": true
     },
-    "remote.autoForwardPorts": false,
-    "eslint.workingDirectories": [ // This is so we can have the .eslintrc.js in subfolders without problem
-      {
-        "mode": "auto"
-      }
-    ],
-    "eslint.packageManager": "pnpm",
-    "eslint.validate": [
-      "javascript",
-      "javascriptreact",
-      "typescript",
-      "vue"
-    ],
     "[prisma]": {
       "editor.defaultFormatter": "Prisma.prisma",
       "editor.formatOnSave": true
     },
-    "[vue]": {
-      "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-    },
-    "[javascript]": {
-      "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-    },
-    "[typescript]": {
-      "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-    },
-    // "editor.codeActionsOnSave": {
-    // 	"source.fixAll": false,
-    // 	"source.fixAll.eslint": true,
-    // },
-    "typescript.tsdk": "root/node_modules/typescript/lib",
-    "[jsonc]": {
-      "editor.defaultFormatter": "vscode.json-language-features"
-    },
-    "terminal.integrated.enablePersistentSessions": true,
-    "ansible.python.interpreterPath": "/bin/python3",
   },
   "extensions": {
     "recommendations": [
-      "dbaeumer.vscode-eslint",
-      // "lokalise.i18n-ally"
-      "Vue.volar",
+      "vue.volar",
       "tonybaloney.vscode-pets",
     ],
     "unwantedRecommendations": [

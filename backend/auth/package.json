@@ -40,7 +40,6 @@
     "express-session": "^1.17.2",
     "haikunator": "^2.1.2",
     "jsonwebtoken": "^8.5.1",
-    "schemas": "workspace:*",
-    "shared-types": "workspace:*"
+    "schemas": "workspace:*"
   }
 }
