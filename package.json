@@ -2,9 +2,13 @@
   "dependencies": {
     "@trpc/client": "^10.12.0",
     "@trpc/server": "^10.12.0",
+    "@types/lodash-es": "^4.17.12",
+    "drizzle-orm": "^0.30.10",
+    "lodash-es": "^4.17.21",
     "mediasoup": "^3.13.16",
     "mediasoup-client": "^3.7.2",
     "tsup": "^8.0.1",
+    "tsx": "^4.10.4",
     "zod": "^3.21.4"
   },
   "devDependencies": {

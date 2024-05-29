@@ -14,6 +14,15 @@ importers:
       '@trpc/server':
         specifier: ^10.12.0
         version: 10.45.2
+      '@types/lodash-es':
+        specifier: ^4.17.12
+        version: 4.17.12
+      drizzle-orm:
+        specifier: ^0.30.10
+        version: 0.30.10(pg@8.11.5)(postgres@3.4.4)
+      lodash-es:
+        specifier: ^4.17.21
+        version: 4.17.21
       mediasoup:
         specifier: ^3.13.16
         version: 3.14.6
@@ -23,6 +32,9 @@ importers:
       tsup:
         specifier: ^8.0.1
         version: 8.0.2(postcss@8.4.38)(ts-node@10.9.2(typescript@5.4.5))(typescript@5.4.5)
+      tsx:
+        specifier: ^4.10.4
+        version: 4.10.4
       zod:
         specifier: ^3.21.4
         version: 3.23.8
@@ -166,6 +178,9 @@ importers:
       bcrypt:
         specifier: ^5.0.1
         version: 5.1.1
+      connect-pg-simple:
+        specifier: ^9.0.1
+        version: 9.0.1
       cors:
         specifier: ^2.8.5
         version: 2.8.5
@@ -187,6 +202,9 @@ importers:
       schemas:
         specifier: workspace:*
         version: link:../../packages/schemas
+      shared-modules:
+        specifier: workspace:*
+        version: link:../../packages/shared-modules
     devDependencies:
       '@types/bcrypt':
         specifier: ^5.0.0
@@ -244,10 +262,13 @@ importers:
         version: 5.1.1
       drizzle-orm:
         specifier: ^0.30.10
-        version: 0.30.10(postgres@3.4.4)
+        version: 0.30.10(pg@8.11.5)(postgres@3.4.4)
       postgres:
         specifier: ^3.4.4
         version: 3.4.4
+      schemas:
+        specifier: workspace:*
+        version: link:../../packages/schemas
       tsx:
         specifier: ^4.10.4
         version: 4.10.4
@@ -282,16 +303,13 @@ importers:
       schemas:
         specifier: workspace:*
         version: link:../../packages/schemas
+      shared-modules:
+        specifier: workspace:^
+        version: link:../../packages/shared-modules
     devDependencies:
       '@types/node':
         specifier: ^18.15.3
         version: 18.19.33
-      node-dev:
-        specifier: ^7.4.3
-        version: 7.4.3
-      ts-node:
-        specifier: ^10.9.1
-        version: 10.9.2(@types/node@18.19.33)(typescript@5.4.5)
 
   backend/mediaserver:
     dependencies:
@@ -313,12 +331,15 @@ importers:
       ip:
         specifier: ^1.1.8
         version: 1.1.9
-      lodash:
+      lodash-es:
         specifier: ^4.17.21
         version: 4.17.21
       schemas:
         specifier: workspace:*
         version: link:../../packages/schemas
+      shared-modules:
+        specifier: workspace:*
+        version: link:../../packages/shared-modules
       superjson:
         specifier: ^1.12.2
         version: 1.13.3
@@ -329,15 +350,15 @@ importers:
         specifier: ^3.0.0
         version: 3.0.0(zod@3.23.8)
       uWebSockets.js:
-        specifier: github:uNetworking/uWebSockets.js#v20.19.0
-        version: https://codeload.github.com/uNetworking/uWebSockets.js/tar.gz/42c9c0d5d31f46ca4115dc75672b0037ec970f28
+        specifier: github:uNetworking/uWebSockets.js#v20.43.0
+        version: https://codeload.github.com/uNetworking/uWebSockets.js/tar.gz/1977b5039938ad863d42fc4958d48c17e5a1fa06
     devDependencies:
       '@types/ip':
         specifier: ^1.1.0
         version: 1.1.3
-      '@types/lodash':
-        specifier: ^4.14.191
-        version: 4.17.1
+      '@types/lodash-es':
+        specifier: ^4.17.12
+        version: 4.17.12
       '@types/node':
         specifier: ^16.10.9
         version: 16.18.97
@@ -359,6 +380,19 @@ importers:
       tscpaths:
         specifier: ^0.0.9
         version: 0.0.9
+      tsx:
+        specifier: ^4.10.4
+        version: 4.10.4
+
+  backend/tsx-test:
+    dependencies:
+      database:
+        specifier: workspace:*
+        version: link:../database
+    devDependencies:
+      tsx:
+        specifier: ^4.10.4
+        version: 4.10.4
 
   packages/buffered-interpolation:
     dependencies:
@@ -384,9 +418,12 @@ importers:
 
   packages/schemas:
     dependencies:
-      ts-extras:
-        specifier: ^0.11.0
-        version: 0.11.0
+      drizzle-orm:
+        specifier: ^0.30.10
+        version: 0.30.10(pg@8.11.5)(postgres@3.4.4)
+      drizzle-zod:
+        specifier: ^0.5.1
+        version: 0.5.1(drizzle-orm@0.30.10(pg@8.11.5)(postgres@3.4.4))(zod@3.23.8)
     devDependencies:
       '@types/jsonwebtoken':
         specifier: ^8.5.8
@@ -2537,6 +2574,10 @@ packages:
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
 
+  connect-pg-simple@9.0.1:
+    resolution: {integrity: sha512-BuwWJH3K3aLpONkO9s12WhZ9ceMjIBxIJAh0JD9x4z1Y9nShmWqZvge5PG/+4j2cIOcguUoa2PSQ4HO/oTsrVg==}
+    engines: {node: '>=16.0.0'}
+
   console-control-strings@1.1.0:
     resolution: {integrity: sha512-ty/fTekppD2fIwRvnZAVdeOiGd1c7YXEixbgJTNzqcxJWKQnjJ/V1bNEEE6hygpM3WjwHFUVK6HTjWSzV4a8sQ==}
 
@@ -2878,6 +2919,12 @@ packages:
         optional: true
       sqlite3:
         optional: true
+
+  drizzle-zod@0.5.1:
+    resolution: {integrity: sha512-C/8bvzUH/zSnVfwdSibOgFjLhtDtbKYmkbPbUCq46QZyZCH6kODIMSOgZ8R7rVjoI+tCj3k06MRJMDqsIeoS4A==}
+    peerDependencies:
+      drizzle-orm: '>=0.23.13'
+      zod: '*'
 
   dtype@2.0.0:
     resolution: {integrity: sha512-s2YVcLKdFGS0hpFqJaTwscsyt0E8nNFdmo73Ocd81xNPj4URI4rj6D60A+vFMIw7BXWlb4yRkEwfBqcZzPGiZg==}
@@ -4626,6 +4673,40 @@ packages:
     resolution: {integrity: sha512-gDKb8aZMDeD/tZWs9P6+q0J9Mwkdl6xMV8TjnGP3qJVJ06bdMgkbBlLU8IdfOsIsFz2BW1rNVT3XuNEl8zPAvw==}
     engines: {node: '>=8'}
 
+  pg-cloudflare@1.1.1:
+    resolution: {integrity: sha512-xWPagP/4B6BgFO+EKz3JONXv3YDgvkbVrGw2mTo3D6tVDQRh1e7cqVGvyR3BE+eQgAvx1XhW/iEASj4/jCWl3Q==}
+
+  pg-connection-string@2.6.4:
+    resolution: {integrity: sha512-v+Z7W/0EO707aNMaAEfiGnGL9sxxumwLl2fJvCQtMn9Fxsg+lPpPkdcyBSv/KFgpGdYkMfn+EI1Or2EHjpgLCA==}
+
+  pg-int8@1.0.1:
+    resolution: {integrity: sha512-WCtabS6t3c8SkpDBUlb1kjOs7l66xsGdKpIPZsg4wR+B3+u9UAum2odSsF9tnvxg80h4ZxLWMy4pRjOsFIqQpw==}
+    engines: {node: '>=4.0.0'}
+
+  pg-pool@3.6.2:
+    resolution: {integrity: sha512-Htjbg8BlwXqSBQ9V8Vjtc+vzf/6fVUuak/3/XXKA9oxZprwW3IMDQTGHP+KDmVL7rtd+R1QjbnCFPuTHm3G4hg==}
+    peerDependencies:
+      pg: '>=8.0'
+
+  pg-protocol@1.6.1:
+    resolution: {integrity: sha512-jPIlvgoD63hrEuihvIg+tJhoGjUsLPn6poJY9N5CnlPd91c2T18T/9zBtLxZSb1EhYxBRoZJtzScCaWlYLtktg==}
+
+  pg-types@2.2.0:
+    resolution: {integrity: sha512-qTAAlrEsl8s4OiEQY69wDvcMIdQN6wdz5ojQiOy6YRMuynxenON0O5oCpJI6lshc6scgAY8qvJ2On/p+CXY0GA==}
+    engines: {node: '>=4'}
+
+  pg@8.11.5:
+    resolution: {integrity: sha512-jqgNHSKL5cbDjFlHyYsCXmQDrfIX/3RsNwYqpd4N0Kt8niLuNoRNH+aazv6cOd43gPh9Y4DjQCtb+X0MH0Hvnw==}
+    engines: {node: '>= 8.0.0'}
+    peerDependencies:
+      pg-native: '>=3.0.1'
+    peerDependenciesMeta:
+      pg-native:
+        optional: true
+
+  pgpass@1.0.5:
+    resolution: {integrity: sha512-FdW9r/jQZhSeohs1Z3sI1yxFQNFvMcnmfuj4WBMUTxOrAyLMaTcE1aAMBiTlbMNaXvBCQuVi0R7hd8udDSP7ug==}
+
   phin@2.9.3:
     resolution: {integrity: sha512-CzFr90qM24ju5f88quFC/6qohjC144rehe5n6DH900lgXmUe86+xCKc10ev56gRKC4/BkHUoG4uSiQgBiIXwDA==}
     deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
@@ -4735,6 +4816,22 @@ packages:
   postcss@8.4.38:
     resolution: {integrity: sha512-Wglpdk03BSfXkHoQa3b/oulrotAkwrlLDRSOb9D0bN86FdRyE9lppSp33aHNPgBa0JKCoB+drFLZkQoRRYae5A==}
     engines: {node: ^10 || ^12 || >=14}
+
+  postgres-array@2.0.0:
+    resolution: {integrity: sha512-VpZrUqU5A69eQyW2c5CA1jtLecCsN2U/bD6VilrFDWq5+5UIEVO7nazS3TEcHf1zuPYO/sqGvUvW62g86RXZuA==}
+    engines: {node: '>=4'}
+
+  postgres-bytea@1.0.0:
+    resolution: {integrity: sha512-xy3pmLuQqRBZBXDULy7KbaitYqLcmxigw14Q5sj8QBVLqEwXfeybIKVWiqAXTlcvdvb0+xkOtDbfQMOf4lST1w==}
+    engines: {node: '>=0.10.0'}
+
+  postgres-date@1.0.7:
+    resolution: {integrity: sha512-suDmjLVQg78nMK2UZ454hAG+OAW+HQPZ6n++TNDUX+L0+uUlLywnoxJKDou51Zm+zTCjrCl0Nq6J9C5hP9vK/Q==}
+    engines: {node: '>=0.10.0'}
+
+  postgres-interval@1.2.0:
+    resolution: {integrity: sha512-9ZhXKM/rw350N1ovuWHbGxnGh/SNJ4cnxHiM0rxE4VN41wsg8P8zWn9hv/buK00RP4WvlOyr/RBDiptyxVbkZQ==}
+    engines: {node: '>=0.10.0'}
 
   postgres@3.4.4:
     resolution: {integrity: sha512-IbyN+9KslkqcXa8AO9fxpk97PA4pzewvpi2B3Dwy9u4zpV32QicaEdgmF3eSQUzdRk7ttDHQejNgAEr4XoeH4A==}
@@ -5127,6 +5224,10 @@ packages:
     resolution: {integrity: sha512-NzNVhJDYpwceVVii8/Hu6DKfD2G+NrQHlS/V/qgv763EYudVwEcMQNxd2lh+0VrUByXN/oJkl5grOhYWvQUYiw==}
     engines: {node: '>=0.10.0'}
 
+  split2@4.2.0:
+    resolution: {integrity: sha512-UcjcJOWknrNkF6PLX83qcHM6KHgVKNkV62Y8a5uYDVv9ydGQVwAHMKqHdJje1VTWpljG0WYpCDhrCdAOYH4TWg==}
+    engines: {node: '>= 10.x'}
+
   sprintf-js@1.0.3:
     resolution: {integrity: sha512-D9cPgkvLlV3t3IzL0D0YLvGA9Ahk4PcvVwUbN0dSGr1aP0Nrt4AEnTUbuGvquEC0mA64Gqt1fzirlRs5ibXx8g==}
 
@@ -5363,10 +5464,6 @@ packages:
     peerDependencies:
       typescript: '>=3.7.0'
 
-  ts-extras@0.11.0:
-    resolution: {integrity: sha512-yrbnkpcvtPiPXVFrvHHqNnCxUplqabQGX+UL5s+hpdaBeochNvixdFpgX/0MsPT99uwWv87wivdLCNezLy5OIA==}
-    engines: {node: '>=14.16'}
-
   ts-interface-checker@0.1.13:
     resolution: {integrity: sha512-Y/arvbn+rrz3JCKl9C4kVNfTfSm2/mEp5FSz5EsZSANGPSlQrpRI5M4PKF+mJnE52jOO90PnPSc3Ur3bTQw0gA==}
 
@@ -5510,9 +5607,9 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
-  uWebSockets.js@https://codeload.github.com/uNetworking/uWebSockets.js/tar.gz/42c9c0d5d31f46ca4115dc75672b0037ec970f28:
-    resolution: {tarball: https://codeload.github.com/uNetworking/uWebSockets.js/tar.gz/42c9c0d5d31f46ca4115dc75672b0037ec970f28}
-    version: 20.19.0
+  uWebSockets.js@https://codeload.github.com/uNetworking/uWebSockets.js/tar.gz/1977b5039938ad863d42fc4958d48c17e5a1fa06:
+    resolution: {tarball: https://codeload.github.com/uNetworking/uWebSockets.js/tar.gz/1977b5039938ad863d42fc4958d48c17e5a1fa06}
+    version: 20.43.0
 
   ua-parser-js@1.0.37:
     resolution: {integrity: sha512-bhTyI94tZofjo+Dn8SN6Zv8nBDvyXTymAdM3LDI/0IboIUwTu1rEhW7v2TfiVsoYWgkQ4kOVqnI8APUFbIQIFQ==}
@@ -8331,6 +8428,12 @@ snapshots:
 
   concat-map@0.0.1: {}
 
+  connect-pg-simple@9.0.1:
+    dependencies:
+      pg: 8.11.5
+    transitivePeerDependencies:
+      - pg-native
+
   console-control-strings@1.1.0: {}
 
   content-disposition@0.5.4:
@@ -8562,9 +8665,15 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.30.10(postgres@3.4.4):
+  drizzle-orm@0.30.10(pg@8.11.5)(postgres@3.4.4):
     optionalDependencies:
+      pg: 8.11.5
       postgres: 3.4.4
+
+  drizzle-zod@0.5.1(drizzle-orm@0.30.10(pg@8.11.5)(postgres@3.4.4))(zod@3.23.8):
+    dependencies:
+      drizzle-orm: 0.30.10(pg@8.11.5)(postgres@3.4.4)
+      zod: 3.23.8
 
   dtype@2.0.0: {}
 
@@ -10702,6 +10811,41 @@ snapshots:
 
   path-type@4.0.0: {}
 
+  pg-cloudflare@1.1.1:
+    optional: true
+
+  pg-connection-string@2.6.4: {}
+
+  pg-int8@1.0.1: {}
+
+  pg-pool@3.6.2(pg@8.11.5):
+    dependencies:
+      pg: 8.11.5
+
+  pg-protocol@1.6.1: {}
+
+  pg-types@2.2.0:
+    dependencies:
+      pg-int8: 1.0.1
+      postgres-array: 2.0.0
+      postgres-bytea: 1.0.0
+      postgres-date: 1.0.7
+      postgres-interval: 1.2.0
+
+  pg@8.11.5:
+    dependencies:
+      pg-connection-string: 2.6.4
+      pg-pool: 3.6.2(pg@8.11.5)
+      pg-protocol: 1.6.1
+      pg-types: 2.2.0
+      pgpass: 1.0.5
+    optionalDependencies:
+      pg-cloudflare: 1.1.1
+
+  pgpass@1.0.5:
+    dependencies:
+      split2: 4.2.0
+
   phin@2.9.3: {}
 
   picocolors@1.0.1: {}
@@ -10754,7 +10898,7 @@ snapshots:
       yaml: 1.10.2
     optionalDependencies:
       postcss: 8.4.38
-      ts-node: 10.9.2(@types/node@18.19.33)(typescript@5.4.5)
+      ts-node: 10.9.2(@types/node@16.18.97)(typescript@5.4.5)
 
   postcss-load-config@4.0.2(postcss@8.4.38)(ts-node@10.9.2(@types/node@18.19.33)(typescript@5.2.2)):
     dependencies:
@@ -10770,7 +10914,7 @@ snapshots:
       yaml: 2.4.2
     optionalDependencies:
       postcss: 8.4.38
-      ts-node: 10.9.2(@types/node@18.19.33)(typescript@5.4.5)
+      ts-node: 10.9.2(@types/node@16.18.97)(typescript@5.4.5)
 
   postcss-nested@6.0.1(postcss@8.4.38):
     dependencies:
@@ -10789,6 +10933,16 @@ snapshots:
       nanoid: 3.3.7
       picocolors: 1.0.1
       source-map-js: 1.2.0
+
+  postgres-array@2.0.0: {}
+
+  postgres-bytea@1.0.0: {}
+
+  postgres-date@1.0.7: {}
+
+  postgres-interval@1.2.0:
+    dependencies:
+      xtend: 4.0.2
 
   postgres@3.4.4: {}
 
@@ -11203,6 +11357,8 @@ snapshots:
     dependencies:
       extend-shallow: 3.0.2
 
+  split2@4.2.0: {}
+
   sprintf-js@1.0.3: {}
 
   stack-utils@2.0.6:
@@ -11464,10 +11620,6 @@ snapshots:
     dependencies:
       typescript: 5.4.5
 
-  ts-extras@0.11.0:
-    dependencies:
-      type-fest: 2.19.0
-
   ts-interface-checker@0.1.13: {}
 
   ts-jest@27.1.5(@babel/core@7.24.5)(@types/jest@27.5.2)(babel-jest@27.5.1(@babel/core@7.24.5))(esbuild@0.19.12)(jest@27.5.1(node-notifier@8.0.2)(ts-node@10.9.2(@types/node@16.18.97)(typescript@5.4.5)))(typescript@5.4.5):
@@ -11524,24 +11676,6 @@ snapshots:
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
     optional: true
-
-  ts-node@10.9.2(@types/node@18.19.33)(typescript@5.4.5):
-    dependencies:
-      '@cspotcode/source-map-support': 0.8.1
-      '@tsconfig/node10': 1.0.11
-      '@tsconfig/node12': 1.0.11
-      '@tsconfig/node14': 1.0.3
-      '@tsconfig/node16': 1.0.4
-      '@types/node': 18.19.33
-      acorn: 8.11.3
-      acorn-walk: 8.3.2
-      arg: 4.1.3
-      create-require: 1.1.1
-      diff: 4.0.2
-      make-error: 1.3.6
-      typescript: 5.4.5
-      v8-compile-cache-lib: 3.0.1
-      yn: 3.1.1
 
   tscpaths@0.0.9:
     dependencies:
@@ -11645,7 +11779,7 @@ snapshots:
 
   typescript@5.4.5: {}
 
-  uWebSockets.js@https://codeload.github.com/uNetworking/uWebSockets.js/tar.gz/42c9c0d5d31f46ca4115dc75672b0037ec970f28: {}
+  uWebSockets.js@https://codeload.github.com/uNetworking/uWebSockets.js/tar.gz/1977b5039938ad863d42fc4958d48c17e5a1fa06: {}
 
   ua-parser-js@1.0.37: {}
 

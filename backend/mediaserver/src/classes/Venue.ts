@@ -1,98 +1,102 @@
 import { Log } from 'debug-level';
-const log = new Log('Venue');
-process.env.DEBUG = 'Venue*, ' + process.env.DEBUG;
+const log = new Log('Stream');
+process.env.DEBUG = 'Stream*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
-import mediasoupConfig from '../mediasoupConfig';
-import { getMediasoupWorker } from '../modules/mediasoupWorkers';
+import mediasoupConfig from '../mediasoupConfig.js';
+import { getMediasoupWorker } from '../modules/mediasoupWorkers.js';
 
 import {types as soupTypes} from 'mediasoup';
-import { ConnectionId, UserId, VenueId, CameraId, VenueUpdate, SenderId, hasAtLeastSecurityLevel } from 'schemas';
+import { ConnectionId, UserId, StreamId, CameraId, StreamUpdate, SenderId, hasAtLeastSecurityLevel, Prettify } from 'schemas';
 
-import { Prisma } from 'database';
-import prisma, { cameraIncludeStuff } from '../modules/prismaClient';
+import { db, schema, queryStreamWithIncludes, basicUserSelect, CameraWithIncludes, StreamWithIncludes } from 'database';
+// import { } from 'drizzle-orm'
 
-import { Camera, VrSpace, type UserClient, SenderClient, BaseClient, PublicProducers  } from './InternalClasses';
+import { Camera, VrSpace, type UserClient, SenderClient, BaseClient, PublicProducers } from './InternalClasses.js';
 import { computed, ref, shallowReactive, effect } from '@vue/reactivity';
 import { ProducerId } from 'schemas/mediasoup';
 import { isPast } from 'date-fns';
+import { and, eq } from 'drizzle-orm';
 
-const basicUserSelect = {
-  select: {
-    userId: true,
-    username: true,
-    role: true,
-  }
-} satisfies Prisma.Venue$ownersArgs;
 
-const venueIncludeStuff  = {
-  whitelistedUsers: basicUserSelect,
-  blackListedUsers: basicUserSelect,
-  owners: basicUserSelect,
-  virtualSpace: { include: { virtualSpace3DModel: true }},
-  cameras: {
-    include: cameraIncludeStuff
-  },
-} satisfies Prisma.VenueInclude;
-const args = {include: venueIncludeStuff} satisfies Prisma.VenueArgs;
-type VenueResponse = Prisma.VenueGetPayload<typeof args>
+// type StreamQueryInput = NonNullable<Required<Parameters<typeof db.query.streams.findFirst>[0]>>;
+// type StreamQueryWithInput = StreamQueryInput['with'];
+
+// const streamDefaultWith = {
+//   cameras: true,
+//   mainCamera: true,
+//   owner: {
+//     columns: basicUserSelect,
+//   }
+// whitelistedUsers: basicUserSelect,
+// blackListedUsers: basicUserSelect,
+// owners: basicUserSelect,
+// virtualSpace: { include: { virtualSpace3DModel: true }},
+// cameras: {
+//   include: cameraIncludeStuff
+// },
+// } satisfies StreamQueryWithInput;
+
+
 export class Venue {
-  private constructor(prismaData: VenueResponse, router: soupTypes.Router){
+  private constructor(dbData: StreamWithIncludes, router: soupTypes.Router) {
     this.router = router;
 
-    if(prismaData.virtualSpace){
-      this.vrSpace = new VrSpace(this, prismaData.virtualSpace);
+    if (dbData?.vrSpace) {
+      this.vrSpace = new VrSpace(this, dbData.vrSpace);
+      // Stream shouldn't care about database data for related models after model is created. set to null to explicitly clarify this.
+      dbData.vrSpace = null;
     }
+
     
-    // Venue shouldn't care about database data for children after the child is created. set to null to explicitly clarify this.
-    prismaData.virtualSpace = null;
-    this.prismaData = prismaData;
-    
-    // TODO: do same as we do with vrspace and exclude cameras from prismadata before we assign. We want one source of truth and that should be
-    // the prismaData in each class instance. The reason we include it in the constructor is because constructors are not allowed to be async, and
+    // TODO: do same as we do with vrspace and exclude cameras from dbData before we assign. We want one source of truth and that should be
+    // the dbData in each class instance. The reason we include it in the constructor is because constructors are not allowed to be async, and
     // thus we cant load data in each class's constructor. So we pass prisma data down from parents to child classes. But after that we should strive to 
-    // make each instance responsible for managing their own prismaData.
-    prismaData.cameras.forEach(c => {
-      this.loadCamera(c.cameraId as CameraId);
+    // make each instance responsible for managing their own dbData.
+    dbData.cameras.forEach(c => {
+      this.loadCamera(c);
     });
+    // delete dbData.cameras;
     
+    this.dbData = dbData;
     effect(() => {
       this.mainAudioProducer;
       this._notifyStateUpdated('mainAudioUpdated');
     });
   }
 
-  private prismaData: Omit<VenueResponse, 'virtualSpace'>;
+  private dbData: Prettify<Omit<StreamWithIncludes, 'vrSpace' | 'cameras' | 'mainCamera'>>;
 
-  get venueId() {
-    return this.prismaData.venueId as VenueId;
+  get streamId() {
+    return this.dbData.streamId as StreamId;
   }
-  get name() { return this.prismaData.name; }
+  get name() { return this.dbData.name; }
 
-  get owners()  {
-    return this.prismaData.owners.reduce<Record<UserId, typeof this.prismaData.owners[number]>>((prev, cur) => {
-      prev[cur.userId as UserId] = cur;
-      return prev;
-    }, {});
-  }
+  // get owners()  {
+  //   return this.dbData.owners.reduce<Record<UserId, typeof this.dbData.owners[number]>>((prev, cur) => {
+  //     prev[cur.userId as UserId] = cur;
+  //     return prev;
+  //   }, {});
+  // }
+  get owner() { return this.dbData.owner; }
 
-  get visibility() { return this.prismaData.visibility; }
+  get visibility() { return this.dbData.visibility; }
 
-  get doorsOpeningTime() { return this.prismaData.doorsOpeningTime; }
-  get doorsAutoOpen() { return this.prismaData.doorsAutoOpen; }
-  get doorsManuallyOpened() { return this.prismaData.doorsManuallyOpened; }
-  // Dont expose this as public state. Instead we'll use a reactive computed client-side to react when passing opening time.
-  get doorsAreOpen() {
-    if(this.prismaData.doorsAutoOpen){
-      return this.prismaData.doorsOpeningTime && isPast(this.prismaData.doorsOpeningTime);
-    }
-    else return this.doorsManuallyOpened;
-  }
+  // get doorsOpeningTime() { return this.dbData.doorsOpeningTime; }
+  // get doorsAutoOpen() { return this.dbData.doorsAutoOpen; }
+  // get doorsManuallyOpened() { return this.dbData.doorsManuallyOpened; }
+  // // Dont expose this as public state. Instead we'll use a reactive computed client-side to react when passing opening time.
+  // get doorsAreOpen() {
+  //   if (this.dbData.doorsAutoOpen) {
+  //     return this.dbData.doorsOpeningTime && isPast(this.dbData.doorsOpeningTime);
+  //   }
+  //   else return this.doorsManuallyOpened;
+  // }
 
-  get streamStartTime() { return this.prismaData.streamStartTime; }
-  get streamAutoStart() { return this.prismaData.streamAutoStart; }
-  get streamManuallyStarted() { return this.prismaData.streamManuallyStarted; }
-  get streamManuallyEnded() { return this.prismaData.streamManuallyEnded; }
+  get streamStartTime() { return this.dbData.streamStartTime; }
+  get streamAutoStart() { return this.dbData.streamAutoStart; }
+  get streamManuallyStarted() { return this.dbData.streamManuallyStarted; }
+  get streamManuallyEnded() { return this.dbData.streamManuallyEnded; }
   // get streamIsStarted() {
   //   if(this.prismaData.streamAutoStart){
   //     return this.prismaData.streamStartTime && isPast(this.prismaData.streamStartTime);
@@ -103,8 +107,8 @@ export class Venue {
   // Dont expose this as public state. Instead we'll use a reactive computed client-side to track the state.
   get streamIsActive() {
     let streamIsStarted = false;
-    if(this.prismaData.streamAutoStart && this.prismaData.streamStartTime){
-      streamIsStarted = isPast(this.prismaData.streamStartTime);
+    if (this.dbData.streamAutoStart && this.dbData.streamStartTime) {
+      streamIsStarted = isPast(this.dbData.streamStartTime);
     }
     else {
       streamIsStarted = this.streamManuallyStarted;
@@ -116,11 +120,13 @@ export class Venue {
   vrSpace?: VrSpace;
 
   cameras = shallowReactive<Map<CameraId, Camera>>(new Map());
-  get mainCameraId() {return this.prismaData.mainCameraId as CameraId | null; }
+  // get mainCameraId() { return this.dbData.mainCameraId as CameraId | null; }
+  get mainCameraId() { return this.dbData.mainCameraId }
   mainAudioCameraId = ref<CameraId>();
   mainAudioProducer = computed(() => {
-    if(!this.mainAudioCameraId.value) return undefined;
-    const c = this.cameras.get(this.mainAudioCameraId.value);
+    const mainAudioCamId = this.mainAudioCameraId.value;
+    if (!mainAudioCamId) return undefined;
+    const c = this.cameras.get(mainAudioCamId);
 
     return c?.producers.value.audioProducer;
   });
@@ -158,7 +164,7 @@ export class Venue {
     return this.clients.size === 0 && this.senderClients.size === 0;
   }
   getPublicState() {
-    const {venueId, name, visibility, doorsOpeningTime, doorsAutoOpen, doorsManuallyOpened, /* doorsAreOpen, */ streamStartTime, streamAutoStart, streamManuallyStarted, streamManuallyEnded, /*streamIsStarted*/ /* streamIsActive, */ mainCameraId } = this;
+    const { streamId: venueId, name, visibility, streamStartTime, streamAutoStart, streamManuallyStarted, streamManuallyEnded, mainCameraId } = this;
     // log.info('Detached senders:', this.detachedSenders.value);
     // const cameraIds = Array.from(this.cameras.keys());
     const cameras: Record<CameraId, {
@@ -174,8 +180,8 @@ export class Venue {
     const mainAudioProducerId = this.mainAudioProducer.value?.producerId;
     return {
       venueId, name, visibility,
-      doorsOpeningTime, doorsAutoOpen, doorsManuallyOpened, /* doorsAreOpen, */
-      streamStartTime, streamAutoStart, streamManuallyStarted, streamManuallyEnded, /*streamIsStarted*/ /* streamIsActive, */
+      // doorsOpeningTime, doorsAutoOpen, doorsManuallyOpened,
+      streamStartTime, streamAutoStart, streamManuallyStarted, streamManuallyEnded,
       vrSpace: this.vrSpace?.getPublicState(),
       cameras,
       mainCameraId,
@@ -184,37 +190,34 @@ export class Venue {
   }
 
   getAdminOnlyState() {
-    const { venueId, clientIds, owners } = this;
+    const { streamId: venueId, clientIds, owner } = this;
     const cameras: Record<CameraId, ReturnType<Camera['getPublicState']>> = {};
     this.cameras.forEach(cam => cameras[cam.cameraId] = cam.getPublicState());
 
-    return { venueId, clientIds, owners , detachedSenders: this.publicDetachedSenders.value, cameras };
+    return { venueId, clientIds, owner, detachedSenders: this.publicDetachedSenders.value, cameras };
   }
 
   //
   // NOTE: It's important we release all references here!
   unload() {
-    log.info(`*****UNLOADING VENUE: ${this.name} (${this.venueId})`);
-    this.emitToAllClients('venueWasUnloaded', this.venueId);
+    log.info(`*****UNLOADING VENUE: ${this.name} (${this.streamId})`);
+    this.emitToAllClients('venueWasUnloaded', this.streamId);
     this.router.close();
     // this.cameras.forEach(room => room.destroy());
-    Venue.venues.delete(this.venueId);
+    Venue.streams.delete(this.streamId);
     this.vrSpace?.unload();
   }
 
-  async update (input: VenueUpdate) {
+  async update(input: StreamUpdate) {
     log.info('Update venue', input);
-    // if(input.name) { this.prismaData.name = input.name;}
-    // if(input.doorsOpeningTime) { this.prismaData.doorsOpeningTime = input.doorsOpeningTime;}
-    // if(input.streamStartTime) { this.prismaData.streamStartTime = input.streamStartTime;}
-    this.prismaData = { ...this.prismaData, ...input};
-    await prisma.venue.update({where: {venueId: this.prismaData.venueId}, data: input});
+    this.dbData = { ...this.dbData, ...input };
+    db.update(schema.streams).set(this.dbData).where(eq(schema.streams.streamId, this.dbData.streamId));
   }
 
   _notifyStateUpdated(reason?: string){
     const publicState = this.getPublicState();
     this.clients.forEach(c => {
-      log.info(`notifying venuestate (${reason}) to client ${c.username} (${c.connectionId})`);
+      log.info(`notifying streamState (${reason}) to client ${c.username} (${c.connectionId})`);
       c.notify.venueStateUpdated?.({data: publicState, reason});
     });
     this.senderClients.forEach(s => {
@@ -250,7 +253,7 @@ export class Venue {
       }
       this.senderClients.set(client.connectionId, client);
       // this._notifyStateUpdated('sender added to venue');
-      client._setVenue(this.venueId);
+      client._setVenue(this.streamId);
       this.tryMatchCamera(client);
       this._notifyAdminOnlyState('sender added to venue');
     }
@@ -268,11 +271,11 @@ export class Venue {
       //   }
       // }
       this.clients.set(client.connectionId, client);
-      client._setVenue(this.venueId);
+      client._setVenue(this.streamId);
       // this._notifyStateUpdated('Client added to Venue');
       this._notifyAdminOnlyState('client added to Venue');
     }
-    log.info(`Client (${client.clientType}) ${client.username} added to the venue ${this.prismaData.name}`);
+    log.info(`Client (${client.clientType}) ${client.username} added to the venue ${this.dbData.name}`);
 
     // this._notifyClients('venueStateUpdated', this.getPublicState(), 'because I wanna');
   }
@@ -382,24 +385,34 @@ export class Venue {
   // Virtual space (lobby) stuff
 
   async CreateAndAddVirtualSpace() {
-    const response = await prisma.virtualSpace.create({
-      include: {
-        virtualSpace3DModel: true,
-      },
-      data: {
-        // NOTE: models are a separate table and thus a related model. This is if we in the future want to be able to reuse a model in several venues.
-        // But for now we will only have one model per venue. Thus we can simply create one with default values here directly.
-        virtualSpace3DModel: {
-          create: {
-            // use defaults so empty object
-          }
+    // const response = await db.transaction(async (tx) => {
+    //   const modelAsset = await tx.insert(schema.assets).values({
+    //     assetType: 'model',
+    //     assetFileExtension: 'glb',
+    //     ownerUserId: this.dbData.ownerUserId,
 
-        },
-        venue: {
-          connect: {venueId: this.prismaData.venueId},
-        }
-      }
-    });
+    //   })
+    // })
+    const [response] = await db.insert(schema.vrSpaces).values({}).returning();
+    this.update({ vrSpaceId: response.vrSpaceId });
+    // const response = await prisma.virtualSpace.create({
+    //   include: {
+    //     virtualSpace3DModel: true,
+    //   },
+    //   data: {
+    //     // NOTE: models are a separate table and thus a related model. This is if we in the future want to be able to reuse a model in several venues.
+    //     // But for now we will only have one model per venue. Thus we can simply create one with default values here directly.
+    //     virtualSpace3DModel: {
+    //       create: {
+    //         // use defaults so empty object
+    //       }
+
+    //     },
+    //     venue: {
+    //       connect: { venueId: this.dbData.venueId },
+    //     }
+    //   }
+    // });
     this.vrSpace = new VrSpace(this, response);
     this._notifyStateUpdated('Created virtual space');
   }
@@ -430,37 +443,18 @@ export class Venue {
   // }
 
 
-  async createNewCamera(name: string, senderId?: SenderId){
-    const result = await prisma.camera.create({
-      data: {
-        name,
-        venue: {
-          connect: {
-            venueId: this.venueId
-          }
-        },
-        senderId,
-        settings: {coolSetting: 'aaaww yeeeah'},
-        // startTime: new Date(),
-        // virtualSpace: {
-        //   create: {
-        //     settings: 'asdas'
-        //   }
-        // }
-
-      },
-      include: cameraIncludeStuff
-    });
-
-    this.prismaData.cameras.push((result));
-
-    return result.cameraId as CameraId;
+  async createAndLoadNewCamera(name: string, senderId?: SenderId) {
+    const [response] = await db.insert(schema.cameras).values({ name, streamId: this.streamId, senderId }).returning();
+    const responseWithIncludes = (<CameraWithIncludes>response)
+    responseWithIncludes.toCameras = [];
+    responseWithIncludes.fromCameras = [];
+    this.loadCamera(responseWithIncludes);
   }
 
   async deleteCamera(cameraId: CameraId) {
-    const prismaCamera = this.prismaData.cameras.find(c => c.cameraId === cameraId);
-    if(!prismaCamera){
-      throw Error('no camera with that cameraId in prismaData for the venue');
+    const dbCamera = this.dbData.cameras.find(c => c.cameraId === cameraId);
+    if (!dbCamera) {
+      throw Error('no camera with that cameraId in dbData for the stream');
     }
     const foundCamera = this.cameras.get(cameraId);
     if(foundCamera){
@@ -469,25 +463,24 @@ export class Venue {
       this.cameras.delete(cameraId);
     }
 
-    const deleteResponse = await prisma.camera.delete({
-      where: {
-        cameraId
-      },
-      include: {
-        fromCameraPortals: true
-      }
-    });
-    deleteResponse.fromCameraPortals.forEach((portal) => {
-      const cId = portal.fromCameraId as CameraId;
-      const loadedCamera = this.cameras.get(cId);
+    // Save ids of fromportals before they'll get cascade deleted. We need to reference them in order to reload them.
+    const fromPortals = await db.query.cameraPortals.findMany({
+      where: eq(schema.cameraPortals.fromCameraId, cameraId),
+    })
+
+    const [response] = await db.delete(schema.cameras).where(eq(schema.cameras.cameraId, cameraId)).returning();
+
+    fromPortals.forEach((portal) => {
+      const loadedCamera = this.cameras.get(portal.fromCameraId);
       if(loadedCamera){
         loadedCamera.reloadDbData('portal removed');
       }
 
     });
-    const idx = this.prismaData.cameras.indexOf(prismaCamera);
-    this.prismaData.cameras.splice(idx, 1);
-    if(cameraId === this.prismaData.mainCameraId){
+
+    const idx = this.dbData.cameras.indexOf(dbCamera);
+    this.dbData.cameras.splice(idx, 1);
+    if (cameraId === this.dbData.mainCameraId) {
       await this.update({
         mainCameraId: null,
       });
@@ -495,14 +488,14 @@ export class Venue {
 
     this._notifyStateUpdated('camera removed');
     this._notifyAdminOnlyState('camera removed');
-    return deleteResponse;
+    return response;
   }
 
   /**
    * Utility function for closing all consumers of a producer
    * This function is primarily for situations where you cant have more fine grained control over consumers.
    * For example admin consuming from several cameras without joining them. Then we still want to be able to close consumption.
-   * Try to avoid using this function if possible.
+   * Try to avoid using this function if possible as it might be less performant.
    */
   _closeAllConsumersOfProducer(producerId: ProducerId) {
     this.clients.forEach(client => {
@@ -526,19 +519,19 @@ export class Venue {
 
   // TODO: We should probably not use the camera prisma data provided by venue when loading. It might be stale.
   // We should probably not have the camera prisma data included in venue in the first place? And instead get the data when loading the camera.
-  loadCamera(cameraId: CameraId) {
-    if(this.cameras.has(cameraId)){
+  loadCamera(dbCamera: typeof this.dbData.cameras[number]) {
+    if (this.cameras.has(dbCamera.cameraId)) {
       throw Error('a camera with that id is already loaded');
     }
-    const prismaCamera = this.prismaData.cameras.find(c => c.cameraId === cameraId);
-    if(!prismaCamera){
-      throw Error('no prisma data for a camera with that Id in venue prismaData');
-    }
+    // const dbCamera = this.dbData.cameras.find(c => c.cameraId === cameraId);
+    // if(!dbCamera){
+    //   throw Error('no db data for a camera with that Id in venue prismaData');
+    // }
     let maybeSender: SenderClient | undefined = undefined;
-    if(prismaCamera.senderId){
-      maybeSender = this.findSenderFromSenderId(prismaCamera.senderId as SenderId);
+    if (dbCamera.senderId) {
+      maybeSender = this.findSenderFromSenderId(dbCamera.senderId);
     }
-    const camera = new Camera(prismaCamera, this, maybeSender);
+    const camera = new Camera(dbCamera, this, maybeSender);
     this.cameras.set(camera.cameraId, camera);
     
     this._notifyStateUpdated('camera loaded');
@@ -574,64 +567,53 @@ export class Venue {
   }
 
   // Static stuff for global housekeeping
-  private static venues: Map<VenueId, Venue> = new Map();
+  private static streams: Map<StreamId, Venue> = new Map();
 
-  static async createNewVenue(name: string, owner: UserId){
+  static async createNewStream(name: string, ownerUserId: UserId) {
     try {
-
-      const result = await prisma.venue.create({
-        data: {
-          name,
-          owners: {
-            connect: {
-              userId: owner
-            }
-          },
-          // settings: {coolSetting: 'aaaww yeeeah'},
-          // startTime: new Date(),
-        }
-      });
-
-      return result.venueId as VenueId;
+      const [response] = await db.insert(schema.streams).values({
+        name,
+        ownerUserId,
+      }).returning()
+      return response.streamId;
     } catch(e) {
       log.error(e);
       throw e;
     }
   }
 
-  static async deleteVenue(venueId: VenueId) {
-    const deletedVenue = await prisma.venue.delete({
-      where: {
-        venueId
-      }
-    });
-    return deletedVenue;
+  static async deleteStream(streamId: StreamId) {
+    const deletedStream = db.delete(schema.streams).where(eq(schema.streams.streamId, streamId)).returning();
+    return deletedStream;
   }
 
   // static async clientRequestLoadVenue()
-  static async loadVenue(venueId: VenueId, ownerId: UserId, worker?: soupTypes.Worker) {
-    log.info(`*****TRYING TO LOAD VENUE: ${venueId}`);
+  static async loadStream(streamId: StreamId, ownerUserId: UserId, worker?: soupTypes.Worker) {
+    log.info(`*****TRYING TO LOAD STREAM: ${streamId}`);
     try {
-      const loadedVenue = Venue.venues.get(venueId);
-      if(loadedVenue){
-        log.warn('Venue with that venueId already loaded');
-        return loadedVenue;
+      const loadedStream = Venue.streams.get(streamId);
+      if (loadedStream) {
+        log.warn('Stream with that streamId already loaded');
+        return loadedStream;
         // throw new Error('Venue with that venueId already loaded');
       }
-      const dbResponse = await prisma.venue.findUniqueOrThrow({
-        where: {
-          venueId,
-          // ownerId_venueId: {
-          //   venueId,
-          //   ownerId
-          // }
-        },
-        include: venueIncludeStuff,
-      });
-      if(!dbResponse.owners.find(u => u.userId === ownerId)){
+      const dbResponse = await queryStreamWithIncludes.execute({ streamId });
+      // const dbResponse = await db.query.streams.findFirst({
+      //   where: eq(schema.streams.streamId, streamId),
+      //   with: {
+      //     owner: { columns: basicUserSelect },
+      //     cameras: true,
+      //     mainCamera: true,
+      //     vrSpace: true,
+      //   }
+      // });
+      if (!dbResponse) {
+        throw Error('No stream with that streamId in db');
+      }
+      if (dbResponse?.ownerUserId !== ownerUserId) {
         // throw Error('you are not owner of the venue! Not allowed!');
-        if(dbResponse.doorsOpeningTime && !isPast(dbResponse.doorsOpeningTime?.getTime())){
-          throw Error('You are not owner of the venue AND the doors opening time has not passed / is not set.');
+        if (dbResponse?.streamStartTime && !isPast(dbResponse.streamStartTime?.getTime())) {
+          throw Error('You are not owner of the venue AND the stream start time has not passed / is not set.');
         }
       }
 
@@ -639,76 +621,76 @@ export class Venue {
         worker = getMediasoupWorker();
       }
       const router = await worker.createRouter(mediasoupConfig.router);
-      const venue = new Venue(dbResponse, router);
+      const stream = new Venue(dbResponse, router);
       // log.info('venueIncludeStuff: ', venueIncludeStuff);
       // log.info('venue was loaded with db data:', dbResponse);
 
-      Venue.venues.set(venue.venueId, venue);
-      log.info(`*****LOADED VENUE: ${venue.name} ${venue.venueId})`);
-      return venue;
+      Venue.streams.set(stream.streamId, stream);
+      log.info(`*****LOADED STREAM: ${stream.name} ${stream.streamId})`);
+      return stream;
     } catch (e) {
-      log.error('failed to load venue');
+      log.error('failed to load stream');
       log.error(e);
       throw e;
     }
   }
 
 
-  static venueIsLoaded(params: {venueId: VenueId}){
-    return Venue.venues.has(params.venueId);
+  static venueIsLoaded(params: { venueId: StreamId }) {
+    return Venue.streams.has(params.venueId);
   }
 
   static getLoadedVenues(){
-    const obj: Record<VenueId, {venueId: VenueId, name: string}> = {};
-    for(const [key, venue] of Venue.venues.entries()){
+    const obj: Record<StreamId, { venueId: StreamId, name: string }> = {};
+    for (const [key, venue] of Venue.streams.entries()) {
       obj[key] = {
-        name: venue.prismaData.name,
-        venueId: venue.venueId,
+        name: venue.dbData.name,
+        venueId: venue.streamId,
       };
     }
     return obj;
   }
 
   static getLoadedVenuesPublicState(){
-    const obj: Record<VenueId, {venueId: VenueId, state: ReturnType<Venue['getPublicState']>}> = {};
-    for(const [key, venue] of Venue.venues.entries()){
+    const obj: Record<StreamId, { venueId: StreamId, state: ReturnType<Venue['getPublicState']> }> = {};
+    for (const [key, venue] of Venue.streams.entries()) {
       obj[key] = {
-        venueId: venue.venueId,
+        venueId: venue.streamId,
         state: venue.getPublicState()
       };
     }
     return obj;
   }
 
-  static getVenue(venueId: VenueId) {
-    const venue = Venue.venues.get(venueId);
+  static getVenue(venueId: StreamId) {
+    const venue = Venue.streams.get(venueId);
     if(!venue){
       throw new Error('No venue with that id is loaded');
     }
     return venue;
   }
 
-  static async getPublicVenue(venueId: VenueId, userId: UserId) {
-    const venue = Venue.venues.get(venueId);
-    if(!venue){
-      throw new Error('No venue with that id is loaded');
-    }
+  static async getPublicVenue(venueId: StreamId, userId: UserId) {
+  // const venue = Venue.streams.get(venueId);
+  // if(!venue){
+  //   throw new Error('No stream with that id is loaded');
+  // }
 
-    const dbResponse = await prisma.venue.findUniqueOrThrow({
-      where: {
-        venueId,
-        // ownerId_venueId: {
-        //   venueId,
-        //   ownerId
-        // }
-      },
-      include: venueIncludeStuff,
+    const response = await db.query.streams.findFirst({
+      where: eq(schema.streams.streamId, venueId),
+      with: {
+        cameras: true,
+        mainCamera: true,
+        owner: { columns: basicUserSelect },
+        vrSpace: true,
+      }
     });
-    if(!dbResponse.owners.find(u => u.userId === userId)){
-      if(venue.visibility === 'private' ){
-        throw Error('Either this event does not exist or you are not allowed to access it.');
+
+    if (response?.owner.userId === userId) {
+      if (response.visibility === 'private') {
+        throw Error('Either this stream does not exist or you are not allowed to access it.');
       }
     }
-    return venue;
+    return response;
   }
 }

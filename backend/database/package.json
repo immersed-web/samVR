@@ -2,11 +2,11 @@
   "name": "database",
   "version": "1.0.0",
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "module": "./dist/esm/index.js",
   "author": "Gunnar Oledal",
   "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "introspect": "dotenv -e ../../.env drizzle-kit introspect",
     "generate": "dotenv -e ../../.env drizzle-kit generate",
@@ -24,6 +24,7 @@
     "bcrypt": "^5.0.1",
     "drizzle-orm": "^0.30.10",
     "postgres": "^3.4.4",
-    "tsx": "^4.10.4"
+    "tsx": "^4.10.4",
+    "schemas": "workspace:*"
   }
 }

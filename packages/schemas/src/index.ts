@@ -1,6 +1,10 @@
 import { z } from 'zod';
 import type { JwtPayload as JwtShapeFromLib } from 'jsonwebtoken'
-import { Role, Venue, VirtualSpace3DModel, Visibility, Camera, CameraType as PrismaCameraType, Prisma, ModelFileFormat } from "database";
+// import { Role, Venue, VirtualSpace3DModel, Visibility, Camera, CameraType as PrismaCameraType, Prisma, ModelFileFormat } from "database";
+import { schema } from 'database';
+import { createInsertSchema } from 'drizzle-zod';
+
+// const PlacedObjectInsertSchema = createInsertSchema(schema.placedObjects)
 
 type RemoveIndex<T> = {
   [ K in keyof T as string extends K ? never : number extends K ? never : K ] : T[K]
@@ -30,7 +34,7 @@ function implement<Model = never>() {
   };
 }
 
-type Prettify<T> = {
+export type Prettify<T> = {
   [K in keyof T]: T[K];
 } & unknown;
 
@@ -62,13 +66,13 @@ type Prettify<T> = {
 //   .nullable()
 //   .transform((v) => transformJsonNull(v));
 
-const InputJsonValueSchema: z.ZodType<Prisma.InputJsonValue> = z.union([
-  z.string(),
-  z.number(),
-  z.boolean(),
-  z.lazy(() => z.array(InputJsonValueSchema.nullable())),
-  z.lazy(() => z.record(InputJsonValueSchema.nullable())),
-]);
+// const InputJsonValueSchema: z.ZodType<Prisma.InputJsonValue> = z.union([
+//   z.string(),
+//   z.number(),
+//   z.boolean(),
+//   z.lazy(() => z.array(InputJsonValueSchema.nullable())),
+//   z.lazy(() => z.record(InputJsonValueSchema.nullable())),
+// ]);
 
 // const NullableJsonNullValueInputSchema = z.enum(['DbNull','JsonNull',]).transform((v) => transformJsonNull(v));
 
@@ -82,10 +86,11 @@ const jwtDefaultPayload = implement<JWTDefaultPayload>().with({
   sub: z.string().optional(),
 })
 
+export const roleHierarchy = schema.Role.enumValues;
 // TODO: I would really prefer to infer a const literal tuple from the prisma enum.
 // That is. Could we in some way convert/extract a literal tuple from the prisma type and then use z.enum() on it directly
 // Then we could use that extracted literal tuple from prisma instead of defining it manually here. This is redundant and we need to keep them in sync
-export const roleHierarchy = (['gunnar', 'superadmin', 'admin', 'moderator', 'sender', 'user', 'guest'] as const) satisfies Readonly<Role[]>;
+// export const roleHierarchy = (['gunnar', 'superadmin', 'admin', 'moderator', 'sender', 'user', 'guest'] as const) satisfies Readonly<Role[]>;
 
 export function throwIfUnauthorized(role: UserRole, minimumUserRole: UserRole) {
   if(!hasAtLeastSecurityLevel(role, minimumUserRole)){
@@ -133,9 +138,20 @@ export function hasAtLeastSecurityLevel(role: UserRole | undefined, minimumUserR
 export const UserRoleSchema = z.enum(roleHierarchy);
 export type UserRole = z.TypeOf<typeof UserRoleSchema>;
 
-export type { Visibility } from 'database'
+export const VisibilitySchema = z.enum(schema.Visibility.enumValues);
+export type Visibility = z.infer<typeof VisibilitySchema>;
 
-//Here we are creating Opaque type for the different types of id's. This is to prevent acidentally using ids for the wrong type of object.
+// export type { Visibility } from 'database'
+
+const timestampKeys = {
+  createdAt: true, updatedAt: true,
+} as const
+
+const optionalReason = z.object({
+  reason: z.string().optional(),
+});
+
+//Here we are creating Opaque type for the different types of id's. This is to prevent acidentally using ids for the wrong type of object. No foot guns in this house, no no no :)
 export const UuidSchema = z.string().uuid();
 export type Uuid = z.TypeOf<typeof UuidSchema>;
 
@@ -145,54 +161,65 @@ export type ConnectionId = z.TypeOf<typeof ConnectionIdSchema>;
 export const UserIdSchema = UuidSchema.brand<'UserId'>();
 export type UserId = z.TypeOf<typeof UserIdSchema>;
 
-export const VenueIdSchema = UuidSchema.brand<'VenueId'>();
-export type VenueId = z.TypeOf<typeof VenueIdSchema>;
+export const StreamIdSchema = UuidSchema.brand<'StreamId'>();
+export type StreamId = z.TypeOf<typeof StreamIdSchema>;
 
 export const CameraIdSchema = UuidSchema.brand<'CameraId'>();
 export type CameraId = z.TypeOf<typeof CameraIdSchema>;
 
+export const AssetIdSchema = UuidSchema.brand<'AssetId'>();
+export type AssetId = z.TypeOf<typeof AssetIdSchema>;
+
 export const VrSpaceIdSchema = UuidSchema.brand<'VrSpaceId'>();
-// export type VrSpaceId = z.TypeOf<typeof VrSpaceIdSchema>;
 export type VrSpaceId = z.TypeOf<typeof VrSpaceIdSchema>;
 
-export const Vr3DModelIdSchema = UuidSchema.brand<'Vr3DModelId'>();
-export type Vr3DModelId = z.TypeOf<typeof Vr3DModelIdSchema>;
+export const PlacementIdSchema = UuidSchema.brand<'PlacementId'>();
+export type PlacementId = z.TypeOf<typeof PlacementIdSchema>;
 
 export const SenderIdSchema = UuidSchema.brand<'SenderId'>();
 export type SenderId = z.TypeOf<typeof SenderIdSchema>;
 
-export type VenueListInfo = Prettify<{venueId: VenueId } & Pick<Venue, 
-  'name' 
-
-  | 'doorsAutoOpen' 
-  | 'doorsManuallyOpened' 
-  | 'doorsOpeningTime' 
-
-  | 'streamAutoStart' 
-  | 'streamManuallyStarted' 
-  | 'streamManuallyEnded' 
-  | 'streamStartTime' 
-
+export type StreamListInfo = Prettify<Pick<typeof schema.streams.$inferSelect,
+  'streamId'
+  | 'name'
+  | 'ownerUserId'
   | 'visibility'
+  | 'streamAutoStart'
+  | 'streamStartTime'
+  | 'streamManuallyStarted'
+  | 'streamManuallyEnded'
   >>
 
-export const visibilityOptions = ['private', 'unlisted', 'public'] as const satisfies Readonly<Visibility[]>
-const VisibilitySchema = z.enum(visibilityOptions);
+export const StreamInsertSchema = createInsertSchema(schema.streams, {
+  streamId: StreamIdSchema.optional(),
+  ownerUserId: UserIdSchema.optional(),
+  vrSpaceId: VrSpaceIdSchema.optional(),
+  mainCameraId: CameraIdSchema.optional(),
+})
+  .omit(timestampKeys)
+  .merge(optionalReason);
+export type StreamInsert = z.TypeOf<typeof StreamInsertSchema>;
 
-// TODO: Make it unsatisfied when using fields that don't exist in Venue
-export const VenueUpdateSchema = z.object({
-  name: z.string().nonempty().optional(),
-  visibility: VisibilitySchema.optional(),
-  doorsOpeningTime: z.date().nullable().optional(),
-  doorsAutoOpen: z.boolean().optional(),
-  doorsManuallyOpened: z.boolean().optional(),
-  streamStartTime: z.date().nullable().optional(),
-  streamAutoStart: z.boolean().optional(),
-  streamManuallyStarted: z.boolean().optional(),
-  streamManuallyEnded: z.boolean().optional(),
-  mainCameraId: CameraIdSchema.nullable().optional(),
-}) satisfies z.ZodType<Partial<Venue>>
-export type VenueUpdate = z.TypeOf<typeof VenueUpdateSchema>;
+// TODO: Refactor so we always use insert schemas instead of special schema for update vs create 
+export const StreamUpdateSchema = StreamInsertSchema.omit({ streamId: true }).partial();
+export type StreamUpdate = z.TypeOf<typeof StreamUpdateSchema>;
+
+// export const StreamUpdateSchema = createInsertSchema(schema.streams, {
+//   streamId: z.never(),
+// });
+// export const StreamUpdateSchema = z.object({
+//   name: z.string().nonempty().optional(),
+//   visibility: VisibilitySchema.optional(),
+//   doorsOpeningTime: z.date().nullable().optional(),
+//   doorsAutoOpen: z.boolean().optional(),
+//   doorsManuallyOpened: z.boolean().optional(),
+//   streamStartTime: z.date().nullable().optional(),
+//   streamAutoStart: z.boolean().optional(),
+//   streamManuallyStarted: z.boolean().optional(),
+//   streamManuallyEnded: z.boolean().optional(),
+//   mainCameraId: CameraIdSchema.nullable().optional(),
+// }) satisfies z.ZodType<Partial<Stream>>
+// export type StreamUpdate = z.TypeOf<typeof StreamUpdateSchema>;
 
 // export const VirtualSpace3DModelCreateSchema = z.object({
 //   modelUrl: z.string()
@@ -204,85 +231,102 @@ export type VenueUpdate = z.TypeOf<typeof VenueUpdateSchema>;
 // })
 // export type VirtualSpace3DRemove = z.TypeOf<typeof VirtualSpace3DModelRemoveSchema>
 
-const ModelFileFormatSchema = z.enum(['glb', 'gltf'] as const satisfies Readonly<ModelFileFormat[]>);
-type Vr3DModelUpdatePayload = Partial<Pick<Prisma.VirtualSpace3DModelUpdateInput,
-  'modelFileFormat'
-  | 'navmeshFileFormat'
-  | 'public'
-  | 'scale'
-  | 'entrancePosition'
-  | 'entranceRotation'
-  | 'spawnPosition'
-  | 'spawnRadius'
->>
-const VirtualSpace3DModelUpdatePayloadSchema = z.object({
-  modelFileFormat: ModelFileFormatSchema.nullable().optional(),
-  navmeshFileFormat: ModelFileFormatSchema.nullable().optional(),
-  public: z.boolean().optional(),
-  scale: z.number().optional(),
-  entrancePosition: z.tuple([z.number(), z.number(), z.number()]).optional(),
-  entranceRotation: z.number().nullable().optional(),
-  spawnPosition: z.tuple([z.number(), z.number(), z.number()]).optional(),
-  spawnRadius: z.number().nullable().optional(),
-  skyColor: z.string().nullable().optional(),
-}) satisfies z.ZodType<Vr3DModelUpdatePayload>
-export const VirtualSpace3DModelUpdateSchema = z.object({
-  vr3DModelId: Vr3DModelIdSchema,
-  data: VirtualSpace3DModelUpdatePayloadSchema,
-  reason: z.string().optional(),
+// const ModelFileFormatSchema = z.enum(['glb', 'gltf'] as const satisfies Readonly<ModelFileFormat[]>);
+// type Vr3DModelUpdatePayload = Partial<Pick<Prisma.VirtualSpace3DModelUpdateInput,
+//   'modelFileFormat'
+//   | 'navmeshFileFormat'
+//   | 'public'
+//   | 'scale'
+//   | 'entrancePosition'
+//   | 'entranceRotation'
+//   | 'spawnPosition'
+//   | 'spawnRadius'
+// >>
+// const VirtualSpace3DModelUpdatePayloadSchema = z.object({
+//   modelFileFormat: ModelFileFormatSchema.nullable().optional(),
+//   navmeshFileFormat: ModelFileFormatSchema.nullable().optional(),
+//   public: z.boolean().optional(),
+//   scale: z.number().optional(),
+//   entrancePosition: z.tuple([z.number(), z.number(), z.number()]).optional(),
+//   entranceRotation: z.number().nullable().optional(),
+//   spawnPosition: z.tuple([z.number(), z.number(), z.number()]).optional(),
+//   spawnRadius: z.number().nullable().optional(),
+//   skyColor: z.string().nullable().optional(),
+// }) satisfies z.ZodType<Vr3DModelUpdatePayload>
+// export const VirtualSpace3DModelUpdateSchema = z.object({
+//   vr3DModelId: Vr3DModelIdSchema,
+//   data: VirtualSpace3DModelUpdatePayloadSchema,
+//   reason: z.string().optional(),
+// })
+// export type VirtualSpace3DModelUpdate = z.TypeOf<typeof VirtualSpace3DModelUpdateSchema>
+
+export const CameraPortalInsertSchema = createInsertSchema(schema.cameraPortals, {
+  fromCameraId: CameraIdSchema.optional(),
+  toCameraId: CameraIdSchema.optional(),
 })
-export type VirtualSpace3DModelUpdate = z.TypeOf<typeof VirtualSpace3DModelUpdateSchema>
+  .omit(timestampKeys)
+  .merge(optionalReason);
+export type CameraPortalInsert = z.TypeOf<typeof CameraPortalInsertSchema>;
 
+// export const CameraPortalUpdateSchema = z.object({
+//       cameraId: CameraIdSchema,
+//       toCameraId: CameraIdSchema,
+//       portal: z.object({
+//         x: z.number(),
+//         y: z.number(),
+//         distance: z.number(),
+//       })
+//     });
 
-export const CameraPortalUpdateSchema = z.object({
-      cameraId: CameraIdSchema,
-      toCameraId: CameraIdSchema,
-      portal: z.object({
-        x: z.number(),
-        y: z.number(),
-        distance: z.number(),
-      })
-    });
-export type CameraPortalUpdate = z.TypeOf<typeof CameraPortalUpdateSchema>
+// export type CameraPortalUpdate = z.TypeOf<typeof CameraPortalUpdateSchema>
 
-type CameraUpdatePayload = Partial<Pick<Prisma.CameraUpdateInput,
-  'name'
-  | 'fovStart'
-  | 'fovEnd'
-  | 'cameraType'
-  | 'orientation'
-  | 'viewOriginX'
-  | 'viewOriginY'
-  | 'settings'
-  >>;
-
-
-
-const CameraUpdatePayloadSchema = implement<CameraUpdatePayload>().with({
-    name: z.string().optional(),
-    cameraType: z.enum(['panoramic360', 'normal']).optional(),
-    viewOriginX: z.number().optional(),
-    viewOriginY: z.number().optional(),
-    fovStart: z.number().optional(),
-    fovEnd: z.number().optional(),
-    orientation: z.number().optional(),
-    // settings: JsonSchema.optional().nullable(),
-    settings: InputJsonValueSchema.optional(),
-    // settings: z.union([ z.lazy(() => NullableJsonNullValueInputSchema),InputJsonValueSchema ]).optional(),
+export const CameraInsertSchema = createInsertSchema(schema.cameras, {
+  cameraId: CameraIdSchema.optional(),
+  streamId: StreamIdSchema,
+  senderId: SenderIdSchema.optional()
 })
+  .omit(timestampKeys)
+  .merge(optionalReason);
+export type CameraInsert = z.TypeOf<typeof CameraInsertSchema>;
 
-export const CameraUpdateSchema = z.object({
-  cameraId: CameraIdSchema,
-  data: CameraUpdatePayloadSchema,
-  reason: z.string().optional(),
-});
-export type CameraUpdate = z.TypeOf<typeof CameraUpdateSchema>
+// type CameraUpdatePayload = Partial<Pick<Prisma.CameraUpdateInput,
+//   'name'
+//   | 'fovStart'
+//   | 'fovEnd'
+//   | 'cameraType'
+//   | 'orientation'
+//   | 'viewOriginX'
+//   | 'viewOriginY'
+//   | 'settings'
+//   >>;
 
-export const CameraFOVUpdateSchema = z.object({
-  cameraId: CameraIdSchema,
-  FOV: z.object({fovStart: z.number(), fovEnd: z.number()})
-})
-export type CameraFOVUpdate = z.TypeOf<typeof CameraFOVUpdateSchema>;
+
+
+// const CameraUpdatePayloadSchema = implement<CameraUpdatePayload>().with({
+//     name: z.string().optional(),
+//     cameraType: z.enum(['panoramic360', 'normal']).optional(),
+//     viewOriginX: z.number().optional(),
+//     viewOriginY: z.number().optional(),
+//     fovStart: z.number().optional(),
+//     fovEnd: z.number().optional(),
+//     orientation: z.number().optional(),
+//     // settings: JsonSchema.optional().nullable(),
+//     settings: InputJsonValueSchema.optional(),
+//     // settings: z.union([ z.lazy(() => NullableJsonNullValueInputSchema),InputJsonValueSchema ]).optional(),
+// })
+
+// export const CameraUpdateSchema = z.object({
+//   cameraId: CameraIdSchema,
+//   data: CameraUpdatePayloadSchema,
+//   reason: z.string().optional(),
+// });
+// export type CameraUpdate = z.TypeOf<typeof CameraUpdateSchema>
+
+// export const CameraFOVUpdateSchema = z.object({
+//   cameraId: CameraIdSchema,
+//   FOV: z.object({fovStart: z.number(), fovEnd: z.number()})
+// })
+// export type CameraFOVUpdate = z.TypeOf<typeof CameraFOVUpdateSchema>;
 
 export const JwtUserDataSchema = z.object({
   userId: UserIdSchema,
@@ -305,18 +349,15 @@ export const ClientTransformSchema = z.object({
   leftHand: TransformSchema.optional(),
   rightHand: TransformSchema.optional(),
 })
-
 export type ClientTransform = z.TypeOf<typeof ClientTransformSchema>;
-
 export type ClientTransforms = Record<ConnectionId, ClientTransform>;
 
-export const ClientInfoSchema = z.object({
-  userId: UserIdSchema,
-  role: UserRoleSchema,
-  position: z.optional(ClientTransformSchema)
-})
-
-export type ClientInfo = z.TypeOf<typeof ClientInfoSchema>;
+// export const ClientInfoSchema = z.object({
+//   userId: UserIdSchema,
+//   role: UserRoleSchema,
+//   position: z.optional(ClientTransformSchema)
+// })
+// export type ClientInfo = z.TypeOf<typeof ClientInfoSchema>;
 
 export const ClientTypeSchema = z.union([z.literal('client'), z.literal('sender')]);
 export type ClientType = z.TypeOf<typeof ClientTypeSchema>;

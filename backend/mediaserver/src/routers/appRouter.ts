@@ -3,16 +3,16 @@ const log = new Log('AppRouter');
 process.env.DEBUG = 'AppRouter*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
-import { router, procedure } from '../trpc/trpc';
-import { soupRouter } from './soupRouter';
-import { vrRouter } from './vrRouter';
-import { venueRouter } from './venueRouter';
+import { router, procedure } from '../trpc/trpc.js';
+import { soupRouter } from './soupRouter.js';
+import { vrRouter } from './vrRouter.js';
+import { venueRouter } from './venueRouter.js';
 import { TypedEmitter } from 'tiny-typed-emitter';
-import { attachToEvent } from '../trpc/trpc-utils';
-import { userRouter } from './userRouter';
-import { senderRouter } from './senderRouter';
-import { adminRouter } from './adminRouter';
-import { cameraRouter } from './cameraRouter';
+import { attachToEvent } from '../trpc/trpc-utils.js';
+import { userRouter } from './userRouter.js';
+import { senderRouter } from './senderRouter.js';
+import { adminRouter } from './adminRouter.js';
+import { cameraRouter } from './cameraRouter.js';
 
 const appRouterEvents = new TypedEmitter<{
   'heartbeat': (msg: string) => void

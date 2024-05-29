@@ -4,7 +4,7 @@ process.env.DEBUG = 'Stats:Instances*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
 import { TypedEmitter } from 'tiny-typed-emitter';
-import { SenderClient, UserClient, Venue } from './classes/InternalClasses';
+import { SenderClient, UserClient, Venue } from './classes/InternalClasses.js';
 
 //
 // @ts-expect-error: We allow reading private field here

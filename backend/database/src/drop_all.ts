@@ -11,4 +11,6 @@ async function clearDB() {
   await queryClient`GRANT ALL ON SCHEMA public TO public;`
 }
 
-clearDB();
+await clearDB();
+
+process.exit();

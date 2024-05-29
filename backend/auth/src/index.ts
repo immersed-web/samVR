@@ -2,13 +2,13 @@ import express, { json as parseJsonBody } from 'express';
 import cors from 'cors';
 import { randomUUID } from 'crypto';
 import { createJwt, verifyJwtToken } from 'shared-modules/jwtUtils';
-import createUserRouter from './userRoutes';
+import createUserRouter from './userRoutes.js';
 import {default as Haikunator} from 'haikunator';
-import wordlist from './haikunator-wordlist';
+import wordlist from './haikunator-wordlist.js';
 import { extractMessageFromCatch } from 'shared-modules/utilFns';
 import session from 'express-session';
-import { PrismaSessionStore } from '@quixo3/prisma-session-store';
-import prisma from './prismaClient';
+// import { PrismaSessionStore } from '@quixo3/prisma-session-store';
+// import prisma from './prismaClient.js';
 // import createApiRouter from './apiRoutes';
 import { JwtUserData, UserIdSchema } from 'schemas';
 
@@ -17,8 +17,6 @@ const haikunator = new Haikunator({
   nouns: wordlist.nouns,
   defaults: { tokenLength: 2 }
 });
-
-
 
 // console.log('environment: ', process.env);
 const devMode = process.env.DEVELOPMENT;
@@ -72,11 +70,13 @@ if (!process.env.SESSION_KEY) {
 }
 
 
-const prismaSessionStore = new PrismaSessionStore(prisma, {
-  checkPeriod: 2 * 60 * 1000,
-  dbRecordIdIsSessionId: true,
-  dbRecordIdFunction: undefined,
-});
+// const prismaSessionStore = new PrismaSessionStore(prisma, {
+//   checkPeriod: 2 * 60 * 1000,
+//   dbRecordIdIsSessionId: true,
+//   dbRecordIdFunction: undefined,
+// });
+
+// TODO: use a store for persisting sessions, preferably compatible with drizzle
 app.use(session({
   secret: process.env.SESSION_KEY,
   cookie: {
@@ -87,7 +87,7 @@ app.use(session({
   name: process.env.EXPOSED_PROJECT_NAME,
   resave: false,
   saveUninitialized: false,
-  store: prismaSessionStore
+  // store: prismaSessionStore
 }),
 );
 const userRouter = createUserRouter();

@@ -3,17 +3,17 @@ const log = new Log('BaseClient');
 process.env.DEBUG = 'BaseClient*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
-import { ConnectionId, JwtUserData, UserId, UserRole, VenueId, ConnectionIdSchema, VenueListInfo } from 'schemas';
+import { ConnectionId, JwtUserData, UserId, UserRole, StreamId, ConnectionIdSchema, StreamListInfo } from 'schemas';
 import { types as soupTypes } from 'mediasoup';
 import type { types as soupClientTypes } from 'mediasoup-client';
 import { ConsumerId, CreateProducerPayload, ProducerId, TransportId  } from 'schemas/mediasoup';
-import { SenderClient, UserClient, Venue, Camera } from './InternalClasses';
-import { FilteredEvents, NonFilteredEvents, NotifierSignature } from 'trpc/trpc-utils';
+import { SenderClient, UserClient, Venue, Camera } from './InternalClasses.js';
+import { FilteredEvents, NonFilteredEvents, NotifierSignature } from 'trpc/trpc-utils.js';
 import { randomUUID } from 'crypto';
-import { Prisma, userDeselectPassword, userSelectAll } from 'database';
-import prismaClient from '../modules/prismaClient';
+import { db, schema } from 'database';
 import { TypedEmitter } from 'tiny-typed-emitter';
 import { computed, ref, shallowRef, effect } from '@vue/reactivity';
+import { eq } from 'drizzle-orm';
 
 type SoupObjectClosePayload =
       {type: 'transport', id: TransportId }
@@ -38,52 +38,29 @@ type ClientVenueEvents = FilteredEvents<{
   'senderAddedOrRemoved': (data: {client: ReturnType<SenderClient['getPublicState']>, added: boolean}) => void,
 }, ConnectionId>
 & NonFilteredEvents<{
-  'venueWasUnloaded': (venueId: VenueId) => void,
+  'venueWasUnloaded': (venueId: StreamId) => void,
 }>
 
 type ClientClientEvents = FilteredEvents<{
   'someClientStateUpdated': (data: { clientState: ClientStateUnion, reason?: string }) => void
-  // 'senderState': (data: { senderState: ReturnType<SenderClient['getPublicState']>, reason?: string }) => void
 }, ConnectionId>
 
 export type AllClientEvents = ClientSoupEvents & ClientVenueEvents & ClientClientEvents
 
-const venueSelect: Record<keyof VenueListInfo, true> = { 
-  venueId: true,
-  name: true,
-  doorsOpeningTime: true,
-  doorsAutoOpen: true,
-  doorsManuallyOpened: true,
-  streamStartTime: true,
-  streamAutoStart: true,
-  streamManuallyEnded: true,
-  streamManuallyStarted: true,
-  visibility: true,
-};
-const userQuery = {
-  select: {
-    ...userSelectAll,
-    ...userDeselectPassword,
-    ownedVenues: {
-      select: venueSelect
+export async function loadUserPrismaData(userId: UserId) {
+  const response = await db.query.users.findFirst({
+    where: eq(schema.users.userId, userId),
+    columns: {
+      password: false,
     },
-    allowedVenues: {
-      select: venueSelect
+    with: {
+      streams: true,
+      assets: true,
     }
-  }
-} satisfies Prisma.UserArgs;
-type UserResponse = Prisma.UserGetPayload<typeof userQuery>
-
-export async function loadUserPrismaData(userId: UserId){
-  const response = await prismaClient.user.findUniqueOrThrow({
-    ...userQuery,
-    where: {
-      userId
-    },
-  });
-  // return response === null ? undefined : response;
+  })
   return response;
 }
+type UserResponse = NonNullable<Awaited<ReturnType<typeof loadUserPrismaData>>>
 
 export type PublicProducers = {
   videoProducer?: {
@@ -117,6 +94,7 @@ export class BaseClient {
 
 
     this.clientEvent = new TypedEmitter();
+    type ttt = typeof this.clientEvent.emit;
 
     // this.event = new TypedEmitter();
     // this.soupEvents = new TypedEmitter();
@@ -150,17 +128,17 @@ export class BaseClient {
   connectionId: ConnectionId;
   // prismaData?: UserResponse;
   prismaData = ref<UserResponse>();
-  allowedVenues= computed(() => {
-    if(!this.prismaData.value){
-      return [];
-    }
-    return [...this.prismaData.value.allowedVenues as VenueListInfo[], ...this.prismaData.value.ownedVenues as VenueListInfo[]] ;
-  });
+  // allowedVenues= computed(() => {
+  //   if(!this.prismaData.value){
+  //     return [];
+  //   }
+  //   return [...this.prismaData.value.allowedVenues as StreamListInfo[], ...this.prismaData.value.ownedVenues as StreamListInfo[]];
+  // });
   ownedVenues = computed(() => {
     if(!this.prismaData.value) {
       return [];
     }
-    return this.prismaData.value.ownedVenues as VenueListInfo[];
+    return this.prismaData.value.streams;
   });
 
   jwtUserData: JwtUserData;
@@ -194,11 +172,11 @@ export class BaseClient {
   // clientEvents: TypedEmitter<ClientEvents>;
   // abstract event: TypedEmitter;
 
-  protected venueId?: VenueId;
+  protected venueId?: StreamId;
   /**
    * **WARNING**: You should never need to call this function, since the venue instance calls this for you when it adds a client to itself.
    */
-  _setVenue(venueId: VenueId | undefined){
+  _setVenue(venueId: StreamId | undefined) {
     this.venueId = venueId;
     // this.getVenue()?.createWebRtcTransport();
   }
@@ -234,9 +212,9 @@ export class BaseClient {
     // const ownedVenues = this.ownedVenues.map(v => v.venueId);
 
     // const ownedVenues = keyBy(this.ownedVenues.value, (v) => v.venueId);
-    const ownedVenues = this.ownedVenues.value.reduce<Record<VenueId, VenueListInfo>>((acc, venue) => {
-      const {venueId} = venue;
-      acc[venueId as VenueId] = venue;
+    const ownedVenues = this.ownedVenues.value.reduce<Record<StreamId, StreamListInfo>>((acc, venue) => {
+      const { streamId: venueId } = venue;
+      acc[venueId as StreamId] = venue;
       return acc;
     }, {});
     return {
@@ -244,7 +222,7 @@ export class BaseClient {
       userId: this.userId,
       username: this.username,
       role: this.role,
-      currentVenueId: this.venue?.venueId,
+      currentVenueId: this.venue?.streamId,
       producers: this.publicProducers.value,
       ownedVenues
     };

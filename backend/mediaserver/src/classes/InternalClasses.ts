@@ -1,9 +1,9 @@
 // This file is a hack to try to mitigate circular dependency issues
-export * from './BaseClient';
-export * from './UserClient';
-export * from './SenderClient';
+export * from './BaseClient.js';
+export * from './UserClient.js';
+export * from './SenderClient.js';
 
-export * from './Venue';
+export * from './Venue.js';
 
-export * from './Camera';
-export * from './VrSpace';
+export * from './Camera.js';
+export * from './VrSpace.js';

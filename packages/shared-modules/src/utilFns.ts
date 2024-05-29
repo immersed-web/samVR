@@ -13,6 +13,16 @@ export function extractMessageFromCatch(e: unknown, fallbackMessage?: string) {
   return 'there was an error!'
 }
 
+export function exclude<Object, Key extends keyof Object>(
+  user: Object,
+  ...keys: Key[]
+): Omit<Object, Key> {
+  for (const key of keys) {
+    delete user[key];
+  }
+  return user;
+}
+
 // export function slugifyString(text: string) {
 
 // }

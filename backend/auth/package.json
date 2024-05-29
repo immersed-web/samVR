@@ -2,12 +2,13 @@
   "name": "auth",
   "version": "1.0.0",
   "description": "auth endpoint for inclubit v.2",
+  "type": "module",
   "main": "dist/index.js",
   "author": "Gunnar Oledal",
   "license": "MIT",
   "scripts": {
     "start": "dotenv -e ../../.env node ./dist/index.js",
-    "dev": "dotenv -v DEVELOPMENT=true -e ../../.env node-dev ./src/index.ts",
+    "dev": "dotenv -v DEVELOPMENT=true -e ../../.env tsx ./src/index.ts",
     "build": "tsc --build",
     "clean": "tsc --build --clean",
     "test": "jest --watch",
@@ -34,12 +35,14 @@
   "dependencies": {
     "@quixo3/prisma-session-store": "^3.1.10",
     "bcrypt": "^5.0.1",
+    "connect-pg-simple": "^9.0.1",
     "cors": "^2.8.5",
     "database": "workspace:*",
     "express": "^4.17.1",
     "express-session": "^1.17.2",
     "haikunator": "^2.1.2",
     "jsonwebtoken": "^8.5.1",
-    "schemas": "workspace:*"
+    "schemas": "workspace:*",
+    "shared-modules": "workspace:*"
   }
 }

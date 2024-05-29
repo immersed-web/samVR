@@ -29,8 +29,6 @@
   },
   "extensions": {
     "recommendations": [
-      "vue.volar",
-      "tonybaloney.vscode-pets",
     ],
     "unwantedRecommendations": [
       "octref.vetur",

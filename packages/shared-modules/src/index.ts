@@ -2,3 +2,6 @@
 // This should for example be autocompleted:
 // import { } from 'shared-modules/...'
 // above should offer 'jwtUtils', 'authUtils' and 'utilFns' in editor
+
+export * as jwtUtils from './jwtUtils.js';
+export * as utilFns from './utilFns.js';

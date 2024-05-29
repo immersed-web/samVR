@@ -6,23 +6,23 @@ const log = new Log('Index');
 process.env.DEBUG = 'Index*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
-import { attachMediasoupObservers } from './mediasoupObservers';
+import { attachMediasoupObservers } from './mediasoupObservers.js';
 let printSoupStats : (() => void) | undefined;
 if(process.env.DEVELOPMENT){
   printSoupStats = attachMediasoupObservers();
 }
 
-import { printClassInstances, printClientListeners } from './DebugObservers';
+import { printClassInstances, printClientListeners } from './DebugObservers.js';
 import uWebSockets, { WebSocket } from 'uWebSockets.js';
 const { DEDICATED_COMPRESSOR_3KB } = uWebSockets;
-import { createWorkers } from './modules/mediasoupWorkers';
+import { createWorkers } from './modules/mediasoupWorkers.js';
 import { verifyJwtToken } from 'shared-modules/jwtUtils';
 import { extractMessageFromCatch } from 'shared-modules/utilFns';
 import { JwtUserData, JwtUserDataSchema, hasAtLeastSecurityLevel, UserId, UserIdSchema, ClientType } from 'schemas';
-import { applyWSHandler } from './trpc/ws-adapter';
-import { appRouter, AppRouter } from './routers/appRouter';
-import { loadUserPrismaData, SenderClient, UserClient } from './classes/InternalClasses';
-import { Context } from 'trpc/trpc';
+import { applyWSHandler } from './trpc/ws-adapter.js';
+import { appRouter, AppRouter } from './routers/appRouter.js';
+import { loadUserPrismaData, SenderClient, UserClient } from './classes/InternalClasses.js';
+import { Context } from 'trpc/trpc.js';
 
 export type MyWebsocketType = WebSocket<WSUserData>;
 

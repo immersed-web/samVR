@@ -5,15 +5,11 @@ log.enable(process.env.DEBUG);
 
 import { TRPCError } from '@trpc/server';
 import {CreateProducerPayloadSchema, ConnectTransportPayloadSchema, ProducerId, RtpCapabilitiesSchema, CreateConsumerPayloadSchema, ProducerIdSchema, ConsumerId, ConsumerIdSchema } from 'schemas/mediasoup';
-import { ErrorMapCtx, z } from 'zod';
-import { procedure as p, clientInVenueP, router, userClientP, atLeastModeratorP, isUserClientM, isInCameraM } from '../trpc/trpc';
-import { attachToEvent, attachToFilteredEvent, NotifierInputData } from '../trpc/trpc-utils';
-import { CameraIdSchema } from 'schemas';
-import { types as soupTypes } from 'mediasoup';
-import type { UserClient } from 'classes/UserClient';
-import type { SenderClient } from 'classes/SenderClient';
+import { z } from 'zod';
+import { procedure as p, clientInVenueP, router, userClientP, atLeastModeratorP, isUserClientM, isInCameraM } from '../trpc/trpc.js';
+import { NotifierInputData } from '../trpc/trpc-utils.js';
+import { UserClient, SenderClient } from 'classes/InternalClasses.js';
 import { observable } from '@trpc/server/observable';
-import { BaseClient } from 'classes/BaseClient';
 
 
 export const soupRouter = router({

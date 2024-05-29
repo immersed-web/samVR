@@ -1,5 +1,5 @@
-import { attachToEvent } from '../trpc/trpc-utils';
-import { userClientP, procedure as p, router } from '../trpc/trpc';
+import { attachToEvent } from '../trpc/trpc-utils.js';
+import { userClientP, procedure as p, router } from '../trpc/trpc.js';
 
 export const userRouter = router({
   getClientState: p.query(({ctx}) => {

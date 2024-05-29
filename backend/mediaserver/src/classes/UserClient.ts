@@ -5,10 +5,9 @@ const log = new Log('UserClient');
 process.env.DEBUG = 'UserClient*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
-import { ClientTransform, ClientTransforms, VenueId, CameraId, ClientType } from 'schemas';
-import { loadUserPrismaData, SenderClient, Venue, VrSpace } from './InternalClasses';
-import { NonFilteredEvents, NotifierSignature, Prettify } from 'trpc/trpc-utils';
-import { BaseClient } from './InternalClasses';
+import { ClientTransform, ClientTransforms, StreamId, CameraId, ClientType } from 'schemas';
+import { loadUserPrismaData, SenderClient, Venue, VrSpace, BaseClient } from './InternalClasses.js';
+import { NonFilteredEvents, NotifierSignature, Prettify } from 'trpc/trpc-utils.js';
 import { effect } from '@vue/reactivity';
 
 
@@ -122,14 +121,15 @@ export class UserClient extends BaseClient {
     this.userClientEvent.emit('myStateUpdated', {myState: this.getPublicState(), reason });
   }
 
-  async joinVenue(venueId: VenueId) {
+  async joinVenue(streamId: StreamId) {
     this.leaveCurrentVenue();
-    const venue = await Venue.getPublicVenue(venueId, this.userId);
-    venue.addClient(this);
+    // const venue = await Venue.getPublicVenue(venueId, this.userId);
+    const stream = Venue.getVenue(streamId);
+    stream.addClient(this);
     // this.sendTransport = await venue.createWebRtcTransport();
     // this.receiveTransport = await venue.createWebRtcTransport();
-    this._onClientStateUpdated('user client joined venue');
-    return venue.getPublicState();
+    this._onClientStateUpdated('user client joined stream');
+    return stream.getPublicState();
   }
 
   leaveCurrentVenue() {
@@ -139,7 +139,7 @@ export class UserClient extends BaseClient {
     }
     // super._onRemovedFromVenue();
     this.venue.removeClient(this);
-    this._onClientStateUpdated('user client left a venue');
+    this._onClientStateUpdated('user client left a stream');
     return true;
   }
 

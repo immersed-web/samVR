@@ -1,34 +1,11 @@
 {
   "name": "schemas",
   "version": "1.0.0",
-  "description": "",
-  "main": "./dist/index.js",
-  "module": "./dist/esm/index.js",
+  "type": "module",
   "exports": {
-    ".": {
-      "default": "./dist/index.js",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    },
-    "./mediasoup": {
-      "default": "./dist/mediasoupSchemas.js",
-      "require": "./dist/mediasoupSchemas.js",
-      "types": "./dist/mediasoupSchemas.d.ts"
-    },
-    "./esm": {
-      "default": "./dist/esm/index.js",
-      "import": "./dist/esm/index.js",
-      "types": "./dist/index.d.ts"
-    },
-    "./esm/mediasoup": {
-      "default": "./dist/esm/mediasoupSchemas.js",
-      "import": "./dist/esm/mediasoupSchemas.js",
-      "types": "./dist/mediasoupSchemas.d.ts"
-    }
+    ".": "./src/index.ts",
+    "./mediasoup": "./src/mediasoupSchemas.ts"
   },
-  "files": [
-    "dist/*"
-  ],
   "typesVersions": {
     "*": {
       "*": [
@@ -39,11 +16,7 @@
       ]
     }
   },
-  "scripts": {
-    "build": "tsup-node",
-    "build:watch": "tsup-node --watch",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "scripts": {},
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -53,6 +26,7 @@
     "jsonwebtoken": "^8.5.1"
   },
   "dependencies": {
-    "ts-extras": "^0.11.0"
+    "drizzle-orm": "^0.30.10",
+    "drizzle-zod": "^0.5.1"
   }
 }

@@ -3,9 +3,9 @@ const log = new Log('Router:VR');
 process.env.DEBUG = 'Router:VR*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
-import { ClientTransformSchema, VirtualSpace3DModelUpdateSchema } from 'schemas';
-import { procedure as p, router, isVenueOwnerM, isUserClientM, userInVenueP, currentVenueAdminP, currentVenueHasVrSpaceM, currentVenueHasNoVrSpaceM } from '../trpc/trpc';
-import { NotifierInputData } from '../trpc/trpc-utils';
+import { ClientTransformSchema } from 'schemas';
+import { procedure as p, router, isVenueOwnerM, isUserClientM, userInVenueP, currentVenueAdminP, currentVenueHasVrSpaceM, currentVenueHasNoVrSpaceM } from '../trpc/trpc.js';
+import { NotifierInputData } from '../trpc/trpc-utils.js';
 import { TRPCError } from '@trpc/server';
 import { observable } from '@trpc/server/observable';
 
@@ -20,10 +20,9 @@ export const vrRouter = router({
   //   ctx.vrSpace.close();
   // }),
   enterVrSpace: userInVenueP.use(currentVenueHasVrSpaceM).mutation(({ctx}) =>{
-    if(!ctx.venue.doorsAreOpen){
-      throw new TRPCError({code: 'FORBIDDEN', message: 'The vr space is not opened to users at this point. Very sad!'});
-    }
-    // ctx.vrSpace.addClient(ctx.client);
+    // if(!ctx.venue.doorsAreOpen){
+    //   throw new TRPCError({code: 'FORBIDDEN', message: 'The vr space is not opened to users at this point. Very sad!'});
+    // }
     ctx.client.joinVrSpace();
     return ctx.vrSpace.getPublicState();
   }),
@@ -43,9 +42,10 @@ export const vrRouter = router({
   // updateNavmesh: currentVenueAdminP.use(isVenueOwnerM).use(currentVrSpaceHasModelM).input(VirtualSpace3DModelCreateSchema).mutation(({input, ctx}) => {
   //   ctx.venue.UpdateNavmesh(input.modelUrl);
   // }),
-  update3DModel: currentVenueAdminP.use(isVenueOwnerM).use(currentVenueHasVrSpaceM).input(VirtualSpace3DModelUpdateSchema).mutation(({input, ctx}) => {
-    ctx.vrSpace.Update3DModel(input);
-  }),
+  // TODO: Implement this (update 3D model)
+  // update3DModel: currentVenueAdminP.use(isVenueOwnerM).use(currentVenueHasVrSpaceM).input(VirtualSpace3DModelUpdateSchema).mutation(({input, ctx}) => {
+  //   // ctx.vrSpace.Update3DModel(input);
+  // }),
   // setSkyColor: currentVenueAdminP.use(isVenueOwnerM).use(currentVenueHasVrSpaceM).input({})
   subVrSpaceStateUpdated: p.use(isUserClientM).subscription(({ctx}) => {
     console.log(`${ctx.username} started subscription to vrSpaceStateUpdate`);

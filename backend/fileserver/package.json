@@ -1,13 +1,10 @@
 {
   "name": "fileserver",
   "version": "1.0.0",
-  "description": "",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
+  "type": "module",
   "scripts": {
     "start": "dotenv -e ../../.env node ./dist/index.js",
-    "dev": "dotenv -v DEVELOPMENT=true -e ../../.env node-dev ./src/index.ts",
+    "dev": "dotenv -v DEVELOPMENT=true -e ../../.env tsx ./src/index.ts",
     "build": "tsup-node",
     "build:watch": "tsup-node --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -16,9 +13,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/node": "^18.15.3",
-    "node-dev": "^7.4.3",
-    "ts-node": "^10.9.1"
+    "@types/node": "^18.15.3"
   },
   "dependencies": {
     "@types/cors": "^2.8.12",
@@ -27,6 +22,7 @@
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "formidable": "^2.1.1",
-    "schemas": "workspace:*"
+    "schemas": "workspace:*",
+    "shared-modules": "workspace:*"
   }
 }

@@ -1,11 +1,11 @@
 
 import { Log } from 'debug-level';
 import type { CameraId, ConnectionId, SenderId  } from 'schemas';
-import {Venue, UserClient, SenderClient, BaseClient, PublicProducers} from './InternalClasses';
+import { Venue, UserClient, SenderClient, PublicProducers } from './InternalClasses.js';
 import { ProducerId } from 'schemas/mediasoup';
 import { computed, shallowRef, effect } from '@vue/reactivity';
-import prismaClient, { CameraWithIncludes, cameraIncludeStuff } from '../modules/prismaClient';
-import _ from 'lodash';
+import { CameraWithIncludes, StreamWithIncludes, db, queryCameraWithIncludes, schema } from 'database'
+import _ from 'lodash-es';
 
 const log = new Log('Camera');
 
@@ -13,7 +13,7 @@ process.env.DEBUG = 'Camera*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
 export class Camera {
-  constructor(prismaCamera: CameraWithIncludes, venue: Venue, sender?: SenderClient){
+  constructor(prismaCamera: StreamWithIncludes['cameras'][number], venue: Venue, sender?: SenderClient) {
     this.prismaData = prismaCamera;
     this.venue = venue;
     this.clients = new Map();
@@ -66,40 +66,30 @@ export class Camera {
   }
   
   get portals() {
-    return this.prismaData.cameraPortals.reduce<Record<CameraId, Omit<(typeof this.prismaData.cameraPortals[number]), 'toCameraId'> & {toCameraId: CameraId}>>((prev, cur) => {
-      prev[cur.toCameraId as CameraId] = cur as {x: number, y: number, distance: number, toCameraId: CameraId};
-      return prev;
-    }, {});
-    // return _.keyBy(this.prismaData.cameraPortals, (p) => p.toCameraId);
-    // return this.prismaData.cameraPortals;
+    return _.keyBy(this.prismaData.toCameras, (p) => p.toCameraId) as Record<CameraId, typeof this.prismaData.toCameras[number]>;
   }
-  
-  // TODO: handle save of settings json
-  async saveToDb(){
-    const { cameraPortals, settings, ...data } = this.prismaData;
-    // const jsonSettings: Prisma.InputJsonValue | Prisma.NullTypes.JsonNull = settings;
+
+  async saveToDb() {
     log.info('saving to db');
-    await prismaClient.camera.update({
-      where: {
-        cameraId: this.cameraId,
-      },
-      data: {
-        ...data,
-        // settings: jsonSettings,
-      },
-      include: cameraIncludeStuff,
-    });
+    const response = await db.update(schema.cameras).set({
+      ...this.prismaData
+    }).returning();
+    return response;
   }
   
   async reloadDbData(reason?: string){
-    const dbResponse = await prismaClient.camera.findUniqueOrThrow({
-      where: {
-        cameraId: this.cameraId,
-      },
-      include: cameraIncludeStuff
+    const response = await queryCameraWithIncludes.execute({ cameraId: this.cameraId });
+    if (!response) {
+      throw Error('camera not found in db');
+    }
+    // const dbResponse = await prismaClient.camera.findUniqueOrThrow({
+    //   where: {
+    //     cameraId: this.cameraId,
+    //   },
+    //   include: cameraIncludeStuff
       
-    });
-    this.prismaData = dbResponse;
+    // });
+    this.prismaData = response;
     this._notifyStateUpdated(reason);
   }
 

@@ -1,12 +1,12 @@
 import { RequestHandler, Router, Request as ExpressReq } from 'express';
 import bcrypt from 'bcrypt';
-import prisma, { Prisma, users, exclude } from './prismaClient';
 import { createJwt } from 'shared-modules/jwtUtils';
-import { extractMessageFromCatch } from 'shared-modules/utilFns';
-import { isLoggedIn } from './utils';
-import 'shared-types/augmentedRequest';
-import 'shared-types/augmentedSession';
-import { UserRole, hasAtLeastSecurityLevel, roleHierarchy, throwIfUnauthorized } from 'schemas';
+import { exclude, extractMessageFromCatch } from 'shared-modules/utilFns';
+import { isLoggedIn } from './utils.js';
+import { StreamId, UserId, UserRole, hasAtLeastSecurityLevel, roleHierarchy, throwIfUnauthorized } from 'schemas';
+import { basicUserSelect, db, schema, userSelectExcludePassword } from 'database';
+import { and, eq } from 'drizzle-orm';
+import * as _ from 'lodash-es'
 
 const index: RequestHandler = (req, res) => {
   res.send({ message: 'this is the auth user route. Whats cookin good lookin?' });
@@ -19,7 +19,6 @@ interface CreateUserRequest extends ExpressReq {
     password?: string,
   }
 }
-
 
 const createUser: RequestHandler = async (req: CreateUserRequest, res) => {
   const userData = req.session.user;
@@ -77,35 +76,25 @@ const createUser: RequestHandler = async (req: CreateUserRequest, res) => {
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
-  const userCreate: Prisma.UserCreateArgs['data'] = {
-    username: username,
-    role: role,
-    password: hashedPassword
-  };
 
   try {
-    const result = await prisma.user.create({
-      data: userCreate
+    const dbResponse = await db.insert(schema.users).values({
+      username,
+      role,
+      password: hashedPassword,
+    }).returning({
+      userId: schema.users.userId,
+      username: schema.users.username,
+      role: schema.users.role,
     });
-    // We dont wan to send the password back!!!
-    const resultWithoutPassword = exclude(result, 'password');
-    res.status(201).send(resultWithoutPassword);
+    res.status(201).send(dbResponse);
     return;
   } catch (e) {
-    if (e instanceof Prisma.PrismaClientKnownRequestError) {
-      if (e.code === 'P2002') {
-        res.status(409).send('Det användarnamnet är upptaget!');
-        return;
-      } else {
-        console.error('prisma client error when creating user');
-        console.error(e);
-        res.status(501).send(e.message);
-        return;
-      }
-    }
-    console.warn(e);
+    console.error('database error when creating user');
+    console.error(e);
+    res.status(501).send(e);
+    return;
   }
-
 };
 
 
@@ -113,16 +102,16 @@ interface CreateSenderRequest extends ExpressReq {
   body: {
     username?: string,
     password?: string,
-    venueId?: string,
+    streamId?: StreamId,
   }
 }
 const createSenderForVenue: RequestHandler = async (req : CreateSenderRequest, res) => {
   const userData = req.session.user
   console.log(userData);
-  const {password, username, venueId} = req.body 
+  const { password, username, streamId } = req.body 
   try {
     throwIfUnauthorized(userData!.role, 'admin');
-    if(!venueId || !username || !password) {
+    if (!streamId || !username || !password) {
       throw Error('invalid payload!');
     }
   } catch(e) {
@@ -130,24 +119,27 @@ const createSenderForVenue: RequestHandler = async (req : CreateSenderRequest, r
     return;
   }
   const hashedPassword = await bcrypt.hash(password, 10);
-  const dbResponse = await prisma.user.create({
-    data: {
+  const txResponse = await db.transaction(async (tx) => {
+    const [response] = await tx.insert(schema.users).values({
       role: 'sender',
       username,
       password: hashedPassword,
-      ownedVenues: {
-        connect: {
-          venueId
-        }
-      }
-    }
+    }).returning();
+    const permissionResponse = await tx.insert(schema.permissions).values({
+      targetId: streamId,
+      targetType: 'stream',
+      userId: response.userId,
+      permissionLevel: 'edit'
+    }).returning();
+    return response;
   })
-  res.send(dbResponse);
+  const userWithoutPassword = exclude(txResponse, 'password');
+  res.send(userWithoutPassword);
 }
 
 interface UpdateUserRequest extends ExpressReq {
   body: {
-    userId: string,
+    userId: UserId,
     role?: UserRole,
     username?: string,
     password?: string,
@@ -185,42 +177,31 @@ const updateUser: RequestHandler = async (req: UpdateUserRequest, res) => {
   if (payload.password) {
     hashedPassword = await bcrypt.hash(payload.password, 10);
   }
-  const userUpdate: Prisma.UserUpdateArgs['data'] = {
+  const userUpdate = {
     username: payload.username,
     password: hashedPassword,
     role: payload.role,
   };
 
   try {
-    const result = await prisma.user.update({
-      where: {
-        userId: payload.userId
-      },
-      data: userUpdate,
-    });
-    // We dont wan to send the password back!!!
+    const [result] = await db.update(schema.users)
+      .set(userUpdate)
+      .where(eq(schema.users.userId, payload.userId))
+      .returning();
     const resultWithoutPassword = exclude(result, 'password');
     res.status(201).send(resultWithoutPassword);
     return;
   } catch (e) {
-    if (e instanceof Prisma.PrismaClientKnownRequestError) {
-      if (e.code === 'P2002') {
-        res.status(409).send('användarnamnet är upptaget!');
-        return;
-      } else {
-        console.error('prisma client error when editing user');
-        console.error(e);
-        res.status(501).send(e.message);
-        return;
-      }
-    }
-    console.warn(e);
+    const errorMsg = extractMessageFromCatch(e, 'failed to update user!');
+    console.error(errorMsg);
+    res.status(501).send(errorMsg);
+    return;
   }
 };
 
 interface DeleteUserRequest extends ExpressReq {
   body: {
-    userId: string
+    userId: UserId
   }
 }
 const deleteUser: RequestHandler = async (req: DeleteUserRequest, res) => {
@@ -233,11 +214,10 @@ const deleteUser: RequestHandler = async (req: DeleteUserRequest, res) => {
     if (!payload || !payload.userId) {
       throw new Error('no userId provided. cant delete');
     }
-    const userToDelete = await users.findUserAsUserData({
-      where: {
-        userId: payload.userId,
-      }
-    });
+    const userToDelete = await db.query.users.findFirst({
+      columns: basicUserSelect,
+      where: eq(schema.users.userId, payload.userId),
+    })
     if (!userToDelete) {
       throw new Error('no user found');
     }
@@ -248,11 +228,7 @@ const deleteUser: RequestHandler = async (req: DeleteUserRequest, res) => {
       }
 
     throwIfUnauthorized(userData.role, 'moderator');
-    const deletedUser = await users.delete({
-      where: {
-        userId: payload.userId
-      }
-    });
+    const [deletedUser] = await db.delete(schema.users).where(eq(schema.users.userId, payload.userId)).returning();
 
     res.send(exclude(deletedUser, 'password'));
   } catch (e) {
@@ -295,24 +271,22 @@ const getAdmins: RequestHandler = async (req, res) => {
     return;
   }
 
-  const userSelect: Prisma.UserFindManyArgs & { where: Prisma.UserWhereInput } = {
-    where: {
-      role: 'admin'
-    },
-  };
-
-  const response = await users.findMany(userSelect);
-  const withoutPasswords = response.map(user => exclude(user, 'password'));
-  res.send(withoutPasswords);
+  const response = await db.query.users.findMany({
+    where: eq(schema.users.role, 'admin'),
+    columns: {
+      password: false,
+    }
+  });
+  res.send(response);
 };
 
 
 interface GetSenderRequest extends ExpressReq {
   body: {
-    venueId: string
+    streamId: StreamId
   }
 }
-const getSender: RequestHandler = async (req: GetSenderRequest, res) => {
+const getAllowedUsersForStream: RequestHandler = async (req: GetSenderRequest, res) => {
   const userData = req.session.user;
 
   try {
@@ -337,32 +311,36 @@ const getSender: RequestHandler = async (req: GetSenderRequest, res) => {
     const msg = extractMessageFromCatch(e, 'Go away. Not authorized');
     res.status(401).send(msg);
   }
-  const {venueId} = req.body
-  if(!venueId) {
+  const { streamId } = req.body
+  if (!streamId) {
     res.status(400).send('no venueId provided. Bad payload');
     return;
   }
   try {
-    // TODO: should we check owners, whitelisted or perhaps both?
-    const dbResponse = await prisma.venue.findUniqueOrThrow({
-      where: {
-        venueId,
-      },
-      include: {
-        owners: {
-          where: {
-            role: 'sender'
-          }
-        }
-      }
-    })
+    // const dbResponse = await db.query.permissions.findMany({
+    //   where: and(eq(schema.permissions.targetId, streamId), eq(schema.permissions.targetType, 'stream')),
+    //   with: {
+    //     user: {
+    //       columns: userSelectExcludePassword,
+    //       with: {
+    //         permissions: true,
+    //       }
+    //     },
+    //   }
+    // })
+    const dbResponse = await db.select()
+      .from(schema.users)
+      .innerJoin(schema.permissions, eq(schema.permissions.userId, schema.users.userId))
+      .where(
+        eq(schema.permissions.targetId, streamId),
+      );
     
-    if(dbResponse.owners.length > 0) {
-      const withoutPassword = exclude(dbResponse.owners[0], 'password')
-      res.send(withoutPassword);
+    if (dbResponse.length > 0) {
+      const users = dbResponse.map((row) => ({ permissions: row.Permissions, ...row.Users }))
+      res.send(users);
       return;
     } else {
-      res.status(404).send('no sender for that venue')
+      res.status(404).send('no user connected to that stream')
     }
   } catch (e) {
     res.status(500).send('db query failed')
@@ -375,16 +353,17 @@ const loginUser: RequestHandler = async (req, res) => {
   const username = req.body.username;
   const password = req.body.password;
   try {
-    const foundUser = await prisma.user.findUnique({ where: { username: username } });
+    const foundUser = await db.query.users.findFirst({
+      where: eq(schema.users.username, username),
+    })
     if (!foundUser) {
       throw new Error('no user with that username found!');
     }
     const correct = await bcrypt.compare(password, foundUser.password);
     if (correct) {
-      const userData = users.userResponseToUserData(foundUser);
-      // console.log('userdata:', userData);
-      req.session.userId = userData.userId;
-      req.session.user = userData;
+      req.session.userId = foundUser.userId;
+      const pickedUserData = _.pick(foundUser, ['userId', 'username', 'role']);
+      req.session.user = pickedUserData;
       res.status(200).send();
       return;
     }
@@ -438,7 +417,7 @@ const getJwt: RequestHandler = async (req, res) => {
   res.send(token);
 };
 
-export default function createUserRouter() {
+export default function createUserRouter(): Router {
 
   const userRouter = Router();
 
@@ -451,7 +430,7 @@ export default function createUserRouter() {
   userRouter.post('/update', isLoggedIn, updateUser);
   userRouter.post('/delete', isLoggedIn, deleteUser);
   userRouter.get('/get-admins', isLoggedIn, getAdmins);
-  userRouter.post('/get-sender', isLoggedIn, getSender);
+  userRouter.post('/get-sender', isLoggedIn, getAllowedUsersForStream);
   userRouter.post('/create-sender', isLoggedIn, createSenderForVenue);
 
   userRouter.get('/me', isLoggedIn, getSelf);

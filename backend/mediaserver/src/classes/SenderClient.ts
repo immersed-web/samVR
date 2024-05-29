@@ -1,11 +1,9 @@
 import { TypedEmitter } from 'tiny-typed-emitter';
-import { NonFilteredEvents, NotifierSignature } from 'trpc/trpc-utils';
-import { BaseClient, Venue } from './InternalClasses';
+import { NonFilteredEvents, NotifierSignature } from 'trpc/trpc-utils.js';
+import { BaseClient, Venue } from './InternalClasses.js';
 
 import { Log } from 'debug-level';
-import { CameraId, ClientType, SenderId, SenderIdSchema, VenueId } from 'schemas';
-import { ProducerId } from 'schemas/mediasoup';
-import type { types as soupTypes } from 'mediasoup';
+import { CameraId, ClientType, SenderId, SenderIdSchema, StreamId } from 'schemas';
 import { randomUUID } from 'crypto';
 
 const log = new Log('SenderClient');
@@ -92,7 +90,7 @@ export class SenderClient extends BaseClient{
     this.leaveCurrentVenue();
   }
 
-  async joinVenue(venueId: VenueId){
+  async joinVenue(venueId: StreamId) {
     this.leaveCurrentVenue();
     const venue = Venue.getVenue(venueId);
     venue.addClient(this);
