@@ -99,10 +99,10 @@
 <script setup lang="ts">
 
 import type { Entity, DetailEvent } from 'aframe';
-import type { ConnectionId, Transform } from 'schemas/esm';
+import type { ConnectionId, Transform } from 'schemas';
 import { ref, computed, watch, onMounted, onBeforeUnmount, shallowRef } from 'vue';
 import type { useVrSpaceStore } from '@/stores/vrSpaceStore';
-import type { ProducerId } from 'schemas/esm/mediasoup';
+import type { ProducerId } from 'schemas/mediasoup';
 import { useSoupStore } from '@/stores/soupStore';
 
 // Props & emits

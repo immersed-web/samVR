@@ -257,7 +257,7 @@
 import { useVenueStore } from '@/stores/venueStore';
 import { useConnectionStore } from '@/stores/connectionStore';
 import { ref, computed, onMounted, onBeforeMount, reactive, watch } from 'vue';
-import type { VenueUpdate } from 'schemas/esm';
+import type { VenueUpdate } from 'schemas';
 import {useRouter} from 'vue-router';
 import { autoResetRef } from '@vueuse/core';
 import { debounce } from 'lodash-es';

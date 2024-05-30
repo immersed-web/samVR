@@ -1,6 +1,6 @@
 import type { SubscriptionValue, RouterOutputs } from '@/modules/trpcClient';
 import { defineStore } from 'pinia';
-import type { CameraId, SenderId, VenueId, CameraPortalUpdate, CameraUpdate, ConnectionId } from 'schemas/esm';
+import type { CameraId, SenderId, StreamId, CameraPortalInsert, CameraInsert, ConnectionId } from 'schemas';
 import { computed, ref } from 'vue';
 import { useConnectionStore } from './connectionStore';
 import { useVenueStore } from './venueStore';
@@ -75,13 +75,13 @@ export const useAdminStore = defineStore('admin', () => {
     }
   }
 
-  async function loadAndJoinVenueAsAdmin ( venueId: VenueId) {
+  async function loadAndJoinVenueAsAdmin(venueId: StreamId) {
     const {publicVenueState, adminOnlyVenueState: aOnlyState} = await connection.client.admin.loadAndJoinVenue.mutate({venueId});
     venueStore.currentVenue = publicVenueState;
     adminOnlyVenueState.value = aOnlyState;
   }
   
-  async function updateCamera(cameraId: CameraId, input: CameraUpdate['data'], reason?: string){
+  async function updateCamera(cameraId: CameraId, input: CameraInsert['data'], reason?: string) {
     await connection.client.admin.updateCamera.mutate({cameraId, data: input, reason});
   }
 
@@ -93,7 +93,7 @@ export const useAdminStore = defineStore('admin', () => {
     await connection.client.admin.setSenderForCamera.mutate({cameraId, senderId});
   }
   
-  async function setPortal(data: CameraPortalUpdate) {
+  async function setPortal(data: CameraPortalInsert) {
     await connection.client.admin.setCameraPortal.mutate(data);
   }
   

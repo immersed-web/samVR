@@ -96,7 +96,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 // import { useConnectionStore } from '@/stores/connectionStore';
-import type { VenueId } from 'schemas/esm';
+import type { StreamId } from 'schemas';
 import { computed, onMounted, watch } from 'vue';
 import { useVenueStore } from '@/stores/venueStore';
 import { useIntervalFn } from '@vueuse/core';
@@ -104,7 +104,7 @@ import { useIntervalFn } from '@vueuse/core';
 const venueStore = useVenueStore();
 
 const props = defineProps<{
-  venueId: VenueId
+  venueId: StreamId
 }>();
 
 // const venueInfo = shallowRef<VenueListInfo>();

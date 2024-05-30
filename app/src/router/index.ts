@@ -2,7 +2,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useConnectionStore } from '@/stores/connectionStore';
 import { useClientStore } from '@/stores/clientStore';
 // import { useSenderStore } from '@/stores/senderStore';
-import { hasAtLeastSecurityLevel, type UserRole, type ClientType, type VenueId } from 'schemas/esm';
+import { hasAtLeastSecurityLevel, type UserRole, type ClientType, type StreamId } from 'schemas';
 import { createRouter, createWebHistory } from 'vue-router';
 import { useVenueStore } from '@/stores/venueStore';
 import { useAdminStore } from '@/stores/adminStore';
@@ -248,7 +248,7 @@ router.beforeEach(async (to, from) => {
 
     if(!venueStore.currentVenue || venueStore.currentVenue.venueId !== venueStore.savedVenueId){
       // await connectionStore.firstConnectionEstablished;
-      const venueId = venueStore.savedVenueId?? to.params.venueId as VenueId | undefined;
+      const venueId = venueStore.savedVenueId ?? to.params.venueId as StreamId | undefined;
       if(!venueId){
         if(to.meta.pickVenueRouteName) return { name: to.meta.pickVenueRouteName};
         const routeName = `${authStore.routePrefix}Home`;

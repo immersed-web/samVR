@@ -24,7 +24,6 @@
     "bcrypt": "^5.0.1",
     "drizzle-orm": "^0.30.10",
     "postgres": "^3.4.4",
-    "tsx": "^4.10.4",
     "schemas": "workspace:*"
   }
 }

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { logout as authLogout, login as authLogin, userAutoToken, guestAutoToken } from '@/modules/authClient';
-import { hasAtLeastSecurityLevel, type JwtPayload } from 'schemas/esm';
+import { hasAtLeastSecurityLevel, type JwtPayload } from 'schemas';
 import jwtDecode from 'jwt-decode';
 import { computed, ref } from 'vue';
 

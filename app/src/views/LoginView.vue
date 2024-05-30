@@ -82,7 +82,7 @@ import { useRouter } from 'vue-router';
 // import { useClientStore } from '@/stores/clientStore';
 import { onMounted, ref } from 'vue';
 import { useAuthStore } from '@/stores/authStore';
-import { hasAtLeastSecurityLevel, type UserRole } from 'schemas/esm';
+import { hasAtLeastSecurityLevel, type UserRole } from 'schemas';
 import { useConnectionStore } from '@/stores/connectionStore';
 import VenueListView from './public/VenueListView.vue';
 
