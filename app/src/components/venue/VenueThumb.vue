@@ -17,7 +17,7 @@
           </div>
         </div>
       </div>
-      <div v-if="props.venue.doorsOpeningTime">
+      <!-- <div v-if="props.venue.doorsOpeningTime">
         <div class="flex items-center">
           <span class="material-icons mr-3">nightlife</span>
           <div>
@@ -26,16 +26,16 @@
             {{ props.venue.doorsOpeningTime.toLocaleString() }}
           </div>
         </div>
-      </div>
+      </div> -->
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 
-import type { VenueListInfo } from 'schemas';
+import type { StreamListInfo } from 'schemas';
 const props = defineProps<{
-  venue: VenueListInfo,
+  venue: StreamListInfo,
 }>();
 
 </script>

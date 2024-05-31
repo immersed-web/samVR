@@ -23,7 +23,8 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ['schemas'],
+    exclude: ['database'],
+    // include: ['schemas'],
   },
   envPrefix: 'EXPOSED_',
 });

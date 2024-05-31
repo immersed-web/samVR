@@ -257,7 +257,7 @@
 import { useVenueStore } from '@/stores/venueStore';
 import { useConnectionStore } from '@/stores/connectionStore';
 import { ref, computed, onMounted, onBeforeMount, reactive, watch } from 'vue';
-import type { VenueUpdate } from 'schemas';
+import type { StreamUpdate } from 'schemas';
 import {useRouter} from 'vue-router';
 import { autoResetRef } from '@vueuse/core';
 import { debounce } from 'lodash-es';
@@ -349,7 +349,7 @@ type DatesAsStrings<T extends Record<string, unknown>> = {
   [K in keyof T]: Date extends T[K] ? Exclude<T[K], Date> | string: T[K]
 }
 
-const values = ref<DatesAsStrings<VenueUpdate>>({});
+const values = ref<DatesAsStrings<StreamUpdate>>({});
 
 
 onBeforeMount(async () => {

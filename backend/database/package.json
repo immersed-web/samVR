@@ -5,7 +5,8 @@
   "author": "Gunnar Oledal",
   "license": "MIT",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./schema": "./src/schema.ts"
   },
   "scripts": {
     "introspect": "dotenv -e ../../.env drizzle-kit introspect",

@@ -17,7 +17,7 @@ import { useConnectionStore } from '@/stores/connectionStore';
 // import { useSenderStore } from '@/stores/senderStore';
 import { useVenueStore } from '@/stores/venueStore';
 
-import type { VenueId } from 'schemas';
+import type { StreamId } from 'schemas';
 import { onBeforeMount, ref } from 'vue';
 import { useRouter } from 'vue-router';
 type Venue = RouterOutputs['venue']['listAllowedVenues'][number];
@@ -34,7 +34,7 @@ onBeforeMount(async () => {
 });
 
 function tryToJoinAndEnterCamera(venue: Venue){
-  venueStore.savedVenueId = venue.venueId as VenueId;
+  venueStore.savedVenueId = venue.venueId as StreamId;
   router.push({name: 'senderHome'});
 }
 

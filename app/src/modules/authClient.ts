@@ -1,7 +1,7 @@
 import axios, { type AxiosResponse } from 'axios';
 
 import type {JwtPayload, JwtUserData } from 'schemas';
-import type { User } from 'database';
+import type { User, } from 'database/schema';
 import decodeJwt from 'jwt-decode';
 
 const completeAuthUrl = `https://${import.meta.env.EXPOSED_SERVER_URL}${import.meta.env.EXPOSED_AUTH_PATH}`;

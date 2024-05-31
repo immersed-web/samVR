@@ -23,12 +23,12 @@
 <script setup lang="ts">
 import CameraView from '@/components/CameraView.vue';
 import { useSoupStore } from '@/stores/soupStore';
-import type { CameraId, VenueId } from 'schemas';
+import type { CameraId, StreamId } from 'schemas';
 import { onBeforeUnmount, onMounted } from 'vue';
 import { useCameraStore } from '@/stores/cameraStore';
 
 const props = defineProps<{
-  venueId: VenueId,
+  venueId: StreamId,
   cameraId: CameraId,
 }>();
 

@@ -1,25 +1,19 @@
 <template>
   <div class="flex flex-wrap gap-2">
-    <div
-      v-for="venue in props.venues"
-      :key="venue.venueId"
-    >
-      <VenueThumb
-        :venue="(venue as VenueListInfo)"
-        @click="emit('venuePicked', (venue as VenueListInfo))"
-      />
+    <div v-for="venue in props.venues" :key="venue.streamId">
+      <VenueThumb :venue="(venue as StreamListInfo)" @click="emit('venuePicked', (venue as StreamListInfo))" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import VenueThumb from '@/components/venue/VenueThumb.vue';
-import type { VenueListInfo } from 'schemas';
+import type { StreamListInfo } from 'schemas';
 
-const props = defineProps<{ venues: VenueListInfo[]}>();
+const props = defineProps<{ venues: StreamListInfo[] }>();
 
 const emit = defineEmits<{
-  (e: 'venuePicked', venue: VenueListInfo): void,
+  (e: 'venuePicked', venue: StreamListInfo): void,
 }>();
 
 </script>

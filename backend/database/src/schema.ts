@@ -5,13 +5,14 @@ import { relations } from "drizzle-orm/relations";
 
 import type { StreamId, UserId, VrSpaceId, AssetId, CameraId, PlacementId, SenderId } from 'schemas';
 
-export const CameraType = pgEnum("CameraType", ['panoramic360', 'normal'])
+export const CameraTypeEnum = pgEnum("CameraType", ['panoramic360', 'normal'])
 // export const AssetFileFormat = pgEnum("AssetFileFormat", ['glb', 'png', 'jpg', 'jpeg', 'pdf',])
-export const AssetType = pgEnum("AssetType", ['image', 'video', 'model', 'navmesh', 'document']);
-export const PlacedObjectType = pgEnum("PlacedObjectType", ['asset', 'vrPortal', 'streamPortal', 'externalLinkPortal', 'pointLight', 'directionalLight', 'ambientLight']);
+export const AssetTypeEnum = pgEnum("AssetType", ['image', 'video', 'model', 'navmesh', 'document']);
+export const PlacedObjectTypeEnum = pgEnum("PlacedObjectType", ['asset', 'vrPortal', 'streamPortal', 'externalLinkPortal', 'pointLight', 'directionalLight', 'ambientLight']);
 // export const PortalType = pgEnum("PortalType", ['vrSpace', 'stream', 'externalUrl']);
-export const Role = pgEnum("Role", ['gunnar', 'superadmin', 'admin', 'moderator', 'user', 'guest'])
-export const Visibility = pgEnum("Visibility", ['private', 'unlisted', 'public'])
+export const RoleEnum = pgEnum("Role", ['gunnar', 'superadmin', 'admin', 'moderator', 'user', 'guest'])
+export const VisibilityEnum = pgEnum("Visibility", ['private', 'unlisted', 'public'])
+export type Visibility = typeof VisibilityEnum.enumValues[number];
 
 const createdAndUpdatedAt = {
 	createdAt: timestamp("createdAt", { precision: 3, mode: 'date' }).defaultNow(),
@@ -71,13 +72,14 @@ export const users = pgTable("Users", {
 	...createdAndUpdatedAt,
 	username: text("username").notNull(),
 	password: text("password").notNull(),
-	role: Role("role").default('user').notNull(),
+	role: RoleEnum("role").default('user').notNull(),
 },
 	(table) => {
 		return {
 			username_key: uniqueIndex("User_username_key").on(table.username),
 		}
 	});
+export type User = Omit<typeof users.$inferSelect, 'password'>;
 
 export const usersRelations = relations(users, ({ many }) => ({
 	assets: many(assets),
@@ -121,7 +123,7 @@ export const streams = pgTable("Streams", {
 	streamManuallyStarted: boolean("streamManuallyStarted").default(false).notNull(),
 	streamManuallyEnded: boolean("streamManuallyEnded").default(false).notNull(),
 	// extraSettings: jsonb("extraSettings"),
-	visibility: Visibility("visibility").default('public').notNull(),
+	visibility: VisibilityEnum("visibility").default('public').notNull(),
 	mainCameraId: uuid("mainCameraId").references((): AnyPgColumn => cameras.cameraId).$type<CameraId>(),
 	vrSpaceId: uuid("vrSpaceId").references((): AnyPgColumn => vrSpaces.vrSpaceId).$type<VrSpaceId>(),
 	...createdAndUpdatedAt,
@@ -163,7 +165,7 @@ export const cameras = pgTable("Cameras", {
 	name: text("name").notNull(),
 	streamId: uuid("streamId").notNull().references(() => streams.streamId, { onDelete: "cascade", onUpdate: "cascade" }).$type<StreamId>(),
 	senderId: uuid("senderId").$type<SenderId>(),
-	cameraType: CameraType("cameraType").default('panoramic360').notNull(),
+	cameraType: CameraTypeEnum("cameraType").default('panoramic360').notNull(),
 	viewOriginX: doublePrecision("viewOriginX").default(0.5).notNull(),
 	viewOriginY: doublePrecision("viewOriginY").default(0.5).notNull(),
 	fovStart: doublePrecision("fovStart").default(0).notNull(),
@@ -230,7 +232,7 @@ export const cameraPortalsRelations = relations(cameraPortals, ({ one }) => ({
 
 export const assets = pgTable("Assets", {
 	assetId: uuid("assetId").defaultRandom().primaryKey().notNull().$type<AssetId>(),
-	assetType: AssetType("assetType").notNull(),
+	assetType: AssetTypeEnum("assetType").notNull(),
 	originalFileName: text("originalFileName").notNull(),
 	generatedName: uuid("generatedName").unique().notNull(),
 	assetFileExtension: text("assetFileExtension").notNull(),
@@ -257,7 +259,7 @@ export const vrSpaces = pgTable("VrSpaces", {
 	worldModelAssetId: uuid("worldModelAssetId").references(() => assets.assetId).$type<AssetId>(),
 	navMeshAssetId: uuid("navMeshAssetId").references(() => assets.assetId).$type<AssetId>(),
 	panoramicPreviewAssetId: uuid('panoramicPreview').references(() => assets.assetId),
-	Visibility: Visibility("visibility").default('public').notNull(),
+	Visibility: VisibilityEnum("visibility").default('public').notNull(),
 	worldModelScale: doublePrecision("worldModelScale").default(1).notNull(),
 	spawnPosition: real("spawnPosition").array(),
 	spawnRadius: doublePrecision("spawnRadius"),
@@ -295,7 +297,7 @@ export const placedObjects = pgTable("PlacedObjects", {
 	// vrPortalId: uuid("vrPortalId").references(() => VrPortal.portalId, { onDelete: "cascade", onUpdate: "cascade" }),
 
 	// Lets try polymorphism!!!
-	type: PlacedObjectType("type").notNull(),
+	type: PlacedObjectTypeEnum("type").notNull(),
 	objectId: uuid('objectId').$type<AssetId | VrSpaceId | StreamId>(),
 	objectSettings: jsonb("objectSettings"),
 	position: real("position").array(),

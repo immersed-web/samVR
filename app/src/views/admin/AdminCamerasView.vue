@@ -196,7 +196,7 @@
 import { useAdminStore } from '@/stores/adminStore';
 import { useSoupStore } from '@/stores/soupStore';
 import { computed, onBeforeMount, reactive, ref, watch } from 'vue';
-import type { CameraId, CameraPortalUpdate, ConnectionId, SenderId } from 'schemas';
+import type { CameraId, CameraPortalInsert, ConnectionId, SenderId } from 'schemas';
 import { useCameraStore } from '@/stores/cameraStore';
 import AdminCameraEditor from './components/AdminCameraEditor.vue';
 import AdminSenderEditor from './components/AdminSenderEditor.vue';
@@ -232,7 +232,7 @@ async function setMainCamera(cameraId: CameraId) {
 //   });
 // }
 
-const portalPosition: Partial<CameraPortalUpdate['portal']> & {absoluteX?: number, absoluteY?: number} = reactive({
+const portalPosition: Partial<CameraPortalInsert['portal']> & { absoluteX?: number, absoluteY?: number } = reactive({
   x: undefined,
   y: undefined,
   absoluteX: undefined,

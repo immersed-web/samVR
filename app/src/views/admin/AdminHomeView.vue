@@ -8,51 +8,34 @@
         Mina event
       </h2>
       <div class="flex space-x-2">
-        <VenueList
-          v-if="clientStore.clientState"
-          :venues="venuesAsArray"
-          @venue-picked="(venue) => pickVenueAndNavigate(venue.venueId as VenueId)"
-        />
+        <VenueList v-if="clientStore.clientState" :venues="venuesAsArray"
+          @venue-picked="(venue) => pickVenueAndNavigate(venue.venueId as StreamId)" />
         <div>
-          <button
-            class="btn btn-outline btn-primary"
-            @click="createVenue"
-          >
+          <button class="btn btn-outline btn-primary" @click="createVenue">
             Skapa ett nytt event
           </button>
         </div>
       </div>
     </div>
-    <div
-      v-if="authStore.role === 'superadmin'"
-      class="space-y-6"
-    >
+    <div v-if="authStore.role === 'superadmin'" class="space-y-6">
       <h2 class="mb-4 text-3xl font-bold">
         Användarfunktioner
       </h2>
       <div class="space-y-2">
         <h3>
-          Skapa ny admin 
+          Skapa ny admin
         </h3>
         <div class="flex gap-6">
           <label class="flex items-center gap-2">
             <span class="font-bold">Användarnamn:</span>
-            <input
-              v-model="adminUsername"
-              class="input input-bordered "
-            >
+            <input v-model="adminUsername" class="input input-bordered ">
           </label>
           <label class="flex items-center gap-2">
             <span class="font-bold">Lösenord:</span>
-            <input
-              v-model="adminPassword"
-              class="input input-bordered "
-            >
+            <input v-model="adminPassword" class="input input-bordered ">
           </label>
-          <button
-            @click="makeCallThenResetList(() => createAdmin(adminUsername, adminPassword))"
-            class="btn  btn-primary"
-          >
+          <button @click="makeCallThenResetList(() => createAdmin(adminUsername, adminPassword))"
+            class="btn  btn-primary">
             <span class="material-icons">add</span>
             Lägg till
           </button>
@@ -65,44 +48,26 @@
         <div class="w-[50rem]">
           <table class="table">
             <tbody>
-              <tr
-                v-for="admin in admins"
-                :key="admin.userId"
-              >
+              <tr v-for="admin in admins" :key="admin.userId">
                 <template v-if="editedUserId === admin.userId">
                   <td class="text-base font-bold">
-                    <input
-                      v-model="editedUsername"
-                      class="input input-bordered"
-                      placeholder="Användarnamn"
-                      @keyup.enter="updateAdmin({userId: editedUserId, username: editedUsername, password: editedPassword === ''?undefined: editedPassword})"
-                    >
+                    <input v-model="editedUsername" class="input input-bordered" placeholder="Användarnamn"
+                      @keyup.enter="updateAdmin({userId: editedUserId, username: editedUsername, password: editedPassword === ''?undefined: editedPassword})">
                   </td>
                   <td>
-                    <div
-                      class="tooltip cursor-help"
-                      data-tip="Lämna blankt för att inte ändra"
-                    >
-                      <input
-                        v-model="editedPassword"
-                        class="input input-bordered"
-                        placeholder="Lösenord"
-                        @keyup.enter="updateAdmin({userId: editedUserId, username: editedUsername, password: editedPassword === ''?undefined: editedPassword})"
-                      >
+                    <div class="tooltip cursor-help" data-tip="Lämna blankt för att inte ändra">
+                      <input v-model="editedPassword" class="input input-bordered" placeholder="Lösenord"
+                        @keyup.enter="updateAdmin({userId: editedUserId, username: editedUsername, password: editedPassword === ''?undefined: editedPassword})">
                       <!-- <span class="material-icons">help</span> -->
                     </div>
                   </td>
                   <td class="flex gap-2 justify-end">
                     <button
                       @click="updateAdmin({userId: editedUserId, username: editedUsername, password: editedPassword === ''?undefined: editedPassword})"
-                      class="btn btn-primary"
-                    >
+                      class="btn btn-primary">
                       <span class="material-icons">save</span>
                     </button>
-                    <button
-                      @click="editedUserId = undefined"
-                      class="btn btn-ghost"
-                    >
+                    <button @click="editedUserId = undefined" class="btn btn-ghost">
                       <span class="material-icons">cancel</span>
                     </button>
                   </td>
@@ -113,16 +78,11 @@
                   </td>
                   <td />
                   <td class="flex gap-2 justify-end">
-                    <button
-                      @click="editedUserId = admin.userId; editedUsername = admin.username; editedPassword= ''"
-                      class="btn"
-                    >
+                    <button @click="editedUserId = admin.userId; editedUsername = admin.username; editedPassword= ''"
+                      class="btn">
                       <span class="material-icons">edit</span>
                     </button>
-                    <button
-                      @click="makeCallThenResetList(()=> deleteUser(admin.userId))"
-                      class="btn btn-error"
-                    >
+                    <button @click="makeCallThenResetList(()=> deleteUser(admin.userId))" class="btn btn-error">
                       <span class="material-icons">delete</span>
                     </button>
                   </td>
@@ -143,7 +103,7 @@ import { useClientStore } from '@/stores/clientStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useVenueStore } from '@/stores/venueStore';
 import { computed, onBeforeMount, ref } from 'vue';
-import type { VenueId } from 'schemas';
+import type { StreamId } from 'schemas';
 import { useAdminStore } from '@/stores/adminStore';
 import { createAdmin, getAdmins, updateUser, deleteUser } from '@/modules/authClient';
 
@@ -223,7 +183,7 @@ async function createVenue () {
   await adminStore.createVenue();
 }
 
-const pickVenueAndNavigate = async (venueId: VenueId) => {
+const pickVenueAndNavigate = async (venueId: StreamId) => {
   venueStore.savedVenueId = venueId;
   router.push({name: authStore.routePrefix + 'Venue'});
 };

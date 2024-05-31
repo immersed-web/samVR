@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import type { SenderId, CameraId, VenueId, CameraFOVUpdate } from 'schemas';
+import type { SenderId, CameraId, StreamId, CameraFOVUpdate } from 'schemas';
 import type { types as soupTypes } from 'mediasoup-client';
 import type { ProducerId } from 'schemas/mediasoup';
 import { reactive, ref, shallowRef, toRaw } from 'vue';

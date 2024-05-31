@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "madge": "madge --circular ./backend/"
+    "madge": "madge ./app/"
   },
   "dependencies": {
     "@trpc/client": "^10.12.0",

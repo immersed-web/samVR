@@ -2,12 +2,12 @@
   <div class="flex flex-col gap-4 mb-12 items-start">
     <div class="flex items-center">
       <h2>
-        Välkommen&nbsp; 
+        Välkommen&nbsp;
       </h2>
       <template v-if="authStore.role && hasAtLeastSecurityLevel(authStore.role, 'admin')">
         <h2 class="inline">
           <span class="underline decoration-dashed decoration-accent">
-          {{ authStore.username }}!
+            {{ authStore.username }}!
           </span>
         </h2>
         <RouterLink :to="{name: 'adminHome'}">
@@ -17,10 +17,10 @@
           </button>
         </RouterLink>
       </template>
-      <div class="flex gap-2 items-center" v-else-if="!isEditingUsername" >
+      <div class="flex gap-2 items-center" v-else-if="!isEditingUsername">
         <h2 class="inline">
           <span class="underline decoration-dashed decoration-accent">
-          {{ authStore.username }}!
+            {{ authStore.username }}!
           </span>
         </h2>
         <button @click="isEditingUsername = true" class="btn btn-sm btn-square">
@@ -29,33 +29,24 @@
       </div>
       <div class="join" v-else>
         <input @keypress.enter="updateUsername" v-model="username" class="input join-item input-bordered input">
-        <button @click="updateUsername" class="join-item btn btn-primary "><span class="material-icons">save</span></button>
-        <button @click="isEditingUsername = false" class="join-item btn btn-error"><span class="material-icons">cancel</span></button>
+        <button @click="updateUsername" class="join-item btn btn-primary "><span
+            class="material-icons">save</span></button>
+        <button @click="isEditingUsername = false" class="join-item btn btn-error"><span
+            class="material-icons">cancel</span></button>
       </div>
     </div>
-    <div
-      v-if="venuesOngoing.length"
-      class="space-y-2"
-    >
+    <div v-if="venuesOngoing.length" class="space-y-2">
       <h3 class="text-base-content/90">
         Pågående event
       </h3>
-      <VenueList
-        :venues="venuesOngoing"
-        @venue-picked="(venue) => goToVenue(venue.venueId as VenueId)"
-      />
+      <VenueList :venues="venuesOngoing" @venue-picked="(venue) => goToVenue(venue.venueId as StreamId)" />
     </div>
 
-    <div
-      v-if="venuesUpcoming.length"
-    >
+    <div v-if="venuesUpcoming.length">
       <h3 class="text-base-content/90">
         Kommande event
       </h3>
-      <VenueList
-        :venues="venuesUpcoming"
-        @venue-picked="(venue) => goToVenue(venue.venueId as VenueId)"
-      />
+      <VenueList :venues="venuesUpcoming" @venue-picked="(venue) => goToVenue(venue.venueId as StreamId)" />
     </div>
     <!-- <h1>Tidigare event</h1>
     <VenueList
@@ -70,16 +61,11 @@
     </div> -->
 
 
-    <div
-      v-if="venuesUnscheduled.length"
-    >
+    <div v-if="venuesUnscheduled.length">
       <h3 class="text-base-content/90">
         Event utan datum
       </h3>
-      <VenueList
-        :venues="venuesUnscheduled"
-        @venue-picked="(venue) => goToVenue(venue.venueId as VenueId)"
-      />
+      <VenueList :venues="venuesUnscheduled" @venue-picked="(venue) => goToVenue(venue.venueId as StreamId)" />
     </div>
   </div>
 
@@ -110,7 +96,7 @@ import type { RouterOutputs } from '@/modules/trpcClient';
 import { useConnectionStore } from '@/stores/connectionStore';
 import { computed, onBeforeMount, ref } from 'vue';
 import VenueList from '@/components/venue/VenueList.vue';
-import { type VenueId, hasAtLeastSecurityLevel } from 'schemas';
+import { type StreamId, hasAtLeastSecurityLevel } from 'schemas';
 import { useRouter } from 'vue-router';
 import { isPast } from 'date-fns';
 import { venueConsideredActive } from '@/stores/venueStore';
@@ -126,7 +112,7 @@ const venuesAllowed = ref<RouterOutputs['venue']['listAllowedVenues']>([]);
 // const venuesLoaded = ref<RouterOutputs['venue']['listLoadedVenuesPublicState']>();
 
 const connection = useConnectionStore();
-onBeforeMount(async () =>{
+onBeforeMount(async () => {
   venuesAllowed.value = await connection.client.venue.listAllowedVenues.query();
   // venuesLoaded.value = await connection.client.venue.listLoadedVenuesPublicState.query();
 });
@@ -154,7 +140,7 @@ const venuesUnscheduled = computed(() => {
   return venuesNotOngoing.value.filter(v => !v.streamStartTime);
 });
 
-async function goToVenue(venueId: VenueId){
+async function goToVenue(venueId: StreamId) {
   // await venueStore.joinVenue(venueId);
   router.push({name: 'userVenue', params: { venueId }});
 }

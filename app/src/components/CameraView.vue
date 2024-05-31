@@ -201,7 +201,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 import { useSoupStore } from '@/stores/soupStore';
-import type { CameraId, VenueId } from 'schemas';
+import type { CameraId, StreamId } from 'schemas';
 import { onBeforeUnmount, onMounted, ref, shallowRef, watch, inject, computed, nextTick, onBeforeMount } from 'vue';
 import { computedWithControl, until } from '@vueuse/core';
 import { useVenueStore } from '@/stores/venueStore';
@@ -212,7 +212,7 @@ import { useAdminStore } from '@/stores/adminStore';
 import { aFrameSceneProvideKey } from '@/modules/injectionKeys';
 
 const props = withDefaults(defineProps<{
-  venueId: VenueId,
+  venueId: StreamId,
   cameraId: CameraId,
   editable?: boolean
 }>(), {

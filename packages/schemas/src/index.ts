@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { JwtPayload as JwtShapeFromLib } from 'jsonwebtoken'
 // import { Role, Venue, VirtualSpace3DModel, Visibility, Camera, CameraType as PrismaCameraType, Prisma, ModelFileFormat } from "database";
-import { schema } from 'database';
+import * as schema from 'database/schema';
 import { createInsertSchema } from 'drizzle-zod';
 
 // const PlacedObjectInsertSchema = createInsertSchema(schema.placedObjects)
@@ -86,7 +86,7 @@ const jwtDefaultPayload = implement<JWTDefaultPayload>().with({
   sub: z.string().optional(),
 })
 
-export const roleHierarchy = schema.Role.enumValues;
+export const roleHierarchy = schema.RoleEnum.enumValues;
 // TODO: I would really prefer to infer a const literal tuple from the prisma enum.
 // That is. Could we in some way convert/extract a literal tuple from the prisma type and then use z.enum() on it directly
 // Then we could use that extracted literal tuple from prisma instead of defining it manually here. This is redundant and we need to keep them in sync
@@ -138,7 +138,7 @@ export function hasAtLeastSecurityLevel(role: UserRole | undefined, minimumUserR
 export const UserRoleSchema = z.enum(roleHierarchy);
 export type UserRole = z.TypeOf<typeof UserRoleSchema>;
 
-export const VisibilitySchema = z.enum(schema.Visibility.enumValues);
+export const VisibilitySchema = z.enum(schema.VisibilityEnum.enumValues);
 export type Visibility = z.infer<typeof VisibilitySchema>;
 
 // export type { Visibility } from 'database'

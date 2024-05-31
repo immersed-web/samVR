@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia';
 import type { RouterOutputs } from '@/modules/trpcClient';
 import { ref, computed, type Ref } from 'vue';
-import type { Visibility } from 'database';
-import type { VenueId } from 'schemas';
+import type { Visibility } from 'database/schema';
+import type { StreamId } from 'schemas';
 import { useConnectionStore } from '@/stores/connectionStore';
 import { useNow, useStorage } from '@vueuse/core';
 
@@ -39,7 +39,7 @@ export const useVenueStore = defineStore('venue', () => {
   // const authStore = useAuthStore();
 
   const currentVenue = ref<_ReceivedPublicVenueState>();
-  const savedVenueId = ref<VenueId>();
+  const savedVenueId = ref<StreamId>();
 
 
 
@@ -81,12 +81,12 @@ export const useVenueStore = defineStore('venue', () => {
     return urlToModelsFolder + modelId + '.navmesh.' + extension;
   });
 
-  async function loadAndJoinVenue (venueId: VenueId) {
+  async function loadAndJoinVenue(venueId: StreamId) {
     currentVenue.value = await connection.client.venue.loadAndJoinVenue.mutate({venueId});
     savedVenueId.value = currentVenue.value.venueId;
   }
 
-  async function joinVenue (venueId: VenueId) {
+  async function joinVenue(venueId: StreamId) {
     currentVenue.value = await connection.client.venue.joinVenue.mutate({venueId});
     savedVenueId.value = currentVenue.value.venueId;
   }
