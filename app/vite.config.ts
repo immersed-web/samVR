@@ -2,20 +2,20 @@ import { fileURLToPath, URL } from 'node:url';
 
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import VueDevtools from 'vite-plugin-vue-devtools';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [vue(
-    {
-      // reactivityTransform: true,
+  plugins: [
+    vue({
       template: {
         compilerOptions: {
-          // NOT WORKING: treat any tag that starts with a- as custom elements
-          isCustomElement: (tag) => tag.startsWith('a-') || tag.startsWith('tc-') ,
+          isCustomElement: (tag) => tag.startsWith('a-') || tag.startsWith('tc-'),
         },
       },
-    },
-  )],
+    }),
+    VueDevtools()
+  ],
   envDir: '../',
   resolve: {
     alias: {
