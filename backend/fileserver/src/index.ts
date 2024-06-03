@@ -34,20 +34,8 @@ if (!user) {
   process.exit(1);
 }
 
-const app = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
-  // .use(logger())
-  // .use(async (c, next) => {
-  //   console.log(c.req.header());
-  //   return next();
-  // })
-  .use((c, next) => {
-    const { JWT_SECRET } = env<{ JWT_SECRET: string }>(c);
-    // console.log(c.env);
-    const mw = jwt({ secret: JWT_SECRET });
-
-    return mw(c, next);
-  })
-  .get('/file/*',
+const publicRoutes = new Hono()
+  .get('/file/:filename',
     // async (c, next) => {
     //   console.log(savePathRelative);
     //   console.log(c.req.path);
@@ -62,6 +50,20 @@ const app = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
       root: savePathRelative,
     })
   )
+
+const privateRoutes = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
+  .use((c, next) => {
+    const { JWT_SECRET } = env<{ JWT_SECRET: string }>(c);
+    // console.log(c.env);
+    const mw = jwt({ secret: JWT_SECRET });
+
+    return mw(c, next);
+  })
+// .use(logger())
+// .use(async (c, next) => {
+//   console.log(c.req.header());
+//   return next();
+// })
   .delete('/delete', zValidator('json', z.object({ assetId: AssetIdSchema })), async (c, next) => {
     const { assetId } = c.req.valid('json');
     const result = await db.transaction(async (tx) => {
@@ -83,23 +85,22 @@ const app = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
       return;
     })
     return c.text('file deleted', HttpStatus.OK);
-}).post('/upload', zValidator('form', z.object({ file: z.instanceof(File), assetType: AssetTypeSchema })), async (c, next) => {
-  const body = await c.req.parseBody();
-  const file = body['file']
-  if (!(file instanceof File)) {
-    // const badRequest = constants.HTTP_STATUS_BAD_REQUEST as StatusCode;
-    // return c.text('no file found in request body', HttpStatus.BAD_REQUEST);
-    return c.json({ error: 'no file found in request body' }, HttpStatus.BAD_REQUEST);
-  }
+  }).post('/upload', zValidator('form', z.object({ file: z.instanceof(File), assetType: AssetTypeSchema.optional() })), async (c, next) => {
+    // const body = await c.req.parseBody();
+    let { file, assetType } = c.req.valid('form');
+  // const file = body['file']
+  // if (!(file instanceof File)) {
+  //   // const badRequest = constants.HTTP_STATUS_BAD_REQUEST as StatusCode;
+  //   // return c.text('no file found in request body', HttpStatus.BAD_REQUEST);
+  //   return c.json({ error: 'no file found in request body' }, HttpStatus.BAD_REQUEST);
+  // }
   console.log(file.type);
   const extension = file.name.slice((file.name.lastIndexOf(".") - 1 >>> 0) + 2);
   console.log(extension);
   // const [mime, extension] = file.type.split('/');
-  const parseResult = AssetTypeSchema.safeParse(body['assetType']);
-  let assetType: AssetType;
-  if (parseResult.success) {
-    assetType = parseResult.data;
-  } else {
+  // const parseResult = AssetTypeSchema.safeParse(body['assetType']);
+  // let assetType: AssetType;
+  if (!assetType) {
     switch (extension) {
       case 'glb':
         assetType = 'model';
@@ -156,6 +157,9 @@ const app = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
   return c.json(dbResponse, HttpStatus.OK);
 });
 
+const app = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
+app.route('/', publicRoutes);
+app.route('/', privateRoutes);
 const port = 3000
 console.log(`Server is running on port ${port}`)
 

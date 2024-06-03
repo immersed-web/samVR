@@ -8,16 +8,18 @@ const client = hc<AppType>('http://localhost:3000');
 const res = await client.upload.$post({
   form: {
     file: new File(['hello'], 'hello.txt', { type: 'text/plain' }),
-    assetType: 'image'
+    assetType: 'document'
   }
 });
-type UploadResponse = InferResponseType<typeof assetRoute.$get, 200>;
 if (res.ok) {
   const data = await res.json()
 }
 
-const assetRoute = client.file[':assetId'];
-
+const fetchedAsset = await client.file[':filename'].$get({
+  param: {
+    filename: 'hello.txt'
+  }
+})
 const res2 = await assetRoute.$get({
   param: {
     assetId: '1'
