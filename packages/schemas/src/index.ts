@@ -141,6 +141,9 @@ export type UserRole = z.TypeOf<typeof UserRoleSchema>;
 export const VisibilitySchema = z.enum(schema.VisibilityEnum.enumValues);
 export type Visibility = z.infer<typeof VisibilitySchema>;
 
+export const AssetTypeSchema = z.enum(schema.AssetTypeEnum.enumValues);
+export type AssetType = z.infer<typeof AssetTypeSchema>;
+
 // export type { Visibility } from 'database'
 
 const timestampKeys = {

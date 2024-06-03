@@ -7,7 +7,7 @@ import type { StreamId, UserId, VrSpaceId, AssetId, CameraId, PlacementId, Sende
 
 export const CameraTypeEnum = pgEnum("CameraType", ['panoramic360', 'normal'])
 // export const AssetFileFormat = pgEnum("AssetFileFormat", ['glb', 'png', 'jpg', 'jpeg', 'pdf',])
-export const AssetTypeEnum = pgEnum("AssetType", ['image', 'video', 'model', 'navmesh', 'document']);
+export const AssetTypeEnum = pgEnum("AssetType", ['image', 'video', 'model', 'navmesh', 'document', 'unknown']);
 export const PlacedObjectTypeEnum = pgEnum("PlacedObjectType", ['asset', 'vrPortal', 'streamPortal', 'externalLinkPortal', 'pointLight', 'directionalLight', 'ambientLight']);
 // export const PortalType = pgEnum("PortalType", ['vrSpace', 'stream', 'externalUrl']);
 export const RoleEnum = pgEnum("Role", ['gunnar', 'superadmin', 'admin', 'moderator', 'user', 'guest'])
@@ -234,7 +234,9 @@ export const assets = pgTable("Assets", {
 	assetId: uuid("assetId").defaultRandom().primaryKey().notNull().$type<AssetId>(),
 	assetType: AssetTypeEnum("assetType").notNull(),
 	originalFileName: text("originalFileName").notNull(),
-	generatedName: uuid("generatedName").unique().notNull(),
+	generatedName: text("generatedName").unique().notNull(),
+	size: doublePrecision("size"),
+	mimeType: text("mimeType"),
 	assetFileExtension: text("assetFileExtension").notNull(),
 	ownerUserId: uuid("ownerUserId").notNull().references(() => users.userId, { onDelete: "cascade", onUpdate: "cascade" }).$type<UserId>(),
 	// extraSettings: jsonb("extraSettings"),

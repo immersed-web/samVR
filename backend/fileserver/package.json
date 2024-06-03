@@ -1,28 +1,22 @@
 {
-  "name": "fileserver",
-  "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "start": "dotenv -e ../../.env node ./dist/index.js",
-    "dev": "dotenv -v DEVELOPMENT=true -e ../../.env tsx ./src/index.ts",
-    "build": "tsup-node",
-    "build:watch": "tsup-node --watch",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "@types/node": "^18.15.3"
+    "dev": "dotenv -e ../../.env tsx watch src/index.ts"
   },
   "dependencies": {
-    "@types/cors": "^2.8.12",
-    "@types/express": "^4.17.17",
-    "@types/formidable": "^2.0.5",
-    "cors": "^2.8.5",
-    "express": "^4.17.1",
-    "formidable": "^2.1.1",
-    "schemas": "workspace:*",
-    "shared-modules": "workspace:*"
+    "@hono-storage/core": "^0.0.12",
+    "@hono-storage/node-disk": "^0.0.14",
+    "@hono/node-server": "^1.11.2",
+    "database": "workspace:^",
+    "hono": "^4.4.2",
+    "hono-upload": "^0.2.0",
+    "http-status-ts": "^2.0.1",
+    "schemas": "workspace:^",
+    "write-file-atomic": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.17",
+    "@types/write-file-atomic": "^4.0.3",
+    "tsx": "^4.7.1"
   }
 }

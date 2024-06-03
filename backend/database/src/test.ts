@@ -2,6 +2,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./schema.js";
 import { eq } from "drizzle-orm";
+import bcrypt from 'bcrypt'
 
 if (!process.env.DATABASE_URL) {
   throw new Error('Missing DATABASE_URL env var');
@@ -23,11 +24,12 @@ const db = drizzle(queryClient, { schema });
 // async function createWithIncludes<T extends (typeof schema)[keyof typeof schema]>(includes: T) {
 
 // }
+const hashedPassword = bcrypt.hashSync('hemligt', 10);
 
 try {
   await db.transaction(async (tx) => {
     const newUser = await tx.insert(schema.users).values({
-      password: 'hemligt',
+      password: hashedPassword,
       username: 'klas',
       role: 'gunnar',
     }).returning();
