@@ -6,7 +6,8 @@ import { Hono } from 'hono'
 import { createMiddleware } from 'hono/factory'
 import { HTTPException } from 'hono/http-exception'
 import { basicAuth } from 'hono/basic-auth'
-import { jwt } from 'hono/jwt';
+import { jwt, verify } from 'hono/jwt';
+import { env } from 'hono/adapter';
 import { randomUUID } from 'crypto'
 import { Stream } from 'node:stream';
 import fs, { existsSync } from 'fs'
@@ -31,7 +32,15 @@ if (!user) {
   process.exit(1);
 }
 
-const app = new Hono().get('/', (c) => {
+const app = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
+  .use((c, next) => {
+    const { JWT_SECRET } = env<{ JWT_SECRET: string }>(c);
+    console.log(JWT_SECRET);
+    const mw = jwt({ secret: JWT_SECRET });
+
+    return mw(c, next);
+  })
+  .get('/', (c) => {
   return c.text('Hello Hono!')
 }).get('/file/:assetId', zValidator('param', z.object({ assetId: AssetIdSchema })), serveStatic({
   root: '../../public/uploads/3d_models/',
