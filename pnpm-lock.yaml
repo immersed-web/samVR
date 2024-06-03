@@ -261,34 +261,46 @@ importers:
 
   backend/fileserver:
     dependencies:
-      '@types/cors':
-        specifier: ^2.8.12
-        version: 2.8.17
-      '@types/express':
-        specifier: ^4.17.17
-        version: 4.17.21
-      '@types/formidable':
-        specifier: ^2.0.5
-        version: 2.0.6
-      cors:
-        specifier: ^2.8.5
-        version: 2.8.5
-      express:
-        specifier: ^4.17.1
-        version: 4.19.2
-      formidable:
-        specifier: ^2.1.1
-        version: 2.1.2
+      '@hono-storage/core':
+        specifier: ^0.0.12
+        version: 0.0.12(hono@4.4.2)
+      '@hono-storage/node-disk':
+        specifier: ^0.0.14
+        version: 0.0.14(hono@4.4.2)
+      '@hono/node-server':
+        specifier: ^1.11.2
+        version: 1.11.2
+      '@hono/zod-validator':
+        specifier: ^0.2.2
+        version: 0.2.2(hono@4.4.2)(zod@3.23.8)
+      database:
+        specifier: workspace:^
+        version: link:../database
+      hono:
+        specifier: ^4.4.2
+        version: 4.4.2
+      hono-upload:
+        specifier: ^0.2.0
+        version: 0.2.0
+      http-status-ts:
+        specifier: ^2.0.1
+        version: 2.0.1
       schemas:
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/schemas
-      shared-modules:
-        specifier: workspace:*
-        version: link:../../packages/shared-modules
+      write-file-atomic:
+        specifier: ^5.0.1
+        version: 5.0.1
     devDependencies:
       '@types/node':
-        specifier: ^18.15.3
-        version: 18.19.33
+        specifier: ^20.11.17
+        version: 20.12.13
+      '@types/write-file-atomic':
+        specifier: ^4.0.3
+        version: 4.0.3
+      tsx:
+        specifier: ^4.7.1
+        version: 4.10.4
 
   backend/fileserver2:
     dependencies:
@@ -1256,6 +1268,12 @@ packages:
     resolution: {integrity: sha512-JhX0nUC66GeDxpIdMKWDRMEwtQBa64CY907iAF1sYqb4m2p2PdSU7zkbnNhAZLg/6IjSlTuj6CF307JlBXVvpg==}
     engines: {node: '>=18.14.1'}
 
+  '@hono/zod-validator@0.2.2':
+    resolution: {integrity: sha512-dSDxaPV70Py8wuIU2QNpoVEIOSzSXZ/6/B/h4xA7eOMz7+AarKTSGV8E6QwrdcCbBLkpqfJ4Q2TmBO0eP1tCBQ==}
+    peerDependencies:
+      hono: '>=3.9.0'
+      zod: ^3.19.1
+
   '@humanwhocodes/config-array@0.11.14':
     resolution: {integrity: sha512-3T8LkOmg45BV5FICb15QQMsyUSWrQ8AygVfC7ZG32zOalnqrilm018ZVCw0eapXux8FtA33q8PSRSstjee3jSg==}
     engines: {node: '>=10.10.0'}
@@ -1609,9 +1627,6 @@ packages:
 
   '@types/express@4.17.21':
     resolution: {integrity: sha512-ejlPM315qwLpaQlQDTjPdsUFSc6ZsP4AN6AlWnogPjQ7CVi7PYF3YVz+CY3jE2pwYf7E/7HlDAN0rV2GxTG0HQ==}
-
-  '@types/formidable@2.0.6':
-    resolution: {integrity: sha512-L4HcrA05IgQyNYJj6kItuIkXrInJvsXTPC5B1i64FggWKKqSL+4hgt7asiSNva75AoLQjq29oPxFfU4GAQ6Z2w==}
 
   '@types/http-errors@2.0.4':
     resolution: {integrity: sha512-D0CFMMtydbJAegzOyHjtiKPLlvnm3iTZyZRSZoLq2mRhDdmLfIWOCYPfQJ4cu2erKghU++QvjcUjp/5h7hESpA==}
@@ -2121,9 +2136,6 @@ packages:
 
   as-number@1.0.0:
     resolution: {integrity: sha512-HkI/zLo2AbSRO4fqVkmyf3hms0bJDs3iboHqTrNuwTiCRvdYXM7HFhfhB6Dk51anV2LM/IMB83mtK9mHw4FlAg==}
-
-  asap@2.0.6:
-    resolution: {integrity: sha512-BSHWgDSAiKs50o2Re8ppvp3seVHXSRM44cdSsT9FfNEUUZLOGWVCsiWaRPWM1Znn+mqZ1OfVZ3z3DWEzSp7hRA==}
 
   assign-symbols@1.0.0:
     resolution: {integrity: sha512-Q+JC7Whu8HhmTdBph/Tq59IoRtoy6KAm5zzPv00WdujX82lbAL8K7WVjne7vdCsAmbF4AYaDOPyO3k0kl8qIrw==}
@@ -2903,9 +2915,6 @@ packages:
   devalue@4.3.3:
     resolution: {integrity: sha512-UH8EL6H2ifcY8TbD2QsxwCC/pr5xSwPvv85LrLXVihmHVC3T3YqTCIwnR5ak0yO1KYqlxrPVOA/JVZJYPy2ATg==}
 
-  dezalgo@1.0.4:
-    resolution: {integrity: sha512-rXSP0bf+5n0Qonsb+SVVfNfIsimO4HEtmnIpPHY8Q1UCzKlQrDMfdobr8nJOOsRgWCyMRqeSBQzmWUMq7zvVig==}
-
   didyoumean@1.2.2:
     resolution: {integrity: sha512-gxtyfqMg7GKyhQmb056K7M3xszy/myH8w+B4RT+QXBQsvAOdc3XymqDDPHx1BgPgsdAA5SIifona89YtRATDzw==}
 
@@ -3404,9 +3413,6 @@ packages:
     resolution: {integrity: sha512-buewHzMvYL29jdeQTVILecSaZKnt/RJWjoZCF5OW60Z67/GmSLBkOFM7qh1PI3zFNtJbaZL5eQu1vLfazOwj4g==}
     engines: {node: '>=12.20.0'}
 
-  formidable@2.1.2:
-    resolution: {integrity: sha512-CM3GuJ57US06mlpQ47YcunuUZ9jpm8Vx+P2CGt2j7HpgkKZO/DJYQ0Bobim8G6PFQmK5lOqOOdUXboU+h73A4g==}
-
   forwarded@0.2.0:
     resolution: {integrity: sha512-buRG0fpBtRHSTCOASe6hD258tEubFoRLb4ZNA6NxMVHNw2gOcwHo9wyablzMzOA5z9xA9L1KNjk/Nt6MT9aYow==}
     engines: {node: '>= 0.6'}
@@ -3634,10 +3640,6 @@ packages:
 
   heap@0.2.7:
     resolution: {integrity: sha512-2bsegYkkHO+h/9MGbn6KWcE45cHZgPANo5LXF7EvWdT0yT2EguSVO1nDgU5c8+ZOPwp2vMNa7YFsJhVcDR9Sdg==}
-
-  hexoid@1.0.0:
-    resolution: {integrity: sha512-QFLV0taWQOZtvIRIAdBChesmogZrtuXvVWsFHZTk2SU+anspqZ2vMnoLg7IE1+Uk16N19APic1BuF8bC8c2m5g==}
-    engines: {node: '>=8'}
 
   home-or-tmp@2.0.0:
     resolution: {integrity: sha512-ycURW7oUxE2sNiPVw1HVEFsW+ecOpJ5zaj7eC0RlwhibhRBod20muUN8qu/gzx956YrLolVvs1MTXwKgC2rVEg==}
@@ -4893,10 +4895,6 @@ packages:
 
   qs@6.11.0:
     resolution: {integrity: sha512-MvjoMCJwEarSbUYk5O+nmoSzSutSsTwF85zcHPQ9OrlFoZOYIjaqBAJIqIXjptyD5vThxGq52Xu/MaJzRkIk4Q==}
-    engines: {node: '>=0.6'}
-
-  qs@6.12.1:
-    resolution: {integrity: sha512-zWmv4RSuB9r2mYQw3zxQuHWeU+42aKi1wWig/j4ele4ygELZ7PEO6MM7rim9oAQH2A5MWfsAVf/jPvTPgCbvUQ==}
     engines: {node: '>=0.6'}
 
   quad-indices@2.0.1:
@@ -6433,6 +6431,11 @@ snapshots:
 
   '@hono/node-server@1.11.2': {}
 
+  '@hono/zod-validator@0.2.2(hono@4.4.2)(zod@3.23.8)':
+    dependencies:
+      hono: 4.4.2
+      zod: 3.23.8
+
   '@humanwhocodes/config-array@0.11.14':
     dependencies:
       '@humanwhocodes/object-schema': 2.0.3
@@ -6715,11 +6718,11 @@ snapshots:
   '@types/body-parser@1.19.5':
     dependencies:
       '@types/connect': 3.4.38
-      '@types/node': 18.19.33
+      '@types/node': 16.18.97
 
   '@types/connect@3.4.38':
     dependencies:
-      '@types/node': 18.19.33
+      '@types/node': 16.18.97
 
   '@types/cors@2.8.17':
     dependencies:
@@ -6739,7 +6742,7 @@ snapshots:
 
   '@types/express-serve-static-core@4.19.0':
     dependencies:
-      '@types/node': 18.19.33
+      '@types/node': 16.18.97
       '@types/qs': 6.9.15
       '@types/range-parser': 1.2.7
       '@types/send': 0.17.4
@@ -6755,27 +6758,23 @@ snapshots:
       '@types/qs': 6.9.15
       '@types/serve-static': 1.15.7
 
-  '@types/formidable@2.0.6':
-    dependencies:
-      '@types/node': 18.19.33
-
   '@types/http-errors@2.0.4': {}
 
   '@types/ini@4.1.0': {}
 
   '@types/ip@1.1.3':
     dependencies:
-      '@types/node': 18.19.33
+      '@types/node': 16.18.97
 
   '@types/json-schema@7.0.15': {}
 
   '@types/jsonwebtoken@8.5.9':
     dependencies:
-      '@types/node': 18.19.33
+      '@types/node': 16.18.97
 
   '@types/keyv@3.1.4':
     dependencies:
-      '@types/node': 18.19.33
+      '@types/node': 16.18.97
 
   '@types/lodash-es@4.17.12':
     dependencies:
@@ -6805,19 +6804,19 @@ snapshots:
 
   '@types/responselike@1.0.3':
     dependencies:
-      '@types/node': 18.19.33
+      '@types/node': 16.18.97
 
   '@types/semver@7.5.8': {}
 
   '@types/send@0.17.4':
     dependencies:
       '@types/mime': 1.3.5
-      '@types/node': 18.19.33
+      '@types/node': 16.18.97
 
   '@types/serve-static@1.15.7':
     dependencies:
       '@types/http-errors': 2.0.4
-      '@types/node': 18.19.33
+      '@types/node': 16.18.97
       '@types/send': 0.17.4
 
   '@types/stats.js@0.17.3': {}
@@ -6840,7 +6839,7 @@ snapshots:
 
   '@types/write-file-atomic@4.0.3':
     dependencies:
-      '@types/node': 18.19.33
+      '@types/node': 16.18.97
 
   '@typescript-eslint/eslint-plugin@5.62.0(@typescript-eslint/parser@5.62.0(eslint@9.3.0)(typescript@5.4.5))(eslint@9.3.0)(typescript@5.4.5)':
     dependencies:
@@ -7405,8 +7404,6 @@ snapshots:
     optional: true
 
   as-number@1.0.0: {}
-
-  asap@2.0.6: {}
 
   assign-symbols@1.0.0:
     optional: true
@@ -8538,11 +8535,6 @@ snapshots:
 
   devalue@4.3.3: {}
 
-  dezalgo@1.0.4:
-    dependencies:
-      asap: 2.0.6
-      wrappy: 1.0.2
-
   didyoumean@1.2.2: {}
 
   diff@4.0.2:
@@ -9229,13 +9221,6 @@ snapshots:
     dependencies:
       fetch-blob: 3.2.0
 
-  formidable@2.1.2:
-    dependencies:
-      dezalgo: 1.0.4
-      hexoid: 1.0.0
-      once: 1.4.0
-      qs: 6.12.1
-
   forwarded@0.2.0: {}
 
   fraction.js@4.3.7: {}
@@ -9496,8 +9481,6 @@ snapshots:
   he@1.2.0: {}
 
   heap@0.2.7: {}
-
-  hexoid@1.0.0: {}
 
   home-or-tmp@2.0.0:
     dependencies:
@@ -10631,10 +10614,6 @@ snapshots:
   punycode@2.3.1: {}
 
   qs@6.11.0:
-    dependencies:
-      side-channel: 1.0.6
-
-  qs@6.12.1:
     dependencies:
       side-channel: 1.0.6
 

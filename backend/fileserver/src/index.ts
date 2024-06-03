@@ -1,6 +1,7 @@
 import { serve } from '@hono/node-server'
 import { HttpStatus } from 'http-status-ts';
 import { serveStatic } from '@hono/node-server/serve-static'
+import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono'
 import { createMiddleware } from 'hono/factory'
 import { HTTPException } from 'hono/http-exception'
@@ -15,16 +16,13 @@ import { basicUserSelect, db, schema } from 'database'
 import { AssetIdSchema, AssetType, AssetTypeSchema, JwtPayload, UserId } from 'schemas'
 import { eq } from 'drizzle-orm';
 import path from 'path';
-
-const app = new Hono()
+import { z } from 'zod';
 
 const saveFolder = path.resolve('.', 'uploads', 'temp')
 
-app.get('/', (c) => {
-  return c.text('Hello Hono!')
-})
-
-const authHandler = basicAuth({ username: 'gunnar', password: 'hemligt' })
+// const authHandler = basicAuth({ username: 'gunnar', password: 'hemligt' })
+// const jwtHandler = jwt({ secret: 'secret' });
+// const jwtAuthHandler = createMiddleware<{ Variables: { jwtPayload: JwtPayload } }>(jwtHandler);
 
 const user = await db.query.users.findFirst({
   columns: basicUserSelect
@@ -33,24 +31,11 @@ if (!user) {
   process.exit(1);
 }
 
-const logRequest = createMiddleware(async (c, next) => {
-  console.log(await c.req.text());
-  console.log(c.req.header('authorization'));
-  console.log(c.req.param());
-  console.log(`${c.req.method}: ${c.req.path}`);
-  await next();
-})
-
-
-app.get('/file/:assetId', logRequest, authHandler, serveStatic({
+const app = new Hono().get('/', (c) => {
+  return c.text('Hello Hono!')
+}).get('/file/:assetId', zValidator('param', z.object({ assetId: AssetIdSchema })), serveStatic({
   root: '../../public/uploads/3d_models/',
-}))
-
-const jwtHandler = jwt({ secret: 'secret' });
-
-const jwtAuthHandler = createMiddleware<{ Variables: { jwtPayload: JwtPayload } }>(jwtHandler);
-
-app.delete('/delete', async (c, next) => {
+})).delete('/delete', async (c, next) => {
   const json = await c.req.json();
   const maybeAssetId = json['assetId'];
   const parseResult = AssetIdSchema.safeParse(maybeAssetId);
@@ -77,14 +62,13 @@ app.delete('/delete', async (c, next) => {
     })
     return c.text('file deleted', HttpStatus.OK);
   }
-})
-
-app.post('/upload', async (c, next) => {
+}).post('/upload', zValidator('form', z.object({ file: z.instanceof(File), assetType: AssetTypeSchema })), async (c, next) => {
   const body = await c.req.parseBody();
   const file = body['file']
   if (!(file instanceof File)) {
     // const badRequest = constants.HTTP_STATUS_BAD_REQUEST as StatusCode;
-    return c.text('no file found in request body', HttpStatus.BAD_REQUEST);
+    // return c.text('no file found in request body', HttpStatus.BAD_REQUEST);
+    return c.json({ error: 'no file found in request body' }, HttpStatus.BAD_REQUEST);
   }
   console.log(file.type);
   const extension = file.name.slice((file.name.lastIndexOf(".") - 1 >>> 0) + 2);
@@ -137,7 +121,7 @@ app.post('/upload', async (c, next) => {
     reject('upload failed', err);
   });
   await fileWritePromise;
-  const dbResponse = await db.insert(schema.assets).values({
+  const [dbResponse] = await db.insert(schema.assets).values({
     assetType,
     assetFileExtension: extension,
     generatedName: generatedName,
@@ -147,7 +131,10 @@ app.post('/upload', async (c, next) => {
     ownerUserId: user.userId,
   }).returning();
 
-  return c.text('file uploaded');
+  // return c.text('file uploaded');
+  return c.json({
+    assetId: dbResponse.assetId
+  }, HttpStatus.OK);
 });
 
 const port = 3000
@@ -157,3 +144,5 @@ serve({
   fetch: app.fetch,
   port
 })
+
+export type AppType = typeof app;
