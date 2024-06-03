@@ -23,7 +23,7 @@
   "dependencies": {
     "@vue/reactivity": "^3.2.47",
     "database": "workspace:*",
-    "date-fns": "^2.29.3",
+    "date-fns": "^3.0.0",
     "debug-level": "3.0.0-1",
     "h264-profile-level-id": "^2.0.0",
     "ip": "^1.1.8",

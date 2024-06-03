@@ -22,7 +22,7 @@
     "axios": "^1.7.2",
     "buffered-interpolation": "workspace:*",
     "database": "workspace:^",
-    "date-fns": "^2.30.0",
+    "date-fns": "^3.0.0",
     "devalue": "^4.3.3",
     "i": "^0.3.7",
     "jwt-decode": "^3.1.2",
