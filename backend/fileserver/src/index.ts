@@ -3,6 +3,7 @@ import { HttpStatus } from 'http-status-ts';
 import { serveStatic } from '@hono/node-server/serve-static'
 import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono'
+import { logger } from 'hono/logger';
 import { createMiddleware } from 'hono/factory'
 import { HTTPException } from 'hono/http-exception'
 import { basicAuth } from 'hono/basic-auth'
@@ -10,8 +11,8 @@ import { jwt, verify } from 'hono/jwt';
 import { env } from 'hono/adapter';
 import { randomUUID } from 'crypto'
 import { Stream } from 'node:stream';
-import fs, { existsSync } from 'fs'
-import fsPromises from 'fs/promises';
+import fs from 'fs'
+
 
 import { basicUserSelect, db, schema } from 'database'
 import { AssetIdSchema, AssetType, AssetTypeSchema, JwtPayload, UserId } from 'schemas'
@@ -19,7 +20,8 @@ import { eq } from 'drizzle-orm';
 import path from 'path';
 import { z } from 'zod';
 
-const saveFolder = path.resolve('.', 'uploads', 'temp')
+const savePathAbsolute = path.resolve('.', 'uploads')
+const savePathRelative = './uploads/'
 
 // const authHandler = basicAuth({ username: 'gunnar', password: 'hemligt' })
 // const jwtHandler = jwt({ secret: 'secret' });
@@ -33,44 +35,54 @@ if (!user) {
 }
 
 const app = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
+  // .use(logger())
+  // .use(async (c, next) => {
+  //   console.log(c.req.header());
+  //   return next();
+  // })
   .use((c, next) => {
     const { JWT_SECRET } = env<{ JWT_SECRET: string }>(c);
-    console.log(JWT_SECRET);
+    // console.log(c.env);
     const mw = jwt({ secret: JWT_SECRET });
 
     return mw(c, next);
   })
-  .get('/', (c) => {
-  return c.text('Hello Hono!')
-}).get('/file/:assetId', zValidator('param', z.object({ assetId: AssetIdSchema })), serveStatic({
-  root: '../../public/uploads/3d_models/',
-})).delete('/delete', async (c, next) => {
-  const json = await c.req.json();
-  const maybeAssetId = json['assetId'];
-  const parseResult = AssetIdSchema.safeParse(maybeAssetId);
-  // console.log(parseResult);
-  if (parseResult.success) {
-    // try {
+  .get('/file/*',
+    // async (c, next) => {
+    //   console.log(savePathRelative);
+    //   console.log(c.req.path);
+    //   await next();
+    // },
+    serveStatic({
+      rewriteRequestPath: (path) => {
+        const newPath = path.substring(5);
+        // console.log(newPath);
+        return newPath;
+      },
+      root: savePathRelative,
+    })
+  )
+  .delete('/delete', zValidator('json', z.object({ assetId: AssetIdSchema })), async (c, next) => {
+    const { assetId } = c.req.valid('json');
     const result = await db.transaction(async (tx) => {
       const foundAsset = await tx.query.assets.findFirst({
-        where: eq(schema.assets.assetId, parseResult.data),
+        where: eq(schema.assets.assetId, assetId),
       })
       if (!foundAsset) {
         throw new HTTPException(HttpStatus.NOT_FOUND, { message: 'no asset found in db' });
       }
 
-      const filePath = `${saveFolder}/${foundAsset.generatedName}`
-      const exists = existsSync(filePath);
+      const filePath = `${savePathAbsolute}/${foundAsset.generatedName}`
+      const exists = fs.existsSync(filePath);
       if (!exists) {
         console.error('no such file found. Apparently filesystem and db arent in sync.');
         throw new HTTPException(HttpStatus.INTERNAL_SERVER_ERROR, { message: 'no such file found' });
       }
-      await tx.delete(schema.assets).where(eq(schema.assets.assetId, parseResult.data));
+      await tx.delete(schema.assets).where(eq(schema.assets.assetId, assetId));
       await fs.promises.unlink(filePath);
       return;
     })
     return c.text('file deleted', HttpStatus.OK);
-  }
 }).post('/upload', zValidator('form', z.object({ file: z.instanceof(File), assetType: AssetTypeSchema })), async (c, next) => {
   const body = await c.req.parseBody();
   const file = body['file']
@@ -115,7 +127,7 @@ const app = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
   // const path = './uploads/temp/';
   const fileStream = file.stream();
   const nodeReadStream = Stream.Readable.fromWeb(fileStream);
-  const writeStream = fs.createWriteStream(`${saveFolder}/${generatedName}`);
+  const writeStream = fs.createWriteStream(`${savePathAbsolute}/${generatedName}`);
   nodeReadStream.pipe(writeStream);
 
   let resolve, reject;
@@ -141,9 +153,7 @@ const app = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
   }).returning();
 
   // return c.text('file uploaded');
-  return c.json({
-    assetId: dbResponse.assetId
-  }, HttpStatus.OK);
+  return c.json(dbResponse, HttpStatus.OK);
 });
 
 const port = 3000
