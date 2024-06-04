@@ -1,10 +1,13 @@
 // process.env.DEBUG = 'mediasoup*';
+// process.env.DEBUG_LEVEL = 'INFO'
 import { Log } from 'debug-level';
 const logUws = new Log('uWebSockets');
 process.env.DEBUG = 'uWebSockets*, ' + process.env.DEBUG;
+logUws.enable(process.env.DEBUG);
 const log = new Log('Index');
 process.env.DEBUG = 'Index*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
+
 
 import { attachMediasoupObservers } from './mediasoupObservers.js';
 let printSoupStats : (() => void) | undefined;
@@ -49,7 +52,7 @@ if(stdin && stdin.isTTY){
   stdin.setEncoding( 'utf8' );
 
   // on any data into stdin
-  stdin.on( 'data', function( key ){
+  stdin.on('data', function (key) {
     const asString = key.toString();
     // ctrl-c ( end of text )
     switch(asString){
