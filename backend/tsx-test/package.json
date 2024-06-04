@@ -8,7 +8,8 @@
     "dev": "dotenv -v DEVELOPMENT=true -e ../../.env tsx watch ./src/index.ts"
   },
   "dependencies": {
-    "database": "workspace:*"
+    "database": "workspace:*",
+    "debug-level": "3.0.0-1"
   },
   "keywords": [],
   "author": "",
