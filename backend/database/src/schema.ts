@@ -1,5 +1,5 @@
-import { AnyPgColumn } from "drizzle-orm/pg-core";
-import { pgTable, pgEnum, varchar, timestamp, text, integer, uniqueIndex, uuid, boolean, jsonb, foreignKey, real, doublePrecision, index, primaryKey } from "drizzle-orm/pg-core"
+import type { AnyPgColumn } from "drizzle-orm/pg-core";
+import { pgTable, pgEnum, varchar, timestamp, text, integer, uniqueIndex, uuid, boolean, json, jsonb, foreignKey, real, doublePrecision, index, primaryKey } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 import { relations } from "drizzle-orm/relations";
 
@@ -55,15 +55,16 @@ const createdAndUpdatedAt = {
 // 	})
 // }))
 
-export const sessions = pgTable("Sessions", {
-	id: text("id").primaryKey().notNull(),
-	sid: text("sid").notNull(),
-	data: text("data").notNull(),
-	expiresAt: timestamp("expiresAt", { precision: 3, mode: 'string' }).notNull(),
+export const session = pgTable("session", {
+	// id: text("id").primaryKey().notNull(),
+	sid: varchar("sid").primaryKey().notNull(),
+	sess: json("sess").notNull(),
+	expire: timestamp("expire", { precision: 6, mode: 'string' }).notNull(),
 },
 	(table) => {
 		return {
 			sid_key: uniqueIndex("Session_sid_key").on(table.sid),
+			IDX_session_expire: index("IDX_session_expire").on(table.expire),
 		}
 	});
 

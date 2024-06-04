@@ -7,6 +7,10 @@ import {default as Haikunator} from 'haikunator';
 import wordlist from './haikunator-wordlist.js';
 import { extractMessageFromCatch } from 'shared-modules/utilFns';
 import session from 'express-session';
+// import { Pool } from 'pg';
+import pg from 'pg';
+const { Pool } = pg;
+import connectPgSimple from "connect-pg-simple";
 // import { PrismaSessionStore } from '@quixo3/prisma-session-store';
 // import prisma from './prismaClient.js';
 // import createApiRouter from './apiRoutes';
@@ -77,6 +81,14 @@ if (!process.env.SESSION_KEY) {
 // });
 
 // TODO: use a store for persisting sessions, preferably compatible with drizzle
+const sessionDBAccess = new Pool({
+  user: 'postgres',
+  password: process.env.DATABASE_PASSWORD,
+  host: 'localhost',
+  port: 5432,
+  database: process.env.DATABASE_NAME,
+})
+const pgSession = connectPgSimple(session);
 app.use(session({
   secret: process.env.SESSION_KEY,
   cookie: {
@@ -88,6 +100,10 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   // store: prismaSessionStore
+  store: new pgSession({
+    pool: sessionDBAccess,
+    tableName: 'session',
+  })
 }),
 );
 const userRouter = createUserRouter();
