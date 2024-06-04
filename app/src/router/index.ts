@@ -55,6 +55,12 @@ const router = createRouter({
           meta: { requiredRole: 'guest', requiredConnection: 'client' },
           component: () => import('@/views/public/StreamListView.vue'),
         },
+        {
+          name: 'vrList',
+          path: 'vrSpaces',
+          meta: { requiredRole: 'guest', requiredConnection: 'client' },
+          component: () => import('@/views/public/VrListView.vue'),
+        },
       ],
     },
     {
