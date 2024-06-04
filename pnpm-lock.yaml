@@ -311,46 +311,6 @@ importers:
         specifier: ^4.7.1
         version: 4.10.4
 
-  backend/fileserver2:
-    dependencies:
-      '@hono-storage/core':
-        specifier: ^0.0.12
-        version: 0.0.12(hono@4.4.2)
-      '@hono-storage/node-disk':
-        specifier: ^0.0.14
-        version: 0.0.14(hono@4.4.2)
-      '@hono/node-server':
-        specifier: ^1.11.2
-        version: 1.11.2
-      database:
-        specifier: workspace:^
-        version: link:../database
-      hono:
-        specifier: ^4.4.2
-        version: 4.4.2
-      hono-upload:
-        specifier: ^0.2.0
-        version: 0.2.0
-      http-status-ts:
-        specifier: ^2.0.1
-        version: 2.0.1
-      schemas:
-        specifier: workspace:^
-        version: link:../../packages/schemas
-      write-file-atomic:
-        specifier: ^5.0.1
-        version: 5.0.1
-    devDependencies:
-      '@types/node':
-        specifier: ^20.11.17
-        version: 20.12.13
-      '@types/write-file-atomic':
-        specifier: ^4.0.3
-        version: 4.0.3
-      tsx:
-        specifier: ^4.7.1
-        version: 4.10.4
-
   backend/mediaserver:
     dependencies:
       '@vue/reactivity':
@@ -417,6 +377,9 @@ importers:
       database:
         specifier: workspace:*
         version: link:../database
+      debug-level:
+        specifier: 3.0.0-1
+        version: 3.0.0-1
 
   packages/buffered-interpolation:
     dependencies:
