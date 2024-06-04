@@ -36,17 +36,24 @@ const router = createRouter({
     {
       path: '/enter',
       name: 'enter',
-      component: () => import('@/views/StartPage.vue'),
+      component: () => import('@/views/public/EnterView.vue'),
     },
+    // simpleLayout routes
     {
       path: '/',
       component: () => import('@/layouts/SimpleLayout.vue'),
       children: [
         {
-          name: 'venueList',
           path: '',
+          name: 'start',
           meta: { requiredRole: 'guest', requiredConnection: 'client' },
-          component: () => import('@/views/public/VenueListView.vue'),
+          component: () => import('@/views/public/StartView.vue'),
+        },
+        {
+          name: 'streamList',
+          path: 'streams',
+          meta: { requiredRole: 'guest', requiredConnection: 'client' },
+          component: () => import('@/views/public/StreamListView.vue'),
         },
       ],
     },
@@ -70,14 +77,14 @@ const router = createRouter({
       component:  () => import('@/layouts/EmptyLayout.vue'),
       children: [
         {
-          path: 'venue/:venueId',
+          path: 'stream/:streamId',
           props: true,
           meta: { mustBeInVenue: true},
           children: [
             {
               path: '',
-              name: 'userVenue',
-              component:  () => import('@/views/user/UserVenueView.vue'),
+              name: 'userStream',
+              component: () => import('@/views/user/UserStreamView.vue'),
               props: true,
             },
             {
@@ -103,7 +110,7 @@ const router = createRouter({
         {
           path: '',
           name: 'userHome',
-          redirect: { name: 'venueList'},
+          redirect: { name: 'streamList' },
           // component:  () => import('@/views/user/UserHomeView.vue'),
         },
         {
