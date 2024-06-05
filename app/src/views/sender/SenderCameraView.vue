@@ -3,27 +3,18 @@
     {{ senderStore.senderId }}
   </pre> -->
   <div class="flex gap-3 items-center">
-    <div
-      class="my-6 text-2xl"
-    >
-      <span class="">Sänder till: </span><span class="font-bold">{{ venueStore.currentVenue?.name }}</span>
+    <div class="my-6 text-2xl">
+      <span class="">Sänder till: </span><span class="font-bold">{{ venueStore.currentStream?.name }}</span>
     </div>
-    <button
-      @click="$router.replace({name: 'senderPickVenue'})"
-      class="btn btn-sm btn-primary"
-    >
+    <button @click="$router.replace({ name: 'senderPickVenue' })" class="btn btn-sm btn-primary">
       Byt evenemang
     </button>
   </div>
-  <div v-if="!venueStore.currentVenue">
+  <div v-if="!venueStore.currentStream">
     Väntar på att evenemanget ska laddas...
   </div>
   <template v-else>
-    <button
-      v-if="permissionState !== 'granted'"
-      @click="requestPermission"
-      class="btn"
-    >
+    <button v-if="permissionState !== 'granted'" @click="requestPermission" class="btn">
       Request camera access
     </button>
     <div v-else>
@@ -34,17 +25,11 @@
       </pre> -->
       <div class="form-control w-fit mb-6">
         <label class="label cursor-pointer">
-          <input
-            v-model="senderStore.stereoAudio"
-            type="checkbox"
-            class="toggle toggle-primary"
-          >
-          <span class="label-text flex items-center ml-2">Stereoljud<span
-            class="tooltip cursor-help flex items-center"
-            data-tip="Tänk på att stereo kräver mer bandbredd så använd bara om nödvändigt"
-          >
-            <span class="material-icons">info</span>
-          </span>
+          <input v-model="senderStore.stereoAudio" type="checkbox" class="toggle toggle-primary">
+          <span class="label-text flex items-center ml-2">Stereoljud<span class="tooltip cursor-help flex items-center"
+              data-tip="Tänk på att stereo kräver mer bandbredd så använd bara om nödvändigt">
+              <span class="material-icons">info</span>
+            </span>
           </span>
         </label>
       </div>
@@ -53,15 +38,8 @@
           <label>
             Videokälla:
           </label>
-          <select
-            v-model="pickedVideoInput"
-            class="select select-bordered"
-          >
-            <option
-              v-for="(device, key) in videoDevices"
-              :key="key"
-              :value="device"
-            >
+          <select v-model="pickedVideoInput" class="select select-bordered">
+            <option v-for="(device, key) in videoDevices" :key="key" :value="device">
               {{ device.label }}
             </option>
           </select>
@@ -70,15 +48,8 @@
           <label>
             Ljudkälla:
           </label>
-          <select
-            v-model="pickedAudioInput"
-            class="select select-bordered"
-          >
-            <option
-              v-for="(device, key) in audioDevices"
-              :key="key"
-              :value="device"
-            >
+          <select v-model="pickedAudioInput" class="select select-bordered">
+            <option v-for="(device, key) in audioDevices" :key="key" :value="device">
               {{ device.label }}
             </option>
           </select>
@@ -86,54 +57,26 @@
       </div>
       <div class="w-fit mt-6">
         <label class="label cursor-pointer">
-          <input
-            v-model="cropIsActive"
-            type="checkbox"
-            class="toggle"
-          >
-              
+          <input v-model="cropIsActive" type="checkbox" class="toggle">
+
           <span class="label-text ml-2">Avgränsa sändarvinkel</span>
-          <div
-            class="tooltip cursor-help flex items-center"
-            data-tip="Kräver mer prestanda här på på sändarsidan eftersom datorn måste beskära varje videoframe i realtid"
-          >
+          <div class="tooltip cursor-help flex items-center"
+            data-tip="Kräver mer prestanda här på på sändarsidan eftersom datorn måste beskära varje videoframe i realtid">
             <span class="material-icons">info</span>
           </div>
         </label>
       </div>
-      <div
-        id="video-crop-container"
-        class="w-full"
-      >
+      <div id="video-crop-container" class="w-full">
         <div class="">
           <!-- NOTE: Be sure to keep the slider at step size 5. Otherwise you might end up with a weird chrome? bug in the worker were "x is not sample aligned in plane 1" -->
-          <tc-range-slider
-            v-show="cropIsActive"
-            ref="FOVSlider"
-            round="0"
-            slider-width="100%"
-            slider-height="1rem"
-            value1="0"
-            value2="100"
-            step="5"
-            mousewheel-disabled="true"
-          />
+          <tc-range-slider v-show="cropIsActive" ref="FOVSlider" round="0" slider-width="100%" slider-height="1rem"
+            value1="0" value2="100" step="5" mousewheel-disabled="true" />
         </div>
-        <video
-          :style="videoStyle"
-          autoplay
-          ref="videoTag"
-        />
+        <video :style="videoStyle" autoplay ref="videoTag" />
       </div>
-      <div
-        class="absolute"
-        v-if="soup.videoProducer.stats"
-      >
-        <pre
-          class="relative max-w-full whitespace-pre-wrap"
-          v-for="(entry, key) in soup.videoProducer.stats"
-          :key="key"
-        >
+      <div class="absolute" v-if="soup.videoProducer.stats">
+        <pre class="relative max-w-full whitespace-pre-wrap" v-for="(entry, key) in soup.videoProducer.stats"
+          :key="key">
           {{ key }}: {{ entry }}
         </pre>
       </div>

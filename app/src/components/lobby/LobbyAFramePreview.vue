@@ -144,49 +144,49 @@ watch(() => props.cursorTarget, (cTarget) => {
   }
 });
 const entrancePosString = computed(() => {
-  const posArr = venueStore.currentVenue?.vrSpace?.virtualSpace3DModel?.entrancePosition;
+  const posArr = venueStore.currentStream?.vrSpace?.virtualSpace3DModel?.entrancePosition;
   if(!posArr) return undefined;
   const v = new AFRAME.THREE.Vector3(...posArr as [number, number, number]);
   return AFRAME.utils.coordinates.stringify(v);
 });
 
 const entranceRotation = computed(() => {
-  if(!venueStore.currentVenue?.vrSpace?.virtualSpace3DModel?.entranceRotation) return 0;
-  return venueStore.currentVenue.vrSpace.virtualSpace3DModel.entranceRotation;
+  if (!venueStore.currentStream?.vrSpace?.virtualSpace3DModel?.entranceRotation) return 0;
+  return venueStore.currentStream.vrSpace.virtualSpace3DModel.entranceRotation;
 });
 
 const spawnPosString = computed(() => {
-  const posArr = venueStore.currentVenue?.vrSpace?.virtualSpace3DModel?.spawnPosition;
-  if(!posArr) return undefined;
+  const posArr = venueStore.currentStream?.vrSpace?.virtualSpace3DModel?.spawnPosition;
+  if (!posArr) return undefined;
   const v = new AFRAME.THREE.Vector3(...posArr as [number, number, number]);
   return AFRAME.utils.coordinates.stringify(v);
 });
 
 const spawnRadius = computed(() => {
-  if(!venueStore.currentVenue?.vrSpace?.virtualSpace3DModel?.spawnRadius) return 0.2;
-  return venueStore.currentVenue.vrSpace.virtualSpace3DModel.spawnRadius;
+  if (!venueStore.currentStream?.vrSpace?.virtualSpace3DModel?.spawnRadius) return 0.2;
+  return venueStore.currentStream.vrSpace.virtualSpace3DModel.spawnRadius;
 });
 
 const skyColor = computed(() => {
-  if(!venueStore.currentVenue?.vrSpace?.virtualSpace3DModel.skyColor) return 'lightskyblue'
-  return venueStore.currentVenue?.vrSpace?.virtualSpace3DModel.skyColor;
+  if (!venueStore.currentStream?.vrSpace?.virtualSpace3DModel.skyColor) return 'lightskyblue'
+  return venueStore.currentStream?.vrSpace?.virtualSpace3DModel.skyColor;
 })
 
-function onIntersection(evt: DetailEvent<any>){
-  console.log('model hovered',evt);
+function onIntersection(evt: DetailEvent<any>) {
+  console.log('model hovered', evt);
   const point: THREE.Vector3 = evt.detail.intersection.point;
-  if(!point) {
+  if (!point) {
     console.error('no point from intersection event');
     return;
   }
-  if(props.cursorTarget === 'spawnPosition'){
-    if(venueStore.currentVenue?.vrSpace?.virtualSpace3DModel){
-      venueStore.currentVenue.vrSpace.virtualSpace3DModel.spawnPosition = point.toArray();
+  if (props.cursorTarget === 'spawnPosition') {
+    if (venueStore.currentStream?.vrSpace?.virtualSpace3DModel) {
+      venueStore.currentStream.vrSpace.virtualSpace3DModel.spawnPosition = point.toArray();
     }
   }
-  if(props.cursorTarget === 'entrancePosition'){
-    if(venueStore.currentVenue?.vrSpace?.virtualSpace3DModel){
-      venueStore.currentVenue.vrSpace.virtualSpace3DModel.entrancePosition = point.toArray();
+  if (props.cursorTarget === 'entrancePosition') {
+    if (venueStore.currentStream?.vrSpace?.virtualSpace3DModel) {
+      venueStore.currentStream.vrSpace.virtualSpace3DModel.entrancePosition = point.toArray();
     }
   }
   // if(!cursorTag.value) return;

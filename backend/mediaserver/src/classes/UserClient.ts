@@ -31,7 +31,7 @@ export class UserClient extends BaseClient {
   constructor(...args: ConstructorParameters<typeof BaseClient>){
     super(...args);
     log.info(`Creating user client ${this.username} (${this.connectionId})`);
-    log.debug('dbData:', this.prismaData.value);
+    log.debug('dbData:', this.dbData.value);
 
 
     effect(() => {
@@ -56,7 +56,7 @@ export class UserClient extends BaseClient {
   unload() {
     log.info(`unloading user client ${ this.username } ${this.connectionId} `);
     super.unload();
-    this.leaveCurrentVenue();
+    this.leaveCurrentStream();
   }
 
   private currentCameraId?: CameraId;
@@ -107,7 +107,7 @@ export class UserClient extends BaseClient {
 
   async loadPrismaDataAndNotifySelf(reason?: string) {
     const updatedDbUser = await loadUserDBData(this.userId);
-    this.prismaData.value = updatedDbUser;
+    this.dbData.value = updatedDbUser;
     this._onClientStateUpdated(reason);
   }
 
@@ -118,11 +118,12 @@ export class UserClient extends BaseClient {
     }
     log.info(`emitting clientState for ${this.username} (${this.connectionId}) to itself`);
     // we emit the new clientstate to the client itself.
+    // this.eventSender.test('test');
     this.userClientEvent.emit('myStateUpdated', {myState: this.getPublicState(), reason });
   }
 
-  async joinVenue(streamId: StreamId) {
-    this.leaveCurrentVenue();
+  async joinStream(streamId: StreamId) {
+    this.leaveCurrentStream();
     // const venue = await Venue.getPublicVenue(venueId, this.userId);
     const stream = Venue.getVenue(streamId);
     stream.addClient(this);
@@ -132,7 +133,7 @@ export class UserClient extends BaseClient {
     return stream.getPublicState();
   }
 
-  leaveCurrentVenue() {
+  leaveCurrentStream() {
     if(!this.venue) {
       return false;
       // throw Error('cant leave a venue if you are not in one!');

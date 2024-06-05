@@ -3,14 +3,11 @@
     <div class="flex items-center justify-between mb-4">
       <div class="">
         <h1>
-          {{ venueStore.currentVenue?.name }}
+          {{ venueStore.currentStream?.name }}
         </h1>
       </div>
       <div>
-        <button
-          class="btn btn-error"
-          @click="deleteVenue"
-        >
+        <button class="btn btn-error" @click="deleteVenue">
           <span class="mr-2 material-icons">delete</span>
           Ta bort event
         </button>
@@ -18,19 +15,14 @@
     </div>
     <StepsContainer>
       <!-- Visibility -->
-      <StepsItem
-        :icon="venueStore.currentVisibilityDetails?.icon"
-      >
+      <StepsItem :icon="venueStore.currentVisibilityDetails?.icon">
         <template #title>
           Synlighet: {{ venueStore.currentVisibilityDetails?.name }}
         </template>
         {{ venueStore.currentVisibilityDetails?.description }}
         <div v-auto-animate>
-          <button
-            v-if="venueStore.currentVenue?.visibility !== 'private' "
-            class="btn btn-primary btn-sm flex justify-between"
-            @click="goToVenue()"
-          >
+          <button v-if="venueStore.currentStream?.visibility !== 'private'"
+            class="btn btn-primary btn-sm flex justify-between" @click="goToVenue()">
             Eventets webbplats
             <span class="ml-2 material-icons">open_in_new</span>
           </button>
@@ -38,34 +30,28 @@
       </StepsItem>
 
       <!-- Lobby -->
-      <StepsItem
-        icon="nightlife"
-      >
+      <StepsItem icon="nightlife">
         <template #title>
-          <span
-            class="material-icons text-sm"
-            :class="adminStore.realDoorsAreOpen ? 'text-green-500' : 'text-red-500'"
-          >circle</span>
+          <span class="material-icons text-sm"
+            :class="adminStore.realDoorsAreOpen ? 'text-green-500' : 'text-red-500'">circle</span>
           Lobbyn är {{ adminStore.realDoorsAreOpen ? 'öppen' : 'stängd' }}
         </template>
         <div v-auto-animate>
-          <div v-if="venueStore.currentVenue?.doorsOpeningTime">
+          <div v-if="venueStore.currentStream?.doorsOpeningTime">
             <span>Listad öppningstid: </span>
-            <strong> {{ venueStore.currentVenue?.doorsOpeningTime?.toLocaleString() }}</strong>
+            <strong> {{ venueStore.currentStream?.doorsOpeningTime?.toLocaleString() }}</strong>
           </div>
         </div>
         <div v-auto-animate>
-          <div v-if="!venueStore.currentVenue?.doorsAutoOpen">
+          <div v-if="!venueStore.currentStream?.doorsAutoOpen">
             <div>
-              {{ venueStore.currentVenue?.doorsOpeningTime ? 'Ni öppnar lobbyn manuellt vid utsatt tid.' : 'Om ni önskar, kan ni öppna lobbyn manuellt' }}
+              {{ venueStore.currentStream?.doorsOpeningTime ? 'Ni öppnar lobbyn manuellt vid utsatt tid.' : 'Om ni
+              önskar, kan ni öppna lobbyn manuellt' }}
             </div>
             <div class="">
-              <button
-                class="btn btn-sm"
-                :class="!venueStore.doorsAreOpen ? 'btn-primary' : 'btn-error'"
-                @click="updateDoors(!venueStore.currentVenue?.doorsManuallyOpened)"
-              >
-                {{ !venueStore.currentVenue?.doorsManuallyOpened ? "Öppna" : "Stäng" }} lobbyn
+              <button class="btn btn-sm" :class="!venueStore.doorsAreOpen ? 'btn-primary' : 'btn-error'"
+                @click="updateDoors(!venueStore.currentStream?.doorsManuallyOpened)">
+                {{ !venueStore.currentStream?.doorsManuallyOpened ? "Öppna" : "Stäng" }} lobbyn
               </button>
             </div>
           </div>
@@ -76,76 +62,53 @@
       </StepsItem>
 
       <!-- Streaming starts -->
-      <StepsItem
-        icon="curtains"
-      >
+      <StepsItem icon="curtains">
         <template #title>
-          <span
-            class="material-icons text-sm"
-            :class="venueStore.streamIsActive ? 'text-green-500' : 'text-red-500'"
-          >circle</span>
+          <span class="material-icons text-sm"
+            :class="venueStore.streamIsActive ? 'text-green-500' : 'text-red-500'">circle</span>
           Sändningen är {{ venueStore.streamIsActive ? 'igång' : 'ej igång' }}
         </template>
         <div v-auto-animate>
-          <div v-if="venueStore.currentVenue?.streamStartTime">
+          <div v-if="venueStore.currentStream?.streamStartTime">
             <span>Listad starttid: </span>
-            <strong> {{ venueStore.currentVenue?.streamStartTime?.toLocaleString() }}</strong>
+            <strong> {{ venueStore.currentStream?.streamStartTime?.toLocaleString() }}</strong>
           </div>
         </div>
         <div v-auto-animate>
-          <div v-if="!venueStore.currentVenue?.streamAutoStart">
+          <div v-if="!venueStore.currentStream?.streamAutoStart">
             <div>
-              {{ venueStore.currentVenue?.streamStartTime ? 'Ni startar sändningen manuellt vid utsatt tid.' : 'Om ni önskar, kan ni starta sändningen manuellt' }}
+              {{ venueStore.currentStream?.streamStartTime ? 'Ni startar sändningen manuellt vid utsatt tid.' : 'Om ni
+              önskar, kan ni starta sändningen manuellt' }}
             </div>
             <div>
-              <button
-                class="btn btn-primary btn-sm"
-                @click="startStream"
-                :disabled="!!venueStore.streamIsActive"
-              >
+              <button class="btn btn-primary btn-sm" @click="startStream" :disabled="!!venueStore.streamIsActive">
                 Starta sändning
               </button>
             </div>
           </div>
-          <div
-            v-else
-            class="flex-1"
-          >
+          <div v-else class="flex-1">
             Sändningen startar automatiskt vid utsatt tid.
           </div>
         </div>
       </StepsItem>
 
       <!-- Event ends -->
-      <StepsItem
-        title="Manuellt avslut"
-        icon="curtains_closed"
-      >
+      <StepsItem title="Manuellt avslut" icon="curtains_closed">
         <template #title>
           Avsluta sändning
         </template>
         <div class="flex-1">
           Ni avslutar sändningen manuellt när ni önskar.
         </div>
-        <div
-          class=""
-        >
-          <button
-            class="btn btn-error btn-sm"
-            @click="endStream"
-            :disabled="!venueStore.streamIsActive"
-          >
+        <div class="">
+          <button class="btn btn-error btn-sm" @click="endStream" :disabled="!venueStore.streamIsActive">
             Avsluta sändning
           </button>
         </div>
       </StepsItem>
 
       <!-- Event has ended -->
-      <StepsItem
-        icon="door_front"
-        :last="true"
-        tooltip="Eventet är avslutat."
-      />
+      <StepsItem icon="door_front" :last="true" tooltip="Eventet är avslutat." />
     </StepsContainer>
 
     <div class="divider" />
@@ -217,13 +180,13 @@ onUnmounted(async () => {
 const deleteVenue = async () => {
   await adminStore.deleteCurrentVenue();
   // TODO: quick hack to make sure venuelist is updated...
-  await clientStore.fetchClientState();
+  // await clientStore.fetchClientState();
   router.push({name: 'adminHome'});
 };
 
 async function goToVenue(){
   // await venueStore.joinVenue(venueId);
-  const id = venueStore.currentVenue?.venueId;
+  const id = venueStore.currentStream?.streamId;
   const routeData = router.resolve({name: 'userVenue', params: { venueId: id }});
   window.open(routeData.href, '_blank');
 }

@@ -34,7 +34,7 @@ onBeforeMount(async () => {
 });
 
 function tryToJoinAndEnterCamera(venue: Venue){
-  venueStore.savedVenueId = venue.venueId as StreamId;
+  venueStore.savedStreamId = venue.venueId as StreamId;
   router.push({name: 'senderHome'});
 }
 

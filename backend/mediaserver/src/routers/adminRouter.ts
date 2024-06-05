@@ -53,7 +53,7 @@ export const adminRouter = router({
   }),
   loadAndJoinVenue: atLeastModeratorP.input(z.object({ streamId: StreamIdSchema })).mutation(async ({ input, ctx }) => {
     const venue = await Venue.loadStream(input.streamId, ctx.userId);
-    const vState = await ctx.client.joinVenue(input.streamId);
+    const vState = await ctx.client.joinStream(input.streamId);
     const adminOnlyState = venue.getAdminOnlyState();
     return {publicVenueState: vState, adminOnlyVenueState: adminOnlyState};
   }),

@@ -82,7 +82,7 @@ const venueStore = useVenueStore();
 const authStore = useAuthStore();
 
 const modelExists = computed(() => {
-  return props.modelType === 'model' ? !!venueStore.currentVenue?.vrSpace?.virtualSpace3DModel?.modelFileFormat : !!venueStore.currentVenue?.vrSpace?.virtualSpace3DModel?.navmeshFileFormat;
+  return props.modelType === 'model' ? !!venueStore.currentStream?.vrSpace?.virtualSpace3DModel?.modelFileFormat : !!venueStore.currentStream?.vrSpace?.virtualSpace3DModel?.navmeshFileFormat;
 });
 
 const config = {
@@ -93,9 +93,9 @@ const config = {
 };
 
 const uploadedFileName = computed(() => {
-  const modelId = venueStore.currentVenue?.vrSpace?.virtualSpace3DModelId;
-  const modelFileFormat = venueStore.currentVenue?.vrSpace?.virtualSpace3DModel?.modelFileFormat;
-  const navmeshFileFormat = venueStore.currentVenue?.vrSpace?.virtualSpace3DModel?.navmeshFileFormat;
+  const modelId = venueStore.currentStream?.vrSpace?.virtualSpace3DModelId;
+  const modelFileFormat = venueStore.currentStream?.vrSpace?.virtualSpace3DModel?.modelFileFormat;
+  const navmeshFileFormat = venueStore.currentStream?.vrSpace?.virtualSpace3DModel?.navmeshFileFormat;
   const fileFormat = props.modelType === 'model' ? modelFileFormat : navmeshFileFormat;
   if(!modelId || !fileFormat) {
     return undefined;
@@ -148,7 +148,7 @@ const uploadFile = async () => {
       // });
       pickedFile.value = undefined;
 
-      if(!venueStore.currentVenue?.vrSpace?.virtualSpace3DModelId){
+      if (!venueStore.currentStream?.vrSpace?.virtualSpace3DModelId) {
         console.error('no virtualSpace3DModelId');
         return;
       }
@@ -160,7 +160,7 @@ const uploadFile = async () => {
           'Content-Type': 'multipart/form-data;',
           'token': authStore.tokenOrThrow(),
           // 'venueId': venueStore.currentVenue.venueId,
-          'model-id': venueStore.currentVenue.vrSpace.virtualSpace3DModelId,
+          'model-id': venueStore.currentStream.vrSpace.virtualSpace3DModelId,
           'file-name-suffix': props.modelType,
         },
         signal: ctl.signal,
@@ -198,7 +198,7 @@ const uploadFile = async () => {
 // };
 
 const update3DModel = async (extension: 'gltf' | 'glb' | null) => {
-  const modelId = venueStore.currentVenue?.vrSpace?.virtualSpace3DModelId;
+  const modelId = venueStore.currentStream?.vrSpace?.virtualSpace3DModelId;
   if(!modelId) return;
   await connectionStore.client.vr.update3DModel.mutate({
     vr3DModelId: modelId,

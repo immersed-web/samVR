@@ -349,6 +349,9 @@ importers:
       tozod:
         specifier: ^3.0.0
         version: 3.0.0(zod@3.23.8)
+      ts-event-bridge:
+        specifier: ^0.0.3
+        version: 0.0.3
       uWebSockets.js:
         specifier: github:uNetworking/uWebSockets.js#v20.43.0
         version: https://codeload.github.com/uNetworking/uWebSockets.js/tar.gz/1977b5039938ad863d42fc4958d48c17e5a1fa06
@@ -5457,6 +5460,9 @@ packages:
   ts-dedent@2.2.0:
     resolution: {integrity: sha512-q5W7tVM71e2xjHZTlgfTDoPF/SmqKG5hddq9SzR49CH2hayqRKJtQ4mtRlSxKaJlR/+9rEM+mnBHf7I2/BQcpQ==}
     engines: {node: '>=6.10'}
+
+  ts-event-bridge@0.0.3:
+    resolution: {integrity: sha512-NZgwPRIsID9eGZM51rk6vbhDVI9pA4FiInBz9bDsgV1YY6uPLfqEbcwilUmAX88FRjsf5eHRD92n5rIjS2PWug==}
 
   ts-graphviz@1.8.2:
     resolution: {integrity: sha512-5YhbFoHmjxa7pgQLkB07MtGnGJ/yhvjmc9uhsnDBEICME6gkPf83SBwLDQqGDoCa3XzUMWLk1AU2Wn1u1naDtA==}
@@ -11301,6 +11307,8 @@ snapshots:
       typescript: 5.4.5
 
   ts-dedent@2.2.0: {}
+
+  ts-event-bridge@0.0.3: {}
 
   ts-graphviz@1.8.2: {}
 

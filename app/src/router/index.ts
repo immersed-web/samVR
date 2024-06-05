@@ -241,7 +241,7 @@ router.beforeEach(async (to, from) => {
       if (to.meta.requiredConnectionType === 'client') {
         connectionStore.createUserClient();
         const clientStore = useClientStore();
-        clientStore.fetchClientState();
+        // clientStore.fetchClientState();
       } else {
         connectionStore.createSenderClient();
         const senderStore = useSenderStore();
@@ -259,10 +259,10 @@ router.beforeEach(async (to, from) => {
     console.log('Entering route that requires to be in a venue.');
     const venueStore = useVenueStore();
 
-    if(!venueStore.currentVenue || venueStore.currentVenue.venueId !== venueStore.savedVenueId){
+    if (!venueStore.currentStream || venueStore.currentStream.streamId !== venueStore.savedStreamId) {
       // await connectionStore.firstConnectionEstablished;
-      const venueId = venueStore.savedVenueId ?? to.params.venueId as StreamId | undefined;
-      if(!venueId){
+      const streamId = venueStore.savedStreamId ?? to.params.streamId;
+      if (!streamId) {
         if(to.meta.pickVenueRouteName) return { name: to.meta.pickVenueRouteName};
         const routeName = `${authStore.routePrefix}Home`;
         return { name: routeName};
@@ -272,7 +272,7 @@ router.beforeEach(async (to, from) => {
         const adminStore = useAdminStore();
         try{
           console.log('Trying to loadAndJoinVenueAsAdmin');
-          await adminStore.loadAndJoinVenueAsAdmin(venueId);
+          await adminStore.loadAndJoinVenueAsAdmin(streamId);
         } catch (e) {
           console.log(e);
           if(to.meta.pickVenueRouteName) return { name: to.meta.pickVenueRouteName};
@@ -283,13 +283,13 @@ router.beforeEach(async (to, from) => {
       }else{
         console.log('Trying to loadAndJoinVenue');
         // await venueStore.joinVenue(venueStore.savedVenueId);
-        await venueStore.loadAndJoinVenue(venueId);
+        await venueStore.loadAndJoinVenue(streamId);
       }
     }
-    const venueName = venueStore.currentVenue?.name;
+    const venueName = venueStore.currentStream?.name;
     if(venueName){
       // console.log('Setting new title');
-      windowTitle.value = `${venueName} - Origoshift`;
+      windowTitle.value = `${venueName} - ${import.meta.env.EXPOSED_APP_NAME}`;
     }
   }
 });

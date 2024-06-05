@@ -11,7 +11,7 @@ import { UserClient, Venue } from '../classes/InternalClasses.js';
 import { TRPCError } from '@trpc/server';
 import { attachToEvent, attachToFilteredEvent, NotifierInputData, NotifierSignature } from '../trpc/trpc-utils.js';
 import { observable } from '@trpc/server/observable';
-import { uniqBy } from 'lodash';
+import { uniqBy } from 'lodash-es';
 import { eq } from 'drizzle-orm';
 
 type VenueStateUpdate = NotifierSignature<ReturnType<Venue['getPublicState']>>;
@@ -66,25 +66,25 @@ export const venueRouter = router({
   // listLoadedVenuesPublicState: p.query(({ctx}) => {
   //   return Venue.getLoadedVenuesPublicState();
   // }),
-  loadAndJoinVenue: p.input(z.object({ streamId: StreamIdSchema })).mutation(async ({ input, ctx }) => {
+  loadAndJoinStream: p.input(z.object({ streamId: StreamIdSchema })).mutation(async ({ input, ctx }) => {
     await Venue.loadStream(input.streamId, ctx.userId);
-    const vState = await ctx.client.joinVenue(input.streamId);
+    const vState = await ctx.client.joinStream(input.streamId);
     return vState;
   }),
-  joinVenue: p.input(
+  joinStream: p.input(
     z.object({
-      venueId: StreamIdSchema
+      streamId: StreamIdSchema
     })
   ).mutation(async ({input, ctx}) => {
-    log.info(`request received to join venue as ${ctx.client.clientType}:`, input.venueId);
-    const vState = await ctx.client.joinVenue(input.venueId);
+    log.info(`request received to join venue as ${ctx.client.clientType}:`, input.streamId);
+    const vState = await ctx.client.joinStream(input.streamId);
     return vState;
   }),
   getVenueState: clientInVenueP.query(({ctx}) => {
     return ctx.venue.getPublicState();
   }),
   subVenueStateUpdated: p.subscription(({ctx}) => {
-    log.info(`attching venueStateUpdated notifier for client: ${ctx.username} (${ctx.connectionId})`);
+    log.info(`attaching venueStateUpdated notifier for client: ${ctx.username} (${ctx.connectionId})`);
     return observable<NotifierInputData<VenueStateUpdate>>((scriber) => {
       ctx.client.notify.venueStateUpdated = scriber.next;
       return () => ctx.client.notify.venueStateUpdated = undefined;
@@ -102,7 +102,7 @@ export const venueRouter = router({
   //   }, ({clientState, reason}) => ({clientState: clientState as ReturnType<UserClient['getPublicState']>, reason}));
   // }),
   leaveCurrentVenue: p.use(isInVenueM).mutation(({ctx}) => {
-    if(!ctx.client.leaveCurrentVenue()){
+    if (!ctx.client.leaveCurrentStream()) {
       throw new TRPCError({code: 'PRECONDITION_FAILED', message: 'cant leave if not in a venue.. Duh!'});
     }
   })

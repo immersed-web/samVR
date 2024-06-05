@@ -66,7 +66,7 @@ export const useCameraStore = defineStore('camera', () => {
       // const angleY = 270 - 360 * p.x; 
       // const angleX = 90 - (180 * p.y);
       newObj[p.toCameraId as CameraId] = {
-        cameraName: venueStore.currentVenue!.cameras[p.toCameraId].name,
+        cameraName: venueStore.currentStream!.cameras[p.toCameraId].name,
         // style: {
 
         //   left: Math.trunc(width.value * p.x) + 'px',
@@ -149,7 +149,7 @@ export const useCameraStore = defineStore('camera', () => {
       const {track} = await soup.consume(currentCamera.value.producers.videoProducer.producerId);
       receivedTracks.videoTrack = track;
     }
-    const mainAudio = venueStore.currentVenue?.mainAudioProducerId;
+    const mainAudio = venueStore.currentStream?.mainAudioProducerId;
     if(mainAudio){
       console.log('CONSUMING MAIN AUDIO!');
       const {track} = await soup.consume(mainAudio);

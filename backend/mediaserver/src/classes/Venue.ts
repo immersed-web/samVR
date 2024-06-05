@@ -165,7 +165,7 @@ export class Venue {
     return this.clients.size === 0 && this.senderClients.size === 0;
   }
   getPublicState() {
-    const { streamId: venueId, name, visibility, streamStartTime, streamAutoStart, streamManuallyStarted, streamManuallyEnded, mainCameraId } = this;
+    const { streamId, name, visibility, streamStartTime, streamAutoStart, streamManuallyStarted, streamManuallyEnded, mainCameraId } = this;
     // log.info('Detached senders:', this.detachedSenders.value);
     // const cameraIds = Array.from(this.cameras.keys());
     const cameras: Record<CameraId, {
@@ -180,7 +180,7 @@ export class Venue {
     });
     const mainAudioProducerId = this.mainAudioProducer.value?.producerId;
     return {
-      venueId, name, visibility,
+      streamId, name, visibility,
       // doorsOpeningTime, doorsAutoOpen, doorsManuallyOpened,
       streamStartTime, streamAutoStart, streamManuallyStarted, streamManuallyEnded,
       vrSpace: this.vrSpace?.getPublicState(),

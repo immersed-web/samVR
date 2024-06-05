@@ -557,7 +557,7 @@ watch(() => props.cameraId, () => {
 
 onBeforeMount(async () => {
   console.log('onBeforeMount');
-  if(!venueStore.currentVenue){
+  if (!venueStore.currentStream) {
     await venueStore.loadAndJoinVenue(props.venueId);
   }
   if(!soup.deviceLoaded){

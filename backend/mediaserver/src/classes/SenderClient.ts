@@ -32,7 +32,7 @@ export class SenderClient extends BaseClient{
     this.senderId = senderId;
     // this.base = new BaseClient(...args);
     log.info(`Creating sender client ${this.username} (${this.connectionId})`);
-    log.debug('prismaData:', this.prismaData);
+    log.debug('prismaData:', this.dbData);
     
     Object.assign(this.notify, senderNotifyAdditions);
 
@@ -87,18 +87,18 @@ export class SenderClient extends BaseClient{
   unload() {
     log.info(`unloading sender client ${ this.username } ${this.connectionId} `);
     super.unload();
-    this.leaveCurrentVenue();
+    this.leaveCurrentStream();
   }
 
-  async joinVenue(venueId: StreamId) {
-    this.leaveCurrentVenue();
+  async joinStream(venueId: StreamId) {
+    this.leaveCurrentStream();
     const venue = Venue.getVenue(venueId);
     venue.addClient(this);
     this._notifyStateUpdated('sender client joined venue');
     return venue.getPublicState();
   }
 
-  leaveCurrentVenue() {
+  leaveCurrentStream() {
     if(!this.venue) {
       return false;
     }

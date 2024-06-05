@@ -184,7 +184,7 @@ async function createVenue () {
 }
 
 const pickVenueAndNavigate = async (venueId: StreamId) => {
-  venueStore.savedVenueId = venueId;
+  venueStore.savedStreamId = venueId;
   router.push({name: authStore.routePrefix + 'Venue'});
 };
 

@@ -5,14 +5,14 @@
       <h3 class="text-base-content/90">
         Pågående event
       </h3>
-      <VenueList :venues="venuesOngoing" @venue-picked="(venue) => goToVenue(venue.venueId as StreamId)" />
+      <VenueList :venues="venuesOngoing" @venue-picked="(venue) => goToVenue(venue.streamId)" />
     </div>
 
     <div v-if="venuesUpcoming.length">
       <h3 class="text-base-content/90">
         Kommande event
       </h3>
-      <VenueList :venues="venuesUpcoming" @venue-picked="(venue) => goToVenue(venue.venueId as StreamId)" />
+      <VenueList :venues="venuesUpcoming" @venue-picked="(venue) => goToVenue(venue.streamId)" />
     </div>
     <!-- <h1>Tidigare event</h1>
     <VenueList
@@ -31,7 +31,7 @@
       <h3 class="text-base-content/90">
         Event utan datum
       </h3>
-      <VenueList :venues="venuesUnscheduled" @venue-picked="(venue) => goToVenue(venue.venueId as StreamId)" />
+      <VenueList :venues="venuesUnscheduled" @venue-picked="(venue) => goToVenue(venue.streamId)" />
     </div>
   </div>
 
@@ -65,7 +65,7 @@ import VenueList from '@/components/venue/VenueList.vue';
 import { type StreamId, hasAtLeastSecurityLevel } from 'schemas';
 import { useRouter } from 'vue-router';
 import { isPast } from 'date-fns';
-import { venueConsideredActive } from '@/stores/venueStore';
+import { streamConsideredActive } from '@/stores/venueStore';
 import UserBanner from '@/components/UserBanner.vue';
 // import { useAuthStore } from '@/stores/authStore';
 
@@ -85,7 +85,7 @@ onBeforeMount(async () => {
 const venuesOngoing = computed(() => {
   // return venuesAllowed.value.filter(v => venuesLoaded.value && v.venueId in venuesLoaded.value);
   return venuesAllowed.value.filter(v => {
-    return venueConsideredActive(v);
+    return streamConsideredActive(v);
   });
 });
 
@@ -105,9 +105,9 @@ const venuesUnscheduled = computed(() => {
   return venuesNotOngoing.value.filter(v => !v.streamStartTime);
 });
 
-async function goToVenue(venueId: StreamId) {
+async function goToVenue(streamId: StreamId) {
   // await venueStore.joinVenue(venueId);
-  router.push({name: 'userVenue', params: { venueId }});
+  router.push({ name: 'userStream', params: { streamId } });
 }
 
 </script>

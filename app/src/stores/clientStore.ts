@@ -21,11 +21,11 @@ export const useClientStore = defineStore('client', () => {
     return clientState.value?.username ? clientState.value?.username.split(' ').map(n => n[0]).join('') : '';
   });
 
-  const fetchClientState = async () => {
-    const receivedState = await connection.client.user.getClientState.query();
-    console.log('manually fetched new clientstate:', receivedState);
-    clientState.value = receivedState;
-  };
+  // const fetchClientState = async () => {
+  //   const receivedState = await connection.client.user.getClientState.query();
+  //   console.log('manually fetched new clientstate:', receivedState);
+  //   clientState.value = receivedState;
+  // };
 
   const initConnection = async () => {
     clientState.value = await connection.client.user.getClientState.query();
@@ -43,7 +43,7 @@ export const useClientStore = defineStore('client', () => {
   return {
     clientState,
     initials,
-    fetchClientState,
+    // fetchClientState,
   };
 
 });

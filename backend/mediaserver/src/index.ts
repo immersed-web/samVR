@@ -190,13 +190,11 @@ app.ws<WSUserData>('/*', {
     const userId = UserIdSchema.parse(userData.jwtUserData.userId);
     logUws.info('socket opened');
 
-    // const connection = new Connection({jwtUserData: userData.jwtUserData });
-
     let client: UserClient | SenderClient;
     if(connectionType === 'sender'){
-      client = new SenderClient({ jwtUserData: userData.jwtUserData, prismaData: userData.dbData });
+      client = new SenderClient({ jwtUserData: userData.jwtUserData, dbData: userData.dbData });
     } else {
-      client = new UserClient({ jwtUserData: userData.jwtUserData, prismaData: userData.dbData });
+      client = new UserClient({ jwtUserData: userData.jwtUserData, dbData: userData.dbData });
     }
 
     clientConnections.set(ws, client);

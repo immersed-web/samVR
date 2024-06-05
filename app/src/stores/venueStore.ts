@@ -6,7 +6,7 @@ import type { StreamId } from 'schemas';
 import { useConnectionStore } from '@/stores/connectionStore';
 import { useNow, useStorage } from '@vueuse/core';
 
-type _ReceivedPublicVenueState = RouterOutputs['venue']['joinVenue'];
+type _ReceivedPublicVenueState = RouterOutputs['venue']['joinStream'];
 
 export type VisibilityDetails = {
   visibility: Visibility,
@@ -15,13 +15,13 @@ export type VisibilityDetails = {
   description: string
 }
 
-export function venueConsideredActive(venueState: Pick<_ReceivedPublicVenueState, 'doorsAutoOpen' | 'doorsManuallyOpened' | 'doorsOpeningTime' |'streamAutoStart' | 'streamManuallyStarted' | 'streamStartTime' | 'streamManuallyEnded'>) {
+export function streamConsideredActive(venueState: Pick<_ReceivedPublicVenueState, 'streamAutoStart' | 'streamManuallyStarted' | 'streamStartTime' | 'streamManuallyEnded'>) {
   const now = Date.now();
-  let doorsAreOpen = false;
-  if(venueState.doorsManuallyOpened) doorsAreOpen = true;
-  if(venueState.doorsAutoOpen && venueState.doorsOpeningTime) {
-    doorsAreOpen = venueState.doorsOpeningTime.getTime() < now;
-  }
+  // let doorsAreOpen = false;
+  // if(venueState.doorsManuallyOpened) doorsAreOpen = true;
+  // if(venueState.doorsAutoOpen && venueState.doorsOpeningTime) {
+  //   doorsAreOpen = venueState.doorsOpeningTime.getTime() < now;
+  // }
 
   let streamActive = false;
   if(venueState.streamManuallyStarted) streamActive = true;
@@ -29,7 +29,7 @@ export function venueConsideredActive(venueState: Pick<_ReceivedPublicVenueState
     streamActive = venueState.streamStartTime.getTime() < now;
   }
   
-  return doorsAreOpen || streamActive;
+  return streamActive;
 }
 
 export const useVenueStore = defineStore('venue', () => {
@@ -38,14 +38,14 @@ export const useVenueStore = defineStore('venue', () => {
   const connection = useConnectionStore();
   // const authStore = useAuthStore();
 
-  const currentVenue = ref<_ReceivedPublicVenueState>();
-  const savedVenueId = ref<StreamId>();
+  const currentStream = ref<_ReceivedPublicVenueState>();
+  const savedStreamId = ref<StreamId>();
 
 
 
   connection.client.venue.subVenueUnloaded.subscribe(undefined, {
     onData() {
-      currentVenue.value = undefined;
+      currentStream.value = undefined;
     },
     onError(err) {
       console.error(err);
@@ -55,49 +55,50 @@ export const useVenueStore = defineStore('venue', () => {
   connection.client.venue.subVenueStateUpdated.subscribe(undefined, {
     onData(data){
       console.log('received venuestate updated:', data);
-      currentVenue.value = data.data;
+      currentStream.value = data.data;
     },
     onError(err){
       console.error(err);
     },
   });
 
-  const urlToFileserver = `https://${import.meta.env.EXPOSED_SERVER_URL}${import.meta.env.EXPOSED_FILESERVER_PATH}`;
-  const urlToModelsFolder = urlToFileserver + '/uploads/3d_models/';
-  const modelUrl = computed(() => {
-    if(!currentVenue.value?.vrSpace?.virtualSpace3DModel?.modelFileFormat){
-      return undefined;
-    }
-    const modelId = currentVenue.value.vrSpace.virtualSpace3DModelId;
-    const extension = currentVenue.value.vrSpace.virtualSpace3DModel.modelFileFormat;
-    return urlToModelsFolder + modelId + '.model.' + extension;
-  });
-  const navmeshUrl = computed(() => {
-    if(!currentVenue.value?.vrSpace?.virtualSpace3DModel?.navmeshFileFormat){
-      return undefined;
-    }
-    const modelId = currentVenue.value.vrSpace.virtualSpace3DModelId;
-    const extension = currentVenue.value.vrSpace.virtualSpace3DModel.navmeshFileFormat;
-    return urlToModelsFolder + modelId + '.navmesh.' + extension;
-  });
+  // const urlToFileserver = `https://${import.meta.env.EXPOSED_SERVER_URL}${import.meta.env.EXPOSED_FILESERVER_PATH}`;
+  // const urlToModelsFolder = urlToFileserver + '/uploads/3d_models/';
+  // const modelUrl = computed(() => {
+  //   if(!currentVenue.value?.vrSpace?.virtualSpace3DModel?.modelFileFormat){
+  //     return undefined;
+  //   }
+  //   const modelId = currentVenue.value.vrSpace.virtualSpace3DModelId;
+  //   const extension = currentVenue.value.vrSpace.virtualSpace3DModel.modelFileFormat;
+  //   return urlToModelsFolder + modelId + '.model.' + extension;
+  // });
+  // const navmeshUrl = computed(() => {
+  //   if(!currentVenue.value?.vrSpace?.virtualSpace3DModel?.navmeshFileFormat){
+  //     return undefined;
+  //   }
+  //   const modelId = currentVenue.value.vrSpace.virtualSpace3DModelId;
+  //   const extension = currentVenue.value.vrSpace.virtualSpace3DModel.navmeshFileFormat;
+  //   return urlToModelsFolder + modelId + '.navmesh.' + extension;
+  // });
 
-  async function loadAndJoinVenue(venueId: StreamId) {
-    currentVenue.value = await connection.client.venue.loadAndJoinVenue.mutate({venueId});
-    savedVenueId.value = currentVenue.value.venueId;
+  async function loadAndJoinVenue(streamId: StreamId) {
+    currentStream.value = await connection.client.venue.loadAndJoinStream.mutate({ streamId });
+    savedStreamId.value = currentStream.value.streamId;
   }
 
-  async function joinVenue(venueId: StreamId) {
-    currentVenue.value = await connection.client.venue.joinVenue.mutate({venueId});
-    savedVenueId.value = currentVenue.value.venueId;
+  async function joinVenue(streamId: StreamId) {
+    // console.log('sending request to join stream:', streamId);
+    currentStream.value = await connection.client.venue.joinStream.mutate({ streamId });
+    savedStreamId.value = currentStream.value.streamId;
   }
 
   async function leaveVenue() {
-    if(!currentVenue.value){
+    if (!currentStream.value) {
       console.warn('Tried to leave venue when you aren\'t in one.. Not so clever, eh?');
       return;
     }
     await connection.client.venue.leaveCurrentVenue.mutate();
-    currentVenue.value = undefined;
+    currentStream.value = undefined;
   }
 
 
@@ -123,48 +124,48 @@ export const useVenueStore = defineStore('venue', () => {
   ] as VisibilityDetails[]);
 
   const currentVisibilityDetails = computed(() => {
-    return visibilityOptions.value.find(o => o.visibility === currentVenue.value?.visibility);
+    return visibilityOptions.value.find(o => o.visibility === currentStream.value?.visibility);
   });
   
   const timeSpread = 30;
   const timeOffset = useStorage('doorTimeOffset', Math.random() * timeSpread);
-  const secondsUntilDoorsOpen = computed(() => {
-    // if(currentVenue.value?.doorsManuallyOpened) return 0;
-    if(!currentVenue.value?.vrSpace || !currentVenue.value?.doorsAutoOpen || !currentVenue.value.doorsOpeningTime || currentVenue.value.doorsManuallyOpened) return undefined;
-    const millis = currentVenue.value.doorsOpeningTime.getTime() - now.value.getTime();
-    return Math.trunc(Math.max(0, millis*0.001 + timeOffset.value));
-  });
-  
-  const doorsAreOpen = computed(() => {
-    if(!currentVenue.value) return false;
-    if(secondsUntilDoorsOpen.value !== undefined){
-      return secondsUntilDoorsOpen.value === 0;
-    }
-    else return currentVenue.value.doorsManuallyOpened;
-  });
+  // const secondsUntilDoorsOpen = computed(() => {
+  //   // if(currentVenue.value?.doorsManuallyOpened) return 0;
+  //   if(!currentVenue.value?.vrSpace || !currentVenue.value?.doorsAutoOpen || !currentVenue.value.doorsOpeningTime || currentVenue.value.doorsManuallyOpened) return undefined;
+  //   const millis = currentVenue.value.doorsOpeningTime.getTime() - now.value.getTime();
+  //   return Math.trunc(Math.max(0, millis*0.001 + timeOffset.value));
+  // });
+
+  // const doorsAreOpen = computed(() => {
+  //   if(!currentVenue.value) return false;
+  //   if(secondsUntilDoorsOpen.value !== undefined){
+  //     return secondsUntilDoorsOpen.value === 0;
+  //   }
+  //   else return currentVenue.value.doorsManuallyOpened;
+  // });
   
   const streamIsActive = computed(() => {
-    if(!currentVenue.value || currentVenue.value.streamManuallyEnded) return false;
-    if(currentVenue.value.streamAutoStart && currentVenue.value.streamStartTime){
-      const isPast = currentVenue.value.streamStartTime.getTime() < now.value.getTime();
+    if (!currentStream.value || currentStream.value.streamManuallyEnded) return false;
+    if (currentStream.value.streamAutoStart && currentStream.value.streamStartTime) {
+      const isPast = currentStream.value.streamStartTime.getTime() < now.value.getTime();
       return isPast;
     }
     else {
-      return currentVenue.value.streamManuallyStarted;
+      return currentStream.value.streamManuallyStarted;
     }
   });
 
   return {
-    doorsAreOpen,
-    secondsUntilDoorsOpen,
+    // doorsAreOpen,
+    // secondsUntilDoorsOpen,
     streamIsActive,
-    savedVenueId,
-    currentVenue,
+    savedStreamId,
+    currentStream,
     loadAndJoinVenue,
     joinVenue,
     leaveVenue,
-    modelUrl,
-    navmeshUrl,
+    // modelUrl,
+    // navmeshUrl,
     visibilityOptions,
     currentVisibilityDetails,
   };

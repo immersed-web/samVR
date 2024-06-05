@@ -229,21 +229,21 @@ const entranceRotation = computed(() => {
 });
 
 const entranceMessage = computed(() => {
-  return venueStore.currentVenue?.name??'Klicka för att hoppa in i sändningen';
+  return venueStore.currentStream?.name ?? 'Klicka för att hoppa in i sändningen';
 });
 
 const skyColor = computed(() => {
-  if(!venueStore.currentVenue?.vrSpace?.virtualSpace3DModel.skyColor) return 'lightskyblue'
-  return venueStore.currentVenue?.vrSpace?.virtualSpace3DModel.skyColor;
+  if (!venueStore.currentStream?.vrSpace?.virtualSpace3DModel.skyColor) return 'lightskyblue'
+  return venueStore.currentStream?.vrSpace?.virtualSpace3DModel.skyColor;
 })
 
 onBeforeMount(async () => {
   // console.log('onBeforeMount');
-  if(!soupStore.deviceLoaded){
+  if (!soupStore.deviceLoaded) {
     await soupStore.loadDevice();
   }
   await soupStore.createReceiveTransport();
-  try{
+  try {
     await soupStore.createSendTransport();
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: true,
@@ -255,10 +255,10 @@ onBeforeMount(async () => {
         isPaused: false,
       },
     });
-  } catch(e){
+  } catch (e) {
     console.error('failed to setup the mediasoup stuff');
   }
-  if(!vrSpaceStore.currentVrSpace) {
+  if (!vrSpaceStore.currentVrSpace) {
     await vrSpaceStore.enterVrSpace();
   }
   // console.log('onBeforeMount completed');
@@ -271,8 +271,8 @@ onMounted(async () => {
 
 function onCameraLoaded() {
   console.log('camera loaded. attaching scene attributes');
-  sceneTag.value!.setAttribute('cursor', {rayOrigin: 'mouse', fuse: false});
-  sceneTag.value!.setAttribute('raycaster', {objects: '.clickable'});
+  sceneTag.value!.setAttribute('cursor', { rayOrigin: 'mouse', fuse: false });
+  sceneTag.value!.setAttribute('raycaster', { objects: '.clickable' });
 }
 
 onBeforeUnmount(async () => {
@@ -282,11 +282,11 @@ onBeforeUnmount(async () => {
   await vrSpaceStore.leaveVrSpace();
 });
 
-async function onModelLoaded(){
-  if(modelTag.value && playerOriginTag.value){
+async function onModelLoaded() {
+  if (modelTag.value && playerOriginTag.value) {
     // console.log(obj3D);
     let startPos = getRandomSpawnPosition();
-    if(!startPos){
+    if (!startPos) {
       console.log('failed to calculate spawnpoint. centering player on model bbox as fallback');
       const obj3D = modelTag.value.getObject3D('mesh');
       const bbox = new THREE.Box3().setFromObject(obj3D);
@@ -304,10 +304,10 @@ async function onModelLoaded(){
     };
     currentTransform.head = trsfm.head;
     await new Promise((res) => setTimeout(res, 200));
-    
+
     vrSpaceStore.updateTransform(trsfm);
     // placeRandomSpheres();
-    
+
     // @ts-ignore
     playerTag.value?.addEventListener('move', onHeadMove);
     // @ts-ignore
@@ -319,11 +319,11 @@ async function onModelLoaded(){
 
 // Test function used to make sure we distribute spawn points nicely in the spawn area
 function placeRandomSpheres() {
-  for(let i = 0; i< 500; i++){
+  for (let i = 0; i < 500; i++) {
     const sphereEl = document.createElement('a-sphere');
     sphereEl.setAttribute('color', 'red');
     const pos = getRandomSpawnPosition();
-    if(!pos) {
+    if (!pos) {
       console.error('failed to generate random spawn point');
       return;
     }
@@ -337,32 +337,32 @@ function placeRandomSpheres() {
 function getRandomSpawnPosition() {
   const spawnPosition = vrSpaceStore.currentVrSpace?.virtualSpace3DModel?.spawnPosition as Point | undefined;
   const spawnRadius = vrSpaceStore.currentVrSpace?.virtualSpace3DModel?.spawnRadius;
-  if(!spawnPosition || !spawnRadius) return;
+  if (!spawnPosition || !spawnRadius) return;
   const randomRadianAngle = 2 * Math.PI * Math.random(); // radian angle
   // Why sqrt? Check here: https://programming.guide/random-point-within-circle.html
   const randomDistance = Math.sqrt(Math.random()) * spawnRadius;
   const x = randomDistance * Math.cos(randomRadianAngle);
   const z = randomDistance * Math.sin(randomRadianAngle);
   const randomOffsetVector = new THREE.Vector3(x, 0, z);
-  
+
   const spawnPointVector = new THREE.Vector3(...spawnPosition);
   spawnPointVector.add(randomOffsetVector);
   return spawnPointVector;
 }
 
-function goToStream(){
+function goToStream() {
   // router.push({name: 'basicVR'});
   // console.log('sphere clicked');
-  if(!venueStore.currentVenue) return;
-  let mainCameraId = venueStore.currentVenue.mainCameraId;
+  if (!venueStore.currentStream) return;
+  let mainCameraId = venueStore.currentStream.mainCameraId;
   if(!mainCameraId){
     console.warn('No maincamera set. Falling back to using any camera');
-    mainCameraId = Object.values(venueStore.currentVenue.cameras)[0].cameraId;
+    mainCameraId = Object.values(venueStore.currentStream.cameras)[0].cameraId;
   }
   router.push({
     name: 'userCamera',
     params: {
-      venueId: venueStore.currentVenue.venueId,
+      venueId: venueStore.currentStream.streamId,
       cameraId: mainCameraId,
     },
   });

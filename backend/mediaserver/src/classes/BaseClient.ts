@@ -14,6 +14,20 @@ import { db, schema } from 'database';
 import { TypedEmitter } from 'tiny-typed-emitter';
 import { computed, ref, shallowRef, effect } from '@vue/reactivity';
 import { eq } from 'drizzle-orm';
+import type { MyWebsocketType } from 'index.js';
+import { Payload, createTypedEvents, EventSender, createStandaloneEventSender } from 'ts-event-bridge/sender';
+
+export interface BaseClientEvents {
+  test: Payload<string>
+  soupEvents: {
+    soupObjectClosed: Payload<{
+
+      data: SoupObjectClosePayload & { reason: string }
+    }>
+  }
+}
+
+// const { createSender } = createTypedEvents<BaseClientEvents>();
 
 type SoupObjectClosePayload =
       {type: 'transport', id: TransportId }
@@ -77,20 +91,24 @@ export type PublicProducers = {
 
 interface ClientConstructorParams {
   connectionId?: ConnectionId,
-  // ws: SocketWrapper,
+  ws: MyWebsocketType,
   jwtUserData: JwtUserData,
-  prismaData?: UserResponse
+  dbData?: UserResponse
 }
 /**
  * @class
  * Base class for backend state of client connection. You should probably not use the base class directly.
  */
 export class BaseClient {
-  constructor({connectionId = ConnectionIdSchema.parse(randomUUID()), jwtUserData, prismaData}: ClientConstructorParams) {
+  protected ws: MyWebsocketType;
+  protected eventSender: ReturnType<typeof createStandaloneEventSender<BaseClientEvents>>;
+  constructor({ connectionId = ConnectionIdSchema.parse(randomUUID()), jwtUserData, dbData, ws }: ClientConstructorParams) {
     // super();
+    this.ws = ws;
+    this.eventSender = createStandaloneEventSender<BaseClientEvents>((msg) => this.ws.send(msg));
     this.connectionId = connectionId;
     this.jwtUserData = jwtUserData;
-    this.prismaData.value = prismaData;
+    this.dbData.value = dbData;
 
 
     this.clientEvent = new TypedEmitter();
@@ -127,7 +145,7 @@ export class BaseClient {
   */
   connectionId: ConnectionId;
   // prismaData?: UserResponse;
-  prismaData = ref<UserResponse>();
+  dbData = ref<UserResponse>();
   // allowedVenues= computed(() => {
   //   if(!this.prismaData.value){
   //     return [];
@@ -135,10 +153,10 @@ export class BaseClient {
   //   return [...this.prismaData.value.allowedVenues as StreamListInfo[], ...this.prismaData.value.ownedVenues as StreamListInfo[]];
   // });
   ownedVenues = computed(() => {
-    if(!this.prismaData.value) {
+    if (!this.dbData.value) {
       return [];
     }
-    return this.prismaData.value.streams;
+    return this.dbData.value.streams;
   });
 
   jwtUserData: JwtUserData;

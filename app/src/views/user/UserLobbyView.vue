@@ -1,12 +1,8 @@
 <template>
   <div>
     <div class="min-h-screen z-0">
-      <VrAFrame
-        v-if="venueStore.modelUrl"
-        :model-url="venueStore.modelUrl"
-        :navmesh-url="venueStore.navmeshUrl"
-        :model-scale="venueStore.currentVenue?.vrSpace?.virtualSpace3DModel?.scale"
-      />
+      <VrAFrame v-if="venueStore.modelUrl" :model-url="venueStore.modelUrl" :navmesh-url="venueStore.navmeshUrl"
+        :model-scale="venueStore.currentStream?.vrSpace?.virtualSpace3DModel?.scale" />
     </div>
   </div>
 </template>

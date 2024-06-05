@@ -33,6 +33,7 @@
     "superjson": "^1.12.2",
     "tiny-typed-emitter": "^2.1.0",
     "tozod": "^3.0.0",
+    "ts-event-bridge": "^0.0.3",
     "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.43.0"
   },
   "devDependencies": {
