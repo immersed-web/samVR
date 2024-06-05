@@ -45,8 +45,8 @@
         <div v-auto-animate>
           <div v-if="!venueStore.currentStream?.doorsAutoOpen">
             <div>
-              {{ venueStore.currentStream?.doorsOpeningTime ? 'Ni öppnar lobbyn manuellt vid utsatt tid.' : 'Om ni
-              önskar, kan ni öppna lobbyn manuellt' }}
+              {{ venueStore.currentStream?.doorsOpeningTime ? 'Ni öppnar lobbyn manuellt vid utsatt tid.'
+              : 'Om ni önskar, kan ni öppna lobbyn manuellt' }}
             </div>
             <div class="">
               <button class="btn btn-sm" :class="!venueStore.doorsAreOpen ? 'btn-primary' : 'btn-error'"
@@ -77,8 +77,8 @@
         <div v-auto-animate>
           <div v-if="!venueStore.currentStream?.streamAutoStart">
             <div>
-              {{ venueStore.currentStream?.streamStartTime ? 'Ni startar sändningen manuellt vid utsatt tid.' : 'Om ni
-              önskar, kan ni starta sändningen manuellt' }}
+              {{ venueStore.currentStream?.streamStartTime ? 'Ni startar sändningen manuellt vid utsatt tid.' :
+                'Om ni önskar, kan ni starta sändningen manuellt' }}
             </div>
             <div>
               <button class="btn btn-primary btn-sm" @click="startStream" :disabled="!!venueStore.streamIsActive">

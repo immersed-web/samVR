@@ -196,7 +196,7 @@ export type StreamListInfo = Prettify<Pick<typeof schema.streams.$inferSelect,
 export const StreamInsertSchema = createInsertSchema(schema.streams, {
   streamId: StreamIdSchema.optional(),
   ownerUserId: UserIdSchema.optional(),
-  vrSpaceId: VrSpaceIdSchema.optional(),
+  // vrSpaceId: VrSpaceIdSchema.optional(),
   mainCameraId: CameraIdSchema.optional(),
 })
   .omit(timestampKeys)
@@ -291,6 +291,8 @@ export const CameraInsertSchema = createInsertSchema(schema.cameras, {
   .omit(timestampKeys)
   .merge(optionalReason);
 export type CameraInsert = z.TypeOf<typeof CameraInsertSchema>;
+export const CameraUpdateSchema = CameraInsertSchema.omit({ cameraId: true }).partial();
+export type CameraUpdate = z.TypeOf<typeof CameraUpdateSchema>;
 
 // type CameraUpdatePayload = Partial<Pick<Prisma.CameraUpdateInput,
 //   'name'

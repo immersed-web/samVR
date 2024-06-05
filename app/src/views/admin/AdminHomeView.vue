@@ -9,7 +9,7 @@
       </h2>
       <div class="flex space-x-2">
         <VenueList v-if="clientStore.clientState" :venues="venuesAsArray"
-          @venue-picked="(venue) => pickVenueAndNavigate(venue.venueId as StreamId)" />
+          @venue-picked="(venue) => pickVenueAndNavigate(venue.streamId)" />
         <div>
           <button class="btn btn-outline btn-primary" @click="createVenue">
             Skapa ett nytt event

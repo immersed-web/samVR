@@ -171,6 +171,6 @@ export const useVenueStore = defineStore('venue', () => {
   };
 }, {
   persist: {
-    paths: ['savedVenueId'],
+    paths: ['savedStreamId'],
   },
 });

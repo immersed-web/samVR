@@ -260,8 +260,8 @@ router.beforeEach(async (to, from) => {
     const venueStore = useVenueStore();
 
     if (!venueStore.currentStream || venueStore.currentStream.streamId !== venueStore.savedStreamId) {
-      // await connectionStore.firstConnectionEstablished;
-      const streamId = venueStore.savedStreamId ?? to.params.streamId;
+      const streamId = venueStore.savedStreamId ?? to.params.streamId as StreamId;
+      // console.log('streamId:', streamId);
       if (!streamId) {
         if(to.meta.pickVenueRouteName) return { name: to.meta.pickVenueRouteName};
         const routeName = `${authStore.routePrefix}Home`;

@@ -1,6 +1,6 @@
 import type { SubscriptionValue, RouterOutputs } from '@/modules/trpcClient';
 import { defineStore } from 'pinia';
-import type { CameraId, SenderId, StreamId, CameraPortalInsert, CameraInsert, ConnectionId } from 'schemas';
+import type { CameraId, SenderId, StreamId, CameraPortalInsert, CameraInsert, ConnectionId, CameraUpdate } from 'schemas';
 import { computed, ref } from 'vue';
 import { useConnectionStore } from './connectionStore';
 import { useVenueStore } from './venueStore';
@@ -68,20 +68,20 @@ export const useAdminStore = defineStore('admin', () => {
 
   async function deleteCurrentVenue() {
     if (venueStore.currentStream?.streamId) {
-      const venueId = venueStore.currentStream.streamId;
+      const streamId = venueStore.currentStream.streamId;
       await venueStore.leaveVenue();
       // TODO: Make all other clients leave venue, too
-      await connection.client.admin.deleteVenue.mutate({venueId});
+      await connection.client.admin.deleteVenue.mutate({ streamId });
     }
   }
 
-  async function loadAndJoinVenueAsAdmin(venueId: StreamId) {
-    const {publicVenueState, adminOnlyVenueState: aOnlyState} = await connection.client.admin.loadAndJoinVenue.mutate({venueId});
+  async function loadAndJoinVenueAsAdmin(streamId: StreamId) {
+    const { publicVenueState, adminOnlyVenueState: aOnlyState } = await connection.client.admin.loadAndJoinVenue.mutate({ streamId });
     venueStore.currentStream = publicVenueState;
     adminOnlyVenueState.value = aOnlyState;
   }
   
-  async function updateCamera(cameraId: CameraId, input: CameraInsert['data'], reason?: string) {
+  async function updateCamera(cameraId: CameraId, input: CameraUpdate, reason?: string) {
     await connection.client.admin.updateCamera.mutate({cameraId, data: input, reason});
   }
 
@@ -122,28 +122,28 @@ export const useAdminStore = defineStore('admin', () => {
     // const response = await connection.client.soup.createConsumer.mutate({ producerId:p.videoProducer?.producerId});
   }
   
-  /** 
-   * We have slightly different implementations in admin and venuestore. Use this one for admins only. Normal users should have the "spreaded" version
-  */
-  const realSecondsUntilDoorsOpen = computed(() => {
-    if (!venueStore.currentStream?.vrSpace || !venueStore.currentStream?.doorsAutoOpen || !venueStore.currentStream.doorsOpeningTime || venueStore.currentStream.doorsManuallyOpened) return undefined;
-    const millis = venueStore.currentStream.doorsOpeningTime.getTime() - now.value.getTime();
-    return Math.trunc(Math.max(0, millis*0.001));
-  });
+  // /** 
+  //  * We have slightly different implementations in admin and venuestore. Use this one for admins only. Normal users should have the "spreaded" version
+  // */
+  // const realSecondsUntilDoorsOpen = computed(() => {
+  //   if (!venueStore.currentStream?.vrSpace || !venueStore.currentStream?.doorsAutoOpen || !venueStore.currentStream.doorsOpeningTime || venueStore.currentStream.doorsManuallyOpened) return undefined;
+  //   const millis = venueStore.currentStream.doorsOpeningTime.getTime() - now.value.getTime();
+  //   return Math.trunc(Math.max(0, millis*0.001));
+  // });
 
-  const realDoorsAreOpen = computed(() => {
-    if (!venueStore.currentStream) return false;
-    if(realSecondsUntilDoorsOpen.value !== undefined){
-      return realSecondsUntilDoorsOpen.value === 0;
-    }
-    else return venueStore.currentStream.doorsManuallyOpened;
-  });
+  // const realDoorsAreOpen = computed(() => {
+  //   if (!venueStore.currentStream) return false;
+  //   if(realSecondsUntilDoorsOpen.value !== undefined){
+  //     return realSecondsUntilDoorsOpen.value === 0;
+  //   }
+  //   else return venueStore.currentStream.doorsManuallyOpened;
+  // });
 
 
   return {
     adminOnlyVenueState,
-    realSecondsUntilDoorsOpen,
-    realDoorsAreOpen,
+    // realSecondsUntilDoorsOpen,
+    // realDoorsAreOpen,
     createVenue,
     loadAndJoinVenueAsAdmin,
     deleteCurrentVenue,
