@@ -59,11 +59,11 @@ const guestContinue = async () => {
   await authStore.autoGuest(guestUsername.value);
   // const connectionStore = useConnectionStore();
   // connectionStore.createUserClient();
-  if (fromRoute?.name === 'userVenue') {
-    console.log('routing back to the venue');
+  if (fromRoute?.name === 'userStream') {
+    console.log('routing back to the stream');
     router.push(fromRoute);
     return;
   }
-  router.push({ name: 'streamList' });
+  router.push({ name: 'start' });
 };
 </script>
