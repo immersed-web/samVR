@@ -27,12 +27,19 @@ export const queryStreamWithIncludes = db.query.streams.findFirst({
   where: (stream, { eq }) => eq(stream.streamId, sql.placeholder('streamId')),
   with: {
     cameras: {
-      with: {
-        toCameras: true,
-        fromCameras: true,
+      columns: {
+        cameraId: true,
+      }
+      // with: {
+      //   toCameras: true,
+      //   fromCameras: true,
+      // }
+    },
+    mainCamera: {
+      columns: {
+        cameraId: true,
       }
     },
-    mainCamera: true,
     owner: {
       columns: basicUserSelect,
     },

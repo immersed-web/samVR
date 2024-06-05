@@ -9,7 +9,7 @@ import { getMediasoupWorker } from '../modules/mediasoupWorkers.js';
 import {types as soupTypes} from 'mediasoup';
 import { ConnectionId, UserId, StreamId, CameraId, StreamUpdate, SenderId, hasAtLeastSecurityLevel, Prettify } from 'schemas';
 
-import { db, schema, queryStreamWithIncludes, basicUserSelect, CameraWithIncludes, StreamWithIncludes } from 'database';
+import { db, schema, queryStreamWithIncludes, basicUserSelect, CameraWithIncludes, StreamWithIncludes, queryCameraWithIncludes } from 'database';
 // import { } from 'drizzle-orm'
 
 import { Camera, VrSpace, type UserClient, SenderClient, BaseClient, PublicProducers } from './InternalClasses.js';
@@ -54,7 +54,7 @@ export class Venue {
     // thus we cant load data in each class's constructor. So we pass prisma data down from parents to child classes. But after that we should strive to 
     // make each instance responsible for managing their own dbData.
     dbData.cameras.forEach(c => {
-      this.loadCamera(c);
+      this.loadCamera(c.cameraId);
     });
     // Slight hack to circumvent typescript
     delete (dbData as Partial<StreamWithIncludes>).cameras;
@@ -210,7 +210,7 @@ export class Venue {
   }
 
   async update(input: StreamUpdate) {
-    log.info('Update venue', input);
+    log.info('Update stream db data', input);
     this.dbData = { ...this.dbData, ...input };
     db.update(schema.streams).set(this.dbData).where(eq(schema.streams.streamId, this.dbData.streamId));
   }
@@ -446,22 +446,25 @@ export class Venue {
 
   async createAndLoadNewCamera(name: string, senderId?: SenderId) {
     const [response] = await db.insert(schema.cameras).values({ name, streamId: this.streamId, senderId }).returning();
-    const responseWithIncludes = (<CameraWithIncludes>response)
-    responseWithIncludes.toCameras = [];
-    responseWithIncludes.fromCameras = [];
-    this.loadCamera(responseWithIncludes);
+    // Since its just created there'll be no relational data yet.
+    // So we set the relational data to empty arrays to make typescript happy.
+    // const responseWithIncludes = (<CameraWithIncludes>response)
+    // responseWithIncludes.toCameras = [];
+    // responseWithIncludes.fromCameras = [];
+    this.loadCamera(response.cameraId);
   }
 
   async deleteCamera(cameraId: CameraId) {
-    const dbCamera = this.dbData.cameras.find(c => c.cameraId === cameraId);
-    if (!dbCamera) {
-      throw Error('no camera with that cameraId in dbData for the stream');
-    }
     const foundCamera = this.cameras.get(cameraId);
     if(foundCamera){
       log.info('camera was loaded. Unloading before removal');
       foundCamera.unload();
+      // foundCamera.delete();
       this.cameras.delete(cameraId);
+    }
+
+    if (this.mainCameraId === cameraId) {
+      await this.update({ mainCameraId: null });
     }
 
     // Save ids of fromportals before they'll get cascade deleted. We need to reference them in order to reload them.
@@ -476,16 +479,7 @@ export class Venue {
       if(loadedCamera){
         loadedCamera.reloadDbData('portal removed');
       }
-
     });
-
-    const idx = this.dbData.cameras.indexOf(dbCamera);
-    this.dbData.cameras.splice(idx, 1);
-    if (cameraId === this.dbData.mainCameraId) {
-      await this.update({
-        mainCameraId: null,
-      });
-    }
 
     this._notifyStateUpdated('camera removed');
     this._notifyAdminOnlyState('camera removed');
@@ -520,19 +514,20 @@ export class Venue {
 
   // TODO: We should probably not use the camera prisma data provided by venue when loading. It might be stale.
   // We should probably not have the camera prisma data included in venue in the first place? And instead get the data when loading the camera.
-  loadCamera(dbCamera: typeof this.dbData.cameras[number]) {
-    if (this.cameras.has(dbCamera.cameraId)) {
+  // loadCamera(dbCamera: CameraWithIncludes) {
+  async loadCamera(cameraId: CameraId) {
+    if (this.cameras.has(cameraId)) {
       throw Error('a camera with that id is already loaded');
     }
-    // const dbCamera = this.dbData.cameras.find(c => c.cameraId === cameraId);
-    // if(!dbCamera){
-    //   throw Error('no db data for a camera with that Id in venue prismaData');
-    // }
-    let maybeSender: SenderClient | undefined = undefined;
-    if (dbCamera.senderId) {
-      maybeSender = this.findSenderFromSenderId(dbCamera.senderId);
+    const dbResponse = await queryCameraWithIncludes.execute({ cameraId });
+    if (!dbResponse) {
+      throw Error('camera not found in db');
     }
-    const camera = new Camera(dbCamera, this, maybeSender);
+    let maybeSender: SenderClient | undefined = undefined;
+    if (dbResponse.senderId) {
+      maybeSender = this.findSenderFromSenderId(dbResponse.senderId);
+    }
+    const camera = new Camera(dbResponse, this, maybeSender);
     this.cameras.set(camera.cameraId, camera);
     
     this._notifyStateUpdated('camera loaded');
@@ -671,7 +666,7 @@ export class Venue {
     return venue;
   }
 
-  static async getPublicVenue(venueId: StreamId, userId: UserId) {
+  static async getStreamPublicInfo(venueId: StreamId, userId: UserId) {
   // const venue = Venue.streams.get(venueId);
   // if(!venue){
   //   throw new Error('No stream with that id is loaded');
@@ -683,7 +678,7 @@ export class Venue {
         cameras: true,
         mainCamera: true,
         owner: { columns: basicUserSelect },
-        vrSpace: true,
+        // vrSpace: true,
       }
     });
 

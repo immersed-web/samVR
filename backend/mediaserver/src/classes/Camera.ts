@@ -5,7 +5,7 @@ import { Venue, UserClient, SenderClient, PublicProducers } from './InternalClas
 import { ProducerId } from 'schemas/mediasoup';
 import { computed, shallowRef, effect } from '@vue/reactivity';
 import { CameraWithIncludes, StreamWithIncludes, db, queryCameraWithIncludes, schema } from 'database'
-import _ from 'lodash-es';
+import * as _ from 'lodash-es';
 
 const log = new Log('Camera');
 
@@ -13,8 +13,8 @@ process.env.DEBUG = 'Camera*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
 export class Camera {
-  constructor(prismaCamera: StreamWithIncludes['cameras'][number], venue: Venue, sender?: SenderClient) {
-    this.prismaData = prismaCamera;
+  constructor(dbCamera: CameraWithIncludes, venue: Venue, sender?: SenderClient) {
+    this.dbData = dbCamera;
     this.venue = venue;
     this.clients = new Map();
     if(sender){
@@ -50,29 +50,29 @@ export class Camera {
     return Array.from(this.clients.keys());
   }
 
-  prismaData: CameraWithIncludes;
+  dbData: CameraWithIncludes;
   get cameraId(){
-    return this.prismaData.cameraId as CameraId;
+    return this.dbData.cameraId as CameraId;
   }
   get senderId() {
-    return this.prismaData.senderId as SenderId;
+    return this.dbData.senderId as SenderId;
   }
   get name() {
-    return this.prismaData.name;
+    return this.dbData.name;
   }
   // TODO: Actually write to db!!!
   setName(name: string) {
-    this.prismaData.name = name;
+    this.dbData.name = name;
   }
   
   get portals() {
-    return _.keyBy(this.prismaData.toCameras, (p) => p.toCameraId) as Record<CameraId, typeof this.prismaData.toCameras[number]>;
+    return _.keyBy(this.dbData.toCameras, (p) => p.toCameraId) as Record<CameraId, typeof this.dbData.toCameras[number]>;
   }
 
   async saveToDb() {
     log.info('saving to db');
     const response = await db.update(schema.cameras).set({
-      ...this.prismaData
+      ...this.dbData
     }).returning();
     return response;
   }
@@ -89,13 +89,13 @@ export class Camera {
     //   include: cameraIncludeStuff
       
     // });
-    this.prismaData = response;
+    this.dbData = response;
     this._notifyStateUpdated(reason);
   }
 
   getPublicState() {
     const { cameraId, name, clientIds, senderId, portals } = this;
-    const { viewOriginX, viewOriginY, fovStart, fovEnd, orientation, cameraType } = this.prismaData;
+    const { viewOriginX, viewOriginY, fovStart, fovEnd, orientation, cameraType } = this.dbData;
     const viewOrigin = {x: viewOriginX, y: viewOriginY };
     const FOV = { fovStart, fovEnd };
     // const senderState = this.sender?.getPublicState();
@@ -159,7 +159,7 @@ export class Camera {
     if(!sender.senderId){
       throw Error('trying to set sender for camera, but the provided senderClient has no senderId');
     }
-    this.prismaData.senderId = sender.senderId;
+    this.dbData.senderId = sender.senderId;
     // await this.saveToDb();
     this.sender.value = sender;
     this.venue.invalidateDetachedSenders();

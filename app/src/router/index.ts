@@ -11,7 +11,7 @@ import { useTitle } from '@vueuse/core';
 
 declare module 'vue-router' {
   interface RouteMeta {
-    requiredConnection?: ClientType
+    requiredConnectionType?: ClientType
     requiredRole?: UserRole
     afterLoginRedirect?: string
     loginNeededRedirect?: 'cameraLogin' | 'login'
@@ -46,19 +46,19 @@ const router = createRouter({
         {
           path: '',
           name: 'start',
-          meta: { requiredRole: 'guest', requiredConnection: 'client' },
+          meta: { requiredRole: 'guest', requiredConnectionType: 'client' },
           component: () => import('@/views/public/StartView.vue'),
         },
         {
           name: 'streamList',
           path: 'streams',
-          meta: { requiredRole: 'guest', requiredConnection: 'client' },
+          meta: { requiredRole: 'guest', requiredConnectionType: 'client' },
           component: () => import('@/views/public/StreamListView.vue'),
         },
         {
           name: 'vrList',
           path: 'vrSpaces',
-          meta: { requiredRole: 'guest', requiredConnection: 'client' },
+          meta: { requiredRole: 'guest', requiredConnectionType: 'client' },
           component: () => import('@/views/public/VrListView.vue'),
         },
       ],
@@ -79,7 +79,7 @@ const router = createRouter({
     // guest/user routes
     {
       path: '/',
-      meta: { requiredRole: 'guest',  requiredConnection: 'client' },
+      meta: { requiredRole: 'guest', requiredConnectionType: 'client' },
       component:  () => import('@/layouts/EmptyLayout.vue'),
       children: [
         {
@@ -139,7 +139,7 @@ const router = createRouter({
     },
     {
       path: '/admin/',
-      meta: { requiredRole: 'admin', loginNeededRedirect: 'login', requiredConnection: 'client' },
+      meta: { requiredRole: 'admin', loginNeededRedirect: 'login', requiredConnectionType: 'client' },
       component:  () => import('@/layouts/HeaderLayout.vue'),
       children: [
         {
@@ -179,7 +179,7 @@ const router = createRouter({
     },
     {
       path: '/send',
-      meta: { requiredRole: 'sender', requiredConnection: 'sender', loginNeededRedirect: 'cameraLogin'},
+      meta: { requiredRole: 'user', requiredConnectionType: 'sender', loginNeededRedirect: 'cameraLogin' },
       component:  () => import('@/layouts/HeaderLayout.vue'),
       children: [
         {
@@ -229,7 +229,7 @@ router.beforeEach(async (to, from) => {
       return { name: redirect /*, query: { next: to.fullPath } */ };
     }
   }
-  if(to.meta.requiredConnection) {
+  if (to.meta.requiredConnectionType) {
     const connectionStore = useConnectionStore();
     // console.log('Connection required. Creating if doesn\'t exist');
 
@@ -238,7 +238,7 @@ router.beforeEach(async (to, from) => {
     }
     if(!connectionStore.clientExists){
       console.log('Connection required. Creating one');
-      if(to.meta.requiredConnection === 'client'){
+      if (to.meta.requiredConnectionType === 'client') {
         connectionStore.createUserClient();
         const clientStore = useClientStore();
         clientStore.fetchClientState();
@@ -251,7 +251,7 @@ router.beforeEach(async (to, from) => {
         // await senderStore.initSenderId();
       }
       // console.log('CONNECTED STATE IN NAV GUARD: ', connectionStore.connected);
-    } else if(connectionStore.connectionType !== to.meta.requiredConnection){
+    } else if (connectionStore.connectionType !== to.meta.requiredConnectionType) {
       throw Error('you are already connected to the backend as the wrong type of client. Close the current connection before going to this route.');
     }
   }
