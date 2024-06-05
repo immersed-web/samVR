@@ -262,7 +262,7 @@ export const vrSpaces = pgTable("VrSpaces", {
 	worldModelAssetId: uuid("worldModelAssetId").references(() => assets.assetId).$type<AssetId>(),
 	navMeshAssetId: uuid("navMeshAssetId").references(() => assets.assetId).$type<AssetId>(),
 	panoramicPreviewAssetId: uuid('panoramicPreview').references(() => assets.assetId),
-	Visibility: VisibilityEnum("visibility").default('public').notNull(),
+	visibility: VisibilityEnum("visibility").default('public').notNull(),
 	worldModelScale: doublePrecision("worldModelScale").default(1).notNull(),
 	spawnPosition: real("spawnPosition").array(),
 	spawnRadius: doublePrecision("spawnRadius"),

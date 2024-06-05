@@ -22,11 +22,11 @@ log.enable(process.env.DEBUG);
 export class VrSpace {
   // private _isOpen = false;
   private venue: Venue;
-  private prismaData: VrSpaceWithIncludes;
+  private dbData: VrSpaceWithIncludes;
   private clients: Venue['clients'];
 
   get vrSpaceId() {
-    return this.prismaData.vrSpaceId;
+    return this.dbData.vrSpaceId;
   }
 
   // TODO:
@@ -36,7 +36,7 @@ export class VrSpace {
   pendingTransforms: ClientTransforms = {};
   constructor(venue: Venue, vrSpace: VrSpaceWithIncludes) {
     this.venue = venue;
-    this.prismaData = vrSpace;
+    this.dbData = vrSpace;
     this.clients = new Map();
   }
 
@@ -56,7 +56,7 @@ export class VrSpace {
   // }
 
   getPublicState() {
-    const returnState = this.prismaData;
+    const returnState = this.dbData;
     const clientsWithProducers = Array.from(this.clients.entries()).map(([cId, client]) => {
       const cData = pick(client.getPublicState(), ['userId', 'connectionId', 'producers', 'role', 'username', 'transform']);
       return [cId, cData] as const;
