@@ -42,11 +42,11 @@ export class Venue {
   private constructor(dbData: StreamWithIncludes, router: soupTypes.Router) {
     this.router = router;
 
-    if (dbData?.vrSpace) {
-      this.vrSpace = new VrSpace(this, dbData.vrSpace);
-      // Stream shouldn't care about database data for related models after model is created. set to null to explicitly clarify this.
-      dbData.vrSpace = null;
-    }
+    // if (dbData?.vrSpace) {
+    //   this.vrSpace = new VrSpace(this, dbData.vrSpace);
+    //   // Stream shouldn't care about database data for related models after model is created. set to null to explicitly clarify this.
+    //   dbData.vrSpace = null;
+    // }
 
     
     // TODO: do same as we do with vrspace and exclude cameras from dbData before we assign. We want one source of truth and that should be
@@ -56,7 +56,8 @@ export class Venue {
     dbData.cameras.forEach(c => {
       this.loadCamera(c);
     });
-    // delete dbData.cameras;
+    // Slight hack to circumvent typescript
+    delete (dbData as Partial<StreamWithIncludes>).cameras;
     
     this.dbData = dbData;
     effect(() => {
@@ -65,7 +66,7 @@ export class Venue {
     });
   }
 
-  private dbData: Prettify<Omit<StreamWithIncludes, 'vrSpace' | 'cameras' | 'mainCamera'>>;
+  private dbData: Prettify<Omit<StreamWithIncludes, 'cameras' | 'mainCamera'>>;
 
   get streamId() {
     return this.dbData.streamId as StreamId;
@@ -384,38 +385,38 @@ export class Venue {
 
   // Virtual space (lobby) stuff
 
-  async CreateAndAddVirtualSpace() {
-    // const response = await db.transaction(async (tx) => {
-    //   const modelAsset = await tx.insert(schema.assets).values({
-    //     assetType: 'model',
-    //     assetFileExtension: 'glb',
-    //     ownerUserId: this.dbData.ownerUserId,
+  // async CreateAndAddVirtualSpace() {
+  //   // const response = await db.transaction(async (tx) => {
+  //   //   const modelAsset = await tx.insert(schema.assets).values({
+  //   //     assetType: 'model',
+  //   //     assetFileExtension: 'glb',
+  //   //     ownerUserId: this.dbData.ownerUserId,
 
-    //   })
-    // })
-    const [response] = await db.insert(schema.vrSpaces).values({}).returning();
-    this.update({ vrSpaceId: response.vrSpaceId });
-    // const response = await prisma.virtualSpace.create({
-    //   include: {
-    //     virtualSpace3DModel: true,
-    //   },
-    //   data: {
-    //     // NOTE: models are a separate table and thus a related model. This is if we in the future want to be able to reuse a model in several venues.
-    //     // But for now we will only have one model per venue. Thus we can simply create one with default values here directly.
-    //     virtualSpace3DModel: {
-    //       create: {
-    //         // use defaults so empty object
-    //       }
+  //   //   })
+  //   // })
+  //   const [response] = await db.insert(schema.vrSpaces).values({}).returning();
+  //   this.update({ vrSpaceId: response.vrSpaceId });
+  //   // const response = await prisma.virtualSpace.create({
+  //   //   include: {
+  //   //     virtualSpace3DModel: true,
+  //   //   },
+  //   //   data: {
+  //   //     // NOTE: models are a separate table and thus a related model. This is if we in the future want to be able to reuse a model in several venues.
+  //   //     // But for now we will only have one model per venue. Thus we can simply create one with default values here directly.
+  //   //     virtualSpace3DModel: {
+  //   //       create: {
+  //   //         // use defaults so empty object
+  //   //       }
 
-    //     },
-    //     venue: {
-    //       connect: { venueId: this.dbData.venueId },
-    //     }
-    //   }
-    // });
-    this.vrSpace = new VrSpace(this, response);
-    this._notifyStateUpdated('Created virtual space');
-  }
+  //   //     },
+  //   //     venue: {
+  //   //       connect: { venueId: this.dbData.venueId },
+  //   //     }
+  //   //   }
+  //   // });
+  //   this.vrSpace = new VrSpace(this, response);
+  //   this._notifyStateUpdated('Created virtual space');
+  // }
 
   // async Create3DModel(modelUrl: string) {
   //   if(this.prismaData.virtualSpace){

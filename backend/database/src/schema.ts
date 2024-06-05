@@ -126,7 +126,7 @@ export const streams = pgTable("Streams", {
 	// extraSettings: jsonb("extraSettings"),
 	visibility: VisibilityEnum("visibility").default('public').notNull(),
 	mainCameraId: uuid("mainCameraId").references((): AnyPgColumn => cameras.cameraId).$type<CameraId>(),
-	vrSpaceId: uuid("vrSpaceId").references((): AnyPgColumn => vrSpaces.vrSpaceId).$type<VrSpaceId>(),
+	// vrSpaceId: uuid("vrSpaceId").references((): AnyPgColumn => vrSpaces.vrSpaceId).$type<VrSpaceId>(),
 	...createdAndUpdatedAt,
 },
 	(table) => {
@@ -149,10 +149,10 @@ export const streamsRelations = relations(streams, ({ many, one }) => ({
 		references: [cameras.cameraId],
 		relationName: 'mainCameraInStream',
 	}),
-	vrSpace: one(vrSpaces, {
-		fields: [streams.vrSpaceId],
-		references: [vrSpaces.vrSpaceId],
-	}),
+	// vrSpace: one(vrSpaces, {
+	// 	fields: [streams.vrSpaceId],
+	// 	references: [vrSpaces.vrSpaceId],
+	// }),
 	allowedUsers: many(permissions)
 	// _usersOwningVenues: many(_usersOwningVenues),
 	// _usersAllowedInVenues: many(_usersAllowedInVenues),

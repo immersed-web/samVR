@@ -1,41 +1,24 @@
-import { ClientTransforms, ConnectionId, VrSpaceId } from 'schemas';
+import { ClientTransforms, ConnectionId, UserId, VrSpaceId } from 'schemas';
 import { throttle, pick } from 'lodash-es';
 import type { UserClient, Venue } from './InternalClasses.js';
 
 import { Log } from 'debug-level';
-import { VrSpaceWithIncludes } from 'database';
-// import prismaClient from '../modules/prismaClient';
-// import { Prisma } from 'database';
+import { VrSpaceWithIncludes, db, queryVrSpaceWithIncludes } from 'database';
 const log = new Log('VR:Space');
 process.env.DEBUG = 'VR:Space*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
-// type ReceivedVirtualSpace = Exclude<Venue['prismaData']['virtualSpace'], null>;
-
-// const vrSpaceQuery = {
-//   include: {
-//     virtualSpace3DModel: true,
-//   }
-// } satisfies Prisma.VirtualSpaceArgs;
-// type VrSpaceDbResponse = Prisma.VirtualSpaceGetPayload<typeof vrSpaceQuery>
-
 export class VrSpace {
-  // private _isOpen = false;
-  private venue: Venue;
   private dbData: VrSpaceWithIncludes;
-  private clients: Venue['clients'];
+  // private clients: Venue['clients'];
+  private clients: Map<ConnectionId, UserClient>;
 
   get vrSpaceId() {
     return this.dbData.vrSpaceId;
   }
 
-  // TODO:
-  // * Save/load scene model & navmesh model
-  // * Save/load avatar pieces. Should vr spaces allow to use different sets of avatar pieces?
-
   pendingTransforms: ClientTransforms = {};
-  constructor(venue: Venue, vrSpace: VrSpaceWithIncludes) {
-    this.venue = venue;
+  constructor(vrSpace: VrSpaceWithIncludes) {
     this.dbData = vrSpace;
     this.clients = new Map();
   }
@@ -78,7 +61,7 @@ export class VrSpace {
     this._notifyStateUpdated('client removed from vrSpace');
   }
 
-  sendPendingTransforms = throttle(() => {
+  sendPendingTransforms: () => void = throttle(() => {
     this.emitTransformsToAllClients();
     this.pendingTransforms = {};
   }, 100, {
@@ -132,18 +115,19 @@ export class VrSpace {
     //clean up listeners and such in here!
   }
   
-  // static async loadVrSpace(venue: Venue, vrSpaceId: string) {
-  //   const response = await prismaClient.virtualSpace.findUnique({
-  //     where: {
-  //       vrId: vrSpaceId,
-  //     },
-  //     include: {
-  //       virtualSpace3DModel: true,
-  //     }
-  //   });
-  //   if(!response){
-  //     throw Error('failed to load vrSpace. Didnt find vrSpace with that id in db');
+  static async loadVrSpace(vrSpaceId: VrSpaceId) {
+    const dbResponse = await queryVrSpaceWithIncludes.execute({ vrSpaceId });
+  // const response = await prismaClient.virtualSpace.findUnique({
+  //   where: {
+  //     vrId: vrSpaceId,
+  //   },
+  //   include: {
+  //     virtualSpace3DModel: true,
   //   }
-  //   return new VrSpace(venue, response);
-  // }
+    // });
+    if (!dbResponse) {
+      throw Error('failed to load vrSpace. Didnt find vrSpace with that id in db');
+    }
+    return new VrSpace(dbResponse);
+  }
 }

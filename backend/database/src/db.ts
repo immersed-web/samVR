@@ -36,14 +36,14 @@ export const queryStreamWithIncludes = db.query.streams.findFirst({
     owner: {
       columns: basicUserSelect,
     },
-    vrSpace: {
-      with: {
-        worldModelAsset: true,
-        navMeshAsset: true,
-        panoramicPreview: true,
-        placedObjects: true,
-      }
-    }
+    // vrSpace: {
+    //   with: {
+    //     worldModelAsset: true,
+    //     navMeshAsset: true,
+    //     panoramicPreview: true,
+    //     placedObjects: true,
+    //   }
+    // }
   }
 }).prepare('queryStreamWithIncludes');
 export type StreamWithIncludes = NonNullable<Awaited<ReturnType<typeof queryStreamWithIncludes.execute>>>;
