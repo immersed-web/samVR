@@ -5,7 +5,7 @@ log.enable(process.env.DEBUG);
 
 import { TRPCError } from '@trpc/server';
 import { observable } from '@trpc/server/observable';
-import { BaseClient, Camera, loadUserPrismaData, SenderClient, UserClient, Venue } from '../classes/InternalClasses.js';
+import { BaseClient, Camera, loadUserDBData, SenderClient, UserClient, Venue } from '../classes/InternalClasses.js';
 // import { Prisma } from 'database';
 // import prismaClient, { cameraIncludeStuff } from '../modules/prismaClient';
 import { CameraIdSchema, hasAtLeastSecurityLevel, SenderIdSchema, StreamId, StreamIdSchema, StreamUpdateSchema, CameraInsertSchema, CameraPortalInsertSchema } from 'schemas';

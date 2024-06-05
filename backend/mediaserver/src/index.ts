@@ -24,7 +24,7 @@ import { extractMessageFromCatch } from 'shared-modules/utilFns';
 import { JwtUserData, JwtUserDataSchema, hasAtLeastSecurityLevel, UserId, UserIdSchema, ClientType } from 'schemas';
 import { applyWSHandler } from './trpc/ws-adapter.js';
 import { appRouter, AppRouter } from './routers/appRouter.js';
-import { loadUserPrismaData, SenderClient, UserClient } from './classes/InternalClasses.js';
+import { loadUserDBData, SenderClient, UserClient } from './classes/InternalClasses.js';
 import { Context } from 'trpc/trpc.js';
 
 export type MyWebsocketType = WebSocket<WSUserData>;
@@ -79,7 +79,7 @@ const {onSocketOpen, onSocketMessage, onSocketClose} = applyWSHandler<AppRouter,
 
 const app = uWebSockets.App();
 
-type WSUserData = { jwtUserData: JwtUserData, clientType: ClientType, prismaData?: Awaited<ReturnType<typeof loadUserPrismaData>>}
+type WSUserData = { jwtUserData: JwtUserData, clientType: ClientType, dbData?: Awaited<ReturnType<typeof loadUserDBData>> }
 app.ws<WSUserData>('/*', {
 
   /* There are many common helper features */
@@ -134,11 +134,11 @@ app.ws<WSUserData>('/*', {
 
       const userDataOnly = JwtUserDataSchema.parse(validJwt);
 
-      if(isSender && !hasAtLeastSecurityLevel(userDataOnly.role, 'sender')){
+      if (isSender && !hasAtLeastSecurityLevel(userDataOnly.role, 'user')) {
         throw Error('must at least have sender role to do that...');
       }
       const isAlreadyConnected = connectedUsers.has(userDataOnly.userId);
-      if(!hasAtLeastSecurityLevel(userDataOnly.role, 'sender') && isAlreadyConnected){
+      if (!hasAtLeastSecurityLevel(userDataOnly.role, 'user') && isAlreadyConnected) {
         throw Error('already logged in!!!');
       }
       wsUserData = {
@@ -151,39 +151,38 @@ app.ws<WSUserData>('/*', {
       res.writeStatus('403 Forbidden').end(msg, true);
       return;
     }
-    const wait = (millis?: number) => new Promise<void>((resolve) => setTimeout(resolve, millis));
+    res.onAborted(() => upgradeState.aborted = true);
     const upgradeMe = async () => {
-      // TODO: Why do we need to wrap this execution in a timeout (the wait-function)? Without it we have invalid access to the res object
-      await wait();
-      let dbResponse: Awaited<ReturnType<typeof loadUserPrismaData>> | undefined = undefined;
+      let dbResponse: Awaited<ReturnType<typeof loadUserDBData>> | undefined = undefined;
       if(wsUserData.jwtUserData.role !== 'guest'){
         try {
-          dbResponse = await loadUserPrismaData(wsUserData.jwtUserData.userId);
-          wsUserData.prismaData = dbResponse;
+          dbResponse = await loadUserDBData(wsUserData.jwtUserData.userId);
+          wsUserData.dbData = dbResponse;
+          log.debug('loaded userdata from db: ', dbResponse);
         } catch(e) {
           log.error('Failed to fetch userdata from database');
         }
       }
-      log.debug('loaded userdata from db: ', dbResponse);
       if(upgradeState.aborted){
         logUws.error('upgrade was cancelled by client');
         return;
       }
-      res.upgrade<WSUserData>(
-        wsUserData,
-        /* Spell these correctly */
-        secWebSocketKey,
-        secWebSocketProtocol,
-        secWebSocketExtensions,
-        // req.getHeader('sec-websocket-key'),
-        // req.getHeader('sec-websocket-protocol'),
-        // req.getHeader('sec-websocket-extensions'),
-        context
-      );
+      res.cork(() => {
+        res.upgrade<WSUserData>(
+          wsUserData,
+          /* Spell these correctly */
+          secWebSocketKey,
+          secWebSocketProtocol,
+          secWebSocketExtensions,
+          // req.getHeader('sec-websocket-key'),
+          // req.getHeader('sec-websocket-protocol'),
+          // req.getHeader('sec-websocket-extensions'),
+          context
+        );
+      })
     };
     upgradeMe();
 
-    res.onAborted(() => upgradeState.aborted = true);
   },
   open: (ws) => {
     const userData = ws.getUserData();
@@ -195,9 +194,9 @@ app.ws<WSUserData>('/*', {
 
     let client: UserClient | SenderClient;
     if(connectionType === 'sender'){
-      client = new SenderClient({ jwtUserData: userData.jwtUserData, prismaData: userData.prismaData });
+      client = new SenderClient({ jwtUserData: userData.jwtUserData, prismaData: userData.dbData });
     } else {
-      client = new UserClient({ jwtUserData: userData.jwtUserData, prismaData: userData.prismaData });
+      client = new UserClient({ jwtUserData: userData.jwtUserData, prismaData: userData.dbData });
     }
 
     clientConnections.set(ws, client);

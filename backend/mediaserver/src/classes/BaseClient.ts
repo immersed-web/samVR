@@ -47,7 +47,7 @@ type ClientClientEvents = FilteredEvents<{
 
 export type AllClientEvents = ClientSoupEvents & ClientVenueEvents & ClientClientEvents
 
-export async function loadUserPrismaData(userId: UserId) {
+export async function loadUserDBData(userId: UserId) {
   const response = await db.query.users.findFirst({
     where: eq(schema.users.userId, userId),
     columns: {
@@ -60,7 +60,7 @@ export async function loadUserPrismaData(userId: UserId) {
   })
   return response;
 }
-type UserResponse = NonNullable<Awaited<ReturnType<typeof loadUserPrismaData>>>
+type UserResponse = NonNullable<Awaited<ReturnType<typeof loadUserDBData>>>
 
 export type PublicProducers = {
   videoProducer?: {

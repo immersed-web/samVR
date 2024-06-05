@@ -6,7 +6,7 @@ process.env.DEBUG = 'UserClient*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
 import { ClientTransform, ClientTransforms, StreamId, CameraId, ClientType } from 'schemas';
-import { loadUserPrismaData, SenderClient, Venue, VrSpace, BaseClient } from './InternalClasses.js';
+import { loadUserDBData, SenderClient, Venue, VrSpace, BaseClient } from './InternalClasses.js';
 import { NonFilteredEvents, NotifierSignature, Prettify } from 'trpc/trpc-utils.js';
 import { effect } from '@vue/reactivity';
 
@@ -31,7 +31,7 @@ export class UserClient extends BaseClient {
   constructor(...args: ConstructorParameters<typeof BaseClient>){
     super(...args);
     log.info(`Creating user client ${this.username} (${this.connectionId})`);
-    log.debug('prismaData:', this.prismaData);
+    log.debug('dbData:', this.prismaData.value);
 
 
     effect(() => {
@@ -106,7 +106,7 @@ export class UserClient extends BaseClient {
   }
 
   async loadPrismaDataAndNotifySelf(reason?: string) {
-    const updatedDbUser = await loadUserPrismaData(this.userId);
+    const updatedDbUser = await loadUserDBData(this.userId);
     this.prismaData.value = updatedDbUser;
     this._onClientStateUpdated(reason);
   }
