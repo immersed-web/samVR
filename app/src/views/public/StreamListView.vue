@@ -5,14 +5,14 @@
       <h3 class="text-base-content/90">
         Pågående event
       </h3>
-      <VenueList :streams="venuesOngoing" @venue-picked="(venue) => goToVenue(venue.streamId)" />
+      <VenueList :streams="venuesOngoing" @stream-picked="(stream) => goToVenue(stream.streamId)" />
     </div>
 
     <div v-if="venuesUpcoming.length">
       <h3 class="text-base-content/90">
         Kommande event
       </h3>
-      <VenueList :streams="venuesUpcoming" @venue-picked="(venue) => goToVenue(venue.streamId)" />
+      <VenueList :streams="venuesUpcoming" @stream-picked="(stream) => goToVenue(stream.streamId)" />
     </div>
     <!-- <h1>Tidigare event</h1>
     <VenueList
@@ -31,7 +31,7 @@
       <h3 class="text-base-content/90">
         Event utan datum
       </h3>
-      <VenueList :streams="venuesUnscheduled" @venue-picked="(venue) => goToVenue(venue.streamId)" />
+      <VenueList :streams="venuesUnscheduled" @stream-picked="(stream) => goToVenue(stream.streamId)" />
     </div>
   </div>
 
@@ -106,6 +106,7 @@ const venuesUnscheduled = computed(() => {
 });
 
 async function goToVenue(streamId: StreamId) {
+  console.log('clicked the stream', streamId);
   // await venueStore.joinVenue(venueId);
   router.push({ name: 'userStream', params: { streamId } });
 }
