@@ -5,7 +5,7 @@ import { exclude, extractMessageFromCatch } from 'shared-modules/utilFns';
 import { isLoggedIn } from './utils.js';
 import { StreamId, UserId, UserRole, hasAtLeastSecurityLevel, roleHierarchy, throwIfUnauthorized } from 'schemas';
 import { basicUserSelect, db, schema, userSelectExcludePassword } from 'database';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, getTableColumns } from 'drizzle-orm';
 import * as _ from 'lodash-es'
 
 const index: RequestHandler = (req, res) => {
@@ -107,8 +107,9 @@ interface CreateSenderRequest extends ExpressReq {
 }
 const createSenderForVenue: RequestHandler = async (req : CreateSenderRequest, res) => {
   const userData = req.session.user
-  console.log(userData);
+  // console.log(userData);
   const { password, username, streamId } = req.body 
+  console.log(req.body);
   try {
     throwIfUnauthorized(userData!.role, 'admin');
     if (!streamId || !username || !password) {
@@ -121,7 +122,7 @@ const createSenderForVenue: RequestHandler = async (req : CreateSenderRequest, r
   const hashedPassword = await bcrypt.hash(password, 10);
   const txResponse = await db.transaction(async (tx) => {
     const [response] = await tx.insert(schema.users).values({
-      role: 'sender',
+      role: 'user',
       username,
       password: hashedPassword,
     }).returning();
@@ -134,6 +135,7 @@ const createSenderForVenue: RequestHandler = async (req : CreateSenderRequest, r
     return response;
   })
   const userWithoutPassword = exclude(txResponse, 'password');
+  console.log(userWithoutPassword);
   res.send(userWithoutPassword);
 }
 
@@ -313,7 +315,7 @@ const getAllowedUsersForStream: RequestHandler = async (req: GetSenderRequest, r
   }
   const { streamId } = req.body
   if (!streamId) {
-    res.status(400).send('no venueId provided. Bad payload');
+    res.status(400).send('no streamId provided. Bad payload');
     return;
   }
   try {
@@ -328,7 +330,9 @@ const getAllowedUsersForStream: RequestHandler = async (req: GetSenderRequest, r
     //     },
     //   }
     // })
-    const dbResponse = await db.select()
+    const { password, ...nonPasswords } = getTableColumns(schema.users);
+    // const { targetType, ...permissionColumns } = getTableColumns(schema.permissions);
+    const dbResponse = await db.select(nonPasswords)
       .from(schema.users)
       .innerJoin(schema.permissions, eq(schema.permissions.userId, schema.users.userId))
       .where(
@@ -336,8 +340,10 @@ const getAllowedUsersForStream: RequestHandler = async (req: GetSenderRequest, r
       );
     
     if (dbResponse.length > 0) {
-      const users = dbResponse.map((row) => ({ permissions: row.Permissions, ...row.Users }))
-      res.send(users);
+      // const users = dbResponse.map((row) => ({ permissions: row.Permissions, ...row.Users }))
+      // res.send(users);
+
+      res.send(dbResponse);
       return;
     } else {
       res.status(404).send('no user connected to that stream')

@@ -3,7 +3,7 @@
     <!-- TODO: Show an optional picture here related to the event -->
     <figure class="bg-gradient-to-br from-primary/35 to-primary h-24">
       <h1 class="text-primary-content card-title drop-shadow-sm">
-        {{ props.venue.name }}
+        {{ props.stream.name }}
       </h1>
     </figure>
     <div class="card-body">
@@ -13,7 +13,7 @@
           <div>
             <strong>Sändningen startar</strong>
             <br>
-            {{ props.venue.streamStartTime?.toLocaleString() || 'ej angivet' }}
+            {{ props.stream.streamStartTime?.toLocaleString() || 'ej angivet' }}
           </div>
         </div>
       </div>
@@ -35,7 +35,7 @@
 
 import type { StreamListInfo } from 'schemas';
 const props = defineProps<{
-  venue: StreamListInfo,
+  stream: StreamListInfo,
 }>();
 
 </script>

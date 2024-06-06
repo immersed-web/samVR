@@ -274,6 +274,7 @@ router.beforeEach(async (to, from) => {
           console.log('Trying to loadAndJoinVenueAsAdmin');
           await adminStore.loadAndJoinVenueAsAdmin(streamId);
         } catch (e) {
+          console.error('failed to loadAndJoinVenueAsAdmin');
           console.log(e);
           if(to.meta.pickVenueRouteName) return { name: to.meta.pickVenueRouteName};
           const routeName = `${authStore.routePrefix}Home`;

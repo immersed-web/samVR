@@ -30,7 +30,7 @@
       </StepsItem>
 
       <!-- Lobby -->
-      <StepsItem icon="nightlife">
+      <!-- <StepsItem icon="nightlife">
         <template #title>
           <span class="material-icons text-sm"
             :class="adminStore.realDoorsAreOpen ? 'text-green-500' : 'text-red-500'">circle</span>
@@ -59,7 +59,7 @@
             Lobbyn öppnas automatiskt vid utsatt tid.
           </div>
         </div>
-      </StepsItem>
+      </StepsItem> -->
 
       <!-- Streaming starts -->
       <StepsItem icon="curtains">
@@ -78,7 +78,7 @@
           <div v-if="!venueStore.currentStream?.streamAutoStart">
             <div>
               {{ venueStore.currentStream?.streamStartTime ? 'Ni startar sändningen manuellt vid utsatt tid.' :
-                'Om ni önskar, kan ni starta sändningen manuellt' }}
+  'Om ni önskar, kan ni starta sändningen manuellt' }}
             </div>
             <div>
               <button class="btn btn-primary btn-sm" @click="startStream" :disabled="!!venueStore.streamIsActive">
@@ -116,10 +116,10 @@
       <div class="flex-1">
         <AdminVenueSettings />
       </div>
-      <div class="divider divider-horizontal" />
+      <!-- <div class="divider divider-horizontal" />
       <div class="flex-1">
         <AdminVenueLobby />
-      </div>
+      </div> -->
       <div class="divider divider-horizontal" />
       <div class="flex-1">
         <AdminVenue360 />
@@ -150,20 +150,20 @@ const venueStore = useVenueStore();
 const adminStore = useAdminStore();
 const clientStore = useClientStore();
 
-async function updateDoors(open: boolean){
-  await connection.client.admin.updateVenue.mutate({
-    doorsManuallyOpened: open,
-  });
-}
+// async function updateDoors(open: boolean){
+//   await connection.client.admin.updateVenue.mutate({
+//     doorsManuallyOpened: open,
+//   });
+// }
 
-async function startStream(){
+async function startStream() {
   await connection.client.admin.updateVenue.mutate({
     streamManuallyStarted: true,
     streamManuallyEnded: false,
   });
 }
 
-async function endStream(){
+async function endStream() {
   await connection.client.admin.updateVenue.mutate({
     streamManuallyStarted: false,
     streamManuallyEnded: true,
@@ -177,17 +177,18 @@ onUnmounted(async () => {
   // }
 });
 
+
 const deleteVenue = async () => {
   await adminStore.deleteCurrentVenue();
   // TODO: quick hack to make sure venuelist is updated...
   // await clientStore.fetchClientState();
-  router.push({name: 'adminHome'});
+  router.push({ name: 'adminHome' });
 };
 
-async function goToVenue(){
+async function goToVenue() {
   // await venueStore.joinVenue(venueId);
   const id = venueStore.currentStream?.streamId;
-  const routeData = router.resolve({name: 'userVenue', params: { venueId: id }});
+  const routeData = router.resolve({ name: 'userVenue', params: { streamId: id } });
   window.open(routeData.href, '_blank');
 }
 

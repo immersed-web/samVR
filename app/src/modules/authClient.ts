@@ -16,9 +16,9 @@ export function createAdmin(username: string, password: string) {
   }));
 }
 
-export function createSender(username: string, password: string, venueId: string) {
-  return handleResponse<FetchedSender>(() => authEndpoint.post('/user/create-sender', {
-    venueId,
+export function createSender(username: string, password: string, streamId: string) {
+  return handleResponse<FetchedSenders>(() => authEndpoint.post('/user/create-sender', {
+    streamId,
     username,
     password,
   }));
@@ -37,11 +37,12 @@ export function getAdmins() {
   return handleResponse<FetchedUsers>(() => authEndpoint.get('/user/get-admins'));
 }
 
-type FetchedSender = Omit<User, 'password'>
-export function getSenderForVenue(venueId: string) {
-  return handleResponse<FetchedSender>(() => authEndpoint.post('/user/get-sender', {
-    venueId,
+// type FetchedSenders = FetchedUsers[number]
+export function getSendersForStream(streamId: string) {
+  const response = handleResponse<FetchedUsers>(() => authEndpoint.post('/user/get-sender', {
+    streamId,
   }));
+  return response;
 }
 
 

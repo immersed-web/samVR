@@ -8,8 +8,8 @@
         Mina event
       </h2>
       <div class="flex space-x-2">
-        <VenueList v-if="clientStore.clientState" :venues="venuesAsArray"
-          @venue-picked="(venue) => pickVenueAndNavigate(venue.streamId)" />
+        <VenueList v-if="clientStore.clientState" :streams="venuesAsArray"
+          @stream-picked="(stream) => pickVenueAndNavigate(stream.streamId)" />
         <div>
           <button class="btn btn-outline btn-primary" @click="createVenue">
             Skapa ett nytt event
@@ -183,8 +183,8 @@ async function createVenue () {
   await adminStore.createVenue();
 }
 
-const pickVenueAndNavigate = async (venueId: StreamId) => {
-  venueStore.savedStreamId = venueId;
+const pickVenueAndNavigate = async (streamId: StreamId) => {
+  venueStore.savedStreamId = streamId;
   router.push({name: authStore.routePrefix + 'Venue'});
 };
 

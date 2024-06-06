@@ -1,8 +1,8 @@
 <template>
   <div class="flex flex-wrap gap-2">
-    <div v-for="venue in props.venues" :key="venue.streamId">
-      <pre>{{ venue }}</pre>
-      <VenueThumb :venue="venue" @click="emit('venuePicked', venue)" />
+    <div v-for="stream in props.streams" :key="stream.streamId">
+      <pre>{{ stream }}</pre>
+      <VenueThumb :stream="stream" @click="emit('streamPicked', stream)" />
     </div>
   </div>
 </template>
@@ -11,10 +11,10 @@
 import VenueThumb from '@/components/venue/VenueThumb.vue';
 import type { StreamListInfo } from 'schemas';
 
-const props = defineProps<{ venues: StreamListInfo[] }>();
+const props = defineProps<{ streams: StreamListInfo[] }>();
 
 const emit = defineEmits<{
-  (e: 'venuePicked', venue: StreamListInfo): void,
+  (e: 'streamPicked', stream: StreamListInfo): void,
 }>();
 
 </script>

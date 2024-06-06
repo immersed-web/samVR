@@ -5,14 +5,14 @@
       <h3 class="text-base-content/90">
         Pågående event
       </h3>
-      <VenueList :venues="venuesOngoing" @venue-picked="(venue) => goToVenue(venue.streamId)" />
+      <VenueList :streams="venuesOngoing" @venue-picked="(venue) => goToVenue(venue.streamId)" />
     </div>
 
     <div v-if="venuesUpcoming.length">
       <h3 class="text-base-content/90">
         Kommande event
       </h3>
-      <VenueList :venues="venuesUpcoming" @venue-picked="(venue) => goToVenue(venue.streamId)" />
+      <VenueList :streams="venuesUpcoming" @venue-picked="(venue) => goToVenue(venue.streamId)" />
     </div>
     <!-- <h1>Tidigare event</h1>
     <VenueList
@@ -31,7 +31,7 @@
       <h3 class="text-base-content/90">
         Event utan datum
       </h3>
-      <VenueList :venues="venuesUnscheduled" @venue-picked="(venue) => goToVenue(venue.streamId)" />
+      <VenueList :streams="venuesUnscheduled" @venue-picked="(venue) => goToVenue(venue.streamId)" />
     </div>
   </div>
 

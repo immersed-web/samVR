@@ -14,13 +14,13 @@ export function extractMessageFromCatch(e: unknown, fallbackMessage?: string) {
 }
 
 export function exclude<Object, Key extends keyof Object>(
-  user: Object,
+  obj: Object,
   ...keys: Key[]
 ): Omit<Object, Key> {
   for (const key of keys) {
-    delete user[key];
+    delete obj[key];
   }
-  return user;
+  return obj;
 }
 
 // export function slugifyString(text: string) {

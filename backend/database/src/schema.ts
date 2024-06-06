@@ -80,7 +80,7 @@ export const users = pgTable("Users", {
 			username_key: uniqueIndex("User_username_key").on(table.username),
 		}
 	});
-export type User = Omit<typeof users.$inferSelect, 'password'>;
+export type User = typeof users.$inferSelect;
 
 export const usersRelations = relations(users, ({ many }) => ({
 	assets: many(assets),
