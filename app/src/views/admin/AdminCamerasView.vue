@@ -5,66 +5,36 @@
         <li class="menu-title mx-4 my-2">
           Kameraprofiler:
         </li>
-        <li
-          v-for="camera in adminStore.adminOnlyVenueState?.cameras"
-          :key="camera.cameraId"
-        >
-          <a
-            @click="editedCameraId = camera.cameraId; editedSenderId = undefined"
-            :class="{'active': editedCameraId === camera.cameraId}"
-            class="justify-between"
-          >
-            <div
-              class="flex flex-nowrap gap-2"
-            >
-            
-              <div
-                class="tooltip" 
-                :data-tip="mainCameraId === camera.cameraId?'Denna kamera är vald som startvinkel när besökaren ansluter till sändningen':'Klicka för att välja denna kamera som startvinkel för sändingen'"
-              >
-                <input
-                  v-model="mainCameraId"
-                  v-if="mainCameraId !== camera.cameraId"
-                  :value="camera.cameraId"
-                  type="radio"
-                  name="mainCamera"
-                  class="radio"
-                  :class="{'bg-neutral-300': editedCameraId === camera.cameraId}"
-                  @click.stop
-                  @input.stop="setMainCamera(camera.cameraId)"
-                ><span
-                  v-else
-                  class="material-icons"
-                >start</span>
+        <li v-for="camera in adminStore.adminOnlyStreamState?.cameras" :key="camera.cameraId">
+          <a @click="editedCameraId = camera.cameraId; editedSenderId = undefined"
+            :class="{ 'active': editedCameraId === camera.cameraId }" class="justify-between">
+            <div class="flex flex-nowrap gap-2">
+
+              <div class="tooltip"
+                :data-tip="mainCameraId === camera.cameraId ? 'Denna kamera är vald som startvinkel när besökaren ansluter till sändningen' : 'Klicka för att välja denna kamera som startvinkel för sändingen'">
+                <input v-model="mainCameraId" v-if="mainCameraId !== camera.cameraId" :value="camera.cameraId"
+                  type="radio" name="mainCamera" class="radio"
+                  :class="{ 'bg-neutral-300': editedCameraId === camera.cameraId }" @click.stop
+                  @input.stop="setMainCamera(camera.cameraId)"><span v-else class="material-icons">start</span>
               </div>
-              <span
-                class="material-icons"
-                :class="{'text-success': camera.isStreaming, 'text-error': !camera.isStreaming}"
-              >{{ camera.isStreaming? 'videocam': 'videocam_off' }}</span>{{ camera.name }}</div>
-            <button
-              @click.stop="deleteCamera(camera.cameraId)"
-              class="btn btn-error btn-square btn-sm"
-            >
+              <span class="material-icons"
+                :class="{ 'text-success': camera.isStreaming, 'text-error': !camera.isStreaming }">{{ camera.isStreaming
+                  ?
+                  'videocam' : 'videocam_off' }}</span>{{ camera.name }}
+            </div>
+            <button @click.stop="deleteCamera(camera.cameraId)" class="btn btn-error btn-square btn-sm">
               <span class="material-icons">delete</span>
             </button>
           </a>
         </li>
       </ul>
-      <ul
-        v-if="hasDetachedSenders"
-        class="menu bg-base-200 rounded-box mt-6"
-      >
+      <ul v-if="hasDetachedSenders" class="menu bg-base-200 rounded-box mt-6">
         <li class="menu-title mx-4 my-2">
           Ej tilldelade kamerastationer:
         </li>
-        <li
-          v-for="sender in adminStore.adminOnlyVenueState?.detachedSenders"
-          :key="sender.connectionId"
-        >
-          <a
-            @click="editedSenderId = sender.senderId; editedCameraId = undefined"
-            :class="{active: editedSenderId === sender.senderId}"
-          >
+        <li v-for="sender in adminStore.adminOnlyStreamState?.detachedSenders" :key="sender.connectionId">
+          <a @click="editedSenderId = sender.senderId; editedCameraId = undefined"
+            :class="{ active: editedSenderId === sender.senderId }">
             {{ sender.username }}[{{ sender.senderId.substring(0, 5) }}]
           </a>
         </li>
@@ -79,10 +49,7 @@
       </template>
     </div>
   </div>
-  <div
-    v-if="false"
-    class="flex gap-1"
-  >
+  <div v-if="false" class="flex gap-1">
     <table class="table">
       <thead>
         <tr>
@@ -92,10 +59,7 @@
         </tr>
       </thead>
       <tbody class="border">
-        <tr
-          v-for="camera in adminStore.adminOnlyVenueState?.cameras"
-          :key="camera.cameraId"
-        >
+        <tr v-for="camera in adminStore.adminOnlyStreamState?.cameras" :key="camera.cameraId">
           <td>
             <p>
               {{ camera.name }} <br>
@@ -104,35 +68,23 @@
             </p>
           </td>
           <td>
-            <button
-              @click="deleteCamera(camera.cameraId)"
-              class="btn btn-error btn-sm"
-            >
+            <button @click="deleteCamera(camera.cameraId)" class="btn btn-error btn-sm">
               Ta bort
             </button>
           </td>
           <td>
-            <button
-              @click="consumeCamera(camera.cameraId)"
-              :disabled="!camera.isStreaming"
-              class="btn btn-primary btn-sm"
-            >
+            <button @click="consumeCamera(camera.cameraId)" :disabled="!camera.isStreaming"
+              class="btn btn-primary btn-sm">
               Consume
             </button>
           </td>
           <td>
-            <button
-              @click="setPortal(camera.cameraId)"
-              class="btn btn-primary btn-sm"
-            >
+            <button @click="setPortal(camera.cameraId)" class="btn btn-primary btn-sm">
               SetPortal
             </button>
           </td>
           <td>
-            <button
-              @click="editedCameraId = camera.cameraId"
-              class="btn btn-primary btn-sm"
-            >
+            <button @click="editedCameraId = camera.cameraId" class="btn btn-primary btn-sm">
               Edit
             </button>
           </td>
@@ -155,10 +107,7 @@
           @click="positionPortal"
         />
       </div> -->
-      <pre
-        v-for="[k, c] in soupStore.consumers"
-        :key="k"
-      >
+      <pre v-for="[k, c] in soupStore.consumers" :key="k">
       {{ c.consumer.id }}
       {{ c.consumer.kind }}
       {{ c.consumer.track }}
@@ -169,15 +118,10 @@
       /> -->
     </div>
     <div class="p-4 border-2">
-      <div
-        v-for="sender in adminStore.adminOnlyVenueState?.detachedSenders"
-        :key="sender.connectionId"
-      >
+      <div v-for="sender in adminStore.adminOnlyStreamState?.detachedSenders" :key="sender.connectionId">
         {{ sender.username }}
-        <button
-          class="btn btn-primary"
-          @click="adminStore.createCameraFromSender(`camera_${sender.senderId.substring(0, 5)}`, sender.senderId)"
-        >
+        <button class="btn btn-primary"
+          @click="adminStore.createCameraFromSender(`camera_${sender.senderId.substring(0, 5)}`, sender.senderId)">
           Create camera
         </button>
       </div>
@@ -192,7 +136,6 @@
 </template>
 
 <script setup lang="ts">
-// import {useVenueStore} from '@/stores/venueStore';
 import { useAdminStore } from '@/stores/adminStore';
 import { useSoupStore } from '@/stores/soupStore';
 import { computed, onBeforeMount, reactive, ref, watch } from 'vue';
@@ -201,13 +144,13 @@ import { useCameraStore } from '@/stores/cameraStore';
 import AdminCameraEditor from './components/AdminCameraEditor.vue';
 import AdminSenderEditor from './components/AdminSenderEditor.vue';
 import { useConnectionStore } from '@/stores/connectionStore';
-import { useVenueStore } from '@/stores/venueStore';
+import { useStreamStore } from '@/stores/streamStore';
 
-const venueStore = useVenueStore();
+const streamStore = useStreamStore();
 const connection = useConnectionStore();
 const adminStore = useAdminStore();
 const hasDetachedSenders = computed(() => {
-  for (const key in adminStore.adminOnlyVenueState?.detachedSenders) {
+  for (const key in adminStore.adminOnlyStreamState?.detachedSenders) {
     return true;
   }
   return false;
@@ -216,7 +159,7 @@ const soupStore = useSoupStore();
 const cameraStore = useCameraStore();
 
 const mainCameraId = ref<CameraId>();
-watch(() => venueStore.currentStream?.mainCameraId, (newMainCameraId) => {
+watch(() => streamStore.currentStream?.mainCameraId, (newMainCameraId) => {
   if(newMainCameraId === null) newMainCameraId = undefined;
   mainCameraId.value = newMainCameraId;
 }, {immediate: true});
@@ -243,7 +186,7 @@ const portalPosition: Partial<CameraPortalInsert['portal']> & { absoluteX?: numb
 const editedCameraId = ref<CameraId>();
 const editedSenderId = ref<SenderId>();
 const editedSender = computed(() => {
-  const detachedSenders = adminStore.adminOnlyVenueState?.detachedSenders;
+  const detachedSenders = adminStore.adminOnlyStreamState?.detachedSenders;
   if(!detachedSenders || !editedSenderId.value) return undefined;
   for(const prop in detachedSenders){
     const s = detachedSenders[prop as ConnectionId];

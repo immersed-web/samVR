@@ -1,22 +1,11 @@
 <template>
-  <div
-    class="w-full h-screen"
-  >
-    <div
-      class="w-full h-full flex justify-center items-center"
-      v-if="!soup.userHasInteracted"
-    >
-      <button
-        class="btn btn-primary btn-lg"
-      >
+  <div class="w-full h-screen">
+    <div class="w-full h-full flex justify-center items-center" v-if="!soup.userHasInteracted">
+      <button class="btn btn-primary btn-lg">
         Starta
       </button>
     </div>
-    <CameraView
-      v-else
-      :camera-id="props.cameraId"
-      :venue-id="props.venueId"
-    />
+    <CameraView v-else :camera-id="props.cameraId" :streamId="props.venueId" />
   </div>
 </template>
 

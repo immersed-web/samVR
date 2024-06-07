@@ -64,12 +64,12 @@
 <script setup lang="ts">
 import VrAFrame from '../../components/lobby/VrAFrame.vue';
 import { useClientStore } from '@/stores/clientStore';
-import { useVenueStore } from '@/stores/venueStore';
+import { useStreamStore } from '@/stores/streamStore';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import { ref } from 'vue';
 
 const vrSpaceStore = useVrSpaceStore();
-const venueStore = useVenueStore();
+const venueStore = useStreamStore();
 const clientStore = useClientStore();
 
 // const baseUrl = `https://${import.meta.env.EXPOSED_SERVER_URL}${import.meta.env.EXPOSED_FILESERVER_PATH}`;

@@ -6,7 +6,7 @@ import type { StreamId } from 'schemas';
 import { useConnectionStore } from '@/stores/connectionStore';
 import { useNow, useStorage } from '@vueuse/core';
 
-type _ReceivedPublicVenueState = RouterOutputs['venue']['joinStream'];
+type _ReceivedPublicStreamState = RouterOutputs['venue']['joinStream'];
 
 export type VisibilityDetails = {
   visibility: Visibility,
@@ -15,7 +15,7 @@ export type VisibilityDetails = {
   description: string
 }
 
-export function streamConsideredActive(venueState: Pick<_ReceivedPublicVenueState, 'streamAutoStart' | 'streamManuallyStarted' | 'streamStartTime' | 'streamManuallyEnded'>) {
+export function streamConsideredActive(streamState: Pick<_ReceivedPublicStreamState, 'streamAutoStart' | 'streamManuallyStarted' | 'streamStartTime' | 'streamManuallyEnded'>) {
   const now = Date.now();
   // let doorsAreOpen = false;
   // if(venueState.doorsManuallyOpened) doorsAreOpen = true;
@@ -24,21 +24,20 @@ export function streamConsideredActive(venueState: Pick<_ReceivedPublicVenueStat
   // }
 
   let streamActive = false;
-  if(venueState.streamManuallyStarted) streamActive = true;
-  if(venueState.streamAutoStart && venueState.streamStartTime && venueState.streamManuallyEnded) {
-    streamActive = venueState.streamStartTime.getTime() < now;
+  if (streamState.streamManuallyStarted) streamActive = true;
+  if (streamState.streamAutoStart && streamState.streamStartTime && streamState.streamManuallyEnded) {
+    streamActive = streamState.streamStartTime.getTime() < now;
   }
-  
+
   return streamActive;
 }
 
-export const useVenueStore = defineStore('venue', () => {
-  // console.log('VENUESTORE USE FUNCTION TRIGGERED');
-  const now = useNow({interval: 1000});
+export const useStreamStore = defineStore('stream', () => {
+  const now = useNow({ interval: 1000 });
   const connection = useConnectionStore();
   // const authStore = useAuthStore();
 
-  const currentStream = ref<_ReceivedPublicVenueState>();
+  const currentStream = ref<_ReceivedPublicStreamState>();
   const savedStreamId = ref<StreamId>();
 
 
@@ -53,11 +52,11 @@ export const useVenueStore = defineStore('venue', () => {
   });
 
   connection.client.venue.subVenueStateUpdated.subscribe(undefined, {
-    onData(data){
-      console.log('received venuestate updated:', data);
+    onData(data) {
+      console.log('received streamState updated:', data);
       currentStream.value = data.data;
     },
-    onError(err){
+    onError(err) {
       console.error(err);
     },
   });
@@ -81,20 +80,20 @@ export const useVenueStore = defineStore('venue', () => {
   //   return urlToModelsFolder + modelId + '.navmesh.' + extension;
   // });
 
-  async function loadAndJoinVenue(streamId: StreamId) {
+  async function loadAndJoinStream(streamId: StreamId) {
     currentStream.value = await connection.client.venue.loadAndJoinStream.mutate({ streamId });
     savedStreamId.value = currentStream.value.streamId;
   }
 
-  async function joinVenue(streamId: StreamId) {
+  async function joinStream(streamId: StreamId) {
     // console.log('sending request to join stream:', streamId);
     currentStream.value = await connection.client.venue.joinStream.mutate({ streamId });
     savedStreamId.value = currentStream.value.streamId;
   }
 
-  async function leaveVenue() {
+  async function leaveStream() {
     if (!currentStream.value) {
-      console.warn('Tried to leave venue when you aren\'t in one.. Not so clever, eh?');
+      console.warn('Tried to leave stream when you aren\'t in one.. Not so clever, eh?');
       return;
     }
     await connection.client.venue.leaveCurrentVenue.mutate();
@@ -102,7 +101,7 @@ export const useVenueStore = defineStore('venue', () => {
   }
 
 
-  const visibilityOptions : Ref<VisibilityDetails[]> = ref([
+  const visibilityOptions: Ref<VisibilityDetails[]> = ref([
     // {
     //   visibility: 'private',
     //   name: 'Privat',
@@ -126,7 +125,7 @@ export const useVenueStore = defineStore('venue', () => {
   const currentVisibilityDetails = computed(() => {
     return visibilityOptions.value.find(o => o.visibility === currentStream.value?.visibility);
   });
-  
+
   const timeSpread = 30;
   const timeOffset = useStorage('doorTimeOffset', Math.random() * timeSpread);
   // const secondsUntilDoorsOpen = computed(() => {
@@ -143,7 +142,7 @@ export const useVenueStore = defineStore('venue', () => {
   //   }
   //   else return currentVenue.value.doorsManuallyOpened;
   // });
-  
+
   const streamIsActive = computed(() => {
     if (!currentStream.value || currentStream.value.streamManuallyEnded) return false;
     if (currentStream.value.streamAutoStart && currentStream.value.streamStartTime) {
@@ -161,9 +160,9 @@ export const useVenueStore = defineStore('venue', () => {
     streamIsActive,
     savedStreamId,
     currentStream,
-    loadAndJoinVenue,
-    joinVenue,
-    leaveVenue,
+    loadAndJoinStream,
+    joinStream,
+    leaveStream,
     // modelUrl,
     // navmeshUrl,
     visibilityOptions,

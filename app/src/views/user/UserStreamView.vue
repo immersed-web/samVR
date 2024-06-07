@@ -14,10 +14,10 @@
     </div>
     <div class="card bg-base-200 p-6 md:m-6 rounded-none md:rounded-2xl">
       <h1 class="text-xl md:text-5xl font-bold md:mt-0 mt-12 mb-8 break-all">
-        {{ venueStore.currentStream?.name ?? $props.streamId }}
+        {{ streamStore.currentStream?.name ?? $props.streamId }}
       </h1>
 
-      <div v-if="!venueStore.currentStream">
+      <div v-if="!streamStore.currentStream">
         <h2>Försöker ansluta till evented</h2>
       </div>
       <div v-else>
@@ -58,17 +58,17 @@
             </h2>
             <p class="my-2">
               <span class="material-icons text-sm"
-                :class="venueStore.streamIsActive ? 'text-green-500' : 'text-red-500'">circle</span>
-              <strong>Sändningen är {{ venueStore.streamIsActive ? 'igång' : 'ej igång' }}</strong>
+                :class="streamStore.streamIsActive ? 'text-green-500' : 'text-red-500'">circle</span>
+              <strong>Sändningen är {{ streamStore.streamIsActive ? 'igång' : 'ej igång' }}</strong>
             </p>
 
-            <div v-if="venueStore.streamIsActive">
+            <div v-if="streamStore.streamIsActive">
               <button @click="goToStream" class="btn btn-primary">
                 Gå till kameraström
               </button>
             </div>
-            <div v-else-if="venueStore.currentStream.streamStartTime">
-              <strong>Sändningen startar:</strong> {{ venueStore.currentStream.streamStartTime?.toLocaleString() }}
+            <div v-else-if="streamStore.currentStream.streamStartTime">
+              <strong>Sändningen startar:</strong> {{ streamStore.currentStream.streamStartTime?.toLocaleString() }}
             </div>
           </div>
         </div>
@@ -82,10 +82,10 @@ import { useRouter } from 'vue-router';
 // import { useConnectionStore } from '@/stores/connectionStore';
 import type { StreamId } from 'schemas';
 import { computed, onMounted, watch } from 'vue';
-import { useVenueStore } from '@/stores/venueStore';
+import { useStreamStore } from '@/stores/streamStore';
 import { useIntervalFn } from '@vueuse/core';
 // const connection = useConnectionStore();
-const venueStore = useVenueStore();
+const streamStore = useStreamStore();
 
 const props = defineProps<{
   streamId: StreamId
@@ -93,23 +93,22 @@ const props = defineProps<{
 
 // const venueInfo = shallowRef<VenueListInfo>();
 
-if (venueStore.currentStream?.streamId !== props.streamId) {
+if (streamStore.currentStream?.streamId !== props.streamId) {
   const { pause } = useIntervalFn(async () => {
     try {
-      console.log('trying to join venue:', props.streamId);
-      // await venueStore.joinVenue(props.venueId);
-      await venueStore.loadAndJoinVenue(props.streamId);
+      console.log('trying to join stream:', props.streamId);
+      await streamStore.loadAndJoinStream(props.streamId);
       pause();
     } catch (e) {
       console.error(e);
-      console.log('failed to join venue. Will retry soon.');
+      console.log('failed to join stream. Will retry soon.');
     }
 
   }, 5000, { immediateCallback: true });
 }
 
 async function returnToVenueList() {
-  await venueStore.leaveVenue();
+  await streamStore.leaveStream();
   router.replace({ name: 'streamList' })
 }
 
@@ -126,16 +125,16 @@ async function returnToVenueList() {
 //   }
 // });
 function goToStream() {
-  if (!venueStore.currentStream) return;
-  let mainCameraId = venueStore.currentStream.mainCameraId;
+  if (!streamStore.currentStream) return;
+  let mainCameraId = streamStore.currentStream.mainCameraId;
   if(!mainCameraId){
     console.warn('No maincamera set. Falling back to using any camera');
-    mainCameraId = Object.values(venueStore.currentStream.cameras)[0].cameraId;
+    mainCameraId = Object.values(streamStore.currentStream.cameras)[0].cameraId;
   }
   router.push({
     name: 'userCamera',
     params: {
-      venueId: venueStore.currentStream.streamId,
+      streamId: streamStore.currentStream.streamId,
       cameraId: mainCameraId,
     },
   });

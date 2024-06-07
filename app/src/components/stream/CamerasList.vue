@@ -8,19 +8,19 @@
       </tr>
     </thead>
     <tbody class="border">
-      <tr v-for="camera in adminStore.adminOnlyVenueState?.cameras" :key="camera.cameraId"
-        :class="{'': !camera.isStreaming}">
+      <tr v-for="camera in adminStore.adminOnlyStreamState?.cameras" :key="camera.cameraId"
+        :class="{ '': !camera.isStreaming }">
         <td>
-          <div v-if="venueStore.currentStream?.mainCameraId === camera.cameraId" class="tooltip z-40"
+          <div v-if="streamStore.currentStream?.mainCameraId === camera.cameraId" class="tooltip z-40"
             data-tip="Denna kamera är vald som startvinkel när besökaren ansluter till sändningen">
             <span class="material-icons cursor-help">start</span>
           </div>
         </td>
         <td class="">
           <div class="tooltip"
-            :data-tip="camera.cameraType === 'panoramic360'?'Detta är en 360-kamera':'Detta är en vanlig kamera'">
+            :data-tip="camera.cameraType === 'panoramic360' ? 'Detta är en 360-kamera' : 'Detta är en vanlig kamera'">
             <span class="material-icons cursor-help">{{ camera.cameraType ===
-              'panoramic360'?'panorama_photosphere_select':'panorama' }}</span>
+              'panoramic360' ? 'panorama_photosphere_select' : 'panorama' }}</span>
           </div>
         </td>
         <td v-if="camera.name !== ''">
@@ -31,8 +31,8 @@
         </td>
         <td>
           <div class="tooltip" data-tip="Denna kamera är takhängd">
-            <span :class="{hidden: camera.orientation!==180}" class="material-icons cursor-help">{{ camera.orientation
-              === 180?'cameraswitch':'cameraswitch' }}</span>
+            <span :class="{ hidden: camera.orientation !== 180 }" class="material-icons cursor-help">{{ camera.orientation
+              === 180 ? 'cameraswitch' : 'cameraswitch' }}</span>
           </div>
         </td>
         <td colspan="2" v-if="!camera.senderAttached" class="text-center">
@@ -43,26 +43,26 @@
         </td>
         <template v-else>
           <td>
-            <div class="tooltip" :class="{'tooltip-error': !camera.producers.audioProducer}"
-              :data-tip="camera.producers.audioProducer?'Kameran skickar ljud':'Kameran skickar inget ljud'">
+            <div class="tooltip" :class="{ 'tooltip-error': !camera.producers.audioProducer }"
+              :data-tip="camera.producers.audioProducer ? 'Kameran skickar ljud' : 'Kameran skickar inget ljud'">
               <span class="material-icons cursor-help"
-                :class="[!camera.producers.audioProducer? 'text-error':'text-success']">{{
-                camera.producers.audioProducer?'volume_up':'volume_off' }}</span>
+                :class="[!camera.producers.audioProducer ? 'text-error' : 'text-success']">{{
+                  camera.producers.audioProducer ? 'volume_up' : 'volume_off' }}</span>
             </div>
           </td>
           <td>
-            <div class="tooltip" :class="{'tooltip-error': !camera.producers.videoProducer}"
-              :data-tip="camera.producers.videoProducer?'Kameran skickar video':'Kameran skickar ingen video! Dubbelkolla sändarstationen!'">
+            <div class="tooltip" :class="{ 'tooltip-error': !camera.producers.videoProducer }"
+              :data-tip="camera.producers.videoProducer ? 'Kameran skickar video' : 'Kameran skickar ingen video! Dubbelkolla sändarstationen!'">
               <span class="material-icons cursor-help"
-                :class="[!camera.producers.videoProducer? 'text-error':'text-success']">{{
-                camera.producers.videoProducer?'videocam':'videocam_off' }}</span>
+                :class="[!camera.producers.videoProducer ? 'text-error' : 'text-success']">{{
+                  camera.producers.videoProducer ? 'videocam' : 'videocam_off' }}</span>
             </div>
           </td>
         </template>
       </tr>
     </tbody>
   </table>
-  <table class="table" v-if="adminStore.adminOnlyVenueState?.detachedSenders">
+  <table class="table" v-if="adminStore.adminOnlyStreamState?.detachedSenders">
     <thead>
       <tr>
         <th colspan="10" class="text-left">
@@ -71,7 +71,7 @@
       </tr>
     </thead>
     <tbody class="border">
-      <tr v-for="sender in adminStore.adminOnlyVenueState?.detachedSenders" :key="sender.connectionId">
+      <tr v-for="sender in adminStore.adminOnlyStreamState?.detachedSenders" :key="sender.connectionId">
         <td>{{ sender.connectionId.substring(0, 5) }}...</td>
         <td>{{ sender.username }}</td>
       </tr>
@@ -81,11 +81,10 @@
 
 <script setup lang="ts">
 import { useAdminStore } from '@/stores/adminStore';
-import { useVenueStore } from '@/stores/venueStore';
+import { useStreamStore } from '@/stores/streamStore';
 
 // Use imports
-const venueStore = useVenueStore();
+const streamStore = useStreamStore();
 const adminStore = useAdminStore();
 
 </script>
-

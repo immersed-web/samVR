@@ -84,7 +84,7 @@ import { onMounted, ref } from 'vue';
 import { useAuthStore } from '@/stores/authStore';
 import { hasAtLeastSecurityLevel, type UserRole } from 'schemas';
 import { useConnectionStore } from '@/stores/connectionStore';
-import VenueListView from './public/VenueListView.vue';
+// import StreamListView from '@/views/public/StreamListView.vue';
 
 const showDevLoginButtons = import.meta.env.DEV;
 

@@ -4,7 +4,7 @@ import { useClientStore } from '@/stores/clientStore';
 // import { useSenderStore } from '@/stores/senderStore';
 import { hasAtLeastSecurityLevel, type UserRole, type ClientType, type StreamId } from 'schemas';
 import { createRouter, createWebHistory } from 'vue-router';
-import { useVenueStore } from '@/stores/venueStore';
+import { useStreamStore } from '@/stores/streamStore';
 import { useAdminStore } from '@/stores/adminStore';
 import { useSenderStore } from '@/stores/senderStore';
 import { useTitle } from '@vueuse/core';
@@ -15,8 +15,8 @@ declare module 'vue-router' {
     requiredRole?: UserRole
     afterLoginRedirect?: string
     loginNeededRedirect?: 'cameraLogin' | 'login'
-    mustBeInVenue?: boolean
-    pickVenueRouteName?: string
+    mustBeInStream?: boolean
+    pickStreamRouteName?: string
   }
 }
 
@@ -85,7 +85,7 @@ const router = createRouter({
         {
           path: 'stream/:streamId',
           props: true,
-          meta: { mustBeInVenue: true},
+          meta: { mustBeInStream: true },
           children: [
             {
               path: '',
@@ -149,13 +149,13 @@ const router = createRouter({
         },
         {
           path: '',
-          meta: {mustBeInVenue: true, pickVenueRouteName: 'adminHome'},
+          meta: { mustBeInStream: true, pickStreamRouteName: 'adminHome' },
           children: [
 
             {
-              path: 'venue',
-              name: 'adminVenue',
-              component:  () => import('@/views/admin/AdminVenueView.vue'),
+              path: 'stream',
+              name: 'adminStream',
+              component: () => import('@/views/admin/AdminStreamView.vue'),
             },
             {
               path: 'lobby',
@@ -184,11 +184,11 @@ const router = createRouter({
       children: [
         {
           name: 'senderHome', path: '',
-          meta: { mustBeInVenue: true, pickVenueRouteName: 'senderPickVenue' },
+          meta: { mustBeInStream: true, pickStreamRouteName: 'senderPickStream' },
           component: () => import('@/views/sender/SenderCameraView.vue'),
         },
         {
-          name: 'senderPickVenue', path: 'choose-venue', component: () => import('@/views/sender/SenderPickVenueView.vue'),
+          name: 'senderPickStream', path: 'choose-stream', component: () => import('@/views/sender/SenderPickStreamView.vue'),
         },
       ],
     },
@@ -245,7 +245,7 @@ router.beforeEach(async (to, from) => {
       } else {
         connectionStore.createSenderClient();
         const senderStore = useSenderStore();
-        // TODO: Here is a possible race conditon where we currently rely on the set/get senderId being called on the server before the server handles the later joinVenue.
+        // TODO: Here is a possible race conditon where we currently rely on the set/get senderId being called on the server before the server handles the later joinStream.
         // We currently dont await that the senderId is correctly agreed between server and client before proceeding.
         // Perhaps we should remove the initialization of senderId from being autotriggered in store and explicitly call it here?
         // await senderStore.initSenderId();
@@ -255,15 +255,15 @@ router.beforeEach(async (to, from) => {
       throw Error('you are already connected to the backend as the wrong type of client. Close the current connection before going to this route.');
     }
   }
-  if(to.meta.mustBeInVenue){
-    console.log('Entering route that requires to be in a venue.');
-    const venueStore = useVenueStore();
+  if (to.meta.mustBeInStream) {
+    console.log('Entering route that requires to be in a stream.');
+    const streamStore = useStreamStore();
 
-    if (!venueStore.currentStream || venueStore.currentStream.streamId !== venueStore.savedStreamId) {
-      const streamId = venueStore.savedStreamId ?? to.params.streamId as StreamId;
+    if (!streamStore.currentStream || streamStore.currentStream.streamId !== streamStore.savedStreamId) {
+      const streamId = streamStore.savedStreamId ?? to.params.streamId as StreamId;
       // console.log('streamId:', streamId);
       if (!streamId) {
-        if(to.meta.pickVenueRouteName) return { name: to.meta.pickVenueRouteName};
+        if (to.meta.pickStreamRouteName) return { name: to.meta.pickStreamRouteName };
         const routeName = `${authStore.routePrefix}Home`;
         return { name: routeName};
       }
@@ -271,26 +271,25 @@ router.beforeEach(async (to, from) => {
       if(connection.connectionType === 'client' && hasAtLeastSecurityLevel(authStore.role, 'moderator')){
         const adminStore = useAdminStore();
         try{
-          console.log('Trying to loadAndJoinVenueAsAdmin');
-          await adminStore.loadAndJoinVenueAsAdmin(streamId);
+          console.log('Trying to loadAndJoinStreamAsAdmin');
+          await adminStore.loadAndJoinStreamAsAdmin(streamId);
         } catch (e) {
-          console.error('failed to loadAndJoinVenueAsAdmin');
+          console.error('failed to loadAndJoinStreamAsAdmin');
           console.log(e);
-          if(to.meta.pickVenueRouteName) return { name: to.meta.pickVenueRouteName};
+          if (to.meta.pickStreamRouteName) return { name: to.meta.pickStreamRouteName };
           const routeName = `${authStore.routePrefix}Home`;
           return { name: routeName};
-          // console.warn('nav guard tried to load venue that was already loaded');
+          // console.warn('nav guard tried to load stream that was already loaded');
         }
       }else{
-        console.log('Trying to loadAndJoinVenue');
-        // await venueStore.joinVenue(venueStore.savedVenueId);
-        await venueStore.loadAndJoinVenue(streamId);
+        console.log('Trying to loadAndJoinStream');
+        await streamStore.loadAndJoinStream(streamId);
       }
     }
-    const venueName = venueStore.currentStream?.name;
-    if(venueName){
+    const streamName = streamStore.currentStream?.name;
+    if (streamName) {
       // console.log('Setting new title');
-      windowTitle.value = `${venueName} - ${import.meta.env.EXPOSED_APP_NAME}`;
+      windowTitle.value = `${streamName} - ${import.meta.env.EXPOSED_APP_NAME}`;
     }
   }
 });

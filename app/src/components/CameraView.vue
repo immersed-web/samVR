@@ -204,7 +204,7 @@ import { useSoupStore } from '@/stores/soupStore';
 import type { CameraId, StreamId } from 'schemas';
 import { onBeforeUnmount, onMounted, ref, shallowRef, watch, inject, computed, nextTick, onBeforeMount } from 'vue';
 import { computedWithControl, until } from '@vueuse/core';
-import { useVenueStore } from '@/stores/venueStore';
+import { useStreamStore } from '@/stores/streamStore';
 import { useCameraStore } from '@/stores/cameraStore';
 import type { Entity, Scene } from 'aframe';
 import { useAdminStore } from '@/stores/adminStore';
@@ -212,7 +212,7 @@ import { useAdminStore } from '@/stores/adminStore';
 import { aFrameSceneProvideKey } from '@/modules/injectionKeys';
 
 const props = withDefaults(defineProps<{
-  venueId: StreamId,
+  streamId: StreamId,
   cameraId: CameraId,
   editable?: boolean
 }>(), {
@@ -248,7 +248,7 @@ const cameraTag = ref<Entity>();
 const cameraRigTag = ref<Entity>();
 
 const soup = useSoupStore();
-const venueStore = useVenueStore();
+const streamStore = useStreamStore();
 const camera = useCameraStore();
 
 const debugMessage = ref<string>();
@@ -444,7 +444,7 @@ function teleportToCamera(cameraId: CameraId, event: Event) {
 
   
   console.log('go to new camera:', cameraId);
-  router.replace({name: 'userCamera', params: {venueId: props.venueId, cameraId}});
+  router.replace({ name: 'userCamera', params: { streamId: props.streamId, cameraId } });
 }
 
 const cameraIsAnimating = ref(false);
@@ -557,8 +557,8 @@ watch(() => props.cameraId, () => {
 
 onBeforeMount(async () => {
   console.log('onBeforeMount');
-  if (!venueStore.currentStream) {
-    await venueStore.loadAndJoinVenue(props.venueId);
+  if (!streamStore.currentStream) {
+    await streamStore.loadAndJoinStream(props.streamId);
   }
   if(!soup.deviceLoaded){
     await soup.loadDevice();

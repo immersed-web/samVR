@@ -11,9 +11,9 @@
 // import { onMounted } from 'vue';
 import VrAFrame from '../../components/lobby/VrAFrame.vue';
 // import { useVrSpaceStore } from '@/stores/vrSpaceStore';
-import { useVenueStore } from '@/stores/venueStore';
+import { useStreamStore } from '@/stores/streamStore';
 
-const venueStore = useVenueStore();
+const venueStore = useStreamStore();
 // const vrSpaceStore = useVrSpaceStore();
 // onMounted(async () => {
 //   await vrSpaceStore.enterVrSpace();

@@ -8,7 +8,7 @@
         Mina event
       </h2>
       <div class="flex space-x-2">
-        <VenueList v-if="clientStore.clientState" :streams="venuesAsArray"
+        <StreamList v-if="clientStore.clientState" :streams="venuesAsArray"
           @stream-picked="(stream) => pickVenueAndNavigate(stream.streamId)" />
         <div>
           <button class="btn btn-outline btn-primary" @click="createVenue">
@@ -98,10 +98,10 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import VenueList from '@/components/venue/VenueList.vue';
+import StreamList from '@/components/stream/StreamList.vue';
 import { useClientStore } from '@/stores/clientStore';
 import { useAuthStore } from '@/stores/authStore';
-import { useVenueStore } from '@/stores/venueStore';
+import { useStreamStore } from '@/stores/streamStore';
 import { computed, onBeforeMount, ref } from 'vue';
 import type { StreamId } from 'schemas';
 import { useAdminStore } from '@/stores/adminStore';
@@ -112,7 +112,7 @@ const router = useRouter();
 // const connectionStore = useConnectionStore();
 const clientStore = useClientStore();
 const authStore = useAuthStore();
-const venueStore = useVenueStore();
+const streamStore = useStreamStore();
 const adminStore = useAdminStore();
 
 
@@ -180,12 +180,12 @@ async function makeCallThenResetList(fetchReq: (...p: any) => Promise<any>) {
 
 // View functionality
 async function createVenue () {
-  await adminStore.createVenue();
+  await adminStore.createStream();
 }
 
 const pickVenueAndNavigate = async (streamId: StreamId) => {
-  venueStore.savedStreamId = streamId;
-  router.push({name: authStore.routePrefix + 'Venue'});
+  streamStore.savedStreamId = streamId;
+  router.push({ name: authStore.routePrefix + 'Stream' });
 };
 
 </script>

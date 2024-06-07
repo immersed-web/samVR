@@ -61,11 +61,11 @@
 import type { RouterOutputs } from '@/modules/trpcClient';
 import { useConnectionStore } from '@/stores/connectionStore';
 import { computed, onBeforeMount, ref } from 'vue';
-import VenueList from '@/components/venue/VenueList.vue';
+import VenueList from '@/components/stream/StreamList.vue';
 import { type StreamId, hasAtLeastSecurityLevel } from 'schemas';
 import { useRouter } from 'vue-router';
 import { isPast } from 'date-fns';
-import { streamConsideredActive } from '@/stores/venueStore';
+import { streamConsideredActive } from '@/stores/streamStore';
 import UserBanner from '@/components/UserBanner.vue';
 // import { useAuthStore } from '@/stores/authStore';
 

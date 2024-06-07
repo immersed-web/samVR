@@ -3,34 +3,22 @@ import { defineStore } from 'pinia';
 import type { CameraId, SenderId, StreamId, CameraPortalInsert, CameraInsert, ConnectionId, CameraUpdate } from 'schemas';
 import { computed, ref } from 'vue';
 import { useConnectionStore } from './connectionStore';
-import { useVenueStore } from './venueStore';
+import { useStreamStore } from './streamStore';
 import { useSoupStore } from './soupStore';
 import { useNow } from '@vueuse/core';
 
-type _ReceivedAdminVenueState = SubscriptionValue<RouterOutputs['admin']['subVenueStateUpdated']>['data'];
+type _ReceivedAdminStreamState = SubscriptionValue<RouterOutputs['admin']['subVenueStateUpdated']>['data'];
 export const useAdminStore = defineStore('admin', () => {
-  const venueStore = useVenueStore();
+  const streamStore = useStreamStore();
   const connection = useConnectionStore();
   const now = useNow({interval: 1000});
 
-  const adminOnlyVenueState = ref<_ReceivedAdminVenueState>();
-
-  // Refs
-  // type ReceivedSenderData = SubscriptionValue<RouterOutputs['admin']['subSenderAddedOrRemoved']>['data']['senderState'];
-
-  // TODO: Do we really want deep reactive object?
-  // const connectedSenders = reactive<Map<ReceivedSenderData['connectionId'], ReceivedSenderData>>(new Map());
-
-  // if(venueStore.currentVenue){
-
-  //   connectedSenders. venueStore.currentVenue.senders
-  // }
-
+  const adminOnlyStreamState = ref<_ReceivedAdminStreamState>();
 
   connection.client.admin.subVenueStateUpdated.subscribe(undefined, {
     onData({data, reason}){
-      console.log('venueState (adminonly) updated:', { data, reason});
-      adminOnlyVenueState.value = data;
+      console.log('streamState (adminonly) updated:', { data, reason });
+      adminOnlyStreamState.value = data;
     },
   });
 
@@ -60,25 +48,25 @@ export const useAdminStore = defineStore('admin', () => {
   //   },
   // });
 
-  async function createVenue () {
-    const venueId = await connection.client.admin.createNewVenue.mutate({name: `event-${Math.trunc(Math.random() * 1000)}`});
-    await loadAndJoinVenueAsAdmin(venueId);
-    console.log('Created, loaded and joined venue', venueId);
+  async function createStream() {
+    const streamId = await connection.client.admin.createNewVenue.mutate({ name: `event-${Math.trunc(Math.random() * 1000)}` });
+    await loadAndJoinStreamAsAdmin(streamId);
+    console.log('Created, loaded and joined stream', streamId);
   }
 
-  async function deleteCurrentVenue() {
-    if (venueStore.currentStream?.streamId) {
-      const streamId = venueStore.currentStream.streamId;
-      await venueStore.leaveVenue();
-      // TODO: Make all other clients leave venue, too
+  async function deleteCurrentStream() {
+    if (streamStore.currentStream?.streamId) {
+      const streamId = streamStore.currentStream.streamId;
+      await streamStore.leaveStream();
+  // TODO: Make all other clients leave stream, too
       await connection.client.admin.deleteVenue.mutate({ streamId });
     }
   }
 
-  async function loadAndJoinVenueAsAdmin(streamId: StreamId) {
+  async function loadAndJoinStreamAsAdmin(streamId: StreamId) {
     const { publicVenueState, adminOnlyVenueState: aOnlyState } = await connection.client.admin.loadAndJoinVenue.mutate({ streamId });
-    venueStore.currentStream = publicVenueState;
-    adminOnlyVenueState.value = aOnlyState;
+    streamStore.currentStream = publicVenueState;
+    adminOnlyStreamState.value = aOnlyState;
   }
   
   async function updateCamera(cameraId: CameraId, input: CameraUpdate, reason?: string) {
@@ -109,11 +97,11 @@ export const useAdminStore = defineStore('admin', () => {
   }
   
   async function consumeDetachedSenderVideo(connectionId: ConnectionId) {
-    if(!adminOnlyVenueState.value?.detachedSenders) {
+    if (!adminOnlyStreamState.value?.detachedSenders) {
       console.warn('detachedSenders undefined!');
       return;
     }
-    const p = adminOnlyVenueState.value?.detachedSenders[connectionId].producers;
+    const p = adminOnlyStreamState.value?.detachedSenders[connectionId].producers;
     if(p === undefined) return;
     if(!p.videoProducer) return;
     const soup = useSoupStore();
@@ -141,12 +129,12 @@ export const useAdminStore = defineStore('admin', () => {
 
 
   return {
-    adminOnlyVenueState,
+    adminOnlyStreamState,
     // realSecondsUntilDoorsOpen,
     // realDoorsAreOpen,
-    createVenue,
-    loadAndJoinVenueAsAdmin,
-    deleteCurrentVenue,
+    createStream,
+    loadAndJoinStreamAsAdmin,
+    deleteCurrentStream,
     createCameraFromSender,
     setSenderForCamera,
     updateCamera,

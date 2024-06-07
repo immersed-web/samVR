@@ -91,7 +91,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 import { useConnectionStore } from '@/stores/connectionStore';
-import { useVenueStore } from '@/stores/venueStore';
+import { useStreamStore } from '@/stores/streamStore';
 import AdminUploadModelForm from './AdminUploadModelForm.vue';
 import VrAFramePreview from '@/components/lobby/LobbyAFramePreview.vue';
 import { ref, watch, onMounted } from 'vue';
@@ -101,7 +101,7 @@ import { throttle } from 'lodash-es';
 // Use imports
 const router = useRouter();
 const connectionStore = useConnectionStore();
-const venueStore = useVenueStore();
+const venueStore = useStreamStore();
 
 onMounted(() => {
   const storeRot = venueStore.currentStream?.vrSpace?.virtualSpace3DModel?.entranceRotation;
@@ -132,19 +132,19 @@ watch(spawnRadius, (radius) => {
 
 type Point = [number, number, number];
 
-function onCursorPlaced(point: Point){
+function onCursorPlaced(point: Point) {
   console.log('cursor placed:', point);
-  if(currentCursorType.value === 'entrancePosition'){
+  if (currentCursorType.value === 'entrancePosition') {
     setEntrancePosition(point);
-  } else if(currentCursorType.value === 'spawnPosition' ){
+  } else if (currentCursorType.value === 'spawnPosition') {
     setSpawnPosition(point);
   }
   currentCursorType.value = undefined;
 }
 
-async function setEntrancePosition(point: Point){
+async function setEntrancePosition(point: Point) {
   const modelId = venueStore.currentStream?.vrSpace?.virtualSpace3DModelId;
-  if(!modelId) return;
+  if (!modelId) return;
   await connectionStore.client.vr.update3DModel.mutate({
     vr3DModelId: modelId,
     data: {
@@ -152,9 +152,9 @@ async function setEntrancePosition(point: Point){
     },
   });
 }
-async function setSpawnPosition(point: Point){
+async function setSpawnPosition(point: Point) {
   const modelId = venueStore.currentStream?.vrSpace?.virtualSpace3DModelId;
-  if(!modelId) return;
+  if (!modelId) return;
   await connectionStore.client.vr.update3DModel.mutate({
     vr3DModelId: modelId,
     data: {
@@ -166,7 +166,7 @@ async function setSpawnPosition(point: Point){
 async function onEntranceRotationCommited() {
   console.log('rotation changed', entranceRotation.value);
   const modelId = venueStore.currentStream?.vrSpace?.virtualSpace3DModelId;
-  if(!modelId) return;
+  if (!modelId) return;
   await connectionStore.client.vr.update3DModel.mutate({
     vr3DModelId: modelId,
     reason: 'entrance rotation updated',
@@ -179,7 +179,7 @@ async function onEntranceRotationCommited() {
 async function onSpawnRadiusCommited() {
   console.log('spawn radius changed', spawnRadius.value);
   const modelId = venueStore.currentStream?.vrSpace?.virtualSpace3DModelId;
-  if(!modelId) return;
+  if (!modelId) return;
   await connectionStore.client.vr.update3DModel.mutate({
     vr3DModelId: modelId,
     reason: 'spawn radius updated',
@@ -194,7 +194,7 @@ const setSkyColor = throttle(async (evt: InputEvent) => {
   // console.log(evt.target);
   // return;
   const modelId = venueStore.currentStream?.vrSpace?.virtualSpace3DModelId;
-  if(!modelId) return;
+  if (!modelId) return;
   await connectionStore.client.vr.update3DModel.mutate({
     vr3DModelId: modelId,
     reason: 'skycolor updated',
@@ -202,12 +202,12 @@ const setSkyColor = throttle(async (evt: InputEvent) => {
       skyColor: evt.target.value,
     }
   })
-}, 800, {trailing: true});
+}, 800, { trailing: true });
 
 const openVirtualSpace = async () => {
 
   await connectionStore.client.vr.enterVrSpace.mutate();
-  const routeData = router.resolve({name: 'adminLobby'});
+  const routeData = router.resolve({ name: 'adminLobby' });
   window.open(routeData.href, '_blank');
 };
 
@@ -225,4 +225,3 @@ const createVirtualSpace = async () => {
 // };
 
 </script>
-

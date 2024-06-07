@@ -1,7 +1,5 @@
 <template>
-  <template
-    v-if="vrSpaceStore.currentVrSpace"
-  >
+  <template v-if="vrSpaceStore.currentVrSpace">
     <!-- <a-assets
       timeout="20000"
     >
@@ -22,30 +20,13 @@
     </a-assets> -->
 
     <a-sky :color="skyColor" />
-    <StreamEntrance
-      :visible="venueStore.streamIsActive"
-      v-if="entrancePosString"
-      @click="goToStream"
-      :position="entrancePosString"
-      :direction="entranceRotation"
-      :message="entranceMessage"
-      class="clickable"
-    />
+    <StreamEntrance :visible="streamStore.streamIsActive" v-if="entrancePosString" @click="goToStream"
+      :position="entrancePosString" :direction="entranceRotation" :message="entranceMessage" class="clickable" />
 
     <!-- The model -->
     <a-entity>
-      <a-gltf-model
-        @model-loaded="onModelLoaded"
-        id="model"
-        ref="modelTag"
-        :src="venueStore.modelUrl"
-      />
-      <a-gltf-model
-        v-if="venueStore.navmeshUrl"
-        id="navmesh"
-        :src="venueStore.navmeshUrl"
-        :visible="showNavMesh"
-      />
+      <a-gltf-model @model-loaded="onModelLoaded" id="model" ref="modelTag" :src="streamStore.modelUrl" />
+      <a-gltf-model v-if="streamStore.navmeshUrl" id="navmesh" :src="streamStore.navmeshUrl" :visible="showNavMesh" />
     </a-entity>
 
     <!-- <a-sphere
@@ -68,10 +49,7 @@
       />
     </a-entity> -->
 
-    <a-entity
-      id="camera-rig"
-      ref="playerOriginTag"
-    >
+    <a-entity id="camera-rig" ref="playerOriginTag">
       <!-- <a-ring
         color="blue"
         rotation="-90 0 0"
@@ -79,59 +57,30 @@
         radius-inner="0.2"
         material="transparent: true; opacity: 0.4"
       /> -->
-      <a-camera
-        @loaded="onCameraLoaded"
-        id="camera"
-        ref="playerTag"
-        look-controls="reverseMouseDrag: true; reverseTouchDrag: true;"
-        wasd-controls="acceleration:65;"
-        emit-move="interval: 20"
-        position="0 1.65 0"
-        :simple-navmesh-constraint="'navmesh:#'+navmeshId+'; fall:0.5; height:1.65;'"
-      >
+      <a-camera @loaded="onCameraLoaded" id="camera" ref="playerTag"
+        look-controls="reverseMouseDrag: true; reverseTouchDrag: true;" wasd-controls="acceleration:65;"
+        emit-move="interval: 20" position="0 1.65 0"
+        :simple-navmesh-constraint="'navmesh:#'+navmeshId+'; fall:0.5; height:1.65;'">
         <!-- <a-box
           position="0 -0.1 -0.2"
           scale="0.1 0.1 0.1"
         /> -->
-        <a-entity
-          v-if="
-            displayMessage.length"
-          :text="'value: ' + displayMessage"
-          position="0 0 -1"
-          animation="property: object3D.position.y; to: 0.1; dir: alternate; dur: 500; loop: true"
-        />
+        <a-entity v-if="
+            displayMessage.length" :text="'value: ' + displayMessage" position="0 0 -1"
+          animation="property: object3D.position.y; to: 0.1; dir: alternate; dur: 500; loop: true" />
       </a-camera>
-      <a-entity
-        ref="leftHandTag"
-        id="left-hand"
-        @controllerconnected="leftControllerConnected = true"
-        @controllerdisconnected="leftControllerConnected = false"
-        laser-controls="hand:left"
-        raycaster="objects: .clickable"
-        emit-move="interval: 20; relativeToCamera: true"
-      >
-          <a-entity
-            :visible="leftControllerConnected"
-            scale="0.05 0.05 0.05"
-            rotation="20 90 -140"
-            gltf-model="#avatar-hand-1"
-          />
+      <a-entity ref="leftHandTag" id="left-hand" @controllerconnected="leftControllerConnected = true"
+        @controllerdisconnected="leftControllerConnected = false" laser-controls="hand:left"
+        raycaster="objects: .clickable" emit-move="interval: 20; relativeToCamera: true">
+        <a-entity :visible="leftControllerConnected" scale="0.05 0.05 0.05" rotation="20 90 -140"
+          gltf-model="#avatar-hand-1" />
       </a-entity>
-      <a-entity
-        ref="rightHandTag"
-        id="right-hand"
-        @controllerconnected="rightControllerConnected= true"
-        @controllerdisconnected="rightControllerConnected= false"
-        oculus-touch-controls="hand:right"
+      <a-entity ref="rightHandTag" id="right-hand" @controllerconnected="rightControllerConnected= true"
+        @controllerdisconnected="rightControllerConnected= false" oculus-touch-controls="hand:right"
         blink-controls="cameraRig: #camera-rig; teleportOrigin: #camera; collisionEntities: #navmesh;"
-        emit-move="interval: 20; relativeToCamera: true"
-      >
-          <a-entity
-            :visible="rightControllerConnected"
-            scale="0.05 0.05 -0.05"
-            rotation="20 90 -140"
-            gltf-model="#avatar-hand-1"
-          />
+        emit-move="interval: 20; relativeToCamera: true">
+        <a-entity :visible="rightControllerConnected" scale="0.05 0.05 -0.05" rotation="20 90 -140"
+          gltf-model="#avatar-hand-1" />
       </a-entity>
     </a-entity>
 
@@ -139,16 +88,10 @@
     <!-- Avatars wrapper element -->
     <a-entity>
       <!-- The avatars -->
-        <template
-          v-for="(clientInfo, id) in clients"
-          :key="id"
-        >
-          <RemoteAvatar
-            v-if="clientInfo.connectionId !== clientStore.clientState?.connectionId && clientInfo.transform"
-            :id="'avatar-'+id"
-            :client-info="clientInfo"
-          />
-        </template>
+      <template v-for="(clientInfo, id) in clients" :key="id">
+        <RemoteAvatar v-if="clientInfo.connectionId !== clientStore.clientState?.connectionId && clientInfo.transform"
+          :id="'avatar-'+id" :client-info="clientInfo" />
+      </template>
     </a-entity>
   </template>
 </template>
@@ -161,7 +104,7 @@ import type { ClientTransform } from 'schemas';
 // import type { Unsubscribable } from '@trpc/server/observable';
 import { useClientStore } from '@/stores/clientStore';
 import { useRouter } from 'vue-router';
-import { useVenueStore } from '@/stores/venueStore';
+import { useStreamStore } from '@/stores/streamStore';
 import { useXRState } from '@/composables/XRState';
 import { throttle } from 'lodash-es';
 // import type { SubscriptionValue, RouterOutputs } from '@/modules/trpcClient';
@@ -174,7 +117,7 @@ const router = useRouter();
 // Stores
 const vrSpaceStore = useVrSpaceStore();
 const clientStore = useClientStore();
-const venueStore = useVenueStore();
+const streamStore = useStreamStore();
 const soupStore = useSoupStore();
 
 // Props & emits
@@ -208,7 +151,7 @@ const rightHandTag = ref<Entity>();
 // });
 
 const navmeshId = computed(() => {
-  return venueStore.navmeshUrl !== '' ? 'navmesh' : 'model';
+  return streamStore.navmeshUrl !== '' ? 'navmesh' : 'model';
 });
 
 const clients = computed(() => vrSpaceStore.currentVrSpace?.clients);
@@ -229,12 +172,12 @@ const entranceRotation = computed(() => {
 });
 
 const entranceMessage = computed(() => {
-  return venueStore.currentStream?.name ?? 'Klicka för att hoppa in i sändningen';
+  return streamStore.currentStream?.name ?? 'Klicka för att hoppa in i sändningen';
 });
 
 const skyColor = computed(() => {
-  if (!venueStore.currentStream?.vrSpace?.virtualSpace3DModel.skyColor) return 'lightskyblue'
-  return venueStore.currentStream?.vrSpace?.virtualSpace3DModel.skyColor;
+  if (!streamStore.currentStream?.vrSpace?.virtualSpace3DModel.skyColor) return 'lightskyblue'
+  return streamStore.currentStream?.vrSpace?.virtualSpace3DModel.skyColor;
 })
 
 onBeforeMount(async () => {
@@ -353,16 +296,16 @@ function getRandomSpawnPosition() {
 function goToStream() {
   // router.push({name: 'basicVR'});
   // console.log('sphere clicked');
-  if (!venueStore.currentStream) return;
-  let mainCameraId = venueStore.currentStream.mainCameraId;
+  if (!streamStore.currentStream) return;
+  let mainCameraId = streamStore.currentStream.mainCameraId;
   if(!mainCameraId){
     console.warn('No maincamera set. Falling back to using any camera');
-    mainCameraId = Object.values(venueStore.currentStream.cameras)[0].cameraId;
+    mainCameraId = Object.values(streamStore.currentStream.cameras)[0].cameraId;
   }
   router.push({
     name: 'userCamera',
     params: {
-      venueId: venueStore.currentStream.streamId,
+      streamId: streamStore.currentStream.streamId,
       cameraId: mainCameraId,
     },
   });

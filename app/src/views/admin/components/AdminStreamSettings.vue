@@ -159,7 +159,7 @@
 </template>
 
 <script setup lang="ts">
-import { useVenueStore } from '@/stores/venueStore';
+import { useStreamStore } from '@/stores/streamStore';
 import { useConnectionStore } from '@/stores/connectionStore';
 import { ref, computed, onMounted, onBeforeMount, reactive, watch } from 'vue';
 import type { StreamUpdate } from 'schemas';
@@ -169,7 +169,7 @@ import { debounce } from 'lodash-es';
 import { getSendersForStream, createSender, updateUser, deleteUser } from '@/modules/authClient';
 
 // Use imports
-const venueStore = useVenueStore();
+const venueStore = useStreamStore();
 const connection = useConnectionStore();
 const router = useRouter();
 
@@ -280,7 +280,7 @@ onMounted(() => {
   values.value.streamStartTime = venueStore.currentStream?.streamStartTime ? venueStore.currentStream?.streamStartTime?.toLocaleDateString() + 'T' + venueStore.currentStream?.streamStartTime?.toLocaleTimeString() : undefined;
   values.value.streamAutoStart = venueStore.currentStream?.streamAutoStart;
   watch([values.value, useDoorsOpenTime], () => {
-  // console.log('values updated!!!');
+    // console.log('values updated!!!');
     // debouncedVenueUpdate();
   }, {
     deep: true,
@@ -292,4 +292,3 @@ const useDoorsOpenTime = ref(false);
 
 
 </script>
-

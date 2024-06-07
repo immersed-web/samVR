@@ -2,13 +2,13 @@
   <div class="flex flex-wrap gap-2">
     <div v-for="stream in props.streams" :key="stream.streamId">
       <pre>{{ stream }}</pre>
-      <VenueThumb :stream="stream" @click="emit('streamPicked', stream)" />
+      <StreamThumb :stream="stream" @click="emit('streamPicked', stream)" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import VenueThumb from '@/components/venue/VenueThumb.vue';
+import StreamThumb from '@/components/stream/StreamThumb.vue';
 import type { StreamListInfo } from 'schemas';
 
 const props = defineProps<{ streams: StreamListInfo[] }>();
@@ -19,6 +19,4 @@ const emit = defineEmits<{
 
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>

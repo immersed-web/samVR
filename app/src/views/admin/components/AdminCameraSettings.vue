@@ -5,10 +5,8 @@
         <!-- <span class="material-icons">videocam</span> -->
         Kameror
       </h2>
-      <RouterLink :to="{name: 'adminCameras'}">
-        <button
-          class="btn btn-primary btn-sm"
-        >
+      <RouterLink :to="{ name: 'adminCameras' }">
+        <button class="btn btn-primary btn-sm">
           <span class="material-icons">settings</span>
           Redigera
         </button>
@@ -21,11 +19,10 @@
 </template>
 
 <script setup lang="ts">
-import { useVenueStore } from '@/stores/venueStore';
-import CamerasList from '@/components/venue/CamerasList.vue';
+import { useStreamStore } from '@/stores/streamStore';
+import CamerasList from '@/components/stream/CamerasList.vue';
 
 // Use imports
-const venueStore = useVenueStore();
+const venueStore = useStreamStore();
 
 </script>
-

@@ -78,7 +78,7 @@
           <div v-if="!venueStore.currentStream?.streamAutoStart">
             <div>
               {{ venueStore.currentStream?.streamStartTime ? 'Ni startar sändningen manuellt vid utsatt tid.' :
-  'Om ni önskar, kan ni starta sändningen manuellt' }}
+                'Om ni önskar, kan ni starta sändningen manuellt' }}
             </div>
             <div>
               <button class="btn btn-primary btn-sm" @click="startStream" :disabled="!!venueStore.streamIsActive">
@@ -131,10 +131,10 @@
 <script setup lang="ts">
 import { onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { useVenueStore } from '@/stores/venueStore';
-import AdminVenueSettings from './components/AdminVenueSettings.vue';
-import AdminVenueLobby from './components/AdminVenueLobby.vue';
-import AdminVenue360 from './components/AdminVenue360.vue';
+import { useStreamStore } from '@/stores/streamStore';
+import AdminVenueSettings from './components/AdminStreamSettings.vue';
+import AdminVenueLobby from './components/AdminVrSpaceSettings.vue';
+import AdminVenue360 from './components/AdminCameraSettings.vue';
 import { useConnectionStore } from '@/stores/connectionStore';
 import StepsContainer from '@/components/design/StepsContainer.vue';
 import StepsItem from '@/components/design/StepsItem.vue';
@@ -146,7 +146,7 @@ const router = useRouter();
 
 // Stores
 const connection = useConnectionStore();
-const venueStore = useVenueStore();
+const venueStore = useStreamStore();
 const adminStore = useAdminStore();
 const clientStore = useClientStore();
 
@@ -179,7 +179,7 @@ onUnmounted(async () => {
 
 
 const deleteVenue = async () => {
-  await adminStore.deleteCurrentVenue();
+  await adminStore.deleteCurrentStream();
   // TODO: quick hack to make sure venuelist is updated...
   // await clientStore.fetchClientState();
   router.push({ name: 'adminHome' });
@@ -193,4 +193,3 @@ async function goToVenue() {
 }
 
 </script>
-

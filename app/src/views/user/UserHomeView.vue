@@ -14,7 +14,7 @@
 
 <script setup lang="ts">
 // import LoggedInLayout from '@/layouts/LoggedInLayout.vue';
-// import VenueList from '@/components/venue/VenueList.vue';
+// import VenueList from '@/components/stream/VenueList.vue';
 import { useClientStore } from '@/stores/clientStore';
 // import { onBeforeMount, ref } from 'vue';
 

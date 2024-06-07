@@ -33,7 +33,7 @@
     </div>
     <a-scene embedded class="w-full" ref="sceneTag">
       <CameraView :camera-id="(props.cameraId as CameraId)"
-        :venue-id="(adminStore.adminOnlyVenueState?.venueId as StreamId)" editable ref="CameraViewRef" />
+        :streamId="(adminStore.adminOnlyStreamState?.venueId as StreamId)" editable ref="CameraViewRef" />
     </a-scene>
     <div class="bottom-0 absolute w-full bg-neutral/50 flex flex-row gap-4 justify-center p-4">
       <template v-for="listedCamera in camerasWithPortalInfo" :key="listedCamera.cameraId">
@@ -94,8 +94,8 @@ const camerasWithPortalInfo = computed(() => {
   const portalCameraIds = camera.portals? Object.keys(camera.portals) : [];
   console.log('portalCameraIds in computed:', portalCameraIds);
   const camerasWithPortalInfo = [];
-  if(!adminStore.adminOnlyVenueState?.cameras) return [];
-  for(const [key, cam] of Object.entries(adminStore.adminOnlyVenueState.cameras)){
+  if (!adminStore.adminOnlyStreamState?.cameras) return [];
+  for (const [key, cam] of Object.entries(adminStore.adminOnlyStreamState.cameras)) {
     // console.log('includes input:', cam.cameraId, portalCameraIds);
     const hasPortal = portalCameraIds.includes(cam.cameraId);
     // console.log('includes result:', hasPortal);

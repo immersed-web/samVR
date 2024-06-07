@@ -4,14 +4,14 @@ import type { CameraId } from 'schemas';
 import type { RouterOutputs } from '@/modules/trpcClient';
 import { computed, ref } from 'vue';
 import { useSoupStore } from './soupStore';
-import { useVenueStore } from './venueStore';
+import { useStreamStore } from './streamStore';
 
 type _ReceivedPublicCameraState = RouterOutputs['camera']['joinCamera'];
 
 export const useCameraStore = defineStore('camera', () => {
   const connection = useConnectionStore();
   const soup = useSoupStore();
-  const venueStore = useVenueStore();
+  const streamStore = useStreamStore();
   const currentCamera = ref<_ReceivedPublicCameraState>();
 
 
@@ -66,7 +66,7 @@ export const useCameraStore = defineStore('camera', () => {
       // const angleY = 270 - 360 * p.x; 
       // const angleX = 90 - (180 * p.y);
       newObj[p.toCameraId as CameraId] = {
-        cameraName: venueStore.currentStream!.cameras[p.toCameraId].name,
+        cameraName: streamStore.currentStream!.cameras[p.toCameraId].name,
         // style: {
 
         //   left: Math.trunc(width.value * p.x) + 'px',
@@ -149,7 +149,7 @@ export const useCameraStore = defineStore('camera', () => {
       const {track} = await soup.consume(currentCamera.value.producers.videoProducer.producerId);
       receivedTracks.videoTrack = track;
     }
-    const mainAudio = venueStore.currentStream?.mainAudioProducerId;
+    const mainAudio = streamStore.currentStream?.mainAudioProducerId;
     if(mainAudio){
       console.log('CONSUMING MAIN AUDIO!');
       const {track} = await soup.consume(mainAudio);
