@@ -1,59 +1,27 @@
 <template>
   <div class="flex flex-col gap-4 mb-12 items-start">
     <UserBanner>Hej&nbsp; </UserBanner>
-    <div v-if="venuesOngoing.length" class="space-y-2">
+    <div v-if="streamsOngoing.length" class="space-y-2">
       <h3 class="text-base-content/90">
         Pågående event
       </h3>
-      <VenueList :streams="venuesOngoing" @stream-picked="(stream) => goToVenue(stream.streamId)" />
+      <StreamList :streams="streamsOngoing" @stream-picked="(stream) => goToStream(stream.streamId)" />
     </div>
 
-    <div v-if="venuesUpcoming.length">
+    <div v-if="streamsUpcoming.length">
       <h3 class="text-base-content/90">
         Kommande event
       </h3>
-      <VenueList :streams="venuesUpcoming" @stream-picked="(stream) => goToVenue(stream.streamId)" />
+      <StreamList :streams="streamsUpcoming" @stream-picked="(stream) => goToStream(stream.streamId)" />
     </div>
-    <!-- <h1>Tidigare event</h1>
-    <VenueList
-      v-if="venuesPast.length"
-      :venues="venuesPast"
-      @venue-picked="(venue) => goToVenue(venue.venueId as VenueId)"
-    />
-    <div v-else>
-      <p>
-        Inga tidigare event
-      </p>
-    </div> -->
 
-
-    <div v-if="venuesUnscheduled.length">
+    <div v-if="streamsUnscheduled.length">
       <h3 class="text-base-content/90">
         Event utan datum
       </h3>
-      <VenueList :streams="venuesUnscheduled" @stream-picked="(stream) => goToVenue(stream.streamId)" />
+      <StreamList :streams="streamsUnscheduled" @stream-picked="(stream) => goToStream(stream.streamId)" />
     </div>
   </div>
-
-  <!-- <pre>
-    ALLOWED:
-    {{ receivedVenues }}
-  </pre> -->
-
-  <!-- <pre>
-    LOADED:
-    {{ venuesLoaded }}
-  </pre>
-
-  <pre>
-    ONGOING:
-    {{ venuesOngoing }}
-  </pre>
-
-  <pre>
-    NOT ONGOING:
-    {{ venuesNotOngoing }}
-  </pre> -->
 </template>
 
 <script setup lang="ts">
@@ -61,53 +29,45 @@
 import type { RouterOutputs } from '@/modules/trpcClient';
 import { useConnectionStore } from '@/stores/connectionStore';
 import { computed, onBeforeMount, ref } from 'vue';
-import VenueList from '@/components/stream/StreamList.vue';
+import StreamList from '@/components/stream/StreamList.vue';
 import { type StreamId, hasAtLeastSecurityLevel } from 'schemas';
 import { useRouter } from 'vue-router';
 import { isPast } from 'date-fns';
 import { streamConsideredActive } from '@/stores/streamStore';
 import UserBanner from '@/components/UserBanner.vue';
-// import { useAuthStore } from '@/stores/authStore';
-
-
-// const authStore = useAuthStore();
 
 const router = useRouter();
-const venuesAllowed = ref<RouterOutputs['venue']['listAllowedVenues']>([]);
-// const venuesLoaded = ref<RouterOutputs['venue']['listLoadedVenuesPublicState']>();
+const streamsAllowed = ref<RouterOutputs['venue']['listAllowedVenues']>([]);
 
 const connection = useConnectionStore();
 onBeforeMount(async () => {
-  venuesAllowed.value = await connection.client.venue.listAllowedVenues.query();
-  // venuesLoaded.value = await connection.client.venue.listLoadedVenuesPublicState.query();
+  streamsAllowed.value = await connection.client.venue.listAllowedVenues.query();
 });
 
-const venuesOngoing = computed(() => {
-  // return venuesAllowed.value.filter(v => venuesLoaded.value && v.venueId in venuesLoaded.value);
-  return venuesAllowed.value.filter(v => {
+const streamsOngoing = computed(() => {
+  return streamsAllowed.value.filter(v => {
     return streamConsideredActive(v);
   });
 });
 
-const venuesNotOngoing = computed(() => {
-  return venuesAllowed.value.filter(v => !venuesOngoing.value.includes(v));
+const streamsNotOngoing = computed(() => {
+  return streamsAllowed.value.filter(v => !streamsOngoing.value.includes(v));
 });
 
-const venuesUpcoming = computed(() => {
-  return venuesNotOngoing.value.filter(v => v.streamStartTime && !isPast(v.streamStartTime));
+const streamsUpcoming = computed(() => {
+  return streamsNotOngoing.value.filter(v => v.streamStartTime && !isPast(v.streamStartTime));
 });
 
-const venuesPast = computed(() => {
-  return venuesNotOngoing.value.filter(v => v.streamStartTime && isPast(v.streamStartTime));
+const streamsPast = computed(() => {
+  return streamsNotOngoing.value.filter(v => v.streamStartTime && isPast(v.streamStartTime));
 });
 
-const venuesUnscheduled = computed(() => {
-  return venuesNotOngoing.value.filter(v => !v.streamStartTime);
+const streamsUnscheduled = computed(() => {
+  return streamsNotOngoing.value.filter(v => !v.streamStartTime);
 });
 
-async function goToVenue(streamId: StreamId) {
+async function goToStream(streamId: StreamId) {
   console.log('clicked the stream', streamId);
-  // await venueStore.joinVenue(venueId);
   router.push({ name: 'userStream', params: { streamId } });
 }
 

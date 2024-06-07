@@ -10,33 +10,20 @@
       </div> -->
       <div class="absolute top-5 right-5 z-10 rounded-md bg-base-100 text-xs p-2">
         <div class="flex flex-col">
-          <div>Modell: {{ venueStore.modelUrl }}</div>
+          <div>Modell: {{ streamStore.modelUrl }}</div>
           <div class="flex items-center">
-            <span>Navmesh: {{ venueStore.navmeshUrl }}</span>
+            <span>Navmesh: {{ streamStore.navmeshUrl }}</span>
             <label class="label cursor-pointer">
               <span class="material-icons mr-2">visibility</span>
-              <input
-                type="checkbox"
-                class="toggle toggle-success toggle-xs"
-                v-model="showNavMesh"
-              >
+              <input type="checkbox" class="toggle toggle-success toggle-xs" v-model="showNavMesh">
             </label>
           </div>
           <div>
             Clients:
             <div v-if="vrSpaceStore.currentVrSpace">
-              <div
-                v-for="({transform}, id) in vrSpaceStore.currentVrSpace.clients"
-                :key="id"
-              >
-                <div
-                  v-if="id !== clientStore.clientState?.connectionId"
-                  class="collapse"
-                >
-                  <input
-                    type="checkbox"
-                    class="min-h-0"
-                  >
+              <div v-for="({ transform }, id) in vrSpaceStore.currentVrSpace.clients" :key="id">
+                <div v-if="id !== clientStore.clientState?.connectionId" class="collapse">
+                  <input type="checkbox" class="min-h-0">
                   <div class="collapse-title min-h-0 p-0">
                     {{ id }}
                   </div>
@@ -51,12 +38,8 @@
       </div>
     </div>
     <div class="min-h-screen z-0">
-      <VrAFrame
-        v-if="venueStore.modelUrl"
-        :model-url="venueStore.modelUrl"
-        :navmesh-url="venueStore.navmeshUrl"
-        :show-nav-mesh="showNavMesh"
-      />
+      <VrAFrame v-if="streamStore.modelUrl" :model-url="streamStore.modelUrl" :navmesh-url="streamStore.navmeshUrl"
+        :show-nav-mesh="showNavMesh" />
     </div>
   </div>
 </template>
@@ -69,12 +52,12 @@ import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import { ref } from 'vue';
 
 const vrSpaceStore = useVrSpaceStore();
-const venueStore = useStreamStore();
+const streamStore = useStreamStore();
 const clientStore = useClientStore();
 
 // const baseUrl = `https://${import.meta.env.EXPOSED_SERVER_URL}${import.meta.env.EXPOSED_FILESERVER_PATH}`;
-// const modelUrl = computed(() => baseUrl + '/model/' + venueStore.currentVenue?.venueId);
-// const navmeshUrl = computed(() => baseUrl + '/navmesh/' + venueStore.currentVenue?.venueId);
+// const modelUrl = computed(() => baseUrl + '/model/' + streamStore.currentStream?.venueId);
+// const navmeshUrl = computed(() => baseUrl + '/navmesh/' + streamStore.currentStream?.venueId);
 
 const showNavMesh = ref<boolean>();
 

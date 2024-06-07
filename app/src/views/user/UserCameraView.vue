@@ -5,7 +5,7 @@
         Starta
       </button>
     </div>
-    <CameraView v-else :camera-id="props.cameraId" :streamId="props.venueId" />
+    <CameraView v-else :camera-id="props.cameraId" :streamId="props.streamId" />
   </div>
 </template>
 
@@ -17,7 +17,7 @@ import { onBeforeUnmount, onMounted } from 'vue';
 import { useCameraStore } from '@/stores/cameraStore';
 
 const props = defineProps<{
-  venueId: StreamId,
+  streamId: StreamId,
   cameraId: CameraId,
 }>();
 

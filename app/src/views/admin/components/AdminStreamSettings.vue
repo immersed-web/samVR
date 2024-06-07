@@ -1,5 +1,5 @@
 <template>
-  <div v-if="venueStore.currentStream">
+  <div v-if="streamStore.currentStream">
     <h2 class="mb-4">
       Grundinställningar
     </h2>
@@ -15,7 +15,7 @@
         <span class="material-icons">visibility</span>
       </div>
       <div class="join w-full">
-        <button v-for="vo in venueStore.visibilityOptions" :key="vo.visibility" type="button"
+        <button v-for="vo in streamStore.visibilityOptions" :key="vo.visibility" type="button"
           class="btn btn-sm join-item" :class="{
             'btn-primary': vo.visibility === values.visibility,
             'btn-neutral': vo.visibility !== values.visibility
@@ -43,7 +43,7 @@
     </div>
 
     <!-- Lobby/VR start time -->
-    <div v-if="venueStore.currentStream.vrSpace" class="w-full mb-2 form-control bg-base-200 p-2 text-sm border">
+    <div v-if="streamStore.currentStream.vrSpace" class="w-full mb-2 form-control bg-base-200 p-2 text-sm border">
       <div class="flex justify-between mb-2">
         <span class="label-text text-base">Lobby</span>
         <span class="material-icons">nightlife</span>
@@ -169,7 +169,7 @@ import { debounce } from 'lodash-es';
 import { getSendersForStream, createSender, updateUser, deleteUser } from '@/modules/authClient';
 
 // Use imports
-const venueStore = useStreamStore();
+const streamStore = useStreamStore();
 const connection = useConnectionStore();
 const router = useRouter();
 
@@ -188,7 +188,7 @@ const userEditingState = ref<'creating' | 'editing'>();
 
 async function createNewSender() {
   const user = senderUser;
-  const streamId = venueStore.currentStream?.streamId;
+  const streamId = streamStore.currentStream?.streamId;
   if (!user?.username || !user.password || !streamId) {
     console.error('no data when creating new sender');
     return;
@@ -221,7 +221,7 @@ async function deleteTheSender() {
 
 const linkCopyTooltip = autoResetRef('Klicka för att kopiera adressen', 3000);
 const eventUrl = computed(() => {
-  const streamId = venueStore.currentStream?.streamId;
+  const streamId = streamStore.currentStream?.streamId;
   if (!streamId) return undefined;
 
   const url = new URL(router.resolve({ name: 'userStream', params: { streamId } }).href, window.location.origin).href;
@@ -258,9 +258,9 @@ const values = ref<DatesAsStrings<StreamUpdate>>({});
 
 
 onBeforeMount(async () => {
-  const streamId = venueStore.currentStream?.streamId;
+  const streamId = streamStore.currentStream?.streamId;
   if (!streamId) {
-    console.warn('no currentvenue. returning');
+    console.warn('no currentstram. returning');
     return;
   }
   const users = await getSendersForStream(streamId);
@@ -272,13 +272,13 @@ onBeforeMount(async () => {
 
 // TODO: could this perhaps fail? Should computed or watcher be used?
 onMounted(() => {
-  values.value.name = venueStore.currentStream?.name;
-  values.value.visibility = venueStore.currentStream?.visibility;
+  values.value.name = streamStore.currentStream?.name;
+  values.value.visibility = streamStore.currentStream?.visibility;
   // useDoorsOpenTime.value = !!venueStore.currentStream?.doorsOpeningTime;
   // values.value.doorsOpeningTime = venueStore.currentStream?.doorsOpeningTime ? venueStore.currentStream?.doorsOpeningTime?.toLocaleDateString() + 'T' + venueStore.currentStream?.doorsOpeningTime?.toLocaleTimeString() : undefined;
   // values.value.doorsAutoOpen = venueStore.currentStream?.doorsAutoOpen;
-  values.value.streamStartTime = venueStore.currentStream?.streamStartTime ? venueStore.currentStream?.streamStartTime?.toLocaleDateString() + 'T' + venueStore.currentStream?.streamStartTime?.toLocaleTimeString() : undefined;
-  values.value.streamAutoStart = venueStore.currentStream?.streamAutoStart;
+  values.value.streamStartTime = streamStore.currentStream?.streamStartTime ? streamStore.currentStream?.streamStartTime?.toLocaleDateString() + 'T' + streamStore.currentStream?.streamStartTime?.toLocaleTimeString() : undefined;
+  values.value.streamAutoStart = streamStore.currentStream?.streamAutoStart;
   watch([values.value, useDoorsOpenTime], () => {
     // console.log('values updated!!!');
     // debouncedVenueUpdate();

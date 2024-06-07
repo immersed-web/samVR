@@ -8,10 +8,10 @@
         Mina event
       </h2>
       <div class="flex space-x-2">
-        <StreamList v-if="clientStore.clientState" :streams="venuesAsArray"
-          @stream-picked="(stream) => pickVenueAndNavigate(stream.streamId)" />
+        <StreamList v-if="clientStore.clientState" :streams="streamsAsArray"
+          @stream-picked="(stream) => pickStreamAndNavigate(stream.streamId)" />
         <div>
-          <button class="btn btn-outline btn-primary" @click="createVenue">
+          <button class="btn btn-outline btn-primary" @click="createStream">
             Skapa ett nytt event
           </button>
         </div>
@@ -125,13 +125,12 @@ const editedUserId = ref<string>();
 const editedUsername = ref<string>();
 const editedPassword = ref<string>();
 
-const venuesAsArray = computed(() => {
+const streamsAsArray = computed(() => {
   if(!clientStore.clientState) return [];
   return Object.values(clientStore.clientState?.ownedVenues);
 });
 
 async function updateAdmin(userData: any) {
-  // console.log(userData);
   const response = await updateUser(userData);
   console.log(response);
   if(!admins.value) {
@@ -139,8 +138,6 @@ async function updateAdmin(userData: any) {
   }
   console.log(admins.value);
   const idx = admins.value.findIndex(a => {
-    // console.log(a.userId);
-    // console.log(userData.userId);
     return a.userId === userData.userId;
   });
   console.log('index:', idx);
@@ -163,27 +160,12 @@ async function makeCallThenResetList(fetchReq: (...p: any) => Promise<any>) {
   admins.value = await getAdmins();  
 }
 
-
-// function createAdmin() {
-//   console.log(adminUsername.value, adminPassword.value);
-// }
-
-// const myVenues = ref<RouterOutputs['admin']['listMyVenues']>();
-// onBeforeMount(async () => {
-//   myVenues.value = await connectionStore.client.admin.listMyVenues.query();
-// });
-
-// const loadedVenues = ref<RouterOutputs['venue']['listLoadedVenues']>();
-// onBeforeMount(async () => {
-//   loadedVenues.value = await connectionStore.client.venue.listLoadedVenues.query();
-// });
-
 // View functionality
-async function createVenue () {
+async function createStream() {
   await adminStore.createStream();
 }
 
-const pickVenueAndNavigate = async (streamId: StreamId) => {
+const pickStreamAndNavigate = async (streamId: StreamId) => {
   streamStore.savedStreamId = streamId;
   router.push({ name: authStore.routePrefix + 'Stream' });
 };

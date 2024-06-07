@@ -23,6 +23,6 @@ import { useStreamStore } from '@/stores/streamStore';
 import CamerasList from '@/components/stream/CamerasList.vue';
 
 // Use imports
-const venueStore = useStreamStore();
+const streamStore = useStreamStore();
 
 </script>

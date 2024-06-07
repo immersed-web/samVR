@@ -32,8 +32,8 @@
       </div>
     </div>
     <a-scene embedded class="w-full" ref="sceneTag">
-      <CameraView :camera-id="(props.cameraId as CameraId)"
-        :streamId="(adminStore.adminOnlyStreamState?.venueId as StreamId)" editable ref="CameraViewRef" />
+      <CameraView :camera-id="(props.cameraId as CameraId)" :streamId="(adminStore.adminOnlyStreamState?.streamId)"
+        editable ref="CameraViewRef" />
     </a-scene>
     <div class="bottom-0 absolute w-full bg-neutral/50 flex flex-row gap-4 justify-center p-4">
       <template v-for="listedCamera in camerasWithPortalInfo" :key="listedCamera.cameraId">

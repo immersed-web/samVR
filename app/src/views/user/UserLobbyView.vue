@@ -1,8 +1,8 @@
 <template>
   <div>
     <div class="min-h-screen z-0">
-      <VrAFrame v-if="venueStore.modelUrl" :model-url="venueStore.modelUrl" :navmesh-url="venueStore.navmeshUrl"
-        :model-scale="venueStore.currentStream?.vrSpace?.virtualSpace3DModel?.scale" />
+      <VrAFrame v-if="streamStore.modelUrl" :model-url="streamStore.modelUrl" :navmesh-url="streamStore.navmeshUrl"
+        :model-scale="streamStore.currentStream?.vrSpace?.virtualSpace3DModel?.scale" />
     </div>
   </div>
 </template>
@@ -13,7 +13,7 @@ import VrAFrame from '../../components/lobby/VrAFrame.vue';
 // import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import { useStreamStore } from '@/stores/streamStore';
 
-const venueStore = useStreamStore();
+const streamStore = useStreamStore();
 // const vrSpaceStore = useVrSpaceStore();
 // onMounted(async () => {
 //   await vrSpaceStore.enterVrSpace();

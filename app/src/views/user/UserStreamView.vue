@@ -2,7 +2,7 @@
   <div class="grid md:place-items-center h-screen">
     <div class="fixed top-0 left-0 z-50">
       <div class="p-4">
-        <a @click="returnToVenueList" class="flex gap-2 items-center cursor-pointer">
+        <a @click="returnToStreamList" class="flex gap-2 items-center cursor-pointer">
           <div class="btn btn-primary btn-outline btn-circle btn-sm">
             <span class="material-icons">arrow_back</span>
           </div>
@@ -79,19 +79,15 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-// import { useConnectionStore } from '@/stores/connectionStore';
 import type { StreamId } from 'schemas';
 import { computed, onMounted, watch } from 'vue';
 import { useStreamStore } from '@/stores/streamStore';
 import { useIntervalFn } from '@vueuse/core';
-// const connection = useConnectionStore();
 const streamStore = useStreamStore();
 
 const props = defineProps<{
   streamId: StreamId
 }>();
-
-// const venueInfo = shallowRef<VenueListInfo>();
 
 if (streamStore.currentStream?.streamId !== props.streamId) {
   const { pause } = useIntervalFn(async () => {
@@ -107,7 +103,7 @@ if (streamStore.currentStream?.streamId !== props.streamId) {
   }, 5000, { immediateCallback: true });
 }
 
-async function returnToVenueList() {
+async function returnToStreamList() {
   await streamStore.leaveStream();
   router.replace({ name: 'streamList' })
 }

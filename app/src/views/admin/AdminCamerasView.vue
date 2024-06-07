@@ -19,8 +19,8 @@
               </div>
               <span class="material-icons"
                 :class="{ 'text-success': camera.isStreaming, 'text-error': !camera.isStreaming }">{{ camera.isStreaming
-                  ?
-                  'videocam' : 'videocam_off' }}</span>{{ camera.name }}
+                ?
+                'videocam' : 'videocam_off' }}</span>{{ camera.name }}
             </div>
             <button @click.stop="deleteCamera(camera.cameraId)" class="btn btn-error btn-square btn-sm">
               <span class="material-icons">delete</span>
@@ -127,12 +127,6 @@
       </div>
     </div>
   </div>
-  <!-- <pre>
-    {{ adminStore.adminOnlyVenueState }}
-  </pre>
-  <pre>
-    {{ venueStore.currentVenue }}
-  </pre> -->
 </template>
 
 <script setup lang="ts">
@@ -175,7 +169,7 @@ async function setMainCamera(cameraId: CameraId) {
 //   });
 // }
 
-const portalPosition: Partial<CameraPortalInsert['portal']> & { absoluteX?: number, absoluteY?: number } = reactive({
+const portalPosition: Partial<CameraPortalInsert> & { absoluteX?: number, absoluteY?: number } = reactive({
   x: undefined,
   y: undefined,
   absoluteX: undefined,
@@ -215,9 +209,9 @@ async function setPortal(cameraId: CameraId) {
     return;
   }
   adminStore.setPortal({
-    cameraId: cameraStore.currentCamera.cameraId,
+    fromCameraId: cameraStore.currentCamera.cameraId,
     toCameraId: cameraId,
-    portal: {distance, x, y},
+    distance, x, y,
   });
 }
 

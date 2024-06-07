@@ -3,11 +3,11 @@
     <div class="flex items-center justify-between mb-4">
       <div class="">
         <h1>
-          {{ venueStore.currentStream?.name }}
+          {{ streamStore.currentStream?.name }}
         </h1>
       </div>
       <div>
-        <button class="btn btn-error" @click="deleteVenue">
+        <button class="btn btn-error" @click="deleteStream">
           <span class="mr-2 material-icons">delete</span>
           Ta bort event
         </button>
@@ -15,14 +15,14 @@
     </div>
     <StepsContainer>
       <!-- Visibility -->
-      <StepsItem :icon="venueStore.currentVisibilityDetails?.icon">
+      <StepsItem :icon="streamStore.currentVisibilityDetails?.icon">
         <template #title>
-          Synlighet: {{ venueStore.currentVisibilityDetails?.name }}
+          Synlighet: {{ streamStore.currentVisibilityDetails?.name }}
         </template>
-        {{ venueStore.currentVisibilityDetails?.description }}
+        {{ streamStore.currentVisibilityDetails?.description }}
         <div v-auto-animate>
-          <button v-if="venueStore.currentStream?.visibility !== 'private'"
-            class="btn btn-primary btn-sm flex justify-between" @click="goToVenue()">
+          <button v-if="streamStore.currentStream?.visibility !== 'private'"
+            class="btn btn-primary btn-sm flex justify-between" @click="goToStream()">
             Eventets webbplats
             <span class="ml-2 material-icons">open_in_new</span>
           </button>
@@ -65,23 +65,23 @@
       <StepsItem icon="curtains">
         <template #title>
           <span class="material-icons text-sm"
-            :class="venueStore.streamIsActive ? 'text-green-500' : 'text-red-500'">circle</span>
-          Sändningen är {{ venueStore.streamIsActive ? 'igång' : 'ej igång' }}
+            :class="streamStore.streamIsActive ? 'text-green-500' : 'text-red-500'">circle</span>
+          Sändningen är {{ streamStore.streamIsActive ? 'igång' : 'ej igång' }}
         </template>
         <div v-auto-animate>
-          <div v-if="venueStore.currentStream?.streamStartTime">
+          <div v-if="streamStore.currentStream?.streamStartTime">
             <span>Listad starttid: </span>
-            <strong> {{ venueStore.currentStream?.streamStartTime?.toLocaleString() }}</strong>
+            <strong> {{ streamStore.currentStream?.streamStartTime?.toLocaleString() }}</strong>
           </div>
         </div>
         <div v-auto-animate>
-          <div v-if="!venueStore.currentStream?.streamAutoStart">
+          <div v-if="!streamStore.currentStream?.streamAutoStart">
             <div>
-              {{ venueStore.currentStream?.streamStartTime ? 'Ni startar sändningen manuellt vid utsatt tid.' :
+              {{ streamStore.currentStream?.streamStartTime ? 'Ni startar sändningen manuellt vid utsatt tid.' :
                 'Om ni önskar, kan ni starta sändningen manuellt' }}
             </div>
             <div>
-              <button class="btn btn-primary btn-sm" @click="startStream" :disabled="!!venueStore.streamIsActive">
+              <button class="btn btn-primary btn-sm" @click="startStream" :disabled="!!streamStore.streamIsActive">
                 Starta sändning
               </button>
             </div>
@@ -101,7 +101,7 @@
           Ni avslutar sändningen manuellt när ni önskar.
         </div>
         <div class="">
-          <button class="btn btn-error btn-sm" @click="endStream" :disabled="!venueStore.streamIsActive">
+          <button class="btn btn-error btn-sm" @click="endStream" :disabled="!streamStore.streamIsActive">
             Avsluta sändning
           </button>
         </div>
@@ -114,15 +114,15 @@
     <div class="divider" />
     <div class="flex items-stretch pb-6">
       <div class="flex-1">
-        <AdminVenueSettings />
+        <AdminStreamSettings />
       </div>
       <!-- <div class="divider divider-horizontal" />
       <div class="flex-1">
-        <AdminVenueLobby />
+        <AdminVrSpaceSettings />
       </div> -->
       <div class="divider divider-horizontal" />
       <div class="flex-1">
-        <AdminVenue360 />
+        <AdminCameraSettings />
       </div>
     </div>
   </div>
@@ -132,9 +132,9 @@
 import { onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useStreamStore } from '@/stores/streamStore';
-import AdminVenueSettings from './components/AdminStreamSettings.vue';
-import AdminVenueLobby from './components/AdminVrSpaceSettings.vue';
-import AdminVenue360 from './components/AdminCameraSettings.vue';
+import AdminStreamSettings from './components/AdminStreamSettings.vue';
+// import AdminVrSpaceSettings from './components/AdminVrSpaceSettings.vue';
+import AdminCameraSettings from './components/AdminCameraSettings.vue';
 import { useConnectionStore } from '@/stores/connectionStore';
 import StepsContainer from '@/components/design/StepsContainer.vue';
 import StepsItem from '@/components/design/StepsItem.vue';
@@ -146,7 +146,7 @@ const router = useRouter();
 
 // Stores
 const connection = useConnectionStore();
-const venueStore = useStreamStore();
+const streamStore = useStreamStore();
 const adminStore = useAdminStore();
 const clientStore = useClientStore();
 
@@ -178,17 +178,17 @@ onUnmounted(async () => {
 });
 
 
-const deleteVenue = async () => {
+const deleteStream = async () => {
   await adminStore.deleteCurrentStream();
   // TODO: quick hack to make sure venuelist is updated...
   // await clientStore.fetchClientState();
   router.push({ name: 'adminHome' });
 };
 
-async function goToVenue() {
+async function goToStream() {
   // await venueStore.joinVenue(venueId);
-  const id = venueStore.currentStream?.streamId;
-  const routeData = router.resolve({ name: 'userVenue', params: { streamId: id } });
+  const id = streamStore.currentStream?.streamId;
+  const routeData = router.resolve({ name: 'userStream', params: { streamId: id } });
   window.open(routeData.href, '_blank');
 }
 

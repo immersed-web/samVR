@@ -4,13 +4,13 @@
   </pre> -->
   <div class="flex gap-3 items-center">
     <div class="my-6 text-2xl">
-      <span class="">Sänder till: </span><span class="font-bold">{{ venueStore.currentStream?.name }}</span>
+      <span class="">Sänder till: </span><span class="font-bold">{{ streamStore.currentStream?.name }}</span>
     </div>
-    <button @click="$router.replace({ name: 'senderPickVenue' })" class="btn btn-sm btn-primary">
+    <button @click="$router.replace({ name: 'senderPickStream' })" class="btn btn-sm btn-primary">
       Byt evenemang
     </button>
   </div>
-  <div v-if="!venueStore.currentStream">
+  <div v-if="!streamStore.currentStream">
     Väntar på att evenemanget ska laddas...
   </div>
   <template v-else>
@@ -93,7 +93,7 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref, shallowRef, watch 
 // import Slider from '@vueform/slider';
 import { isTRPCClientError } from '@/modules/trpcClient';
 import type { ProducerInfo } from 'schemas/mediasoup';
-import { useVenueStore } from '@/stores/venueStore';
+import { useStreamStore } from '@/stores/streamStore';
 import { useSenderStore } from '@/stores/senderStore';
 import { useSoupStore } from '@/stores/soupStore';
 import { useIntervalFn, useDebounceFn } from '@vueuse/core';
@@ -104,7 +104,7 @@ import 'toolcool-range-slider';
 import type { RangeSlider } from 'toolcool-range-slider';
 
 const senderStore = useSenderStore();
-const venueStore = useVenueStore();
+const streamStore = useStreamStore();
 
 const soup = useSoupStore();
 
@@ -128,7 +128,7 @@ const { pause } = useIntervalFn(async () => {
 }, 5000, {immediateCallback: true} );
 
 onBeforeUnmount(() => {
-  venueStore.leaveVenue();
+  streamStore.leaveStream();
   // wrkr?.terminate();
 });
 
