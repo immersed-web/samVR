@@ -212,7 +212,9 @@ export class Venue {
   async update(input: StreamUpdate) {
     log.info('Update stream db data', input);
     this.dbData = { ...this.dbData, ...input };
-    db.update(schema.streams).set(this.dbData).where(eq(schema.streams.streamId, this.dbData.streamId));
+    log.info('Update stream db data', this.dbData);
+    const dbResponse = await db.update(schema.streams).set(this.dbData).where(eq(schema.streams.streamId, this.dbData.streamId)).returning();
+    return dbResponse
   }
 
   _notifyStateUpdated(reason?: string){
