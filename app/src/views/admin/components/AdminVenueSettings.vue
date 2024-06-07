@@ -3,13 +3,13 @@
     <h2 class="mb-4">
       Grundinställningar
     </h2>
-    <div class="w-full max-w-xs mb-2 bg-neutral-100 p-2 border form-control">
+    <div class="w-full mb-2 bg-neutral-100 p-2 border form-control">
       <label class="label">
         <span class="label-text text-base">Eventets namn</span>
       </label>
-      <input v-model="values.name" type="text" placeholder="Eventets namn" class="w-full max-w-xs input input-bordered">
+      <input v-model="values.name" type="text" placeholder="Eventets namn" class="input input-bordered">
     </div>
-    <div class="w-full max-w-xs mb-2 form-control bg-neutral-100 p-2 text-sm border">
+    <div class="w-full mb-2 form-control bg-neutral-100 p-2 text-sm border">
       <div class="flex justify-between mb-2">
         <span class="label-text text-base">Synlighet</span>
         <span class="material-icons">visibility</span>
@@ -43,8 +43,7 @@
     </div>
 
     <!-- Lobby/VR start time -->
-    <div v-if="venueStore.currentStream.vrSpace"
-      class="w-full max-w-xs mb-2 form-control bg-base-200 p-2 text-sm border">
+    <div v-if="venueStore.currentStream.vrSpace" class="w-full mb-2 form-control bg-base-200 p-2 text-sm border">
       <div class="flex justify-between mb-2">
         <span class="label-text text-base">Lobby</span>
         <span class="material-icons">nightlife</span>
@@ -80,7 +79,7 @@
     </div>
 
     <!-- Event streaming start time -->
-    <div class="w-full max-w-xs mb-2 form-control bg-base-200 p-2 text-sm border">
+    <div class="w-full mb-2 form-control bg-base-200 p-2 text-sm border">
       <div class="flex justify-between mb-2">
         <span class="label-text text-base">360-sändning</span>
         <span class="material-icons">curtains</span>
@@ -88,7 +87,7 @@
       <div>
         Ange tiden då 360-sändningen startar. Tiden är synlig för besökarna.
         <input v-model="values.streamStartTime" type="datetime-local" placeholder="Startdatum och -tid"
-          class="w-full max-w-xs input input-bordered">
+          class="w-full input input-bordered">
         <label class="label flex justify-start gap-2">
           <span class="label-text">Starta automatiskt vid utsatt tid: </span>
           <input class="mr-2 toggle toggle-primary toggle-sm" type="checkbox" v-model="values.streamAutoStart">
@@ -96,7 +95,7 @@
       </div>
     </div>
     <!-- Separate sender login -->
-    <div class="w-full max-w-xs mb-2 form-control bg-base-200 p-2 text-sm border">
+    <div class="w-full mb-2 form-control bg-base-200 p-2 text-sm border">
       <div class="flex justify-between mb-2">
         <span class="label-text text-base">Separat sändarinloggning</span>
         <span class="material-icons">person</span>
@@ -123,16 +122,18 @@
           </div>
         </form>
       </div>
-      <div v-else-if="senderUser.userId" class="flex gap-2 items-center">
-        <div class="grid grid-cols-2 gap-x-2">
-          <p>Användarnamn:</p>
-          <p class="font-bold">
-            {{ senderUser.username }}
-          </p>
-          <p>Lösenord:</p>
-          <p class="font-bold">
-            *****
-          </p>
+      <div v-else-if="senderUser.userId" class="flex justify-between gap-2 items-center">
+        <div class="grow">
+          <div class="w-fit grid grid-cols-2 gap-x-4">
+            <p>Användarnamn:</p>
+            <p class="font-bold">
+              {{ senderUser.username }}
+            </p>
+            <p>Lösenord:</p>
+            <p class="font-bold">
+              *****
+            </p>
+          </div>
         </div>
         <div class="tooltip" data-tip="Ändra inloggningen">
           <button @click="userEditingState = 'editing'" class="btn btn-primary btn-circle btn-sm">
