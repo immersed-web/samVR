@@ -89,7 +89,7 @@
 
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, reactive, ref, shallowRef, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, reactive, ref, shallowRef, watch, type CSSProperties } from 'vue';
 // import Slider from '@vueform/slider';
 import { isTRPCClientError } from '@/modules/trpcClient';
 import type { ProducerInfo } from 'schemas/mediasoup';
@@ -153,10 +153,17 @@ watch(cropIsActive, (cropIsActive) => {
 });
 
 const videoStyle = computed(() => {
-  if(cropIsActive.value) {
-    return {width: `${(cropRange[1]-cropRange[0])}%`, position:'relative', left: `${cropRange[0]}%`};
+  const styles: CSSProperties = {
+    position: 'relative',
+    left: '0',
+    width: '100%',
   }
-  return {};
+  if(cropIsActive.value) {
+    styles.left = `${cropRange[0]}%`;
+    styles.width = `${cropRange[1] - cropRange[0]}%`;
+    // return {width: `${(cropRange[1]-cropRange[0])}%`, position: 'relative', left: `${cropRange[0]}%`};
+  }
+  return styles;
 });
 
 const mediaDevices = ref<MediaDeviceInfo[]>();
