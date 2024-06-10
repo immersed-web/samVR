@@ -221,15 +221,15 @@ export class Venue {
     const publicState = this.getPublicState();
     this.clients.forEach(c => {
       log.info(`notifying streamState (${reason}) to client ${c.username} (${c.connectionId})`);
-      c.notify.venueStateUpdated?.({data: publicState, reason});
+      c.notify.streamStateUpdated?.({ data: publicState, reason });
     });
     this.senderClients.forEach(s => {
       log.info(`notifying streamstate (${reason}) to sender ${s.username} (${s.connectionId})`);
-      if(!s.notify.venueStateUpdated){
+      if (!s.notify.streamStateUpdated) {
         log.warn('sender didnt have subscriver attached');
         return;
       }
-      s.notify.venueStateUpdated({data: publicState, reason});
+      s.notify.streamStateUpdated({ data: publicState, reason });
     });
   }
 
@@ -238,7 +238,7 @@ export class Venue {
     this.clients.forEach(c => {
       if(hasAtLeastSecurityLevel(c.role, 'moderator')){
         log.info(`notifying adminOnlyVenuestate (${reason}) to client ${c.username} (${c.connectionId})`);
-        c.notify.venueStateUpdatedAdminOnly?.({data, reason});
+        c.notify.streamStateUpdatedAdminOnly?.({ data, reason });
       }
     });
   }

@@ -15,7 +15,7 @@ import { observable } from '@trpc/server/observable';
 export const soupRouter = router({
   getRouterRTPCapabilities: clientInVenueP.query(({ctx}) => {
 
-    const caps = ctx.venue.router.rtpCapabilities;
+    const caps = ctx.stream.router.rtpCapabilities;
     return caps;
     // return 'Not implemented yet' as const;
   }),
@@ -65,10 +65,10 @@ export const soupRouter = router({
     }
     const producerId = await client.createProducer(input);
     // log.info('gonna emit producerCreated');
-    // ctx.venue._notifyStateUpdated('producer added');
-    ctx.venue._notifyAdminOnlyState('producer added');
-    // ctx.venue.emitToAllClients('producerCreated', {producingConnectionId: ctx.connectionId, producer: {producerId, paused: input.producerInfo.isPaused, kind: input.kind}});
-    // ctx.venue.emitToAllClients('someClientStateUpdated', { clientState: client.getPublicState(), reason: `client (${client.clientType}) created producer` });
+    // ctx.stream._notifyStateUpdated('producer added');
+    ctx.stream._notifyAdminOnlyState('producer added');
+    // ctx.stream.emitToAllClients('producerCreated', {producingConnectionId: ctx.connectionId, producer: {producerId, paused: input.producerInfo.isPaused, kind: input.kind}});
+    // ctx.stream.emitToAllClients('someClientStateUpdated', { clientState: client.getPublicState(), reason: `client (${client.clientType}) created producer` });
     return producerId;
   }),
   closeVideoProducer: clientInVenueP.mutation(({ctx}) =>{

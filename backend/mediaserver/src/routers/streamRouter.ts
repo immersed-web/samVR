@@ -81,13 +81,13 @@ export const streamRouter = router({
     return vState;
   }),
   getStreamState: clientInVenueP.query(({ ctx }) => {
-    return ctx.venue.getPublicState();
+    return ctx.stream.getPublicState();
   }),
   subStreamStateUpdated: p.subscription(({ ctx }) => {
-    log.info(`attaching venueStateUpdated notifier for client: ${ctx.username} (${ctx.connectionId})`);
+    log.info(`attaching streamStateUpdated notifier for client: ${ctx.username} (${ctx.connectionId})`);
     return observable<NotifierInputData<VenueStateUpdate>>((scriber) => {
-      ctx.client.notify.venueStateUpdated = scriber.next;
-      return () => ctx.client.notify.venueStateUpdated = undefined;
+      ctx.client.notify.streamStateUpdated = scriber.next;
+      return () => ctx.client.notify.streamStateUpdated = undefined;
     });
   }),
   subStreamUnloaded: p.subscription(({ ctx }) => {

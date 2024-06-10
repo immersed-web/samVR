@@ -11,7 +11,7 @@ import { observable } from '@trpc/server/observable';
 
 export const vrRouter = router({
   createVrSpace: currentVenueAdminP.use(isVenueOwnerM).use(currentVenueHasNoVrSpaceM).mutation(({ctx}) => {
-    ctx.venue.CreateAndAddVirtualSpace();
+    // ctx.venue.CreateAndAddVirtualSpace();
   }),
   // openVrSpace: currentVenueAdminP.use(isVenueOwnerM).use(currentVenueHasVrSpaceM).mutation(({ctx}) => {
   //   ctx.vrSpace.open();

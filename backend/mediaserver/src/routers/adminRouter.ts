@@ -146,8 +146,8 @@ export const adminRouter = router({
   subStreamStateUpdated: atLeastModeratorP.subscription(({ ctx }) => {
     log.info(`attching (admin)streamStateUpdated notifier for client: ${ctx.username} (${ctx.connectionId})`);
     return observable<NotifierInputData<StreamStateAdminUpdate>>((scriber) => {
-      ctx.client.notify.venueStateUpdatedAdminOnly = scriber.next;
-      return () => ctx.client.notify.venueStateUpdatedAdminOnly = undefined;
+      ctx.client.notify.streamStateUpdatedAdminOnly = scriber.next;
+      return () => ctx.client.notify.streamStateUpdatedAdminOnly = undefined;
     });
   }),
 });

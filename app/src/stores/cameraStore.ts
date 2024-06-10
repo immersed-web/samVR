@@ -65,7 +65,7 @@ export const useCameraStore = defineStore('camera', () => {
     for(const [k , p ] of Object.entries(currentCamera.value.portals).sort()){
       // const angleY = 270 - 360 * p.x; 
       // const angleX = 90 - (180 * p.y);
-      newObj[p.toCameraId as CameraId] = {
+      newObj[p.toCameraId] = {
         cameraName: streamStore.currentStream!.cameras[p.toCameraId].name,
         // style: {
 

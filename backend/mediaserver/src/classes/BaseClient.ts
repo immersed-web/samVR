@@ -125,8 +125,8 @@ export class BaseClient {
   connected = true;
 
   notify = {
-    venueStateUpdated: undefined as NotifierSignature<ReturnType<Venue['getPublicState']>>,
-    venueStateUpdatedAdminOnly: undefined as NotifierSignature<ReturnType<Venue['getAdminOnlyState']>>,
+    streamStateUpdated: undefined as NotifierSignature<ReturnType<Venue['getPublicState']>>,
+    streamStateUpdatedAdminOnly: undefined as NotifierSignature<ReturnType<Venue['getAdminOnlyState']>>,
     // camera: {
     cameraStateUpdated: undefined as NotifierSignature<ReturnType<Camera['getPublicState']>>,
     // newProducerInCamera: undefined as NotifierSignature<{added: true} & ReturnType<typeof this.getPublicProducers>['videoProducer']>,

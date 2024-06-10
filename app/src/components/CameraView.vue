@@ -512,13 +512,11 @@ async function createOrCenterOnPortal(cameraId:CameraId){
     console.log(portalCoords);
     const adminStore = useAdminStore();
     adminStore.setPortal({
-      cameraId: camera.currentCamera.cameraId,
+      fromCameraId: camera.currentCamera.cameraId,
       toCameraId: cameraId,
-      portal: {
-        distance: 4,
-        x: portalCoords.x,
-        y: portalCoords.y,
-      },
+      distance: 4,
+      x: portalCoords.x,
+      y: portalCoords.y,
     });
   }
 }
@@ -694,11 +692,10 @@ function onMouseUp(evt: Event){
 
   console.log('mouseup', evt);
   if(movedPortalCameraId.value && camera.currentCamera){
-    const {toCameraId, ...portal} = camera.currentCamera.portals[movedPortalCameraId.value];
+    const portal = camera.currentCamera.portals[movedPortalCameraId.value];
     const data: CameraPortalInsert = {
       fromCameraId: camera.currentCamera.cameraId,
-      toCameraId,
-      portal,
+      ...portal,
     };
     console.log('setting portal:', data);
     adminStore.setPortal(data);

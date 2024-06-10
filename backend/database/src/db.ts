@@ -58,7 +58,13 @@ export type StreamWithIncludes = NonNullable<Awaited<ReturnType<typeof queryStre
 export const queryCameraWithIncludes = db.query.cameras.findFirst({
   where: (camera, { eq }) => eq(camera.cameraId, sql.placeholder('cameraId')),
   with: {
-    toCameras: true,
+    toCameras: {
+      columns: {
+        fromCameraId: false,
+        createdAt: false,
+        updatedAt: false,
+      }
+    },
     fromCameras: true,
   }
 }).prepare('queryCameraWithIncludes')
