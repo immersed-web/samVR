@@ -27,7 +27,7 @@ export interface BaseClientEvents {
   }
 }
 
-// const { createSender } = createTypedEvents<BaseClientEvents>();
+const { createSender } = createTypedEvents<BaseClientEvents>();
 
 type SoupObjectClosePayload =
       {type: 'transport', id: TransportId }
@@ -101,11 +101,14 @@ interface ClientConstructorParams {
  */
 export class BaseClient {
   protected ws: MyWebsocketType;
-  protected eventSender: ReturnType<typeof createStandaloneEventSender<BaseClientEvents>>;
+  // protected eventSender: ReturnType<typeof createStandaloneEventSender<BaseClientEvents>>;
+  protected eventSender: EventSender<MyWebsocketType, BaseClientEvents>;
   constructor({ connectionId = ConnectionIdSchema.parse(randomUUID()), jwtUserData, dbData, ws }: ClientConstructorParams) {
     // super();
     this.ws = ws;
-    this.eventSender = createStandaloneEventSender<BaseClientEvents>((msg) => this.ws.send(msg));
+    // this.eventSender = createStandaloneEventSender<BaseClientEvents>((msg) => this.ws.send(msg));
+    this.eventSender = createSender(this.ws, (msg: any) => this.ws.send(msg));
+    // this.ws.send('textTest');
     this.connectionId = connectionId;
     this.jwtUserData = jwtUserData;
     this.dbData.value = dbData;

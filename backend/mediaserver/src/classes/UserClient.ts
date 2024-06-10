@@ -118,7 +118,12 @@ export class UserClient extends BaseClient {
     }
     log.info(`emitting clientState for ${this.username} (${this.connectionId}) to itself`);
     // we emit the new clientstate to the client itself.
-    // this.eventSender.test('test');
+    try {
+      log.debug('trying to trigger ts-event-bridge')
+      this.eventSender.test('test');
+    } catch (e) {
+      console.error(e);
+    }
     this.userClientEvent.emit('myStateUpdated', {myState: this.getPublicState(), reason });
   }
 

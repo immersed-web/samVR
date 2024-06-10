@@ -192,9 +192,9 @@ app.ws<WSUserData>('/*', {
 
     let client: UserClient | SenderClient;
     if(connectionType === 'sender'){
-      client = new SenderClient({ jwtUserData: userData.jwtUserData, dbData: userData.dbData });
+      client = new SenderClient({ jwtUserData: userData.jwtUserData, dbData: userData.dbData, ws });
     } else {
-      client = new UserClient({ jwtUserData: userData.jwtUserData, dbData: userData.dbData });
+      client = new UserClient({ jwtUserData: userData.jwtUserData, dbData: userData.dbData, ws });
     }
 
     clientConnections.set(ws, client);
