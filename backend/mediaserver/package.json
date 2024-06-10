@@ -6,7 +6,10 @@
   "exports": {
     ".": {
       "types": "./src/routers/appRouter.ts"
-    }
+    },
+    "./base-events": "./src/classes/BaseClient.ts",
+    "./user-events": "./src/classes/UserClient.ts",
+    "./sender-events": "./src/classes/SenderClient.ts"
   },
   "author": "Gunnar Oledal",
   "license": "ISC",

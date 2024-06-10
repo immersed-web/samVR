@@ -222,6 +222,7 @@ export class Venue {
     this.clients.forEach(c => {
       log.info(`notifying streamState (${reason}) to client ${c.username} (${c.connectionId})`);
       c.notify.streamStateUpdated?.({ data: publicState, reason });
+      c.eventSender.stream.streamStateUpdated({ data: publicState, reason })
     });
     this.senderClients.forEach(s => {
       log.info(`notifying streamstate (${reason}) to sender ${s.username} (${s.connectionId})`);

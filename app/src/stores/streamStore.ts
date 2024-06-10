@@ -5,6 +5,7 @@ import type { Visibility } from 'database/schema';
 import type { StreamId } from 'schemas';
 import { useConnectionStore } from '@/stores/connectionStore';
 import { useNow, useStorage } from '@vueuse/core';
+import { receiver } from '@/modules/trpcClient';
 
 type _ReceivedPublicStreamState = RouterOutputs['stream']['joinStream'];
 
@@ -51,15 +52,21 @@ export const useStreamStore = defineStore('stream', () => {
     },
   });
 
-  connection.client.stream.subStreamStateUpdated.subscribe(undefined, {
-    onData(data) {
-      console.log('received streamState updated:', data);
-      currentStream.value = data.data;
-    },
-    onError(err) {
-      console.error(err);
-    },
-  });
+  // connection.client.stream.subStreamStateUpdated.subscribe(undefined, {
+  //   onData(data) {
+  //     console.log('received streamState updated:', data);
+  //     currentStream.value = data.data;
+  //   },
+  //   onError(err) {
+  //     console.error(err);
+  //   },
+  // });
+
+  receiver.stream.streamStateUpdated.subscribe(payload => {
+    console.log('Gunnar är bäst');
+    console.log(payload.reason);
+    currentStream.value = payload.data
+  })
 
   // const urlToFileserver = `https://${import.meta.env.EXPOSED_SERVER_URL}${import.meta.env.EXPOSED_FILESERVER_PATH}`;
   // const urlToModelsFolder = urlToFileserver + '/uploads/3d_models/';

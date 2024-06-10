@@ -3,7 +3,7 @@ const log = new Log('BaseClient');
 process.env.DEBUG = 'BaseClient*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
-import { ConnectionId, JwtUserData, UserId, UserRole, StreamId, ConnectionIdSchema, StreamListInfo } from 'schemas';
+import { ConnectionId, JwtUserData, UserId, UserRole, StreamId, ConnectionIdSchema, StreamListInfo, Prettify } from 'schemas';
 import { types as soupTypes } from 'mediasoup';
 import type { types as soupClientTypes } from 'mediasoup-client';
 import { ConsumerId, CreateProducerPayload, ProducerId, TransportId  } from 'schemas/mediasoup';
@@ -15,19 +15,35 @@ import { TypedEmitter } from 'tiny-typed-emitter';
 import { computed, ref, shallowRef, effect } from '@vue/reactivity';
 import { eq } from 'drizzle-orm';
 import type { MyWebsocketType } from 'index.js';
-import { Payload, createTypedEvents, EventSender, createStandaloneEventSender } from 'ts-event-bridge/sender';
+import { Payload, createTypedEvents, EventSender } from 'ts-event-bridge/sender';
 
-export interface BaseClientEvents {
+export type DataAndReason<T> = Prettify<{ data: T, reason?: string }>
+
+export type BaseClientEventMap = {
   test: Payload<string>
-  soupEvents: {
-    soupObjectClosed: Payload<{
+  soup: {
+    producerCreated: Payload<{ data: { producer: PublicProducers['videoProducer'], producingConnectionId: ConnectionId } }>,
+    soupObjectClosed: Payload<DataAndReason<SoupObjectClosePayload>>,
+    consumerPausedOrResumed: Payload<DataAndReason<{ consumerId: ConsumerId, wasPaused: boolean }>>,
+    producerPausedOrResumed: Payload<DataAndReason<{ producerId: ProducerId, wasPaused: boolean }>>,
+  },
+  stream: {
+  // clientAddedOrRemoved: Payload<{ data: { client: ReturnType<UserClient['getPublicState']>, added: boolean } }>,
+  // senderAddedOrRemoved: Payload<{ data: { client: ReturnType<SenderClient['getPublicState']>, added: boolean } }>,
+  // streamWasUnloaded: Payload<{ venueId: StreamId }>,
 
-      data: SoupObjectClosePayload & { reason: string }
-    }>
+    streamStateUpdated: Payload<DataAndReason<ReturnType<Venue['getPublicState']>>>,
+    streamStateUpdatedAdminOnly: Payload<DataAndReason<ReturnType<Venue['getAdminOnlyState']>>>,
+  },
+  camera: {
+    cameraStateUpdated: Payload<DataAndReason<ReturnType<Camera['getPublicState']>>>,
+  },
+  client: {
+    someClientStateUpdated: Payload<DataAndReason<ClientStateUnion>>,
   }
 }
 
-const { createSender } = createTypedEvents<BaseClientEvents>();
+const { createSender } = createTypedEvents<BaseClientEventMap>();
 
 type SoupObjectClosePayload =
       {type: 'transport', id: TransportId }
@@ -102,12 +118,13 @@ interface ClientConstructorParams {
 export class BaseClient {
   protected ws: MyWebsocketType;
   // protected eventSender: ReturnType<typeof createStandaloneEventSender<BaseClientEvents>>;
-  protected eventSender: EventSender<MyWebsocketType, BaseClientEvents>;
+  protected eventSender: EventSender<MyWebsocketType, BaseClientEventMap>;
   constructor({ connectionId = ConnectionIdSchema.parse(randomUUID()), jwtUserData, dbData, ws }: ClientConstructorParams) {
     // super();
     this.ws = ws;
     // this.eventSender = createStandaloneEventSender<BaseClientEvents>((msg) => this.ws.send(msg));
     this.eventSender = createSender(this.ws, (msg: any) => this.ws.send(msg));
+    this.eventSender.test('test');
     // this.ws.send('textTest');
     this.connectionId = connectionId;
     this.jwtUserData = jwtUserData;
@@ -115,7 +132,6 @@ export class BaseClient {
 
 
     this.clientEvent = new TypedEmitter();
-    type ttt = typeof this.clientEvent.emit;
 
     // this.event = new TypedEmitter();
     // this.soupEvents = new TypedEmitter();

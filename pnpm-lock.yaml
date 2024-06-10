@@ -111,6 +111,9 @@ importers:
       toolcool-range-slider:
         specifier: ^4.0.28
         version: 4.0.28
+      ts-event-bridge:
+        specifier: ^0.0.3
+        version: 0.0.3
       vue:
         specifier: ^3.4.27
         version: 3.4.27(typescript@5.2.2)

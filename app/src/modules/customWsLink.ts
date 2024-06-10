@@ -20,6 +20,7 @@ export interface WebSocketClientOptions {
   retryDelayMs?: typeof retryDelay;
   onOpen?: () => void;
   onClose?: (cause?: { code?: number }) => void;
+  onUnParseableMessage?: (message: string) => void;
 }
 
 export function createWSClient(opts: WebSocketClientOptions) {
@@ -29,6 +30,7 @@ export function createWSClient(opts: WebSocketClientOptions) {
     retryDelayMs: retryDelayFn = retryDelay,
     onOpen,
     onClose,
+    onUnParseableMessage,
   } = opts;
   /* istanbul ignore next */
   if (!WebSocketImpl) {
@@ -182,8 +184,12 @@ export function createWSClient(opts: WebSocketClientOptions) {
 
       if ('method' in msg) {
         handleIncomingRequest(msg);
-      } else {
+      } else if ('result' in msg) {
         handleIncomingResponse(msg);
+      } else {
+        // console.warn('couldnt parse trpcs message');
+        // console.log(data);
+        onUnParseableMessage?.(data);
       }
       if (conn !== activeConnection || state === 'closed') {
         // when receiving a message, we close old connection that has no pending requests

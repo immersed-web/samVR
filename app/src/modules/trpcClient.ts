@@ -3,14 +3,26 @@ import type { inferRouterOutputs, inferRouterInputs } from '@trpc/server';
 import type { inferObservableValue } from '@trpc/server/observable';
 import { createWSClient } from './customWsLink';
 import type { AppRouter } from 'mediaserver';
-import type { ClientType } from 'schemas';
+import type { UserClientEventMap } from 'mediaserver/user-events'
+import type { ClientType, Prettify } from 'schemas';
 import superjson from 'superjson';
+import { createReceiver } from 'ts-event-bridge/receiver'
 // import { guestAutoToken, loginWithAutoToken, getToken } from '@/modules/authClient';
 
 import { shallowRef, type ShallowRef, computed, type ComputedRef } from 'vue';
-// import { devtoolsLink } from 'trpc-client-devtools-link';
 
 const wsBaseURL = `wss://${import.meta.env.EXPOSED_SERVER_URL}${import.meta.env.EXPOSED_MEDIASOUP_PATH}`;
+
+const { receiver, onMessageReceived } = createReceiver<UserClientEventMap>({
+  onUnhandledEvent(evt, msg) {
+    console.warn('unhandled event: ', evt, msg);
+  },
+  onUnparseableMsg(receivedMsg, error) {
+    console.warn('unparseable message: ', receivedMsg, error);
+  },
+});
+
+export { receiver };
 
 export function isTRPCClientError(
   cause: unknown,
@@ -74,6 +86,7 @@ export const createTrpcClient = (getToken: () => string, clientType: ClientType 
   // await loginWithAutoToken(username, password);
   _wsClient = createWSClient({
     url: () => buildConnectionUrl(getToken(), clientType === 'sender'),
+    onUnParseableMessage: (msg) => onMessageReceived(msg),
   });
   trpcClient.value = createTRPCProxyClient<AppRouter>({
     transformer: superjson,

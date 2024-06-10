@@ -1,10 +1,12 @@
 import { TypedEmitter } from 'tiny-typed-emitter';
 import { NonFilteredEvents, NotifierSignature } from 'trpc/trpc-utils.js';
-import { BaseClient, Venue } from './InternalClasses.js';
+import { BaseClient, BaseClientEventMap, Venue } from './InternalClasses.js';
 
 import { Log } from 'debug-level';
 import { CameraId, ClientType, SenderId, SenderIdSchema, StreamId } from 'schemas';
 import { randomUUID } from 'crypto';
+import { EventSender, Payload } from 'ts-event-bridge/sender';
+import { MyWebsocketType } from 'index.js';
 
 const log = new Log('SenderClient');
 process.env.DEBUG = 'SenderClient*, ' + process.env.DEBUG;
@@ -25,6 +27,12 @@ const senderNotifyAdditions = {
   myStateUpdated: undefined as NotifierSignature<ReturnType<SenderClient['getPublicState']>>
 };
 type SenderNotifyMap = BaseClient['notify'] & typeof senderNotifyAdditions;
+
+type EventMapAdditions = {
+  myStateUpdated: Payload<ReturnType<SenderClient['getPublicState']>>
+}
+
+export type SenderClientEventMap = BaseClientEventMap 
 
 export class SenderClient extends BaseClient{
   constructor({senderId = SenderIdSchema.parse(randomUUID()), ...args}: SenderConstructorInput){
@@ -64,6 +72,7 @@ export class SenderClient extends BaseClient{
   senderClientEvent: TypedEmitter<SenderClientEvents>;
 
   declare notify: SenderNotifyMap;
+  declare eventSender: EventSender<MyWebsocketType, SenderClientEventMap>;
 
   getPublicState(){
     const { senderId, cameraId, clientType } = this;

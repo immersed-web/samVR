@@ -6,10 +6,21 @@ process.env.DEBUG = 'UserClient*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
 import { ClientTransform, ClientTransforms, StreamId, CameraId, ClientType } from 'schemas';
-import { loadUserDBData, SenderClient, Venue, VrSpace, BaseClient } from './InternalClasses.js';
+import { loadUserDBData, SenderClient, Venue, VrSpace, BaseClient, DataAndReason, BaseClientEventMap } from './InternalClasses.js';
 import { NonFilteredEvents, NotifierSignature, Prettify } from 'trpc/trpc-utils.js';
 import { effect } from '@vue/reactivity';
+import { EventSender, Payload, createTypedEvents } from 'ts-event-bridge/sender';
+import { MyWebsocketType } from 'index.js';
 
+type EventMapAdditions = {
+  userClientHealhty: Payload<string>,
+  senderAddedOrRemoved: Payload<{ senderState: ReturnType<SenderClient['getPublicState']>, added: boolean }>,
+  vrSpaceStateUpdated: Payload<DataAndReason<ReturnType<VrSpace['getPublicState']>>>,
+  clientTransforms: Payload<ClientTransforms>
+}
+
+export type UserClientEventMap = EventMapAdditions & BaseClientEventMap
+const { createSender } = createTypedEvents<UserClientEventMap>();
 
 type UserClientEvents =
 NonFilteredEvents<{
@@ -28,11 +39,11 @@ type UserNotifyMap = BaseClient['notify'] & typeof userNotifyAdditions;
  * This class represents the backend state of a user client connection.
  */
 export class UserClient extends BaseClient {
+  // eventSender: EventSender<MyWebsocketType, UserClientEventMap>;
   constructor(...args: ConstructorParameters<typeof BaseClient>){
     super(...args);
     log.info(`Creating user client ${this.username} (${this.connectionId})`);
     log.debug('dbData:', this.dbData.value);
-
 
     effect(() => {
       if(!this.vrSpace) return;
@@ -49,6 +60,9 @@ export class UserClient extends BaseClient {
   transform: ClientTransform | undefined;
 
   userClientEvent: TypedEmitter<UserClientEvents>;
+
+  // sneaky hack so we can share the instance between base, user and senderclient but different intellisense.
+  declare eventSender: EventSender<MyWebsocketType, UserClientEventMap>;
 
   declare notify: UserNotifyMap; // Make typescript happy and allow to add our local notify keys in the constructor
 
@@ -118,12 +132,12 @@ export class UserClient extends BaseClient {
     }
     log.info(`emitting clientState for ${this.username} (${this.connectionId}) to itself`);
     // we emit the new clientstate to the client itself.
-    try {
-      log.debug('trying to trigger ts-event-bridge')
-      this.eventSender.test('test');
-    } catch (e) {
-      console.error(e);
-    }
+    // try {
+    //   log.debug('trying to trigger ts-event-bridge')
+    //   this.eventSender.test('test');
+    // } catch (e) {
+    //   console.error(e);
+    // }
     this.userClientEvent.emit('myStateUpdated', {myState: this.getPublicState(), reason });
   }
 
