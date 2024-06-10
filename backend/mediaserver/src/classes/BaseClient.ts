@@ -39,7 +39,8 @@ export type BaseClientEventMap = {
     cameraStateUpdated: Payload<DataAndReason<ReturnType<Camera['getPublicState']>>>,
   },
   client: {
-    someClientStateUpdated: Payload<DataAndReason<ClientStateUnion>>,
+    someClientStateUpdated: Payload<DataAndReason<ReturnType<UserClient['getPublicState']>>>,
+    // myClientStateUpdated: Payload<DataAndReason<ReturnType<UserClient['getPublicState']>>>,
   }
 }
 

@@ -261,11 +261,12 @@ export type CameraUpdate = z.TypeOf<typeof CameraUpdateSchema>;
 // });
 // export type CameraUpdate = z.TypeOf<typeof CameraUpdateSchema>
 
-// export const CameraFOVUpdateSchema = z.object({
-//   cameraId: CameraIdSchema,
-//   FOV: z.object({fovStart: z.number(), fovEnd: z.number()})
-// })
-// export type CameraFOVUpdate = z.TypeOf<typeof CameraFOVUpdateSchema>;
+export const CameraFOVUpdateSchema = z.object({
+  cameraId: CameraIdSchema,
+  fovStart: z.number(),
+  fovEnd: z.number()
+})
+export type CameraFOVUpdate = z.TypeOf<typeof CameraFOVUpdateSchema>;
 
 export const JwtUserDataSchema = z.object({
   userId: UserIdSchema,

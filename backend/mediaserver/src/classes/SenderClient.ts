@@ -1,6 +1,6 @@
 import { TypedEmitter } from 'tiny-typed-emitter';
 import { NonFilteredEvents, NotifierSignature } from 'trpc/trpc-utils.js';
-import { BaseClient, BaseClientEventMap, Venue } from './InternalClasses.js';
+import { BaseClient, BaseClientEventMap, DataAndReason, Venue } from './InternalClasses.js';
 
 import { Log } from 'debug-level';
 import { CameraId, ClientType, SenderId, SenderIdSchema, StreamId } from 'schemas';
@@ -29,10 +29,12 @@ const senderNotifyAdditions = {
 type SenderNotifyMap = BaseClient['notify'] & typeof senderNotifyAdditions;
 
 type EventMapAdditions = {
-  myStateUpdated: Payload<ReturnType<SenderClient['getPublicState']>>
+  sender: {
+    senderStateUpdate: Payload<DataAndReason<ReturnType<SenderClient['getPublicState']>>>
+  }
 }
 
-export type SenderClientEventMap = BaseClientEventMap 
+export type SenderClientEventMap = BaseClientEventMap & EventMapAdditions
 
 export class SenderClient extends BaseClient{
   constructor({senderId = SenderIdSchema.parse(randomUUID()), ...args}: SenderConstructorInput){
@@ -89,8 +91,9 @@ export class SenderClient extends BaseClient{
       log.info('skipped emitting to client because socket was already closed');
       return;
     }
-    log.info(`emitting clientState (${reason}) for ${this.username} (${this.connectionId}) to itself`);
-    this.notify.myStateUpdated?.({data: this.getPublicState(), reason});
+    log.info(`notifying senderState (${reason}) for ${this.username} (${this.connectionId}) to itself`);
+    // this.notify.myStateUpdated?.({data: this.getPublicState(), reason});
+    this.eventSender.sender.senderStateUpdate({ data: this.getPublicState(), reason });
   }
 
   unload() {
