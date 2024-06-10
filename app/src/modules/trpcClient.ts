@@ -10,6 +10,7 @@ import { createReceiver } from 'ts-event-bridge/receiver'
 // import { guestAutoToken, loginWithAutoToken, getToken } from '@/modules/authClient';
 
 import { shallowRef, type ShallowRef, computed, type ComputedRef } from 'vue';
+import type { Payload } from 'ts-event-bridge/sender';
 
 const wsBaseURL = `wss://${import.meta.env.EXPOSED_SERVER_URL}${import.meta.env.EXPOSED_MEDIASOUP_PATH}`;
 
@@ -22,7 +23,9 @@ const { receiver, onMessageReceived } = createReceiver<UserClientEventMap>({
   },
 });
 
-export { receiver };
+export type UnPayload<T extends Payload<any>> = T extends Payload<infer Inner> ? Inner : T;
+export type ExtractPayload<T extends (arg: (arg: any) => void) => void> = Parameters<Parameters<T>[0]>[0];
+export { receiver as eventReceiver };
 
 export function isTRPCClientError(
   cause: unknown,

@@ -30,7 +30,7 @@ type SenderNotifyMap = BaseClient['notify'] & typeof senderNotifyAdditions;
 
 type EventMapAdditions = {
   sender: {
-    senderStateUpdate: Payload<DataAndReason<ReturnType<SenderClient['getPublicState']>>>
+    myStateUpdated: Payload<DataAndReason<ReturnType<SenderClient['getPublicState']>>>
   }
 }
 
@@ -93,7 +93,7 @@ export class SenderClient extends BaseClient{
     }
     log.info(`notifying senderState (${reason}) for ${this.username} (${this.connectionId}) to itself`);
     // this.notify.myStateUpdated?.({data: this.getPublicState(), reason});
-    this.eventSender.sender.senderStateUpdate({ data: this.getPublicState(), reason });
+    this.eventSender.sender.myStateUpdated({ data: this.getPublicState(), reason });
   }
 
   unload() {

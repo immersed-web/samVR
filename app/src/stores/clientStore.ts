@@ -1,6 +1,6 @@
 // import { ref, computed } from 'vue';
 import { defineStore } from 'pinia';
-import type { RouterOutputs } from '@/modules/trpcClient';
+import { eventReceiver, type RouterOutputs } from '@/modules/trpcClient';
 import { useConnectionStore } from './connectionStore';
 import { ref, computed } from 'vue';
 
@@ -29,12 +29,16 @@ export const useClientStore = defineStore('client', () => {
 
   const initConnection = async () => {
     clientState.value = await connection.client.user.getClientState.query();
-    connection.client.user.subOwnClientState.subscribe(undefined, {
-      onData: (data) => {
-        console.log(`clientState received. Reason: ${data.reason}`);
-        clientState.value = data.myState;
-      },
-    });
+    // connection.client.user.subOwnClientState.subscribe(undefined, {
+    //   onData: (data) => {
+    //     console.log(`clientState received. Reason: ${data.reason}`);
+    //     clientState.value = data.myState;
+    //   },
+    // });
+    eventReceiver.user.myStateUpdated.subscribe(({ data, reason }) => {
+      console.log(`clientState received. Reason: ${reason}`);
+      clientState.value = data;
+    })
   };
 
   // Init

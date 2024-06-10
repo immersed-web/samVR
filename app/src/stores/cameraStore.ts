@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { useConnectionStore } from './connectionStore';
 import type { CameraId } from 'schemas';
-import type { RouterOutputs } from '@/modules/trpcClient';
+import { eventReceiver, type RouterOutputs } from '@/modules/trpcClient';
 import { computed, ref } from 'vue';
 import { useSoupStore } from './soupStore';
 import { useStreamStore } from './streamStore';
@@ -108,24 +108,29 @@ export const useCameraStore = defineStore('camera', () => {
     return currentCamera.value?.producers;
   });
 
-  connection.client.camera.subCameraStateUpdated.subscribe(undefined, {
-    onData({data, reason}) {
-      console.log(`subscription received new cameraState (${reason}):`, data);
+  // connection.client.camera.subCameraStateUpdated.subscribe(undefined, {
+  //   onData({data, reason}) {
+  //     console.log(`subscription received new cameraState (${reason}):`, data);
 
-      currentCamera.value = data;
-      // patch existing state if exists
-      // if(currentCamera.value){
-      //   for(const k of Object.keys(currentCamera.value)) {
-      //     const key = k as keyof typeof data;
-      //     // if(!key) continue;
-      //     const d = data[key];
-      //     const p = currentCamera.value[key];
-      //   }
-      // }else {
-      //   currentCamera.value = data;
-      // }
-    },
-  });
+  //     currentCamera.value = data;
+  //     // patch existing state if exists
+  //     // if(currentCamera.value){
+  //     //   for(const k of Object.keys(currentCamera.value)) {
+  //     //     const key = k as keyof typeof data;
+  //     //     // if(!key) continue;
+  //     //     const d = data[key];
+  //     //     const p = currentCamera.value[key];
+  //     //   }
+  //     // }else {
+  //     //   currentCamera.value = data;
+  //     // }
+  //   },
+  // });
+
+  eventReceiver.camera.cameraStateUpdated.subscribe(({ data, reason }) => {
+    console.log(`subscription received new cameraState (${reason}):`, data);
+    currentCamera.value = data;
+  })
   async function joinCamera(cameraId: CameraId){
     // console.log('Joining camera!!!!');
     currentCamera.value = await connection.client.camera.joinCamera.mutate({ cameraId });

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import type { RouterOutputs } from '@/modules/trpcClient';
+import { eventReceiver, type RouterOutputs } from '@/modules/trpcClient';
 import { soupDevice, attachTransportEvents, type ProduceAppData } from '@/modules/mediasoup';
 import type {types as soupTypes } from 'mediasoup-client';
 import { reactive, ref, shallowReactive, shallowRef, markRaw, type Raw } from 'vue';
@@ -148,50 +148,54 @@ export const useSoupStore = defineStore('soup', () =>{
 
   const connectionStore = useConnectionStore();
 
-  connectionStore.client.soup.subSoupObjectClosed.subscribe(undefined, {
-    onData({data, reason}) {
-      console.log(`soupObject closed (${reason}): `, data);
-      switch (data.type){
-        case 'consumer': {
-          const { consumerInfo: {consumerId, producerId} } = data;
-          const con = consumers.get(producerId);
-          if(con) {
-            con.consumer.close();
-            consumers.delete(producerId);
-            // consumerStats.delete(producerId);
-          }
-          break;
+  eventReceiver.soup.soupObjectClosed.subscribe(({ data, reason }) => {
+    console.log(`soupObject closed (${reason}): `, data);
+    switch (data.type) {
+      case 'consumer': {
+        const { consumerInfo: { consumerId, producerId } } = data;
+        const con = consumers.get(producerId);
+        if (con) {
+          con.consumer.close();
+          consumers.delete(producerId);
+          // consumerStats.delete(producerId);
         }
-        case 'producer': {
-          if(videoProducer.producer?.id === data.id){
-            videoProducer.producer.close();
-            videoProducer.producer = undefined;
-            videoProducer.stats = undefined;
-          } else if(audioProducer.producer?.id === data.id){
-            audioProducer.producer.close();
-            audioProducer.producer = undefined;
-            audioProducer.stats = undefined;
-          }
-          break;
+        break;
+      }
+      case 'producer': {
+        if (videoProducer.producer?.id === data.id) {
+          videoProducer.producer.close();
+          videoProducer.producer = undefined;
+          videoProducer.stats = undefined;
+        } else if (audioProducer.producer?.id === data.id) {
+          audioProducer.producer.close();
+          audioProducer.producer = undefined;
+          audioProducer.stats = undefined;
         }
-        case 'transport': {
-          if(sendTransport.value?.id === data.id){
-            sendTransport.value?.close();
-            sendTransport.value = undefined;
-          } else if(receiveTransport.value?.id === data.id){
-            receiveTransport.value?.close();
-            receiveTransport.value = undefined;
-          }
+        break;
+      }
+      case 'transport': {
+        if (sendTransport.value?.id === data.id) {
+          sendTransport.value?.close();
+          sendTransport.value = undefined;
+        } else if (receiveTransport.value?.id === data.id) {
+          receiveTransport.value?.close();
+          receiveTransport.value = undefined;
         }
       }
-    },
-    onError(err){
-      console.error(err);
-    },
-    onComplete() {
-      console.log('sub scompleted');
-    },
+    }
   });
+
+  // connectionStore.client.soup.subSoupObjectClosed.subscribe(undefined, {
+  //   onData({data, reason}) {
+  //     console.log(`soupObject closed (${reason}): `, data);
+  //   },
+  //   onError(err){
+  //     console.error(err);
+  //   },
+  //   onComplete() {
+  //     console.log('sub scompleted');
+  //   },
+  // });
 
   async function loadDevice() {
     if(soupDevice.loaded){

@@ -4,17 +4,19 @@ import type { types as soupTypes } from 'mediasoup-client';
 import type { ProducerId } from 'schemas/mediasoup';
 import { reactive, ref, shallowRef, toRaw } from 'vue';
 import { useConnectionStore } from './connectionStore';
-import type { RouterOutputs, SubscriptionValue } from '@/modules/trpcClient';
+import type { ExtractPayload, RouterOutputs, SubscriptionValue } from '@/modules/trpcClient';
 import { createReceiver } from 'ts-event-bridge/receiver';
 import type { SenderClientEventMap } from 'mediaserver/sender-events';
 type SenderReceiver = ReturnType<typeof createReceiver<SenderClientEventMap>>['receiver'];
-import { receiver } from '@/modules/trpcClient';
-const senderReceiver = receiver as unknown as SenderReceiver
+import { eventReceiver } from '@/modules/trpcClient';
+const senderReceiver = eventReceiver as unknown as SenderReceiver
 
 // type ReceivedSenderState = SubscriptionValue<RouterOutputs['sender']['subOwnClientState']>['data']
 
-// THE fuck....
-type ReceivedSenderState = Parameters<Parameters<typeof senderReceiver.sender.senderStateUpdate.subscribe>[0]>[0]['data'];
+// THE FUCK....
+// type ReceivedSenderState = Parameters<Parameters<typeof senderReceiver.sender.senderStateUpdate.subscribe>[0]>[0]['data'];
+type ReceivedSenderState = ExtractPayload<typeof senderReceiver.sender.myStateUpdated.subscribe>['data'];
+
 export const useSenderStore = defineStore('sender', () => {
   const savedPickedDeviceId = ref<string>();
   const senderState = ref<ReceivedSenderState>();
@@ -32,7 +34,7 @@ export const useSenderStore = defineStore('sender', () => {
   //   },
   // });
 
-  senderReceiver.sender.senderStateUpdate.subscribe(payload => {
+  senderReceiver.sender.myStateUpdated.subscribe(payload => {
     senderState.value = payload.data;
     // Why not computed? I dont remember, but lets not dwelve into that right now
     senderId.value = payload.data.senderId;

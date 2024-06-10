@@ -13,10 +13,15 @@ import { EventSender, Payload, createTypedEvents } from 'ts-event-bridge/sender'
 import { MyWebsocketType } from 'index.js';
 
 type EventMapAdditions = {
-  userClientHealhty: Payload<string>,
-  senderAddedOrRemoved: Payload<{ senderState: ReturnType<SenderClient['getPublicState']>, added: boolean }>,
-  vrSpaceStateUpdated: Payload<DataAndReason<ReturnType<VrSpace['getPublicState']>>>,
-  clientTransforms: Payload<ClientTransforms>
+  // userClientHealhty: Payload<string>,
+  vrSpace: {
+    vrSpaceStateUpdated: Payload<DataAndReason<ReturnType<VrSpace['getPublicState']>>>,
+    clientTransforms: Payload<ClientTransforms>
+  },
+  user: {
+    someClientStateUpdated: Payload<DataAndReason<ReturnType<UserClient['getPublicState']>>>,
+    myStateUpdated: Payload<DataAndReason<ReturnType<UserClient['getPublicState']>>>,
+  }
 }
 
 export type UserClientEventMap = EventMapAdditions & BaseClientEventMap
@@ -130,7 +135,7 @@ export class UserClient extends BaseClient {
       log.info('skipped emitting to client because socket was already closed');
       return;
     }
-    log.info(`emitting clientState for ${this.username} (${this.connectionId}) to itself`);
+    log.info(`notyfyin myStateUpdated for ${this.username} (${this.connectionId}) to itself`);
     // we emit the new clientstate to the client itself.
     // try {
     //   log.debug('trying to trigger ts-event-bridge')
@@ -138,7 +143,8 @@ export class UserClient extends BaseClient {
     // } catch (e) {
     //   console.error(e);
     // }
-    this.userClientEvent.emit('myStateUpdated', {myState: this.getPublicState(), reason });
+    // this.userClientEvent.emit('myStateUpdated', {myState: this.getPublicState(), reason });
+    this.eventSender.user.myStateUpdated({ data: this.getPublicState(), reason });
   }
 
   async joinStream(streamId: StreamId) {

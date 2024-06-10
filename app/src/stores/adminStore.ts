@@ -1,4 +1,4 @@
-import type { SubscriptionValue, RouterOutputs } from '@/modules/trpcClient';
+import type { SubscriptionValue, RouterOutputs, ExtractPayload } from '@/modules/trpcClient';
 import { defineStore } from 'pinia';
 import type { CameraId, SenderId, StreamId, CameraPortalInsert, CameraInsert, ConnectionId, CameraUpdate } from 'schemas';
 import { computed, ref } from 'vue';
@@ -6,8 +6,10 @@ import { useConnectionStore } from './connectionStore';
 import { useStreamStore } from './streamStore';
 import { useSoupStore } from './soupStore';
 import { useNow } from '@vueuse/core';
+import { eventReceiver, type UnPayload } from '@/modules/trpcClient';
 
-type _ReceivedAdminStreamState = SubscriptionValue<RouterOutputs['admin']['subStreamStateUpdated']>['data'];
+// type _ReceivedAdminStreamState = SubscriptionValue<RouterOutputs['admin']['subStreamStateUpdated']>['data'];
+type _ReceivedAdminStreamState = ExtractPayload<typeof eventReceiver.stream.streamStateUpdatedAdminOnly.subscribe>['data'];
 export const useAdminStore = defineStore('admin', () => {
   const streamStore = useStreamStore();
   const connection = useConnectionStore();
@@ -15,11 +17,15 @@ export const useAdminStore = defineStore('admin', () => {
 
   const adminOnlyStreamState = ref<_ReceivedAdminStreamState>();
 
-  connection.client.admin.subStreamStateUpdated.subscribe(undefined, {
-    onData({data, reason}){
-      console.log('streamState (adminonly) updated:', { data, reason });
-      adminOnlyStreamState.value = data;
-    },
+  // connection.client.admin.subStreamStateUpdated.subscribe(undefined, {
+  //   onData({data, reason}){
+  //     console.log('streamState (adminonly) updated:', { data, reason });
+  //     adminOnlyStreamState.value = data;
+  //   },
+  // });
+
+  eventReceiver.stream.streamStateUpdatedAdminOnly.subscribe(payload => {
+    adminOnlyStreamState.value = payload.data;
   });
 
   // connectionStore.client.admin.subSenderAddedOrRemoved.subscribe(undefined, {

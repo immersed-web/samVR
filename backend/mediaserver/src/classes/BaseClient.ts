@@ -26,11 +26,12 @@ export type BaseClientEventMap = {
     soupObjectClosed: Payload<DataAndReason<SoupObjectClosePayload>>,
     consumerPausedOrResumed: Payload<DataAndReason<{ consumerId: ConsumerId, wasPaused: boolean }>>,
     producerPausedOrResumed: Payload<DataAndReason<{ producerId: ProducerId, wasPaused: boolean }>>,
+    senderAddedOrRemoved: Payload<{ senderState: ReturnType<SenderClient['getPublicState']>, added: boolean }>,
   },
   stream: {
   // clientAddedOrRemoved: Payload<{ data: { client: ReturnType<UserClient['getPublicState']>, added: boolean } }>,
   // senderAddedOrRemoved: Payload<{ data: { client: ReturnType<SenderClient['getPublicState']>, added: boolean } }>,
-  // streamWasUnloaded: Payload<{ venueId: StreamId }>,
+    streamWasUnloaded: Payload<{ streamId: StreamId }>,
 
     streamStateUpdated: Payload<DataAndReason<ReturnType<Venue['getPublicState']>>>,
     streamStateUpdatedAdminOnly: Payload<DataAndReason<ReturnType<Venue['getAdminOnlyState']>>>,
@@ -38,10 +39,6 @@ export type BaseClientEventMap = {
   camera: {
     cameraStateUpdated: Payload<DataAndReason<ReturnType<Camera['getPublicState']>>>,
   },
-  client: {
-    someClientStateUpdated: Payload<DataAndReason<ReturnType<UserClient['getPublicState']>>>,
-    // myClientStateUpdated: Payload<DataAndReason<ReturnType<UserClient['getPublicState']>>>,
-  }
 }
 
 const { createSender } = createTypedEvents<BaseClientEventMap>();

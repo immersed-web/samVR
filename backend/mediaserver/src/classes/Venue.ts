@@ -202,7 +202,10 @@ export class Venue {
   // NOTE: It's important we release all references here!
   unload() {
     log.info(`*****UNLOADING VENUE: ${this.name} (${this.streamId})`);
-    this.emitToAllClients('venueWasUnloaded', this.streamId);
+    this.clients.forEach(c => {
+      c.eventSender.stream.streamWasUnloaded({ streamId: this.streamId });
+    })
+
     this.router.close();
     // this.cameras.forEach(room => room.destroy());
     Venue.streams.delete(this.streamId);
@@ -239,7 +242,8 @@ export class Venue {
     this.clients.forEach(c => {
       if(hasAtLeastSecurityLevel(c.role, 'moderator')){
         log.info(`notifying adminOnlyVenuestate (${reason}) to client ${c.username} (${c.connectionId})`);
-        c.notify.streamStateUpdatedAdminOnly?.({ data, reason });
+        // c.notify.streamStateUpdatedAdminOnly?.({ data, reason });
+        c.eventSender.stream.streamStateUpdatedAdminOnly({ data, reason });
       }
     });
   }

@@ -117,7 +117,8 @@ export class Camera {
     this.clients.forEach(client => {
       if(client.connectionId === skipClientWithId) return;
       log.info(`notifying cameraState (${reason}) to client ${client.username} (${client.connectionId})`);
-      client.notify.cameraStateUpdated?.({data: this.getPublicState(), reason});
+      // client.notify.cameraStateUpdated?.({data: this.getPublicState(), reason});
+      client.eventSender.camera.cameraStateUpdated({ data: this.getPublicState(), reason });
     });
   }
 
