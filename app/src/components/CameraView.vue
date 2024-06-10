@@ -201,7 +201,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 import { useSoupStore } from '@/stores/soupStore';
-import type { CameraId, StreamId } from 'schemas';
+import type { CameraId, CameraPortalInsert, StreamId } from 'schemas';
 import { onBeforeUnmount, onMounted, ref, shallowRef, watch, inject, computed, nextTick, onBeforeMount } from 'vue';
 import { computedWithControl, until } from '@vueuse/core';
 import { useStreamStore } from '@/stores/streamStore';
@@ -210,6 +210,7 @@ import type { Entity, Scene } from 'aframe';
 import { useAdminStore } from '@/stores/adminStore';
 // import { useAutoEnterXR } from '@/composables/autoEnterXR';
 import { aFrameSceneProvideKey } from '@/modules/injectionKeys';
+import { THREE } from 'aframe';
 
 const props = withDefaults(defineProps<{
   streamId: StreamId,
@@ -694,15 +695,15 @@ function onMouseUp(evt: Event){
   console.log('mouseup', evt);
   if(movedPortalCameraId.value && camera.currentCamera){
     const {toCameraId, ...portal} = camera.currentCamera.portals[movedPortalCameraId.value];
-    const data = {
-      cameraId: camera.currentCamera.cameraId,
+    const data: CameraPortalInsert = {
+      fromCameraId: camera.currentCamera.cameraId,
       toCameraId,
       portal,
     };
     console.log('setting portal:', data);
     adminStore.setPortal(data);
   } else if(isViewOriginMoved.value) {
-    adminStore.updateCamera(camera.currentCamera!.cameraId, {viewOriginX: camera.currentCamera?.viewOrigin.x, viewOriginY: camera.currentCamera?.viewOrigin.y }, 'view origin');
+    adminStore.updateCamera({ cameraId: camera.currentCamera!.cameraId, viewOriginX: camera.currentCamera?.viewOrigin.x, viewOriginY: camera.currentCamera?.viewOrigin.y }, 'view origin');
   }
   movedPortalCameraId.value = undefined;
   isViewOriginMoved.value = false;

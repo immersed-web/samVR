@@ -6,7 +6,7 @@ import type { StreamId } from 'schemas';
 import { useConnectionStore } from '@/stores/connectionStore';
 import { useNow, useStorage } from '@vueuse/core';
 
-type _ReceivedPublicStreamState = RouterOutputs['venue']['joinStream'];
+type _ReceivedPublicStreamState = RouterOutputs['stream']['joinStream'];
 
 export type VisibilityDetails = {
   visibility: Visibility,
@@ -42,7 +42,7 @@ export const useStreamStore = defineStore('stream', () => {
 
 
 
-  connection.client.venue.subVenueUnloaded.subscribe(undefined, {
+  connection.client.stream.subStreamUnloaded.subscribe(undefined, {
     onData() {
       currentStream.value = undefined;
     },
@@ -51,7 +51,7 @@ export const useStreamStore = defineStore('stream', () => {
     },
   });
 
-  connection.client.venue.subVenueStateUpdated.subscribe(undefined, {
+  connection.client.stream.subStreamStateUpdated.subscribe(undefined, {
     onData(data) {
       console.log('received streamState updated:', data);
       currentStream.value = data.data;
@@ -81,13 +81,13 @@ export const useStreamStore = defineStore('stream', () => {
   // });
 
   async function loadAndJoinStream(streamId: StreamId) {
-    currentStream.value = await connection.client.venue.loadAndJoinStream.mutate({ streamId });
+    currentStream.value = await connection.client.stream.loadAndJoinStream.mutate({ streamId });
     savedStreamId.value = currentStream.value.streamId;
   }
 
   async function joinStream(streamId: StreamId) {
     // console.log('sending request to join stream:', streamId);
-    currentStream.value = await connection.client.venue.joinStream.mutate({ streamId });
+    currentStream.value = await connection.client.stream.joinStream.mutate({ streamId });
     savedStreamId.value = currentStream.value.streamId;
   }
 
@@ -96,7 +96,7 @@ export const useStreamStore = defineStore('stream', () => {
       console.warn('Tried to leave stream when you aren\'t in one.. Not so clever, eh?');
       return;
     }
-    await connection.client.venue.leaveCurrentVenue.mutate();
+    await connection.client.stream.leaveCurrentStream.mutate();
     currentStream.value = undefined;
   }
 

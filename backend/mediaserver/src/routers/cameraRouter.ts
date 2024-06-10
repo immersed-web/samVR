@@ -24,9 +24,9 @@ export const cameraRouter = router({
       log.info('was already in a camera. leaving that camera first');
       ctx.client.leaveCurrentCamera();
     }
-    const foundCamera = ctx.venue.cameras.get(input.cameraId);
+    const foundCamera = ctx.stream.cameras.get(input.cameraId);
     if(!foundCamera) {
-      throw new TRPCError({ code: 'NOT_FOUND', message: 'no camera with that Id found in venue'});
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'no camera with that Id found in stream' });
     }
     foundCamera.addClient(ctx.client);
     return foundCamera.getPublicState();

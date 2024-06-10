@@ -3,6 +3,7 @@ import { fileURLToPath, URL } from 'node:url';
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import VueDevtools from 'vite-plugin-vue-devtools';
+import { viteExternalsPlugin } from 'vite-plugin-externals'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -14,7 +15,11 @@ export default defineConfig({
         },
       },
     }),
-    VueDevtools()
+    VueDevtools(),
+    viteExternalsPlugin({
+      three: 'THREE',
+
+    }, { useWindow: true })
   ],
   envDir: '../',
   resolve: {

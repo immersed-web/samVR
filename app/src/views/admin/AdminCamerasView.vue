@@ -158,7 +158,7 @@ watch(() => streamStore.currentStream?.mainCameraId, (newMainCameraId) => {
   mainCameraId.value = newMainCameraId;
 }, {immediate: true});
 async function setMainCamera(cameraId: CameraId) {
-  await connection.client.admin.updateVenue.mutate({
+  await connection.client.admin.updateStream.mutate({
     mainCameraId: cameraId,
   });
 }

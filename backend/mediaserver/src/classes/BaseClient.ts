@@ -202,7 +202,7 @@ export class BaseClient {
     try{
       if(!this.venueId) return undefined;
       // return getVenue(this.venueId);
-      return Venue.getVenue(this.venueId);
+      return Venue.getStream(this.venueId);
     } catch (e) {
       console.error(e);
       return undefined;

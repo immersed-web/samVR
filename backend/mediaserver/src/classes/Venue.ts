@@ -191,11 +191,11 @@ export class Venue {
   }
 
   getAdminOnlyState() {
-    const { streamId: venueId, clientIds, owner } = this;
+    const { streamId, clientIds, owner } = this;
     const cameras: Record<CameraId, ReturnType<Camera['getPublicState']>> = {};
     this.cameras.forEach(cam => cameras[cam.cameraId] = cam.getPublicState());
 
-    return { venueId, clientIds, owner, detachedSenders: this.publicDetachedSenders.value, cameras };
+    return { streamId, clientIds, owner, detachedSenders: this.publicDetachedSenders.value, cameras };
   }
 
   //
@@ -224,7 +224,7 @@ export class Venue {
       c.notify.venueStateUpdated?.({data: publicState, reason});
     });
     this.senderClients.forEach(s => {
-      log.info(`notifying venuestate (${reason}) to sender ${s.username} (${s.connectionId})`);
+      log.info(`notifying streamstate (${reason}) to sender ${s.username} (${s.connectionId})`);
       if(!s.notify.venueStateUpdated){
         log.warn('sender didnt have subscriver attached');
         return;
@@ -244,8 +244,8 @@ export class Venue {
   }
 
   /**
-   * adds a client (client or sender) to this venues collection of clients. Also takes care of assigning the venue inside the client itself
-   * @param client the client instance to add to the venue
+   * adds a client (client or sender) to this stream's collection of clients. Also takes care of assigning the stream inside the client itself
+   * @param client the client instance to add to the stream
    */
   addClient ( client : UserClient | SenderClient){
     if(client.clientType === 'sender'){
@@ -255,10 +255,10 @@ export class Venue {
         }
       }
       this.senderClients.set(client.connectionId, client);
-      // this._notifyStateUpdated('sender added to venue');
+      // this._notifyStateUpdated('sender added to stream');
       client._setVenue(this.streamId);
       this.tryMatchCamera(client);
-      this._notifyAdminOnlyState('sender added to venue');
+      this._notifyAdminOnlyState('sender added to stream');
     }
     else {
       // log.info('client wants to join');
@@ -278,17 +278,17 @@ export class Venue {
       // this._notifyStateUpdated('Client added to Venue');
       this._notifyAdminOnlyState('client added to Venue');
     }
-    log.info(`Client (${client.clientType}) ${client.username} added to the venue ${this.dbData.name}`);
+    log.info(`Client (${client.clientType}) ${client.username} added to the stream ${this.dbData.name}`);
 
     // this._notifyClients('venueStateUpdated', this.getPublicState(), 'because I wanna');
   }
 
   /**
-   * Removes the client (client or sender) from the venue. Also automatically unloads the venue if it becomes empty
+   * Removes the client (client or sender) from the stream. Also automatically unloads the stream if it becomes empty
    * Also removes the client from camera or a vrSpace if its inside one
    */
   removeClient (client: UserClient | SenderClient) {
-    log.info(`removing ${client.username} (${client.connectionId}) from the venue ${this.name}`);
+    log.info(`removing ${client.username} (${client.connectionId}) from the stream ${this.name}`);
     if(client.clientType === 'client'){
       // TODO: We should also probably cleanup if client is in a camera or perhaps a VR place to avoid invalid states?
       const camera = client.currentCamera;
@@ -301,8 +301,8 @@ export class Venue {
       }
       this.clients.delete(client.connectionId);
       // this.emitToAllClients('clientAddedOrRemoved', {client: client.getPublicState(), added: false}, client.connectionId);
-      // this._notifyStateUpdated('client removed from venue');
-      this._notifyAdminOnlyState('client removed from venue');
+      // this._notifyStateUpdated('client removed from stream');
+      this._notifyAdminOnlyState('client removed from stream');
     } else {
 
       // TODO: Make sure this is not race condition where it throws because it cant find the camera instance
@@ -314,12 +314,12 @@ export class Venue {
 
       // this.emitToAllClients('senderAddedOrRemoved', {client: client.getPublicState(), added: false}, client.connectionId);
       // this._notifySenderAddedOrRemoved(client.getPublicState(), false, 'sender was removed');
-      this._notifyAdminOnlyState('sender removed from venue');
+      this._notifyAdminOnlyState('sender removed from stream');
     }
     client.onRemovedFromVenue();
     client._setVenue(undefined);
 
-    // If this was the last client in the venue, lets unload it!
+    // If this was the last client in the stream, lets unload it!
     if(this._isEmpty){
       this.unload();
     }
@@ -339,12 +339,12 @@ export class Venue {
   };
 
   /**
-   * Adds a senderClient to the venue. senderClients are distinct from normal clients in that
+   * Adds a senderClient to the stream. senderClients are distinct from normal clients in that
    * their only role is to send media to the server. The server can instruct connected senderClients to start or stop media producers.
    * The server is then responsible for linking the producers from senderCLients to the server Camera instances
    */
   // addSenderClient (senderClient : SenderClient){
-  //   log.info(`SenderClient ${senderClient.username} (${senderClient.connectionId}) added to the venue ${this.prismaData.name}`);
+  //   log.info(`SenderClient ${senderClient.username} (${senderClient.connectionId}) added to the stream ${this.prismaData.name}`);
   //   // console.log('clients before add: ',this.clients);
   //   // const senderClient = new SenderClient(client);
   //   this.senderClients.set(senderClient.connectionId, senderClient);
@@ -354,7 +354,7 @@ export class Venue {
   // }
 
   // removeSenderClient (senderClient: SenderClient) {
-  //   log.info(`SenderClient ${senderClient.username} (${senderClient.connectionId}) removed from the venue ${this.prismaData.name}`);
+  //   log.info(`SenderClient ${senderClient.username} (${senderClient.connectionId}) removed from the stream ${this.prismaData.name}`);
   //   this.senderClients.delete(senderClient.connectionId);
   //   senderClient._setVenue(undefined);
 
@@ -404,7 +404,7 @@ export class Venue {
   //   //   },
   //   //   data: {
   //   //     // NOTE: models are a separate table and thus a related model. This is if we in the future want to be able to reuse a model in several venues.
-  //   //     // But for now we will only have one model per venue. Thus we can simply create one with default values here directly.
+  //   //     // But for now we will only have one model per stream. Thus we can simply create one with default values here directly.
   //   //     virtualSpace3DModel: {
   //   //       create: {
   //   //         // use defaults so empty object
@@ -514,8 +514,8 @@ export class Venue {
     }
   }
 
-  // TODO: We should probably not use the camera prisma data provided by venue when loading. It might be stale.
-  // We should probably not have the camera prisma data included in venue in the first place? And instead get the data when loading the camera.
+  // TODO: We should probably not use the camera prisma data provided by stream when loading. It might be stale.
+  // We should probably not have the camera prisma data included in stream in the first place? And instead get the data when loading the camera.
   // loadCamera(dbCamera: CameraWithIncludes) {
   async loadCamera(cameraId: CameraId) {
     if (this.cameras.has(cameraId)) {
@@ -553,11 +553,11 @@ export class Venue {
     // const foundSender = this.senderClients.get(senderConnectionId);
     const foundSender = this.findSenderFromSenderId(senderId);
     if(!foundSender){
-      throw Error('No sender with that connectionId in venue');
+      throw Error('No sender with that connectionId in stream');
     }
     const foundCamera = this.cameras.get(cameraId);
     if(!foundCamera){
-      throw Error('No camera with that cameraId in venue');
+      throw Error('No camera with that cameraId in stream');
     }
     await foundCamera.setSender(foundSender);
     await foundCamera.saveToDb();
@@ -609,9 +609,9 @@ export class Venue {
         throw Error('No stream with that streamId in db');
       }
       if (dbResponse?.ownerUserId !== ownerUserId) {
-        // throw Error('you are not owner of the venue! Not allowed!');
+        // throw Error('you are not owner of the stream! Not allowed!');
         if (dbResponse?.streamStartTime && !isPast(dbResponse.streamStartTime?.getTime())) {
-          throw Error('You are not owner of the venue AND the stream start time has not passed / is not set.');
+          throw Error('You are not owner of the stream AND the stream start time has not passed / is not set.');
         }
       }
 
@@ -621,7 +621,7 @@ export class Venue {
       const router = await worker.createRouter(mediasoupConfig.router);
       const stream = new Venue(dbResponse, router);
       // log.info('venueIncludeStuff: ', venueIncludeStuff);
-      // log.info('venue was loaded with db data:', dbResponse);
+      // log.info('stream was loaded with db data:', dbResponse);
 
       Venue.streams.set(stream.streamId, stream);
       log.info(`*****LOADED STREAM: ${stream.name} ${stream.streamId})`);
@@ -634,48 +634,48 @@ export class Venue {
   }
 
 
-  static venueIsLoaded(params: { venueId: StreamId }) {
-    return Venue.streams.has(params.venueId);
+  static streamIsLoaded(params: { streamId: StreamId }) {
+    return Venue.streams.has(params.streamId);
   }
 
-  static getLoadedVenues(){
-    const obj: Record<StreamId, { venueId: StreamId, name: string }> = {};
-    for (const [key, venue] of Venue.streams.entries()) {
+  static getLoadedStreams() {
+    const obj: Record<StreamId, { streamId: StreamId, name: string }> = {};
+    for (const [key, stream] of Venue.streams.entries()) {
       obj[key] = {
-        name: venue.dbData.name,
-        venueId: venue.streamId,
+        name: stream.dbData.name,
+        streamId: stream.streamId,
       };
     }
     return obj;
   }
 
-  static getLoadedVenuesPublicState(){
-    const obj: Record<StreamId, { venueId: StreamId, state: ReturnType<Venue['getPublicState']> }> = {};
-    for (const [key, venue] of Venue.streams.entries()) {
+  static getLoadedStreamsPublicState() {
+    const obj: Record<StreamId, { streamId: StreamId, state: ReturnType<Venue['getPublicState']> }> = {};
+    for (const [key, stream] of Venue.streams.entries()) {
       obj[key] = {
-        venueId: venue.streamId,
-        state: venue.getPublicState()
+        streamId: stream.streamId,
+        state: stream.getPublicState()
       };
     }
     return obj;
   }
 
-  static getVenue(venueId: StreamId) {
-    const venue = Venue.streams.get(venueId);
-    if(!venue){
-      throw new Error('No venue with that id is loaded');
+  static getStream(streamId: StreamId) {
+    const stream = Venue.streams.get(streamId);
+    if (!stream) {
+      throw new Error('No stream with that id is loaded');
     }
-    return venue;
+    return stream;
   }
 
-  static async getStreamPublicInfo(venueId: StreamId, userId: UserId) {
+  static async getStreamPublicInfo(streamId: StreamId, userId: UserId) {
   // const venue = Venue.streams.get(venueId);
   // if(!venue){
   //   throw new Error('No stream with that id is loaded');
   // }
 
     const response = await db.query.streams.findFirst({
-      where: eq(schema.streams.streamId, venueId),
+      where: eq(schema.streams.streamId, streamId),
       with: {
         cameras: true,
         mainCamera: true,

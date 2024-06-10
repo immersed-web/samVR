@@ -92,7 +92,7 @@ export class SenderClient extends BaseClient{
 
   async joinStream(venueId: StreamId) {
     this.leaveCurrentStream();
-    const venue = Venue.getVenue(venueId);
+    const venue = Venue.getStream(venueId);
     venue.addClient(this);
     this._notifyStateUpdated('sender client joined venue');
     return venue.getPublicState();

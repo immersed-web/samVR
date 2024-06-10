@@ -6,7 +6,7 @@ log.enable(process.env.DEBUG);
 import { router, procedure } from '../trpc/trpc.js';
 import { soupRouter } from './soupRouter.js';
 import { vrRouter } from './vrRouter.js';
-import { venueRouter } from './venueRouter.js';
+import { streamRouter } from './streamRouter.js';
 import { TypedEmitter } from 'tiny-typed-emitter';
 import { attachToEvent } from '../trpc/trpc-utils.js';
 import { userRouter } from './userRouter.js';
@@ -23,7 +23,7 @@ export const appRouter = router({
   user: userRouter,
   sender: senderRouter,
   admin: adminRouter,
-  venue: venueRouter,
+  stream: streamRouter,
   camera: cameraRouter,
   soup: soupRouter,
   vr: vrRouter,

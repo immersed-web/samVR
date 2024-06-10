@@ -1,8 +1,8 @@
 <template>
   <div>
     <div class="min-h-screen z-0">
-      <VrAFrame v-if="streamStore.modelUrl" :model-url="streamStore.modelUrl" :navmesh-url="streamStore.navmeshUrl"
-        :model-scale="streamStore.currentStream?.vrSpace?.virtualSpace3DModel?.scale" />
+      <!-- <VrAFrame v-if="streamStore.modelUrl" :model-url="streamStore.modelUrl" :navmesh-url="streamStore.navmeshUrl"
+        :model-scale="streamStore.currentStream?.vrSpace?.virtualSpace3DModel?.scale" /> -->
     </div>
   </div>
 </template>

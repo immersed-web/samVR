@@ -157,14 +157,14 @@ const clientStore = useClientStore();
 // }
 
 async function startStream() {
-  await connection.client.admin.updateVenue.mutate({
+  await connection.client.admin.updateStream.mutate({
     streamManuallyStarted: true,
     streamManuallyEnded: false,
   });
 }
 
 async function endStream() {
-  await connection.client.admin.updateVenue.mutate({
+  await connection.client.admin.updateStream.mutate({
     streamManuallyStarted: false,
     streamManuallyEnded: true,
   });

@@ -195,7 +195,7 @@ export type StreamListInfo = Prettify<Pick<typeof schema.streams.$inferSelect,
 
 export const StreamInsertSchema = createInsertSchema(schema.streams, {
   streamId: StreamIdSchema.optional(),
-  ownerUserId: UserIdSchema.optional(),
+  ownerUserId: UserIdSchema,
   // vrSpaceId: VrSpaceIdSchema.optional(),
   mainCameraId: CameraIdSchema.optional(),
 })
@@ -207,81 +207,15 @@ export type StreamInsert = z.TypeOf<typeof StreamInsertSchema>;
 export const StreamUpdateSchema = StreamInsertSchema.omit({ streamId: true }).partial();
 export type StreamUpdate = z.TypeOf<typeof StreamUpdateSchema>;
 
-// export const StreamUpdateSchema = createInsertSchema(schema.streams, {
-//   streamId: z.never(),
-// });
-// export const StreamUpdateSchema = z.object({
-//   name: z.string().nonempty().optional(),
-//   visibility: VisibilitySchema.optional(),
-//   doorsOpeningTime: z.date().nullable().optional(),
-//   doorsAutoOpen: z.boolean().optional(),
-//   doorsManuallyOpened: z.boolean().optional(),
-//   streamStartTime: z.date().nullable().optional(),
-//   streamAutoStart: z.boolean().optional(),
-//   streamManuallyStarted: z.boolean().optional(),
-//   streamManuallyEnded: z.boolean().optional(),
-//   mainCameraId: CameraIdSchema.nullable().optional(),
-// }) satisfies z.ZodType<Partial<Stream>>
-// export type StreamUpdate = z.TypeOf<typeof StreamUpdateSchema>;
-
-// export const VirtualSpace3DModelCreateSchema = z.object({
-//   modelUrl: z.string()
-// }) satisfies z.ZodType<Partial<VirtualSpace3DModel>>
-// export type VirtualSpace3DCreate = z.TypeOf<typeof VirtualSpace3DModelCreateSchema>
-
-// export const VirtualSpace3DModelRemoveSchema = z.object({
-//   modelId: Vr3DModelIdSchema
-// })
-// export type VirtualSpace3DRemove = z.TypeOf<typeof VirtualSpace3DModelRemoveSchema>
-
-// const ModelFileFormatSchema = z.enum(['glb', 'gltf'] as const satisfies Readonly<ModelFileFormat[]>);
-// type Vr3DModelUpdatePayload = Partial<Pick<Prisma.VirtualSpace3DModelUpdateInput,
-//   'modelFileFormat'
-//   | 'navmeshFileFormat'
-//   | 'public'
-//   | 'scale'
-//   | 'entrancePosition'
-//   | 'entranceRotation'
-//   | 'spawnPosition'
-//   | 'spawnRadius'
-// >>
-// const VirtualSpace3DModelUpdatePayloadSchema = z.object({
-//   modelFileFormat: ModelFileFormatSchema.nullable().optional(),
-//   navmeshFileFormat: ModelFileFormatSchema.nullable().optional(),
-//   public: z.boolean().optional(),
-//   scale: z.number().optional(),
-//   entrancePosition: z.tuple([z.number(), z.number(), z.number()]).optional(),
-//   entranceRotation: z.number().nullable().optional(),
-//   spawnPosition: z.tuple([z.number(), z.number(), z.number()]).optional(),
-//   spawnRadius: z.number().nullable().optional(),
-//   skyColor: z.string().nullable().optional(),
-// }) satisfies z.ZodType<Vr3DModelUpdatePayload>
-// export const VirtualSpace3DModelUpdateSchema = z.object({
-//   vr3DModelId: Vr3DModelIdSchema,
-//   data: VirtualSpace3DModelUpdatePayloadSchema,
-//   reason: z.string().optional(),
-// })
-// export type VirtualSpace3DModelUpdate = z.TypeOf<typeof VirtualSpace3DModelUpdateSchema>
 
 export const CameraPortalInsertSchema = createInsertSchema(schema.cameraPortals, {
-  fromCameraId: CameraIdSchema.optional(),
-  toCameraId: CameraIdSchema.optional(),
+  fromCameraId: CameraIdSchema,
+  toCameraId: CameraIdSchema,
 })
   .omit(timestampKeys)
   .merge(optionalReason);
 export type CameraPortalInsert = z.TypeOf<typeof CameraPortalInsertSchema>;
 
-// export const CameraPortalUpdateSchema = z.object({
-//       cameraId: CameraIdSchema,
-//       toCameraId: CameraIdSchema,
-//       portal: z.object({
-//         x: z.number(),
-//         y: z.number(),
-//         distance: z.number(),
-//       })
-//     });
-
-// export type CameraPortalUpdate = z.TypeOf<typeof CameraPortalUpdateSchema>
 
 export const CameraInsertSchema = createInsertSchema(schema.cameras, {
   cameraId: CameraIdSchema.optional(),
@@ -291,7 +225,7 @@ export const CameraInsertSchema = createInsertSchema(schema.cameras, {
   .omit(timestampKeys)
   .merge(optionalReason);
 export type CameraInsert = z.TypeOf<typeof CameraInsertSchema>;
-export const CameraUpdateSchema = CameraInsertSchema.omit({ cameraId: true }).partial();
+export const CameraUpdateSchema = CameraInsertSchema.partial().required({ cameraId: true });
 export type CameraUpdate = z.TypeOf<typeof CameraUpdateSchema>;
 
 // type CameraUpdatePayload = Partial<Pick<Prisma.CameraUpdateInput,

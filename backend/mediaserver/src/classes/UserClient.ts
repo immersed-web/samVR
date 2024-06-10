@@ -125,7 +125,7 @@ export class UserClient extends BaseClient {
   async joinStream(streamId: StreamId) {
     this.leaveCurrentStream();
     // const venue = await Venue.getPublicVenue(venueId, this.userId);
-    const stream = Venue.getVenue(streamId);
+    const stream = Venue.getStream(streamId);
     stream.addClient(this);
     // this.sendTransport = await venue.createWebRtcTransport();
     // this.receiveTransport = await venue.createWebRtcTransport();

@@ -72,22 +72,22 @@ export const userClientP = procedure.use(isUserClientM);
 export const senderClientP = procedure.use(isSenderClientM);
 
 export const isInVenueM = middleware(({ctx, next, path})=> {
-  const venue = ctx.client.venue;
-  if(!venue) {
+  const stream = ctx.client.venue;
+  if (!stream) {
     throw new TRPCError({code: 'PRECONDITION_FAILED', message: `You have to be added to a venue before performing action: ${path}`});
   }
   return next({ctx: {
-    venue
+    stream
   }});
 });
 
 export const currentVenueHasVrSpaceM = isInVenueM.unstable_pipe(({ctx, next}) => {
-  if(!ctx.venue.vrSpace){
+  if (!ctx.stream.vrSpace) {
     throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'the venue doesnt have a vr space. Now cry!'});
   }
   return next({
     ctx: {
-      vrSpace: ctx.venue.vrSpace,
+      vrSpace: ctx.stream.vrSpace,
     }
   });
 });
@@ -104,7 +104,7 @@ export const currentVenueHasVrSpaceM = isInVenueM.unstable_pipe(({ctx, next}) =>
 // });
 
 export const currentVenueHasNoVrSpaceM = isInVenueM.unstable_pipe(({ctx, next, path}) => {
-  if(ctx.venue.vrSpace){
+  if (ctx.stream.vrSpace) {
     throw new TRPCError({ code: 'PRECONDITION_FAILED', message: `the venue already have a vr space. Action not allowed: ${path}`});
   }
   return next();
@@ -112,7 +112,7 @@ export const currentVenueHasNoVrSpaceM = isInVenueM.unstable_pipe(({ctx, next, p
 
 export const isVenueOwnerM = isInVenueM.unstable_pipe(({ctx, next, path}) => {
   // log.info('venueOwner middleware. venueowners:',ctx.venue.owners);
-  if (!(ctx.userId === ctx.venue.owner.userId)) {
+  if (!(ctx.userId === ctx.stream.owner.userId)) {
     throw new TRPCError({code: 'FORBIDDEN', message: `you are not the owner of this venue. Action not allowed: ${path}`});
   }
   return next();

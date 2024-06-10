@@ -7,7 +7,7 @@ import { useStreamStore } from './streamStore';
 import { useSoupStore } from './soupStore';
 import { useNow } from '@vueuse/core';
 
-type _ReceivedAdminStreamState = SubscriptionValue<RouterOutputs['admin']['subVenueStateUpdated']>['data'];
+type _ReceivedAdminStreamState = SubscriptionValue<RouterOutputs['admin']['subStreamStateUpdated']>['data'];
 export const useAdminStore = defineStore('admin', () => {
   const streamStore = useStreamStore();
   const connection = useConnectionStore();
@@ -15,7 +15,7 @@ export const useAdminStore = defineStore('admin', () => {
 
   const adminOnlyStreamState = ref<_ReceivedAdminStreamState>();
 
-  connection.client.admin.subVenueStateUpdated.subscribe(undefined, {
+  connection.client.admin.subStreamStateUpdated.subscribe(undefined, {
     onData({data, reason}){
       console.log('streamState (adminonly) updated:', { data, reason });
       adminOnlyStreamState.value = data;
@@ -49,7 +49,7 @@ export const useAdminStore = defineStore('admin', () => {
   // });
 
   async function createStream() {
-    const streamId = await connection.client.admin.createNewVenue.mutate({ name: `event-${Math.trunc(Math.random() * 1000)}` });
+    const streamId = await connection.client.admin.createNewStream.mutate({ name: `event-${Math.trunc(Math.random() * 1000)}` });
     await loadAndJoinStreamAsAdmin(streamId);
     console.log('Created, loaded and joined stream', streamId);
   }
@@ -59,18 +59,18 @@ export const useAdminStore = defineStore('admin', () => {
       const streamId = streamStore.currentStream.streamId;
       await streamStore.leaveStream();
   // TODO: Make all other clients leave stream, too
-      await connection.client.admin.deleteVenue.mutate({ streamId });
+      await connection.client.admin.deleteStream.mutate({ streamId });
     }
   }
 
   async function loadAndJoinStreamAsAdmin(streamId: StreamId) {
-    const { publicVenueState, adminOnlyVenueState: aOnlyState } = await connection.client.admin.loadAndJoinVenue.mutate({ streamId });
+    const { publicStreamState: publicVenueState, adminOnlyStramState: aOnlyState } = await connection.client.admin.loadAndJoinStream.mutate({ streamId });
     streamStore.currentStream = publicVenueState;
     adminOnlyStreamState.value = aOnlyState;
   }
   
-  async function updateCamera(cameraId: CameraId, input: CameraUpdate, reason?: string) {
-    await connection.client.admin.updateCamera.mutate({cameraId, data: input, reason});
+  async function updateCamera(input: CameraUpdate, reason?: string) {
+    await connection.client.admin.updateCamera.mutate({ ...input, reason });
   }
 
   async function createCameraFromSender(cameraName: string, senderId: SenderId){

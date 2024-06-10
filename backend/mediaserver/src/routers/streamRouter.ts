@@ -16,8 +16,8 @@ import { eq } from 'drizzle-orm';
 
 type VenueStateUpdate = NotifierSignature<ReturnType<Venue['getPublicState']>>;
 
-export const venueRouter = router({
-  listAllowedVenues: p.query(async ({ctx}) => {
+export const streamRouter = router({
+  listAllowedStreams: p.query(async ({ ctx }) => {
     const publicStreams = await db.query.streams.findMany({
       where: eq(schema.streams.visibility, 'public'),
 
@@ -45,16 +45,16 @@ export const venueRouter = router({
 
     return publicStreams;
   }),
-  getVenueListInfo: p.input(z.object({
+  getStreamListInfo: p.input(z.object({
     streamId: StreamIdSchema,
-  })).query(async ({input, ctx}) => {
+  })).query(async ({ input, ctx }) => {
     try {
       return await db.query.streams.findFirst({
         where: eq(schema.streams.streamId, input.streamId),
       })
-    } catch(e) {
+    } catch (e) {
       log.error(e);
-      throw new TRPCError({ code: 'NOT_FOUND', message: 'didn\'t find that Venue'});
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'didn\'t find that Venue' });
     }
   }),
   // subClientAddedOrRemoved: p.use(isUserClientM).subscription(({ctx}) => {
@@ -75,22 +75,22 @@ export const venueRouter = router({
     z.object({
       streamId: StreamIdSchema
     })
-  ).mutation(async ({input, ctx}) => {
+  ).mutation(async ({ input, ctx }) => {
     log.info(`request received to join venue as ${ctx.client.clientType}:`, input.streamId);
     const vState = await ctx.client.joinStream(input.streamId);
     return vState;
   }),
-  getVenueState: clientInVenueP.query(({ctx}) => {
+  getStreamState: clientInVenueP.query(({ ctx }) => {
     return ctx.venue.getPublicState();
   }),
-  subVenueStateUpdated: p.subscription(({ctx}) => {
+  subStreamStateUpdated: p.subscription(({ ctx }) => {
     log.info(`attaching venueStateUpdated notifier for client: ${ctx.username} (${ctx.connectionId})`);
     return observable<NotifierInputData<VenueStateUpdate>>((scriber) => {
       ctx.client.notify.venueStateUpdated = scriber.next;
       return () => ctx.client.notify.venueStateUpdated = undefined;
     });
   }),
-  subVenueUnloaded: p.subscription(({ctx}) => {
+  subStreamUnloaded: p.subscription(({ ctx }) => {
     return attachToEvent(ctx.client.clientEvent, 'venueWasUnloaded');
   }),
   // subSomeClientStateUpdated: atLeastModeratorP.subscription(({ctx}) => {
@@ -101,9 +101,9 @@ export const venueRouter = router({
   //     return true;
   //   }, ({clientState, reason}) => ({clientState: clientState as ReturnType<UserClient['getPublicState']>, reason}));
   // }),
-  leaveCurrentVenue: p.use(isInVenueM).mutation(({ctx}) => {
+  leaveCurrentStream: p.use(isInVenueM).mutation(({ ctx }) => {
     if (!ctx.client.leaveCurrentStream()) {
-      throw new TRPCError({code: 'PRECONDITION_FAILED', message: 'cant leave if not in a venue.. Duh!'});
+      throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'cant leave if not in a venue.. Duh!' });
     }
   })
 });

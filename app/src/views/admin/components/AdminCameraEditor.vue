@@ -109,10 +109,10 @@ const props = defineProps<{
   cameraId: CameraId
 }>();
 
-function updateCurrentCamera(input: Parameters<typeof adminStore.updateCamera>[1], reason?: string){
-  if(!camera.currentCamera) return;
+function updateCurrentCamera(input: Omit<Parameters<typeof adminStore.updateCamera>[0], 'cameraId'>, reason?: string) {
+  if (!camera.currentCamera) return;
   const adminStore = useAdminStore();
-  adminStore.updateCamera(camera.currentCamera.cameraId, input, reason);
+  adminStore.updateCamera({ ...input, cameraId: camera.currentCamera.cameraId }, reason);
 }
 
 function setCameraName(){
