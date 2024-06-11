@@ -13,7 +13,7 @@ import { useStreamStore } from '@/stores/streamStore';
 
 import { onBeforeMount, ref } from 'vue';
 import { useRouter } from 'vue-router';
-type Stream = RouterOutputs['stream']['listAllowedStreams'][number];
+type Stream = RouterOutputs['stream']['listPublicStreams'][number];
 
 
 const router = useRouter();
@@ -23,7 +23,7 @@ const streamStore = useStreamStore();
 const connection = useConnectionStore();
 
 onBeforeMount(async () => {
-  streams.value = await connection.client.stream.listAllowedStreams.query();
+  streams.value = await connection.client.stream.listPublicStreams.query();
 });
 
 function tryToJoinAndEnterCamera(stream: Stream) {

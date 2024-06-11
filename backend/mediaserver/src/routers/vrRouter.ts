@@ -5,9 +5,7 @@ log.enable(process.env.DEBUG);
 
 import { ClientTransformSchema } from 'schemas';
 import { procedure as p, router, isVenueOwnerM, isUserClientM, userInVenueP, currentVenueAdminP, currentVenueHasVrSpaceM, currentVenueHasNoVrSpaceM } from '../trpc/trpc.js';
-import { NotifierInputData } from '../trpc/trpc-utils.js';
 import { TRPCError } from '@trpc/server';
-import { observable } from '@trpc/server/observable';
 
 export const vrRouter = router({
   createVrSpace: currentVenueAdminP.use(isVenueOwnerM).use(currentVenueHasNoVrSpaceM).mutation(({ctx}) => {
@@ -47,13 +45,6 @@ export const vrRouter = router({
   //   // ctx.vrSpace.Update3DModel(input);
   // }),
   // setSkyColor: currentVenueAdminP.use(isVenueOwnerM).use(currentVenueHasVrSpaceM).input({})
-  subVrSpaceStateUpdated: p.use(isUserClientM).subscription(({ctx}) => {
-    console.log(`${ctx.username} started subscription to vrSpaceStateUpdate`);
-    return observable<NotifierInputData<typeof ctx.client.notify.vrSpaceStateUpdated>>(scriber => {
-      ctx.client.notify.vrSpaceStateUpdated = scriber.next;
-      return () => ctx.client.notify.vrSpaceStateUpdated = undefined;
-    });
-  }),
   transform: router({
     updateTransform: userInVenueP.use(currentVenueHasVrSpaceM).input(ClientTransformSchema).mutation(({input, ctx}) =>{
       log.debug(`transform received from ${ctx.username} (${ctx.connectionId})`);
@@ -76,14 +67,14 @@ export const vrRouter = router({
       // }
       // return transformDict;
     }),
-    subClientTransforms: p.use(isUserClientM).subscription(({ctx}) => {
-      console.log(`${ctx.username} started subscription to transforms`);
-      // return attachToEvent(ctx.client.userClientEvent, 'clientTransforms');
-      // return attachEmitter(venue.vrSpace.emitter, 'transforms');
-      return observable<NotifierInputData<typeof ctx.client.notify.clientTransforms>>(scriber => {
-        ctx.client.notify.clientTransforms = scriber.next;
-        return () => ctx.client.notify.clientTransforms = undefined;
-      });
-    }),
+    // subClientTransforms: p.use(isUserClientM).subscription(({ctx}) => {
+    //   console.log(`${ctx.username} started subscription to transforms`);
+    //   // return attachToEvent(ctx.client.userClientEvent, 'clientTransforms');
+    //   // return attachEmitter(venue.vrSpace.emitter, 'transforms');
+    //   return observable<NotifierInputData<typeof ctx.client.notify.clientTransforms>>(scriber => {
+    //     ctx.client.notify.clientTransforms = scriber.next;
+    //     return () => ctx.client.notify.clientTransforms = undefined;
+    //   });
+    // }),
   })
 });

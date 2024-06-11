@@ -6,22 +6,14 @@ log.enable(process.env.DEBUG);
 import { TRPCError } from '@trpc/server';
 import { observable } from '@trpc/server/observable';
 import { BaseClient, Camera, loadUserDBData, SenderClient, UserClient, Venue } from '../classes/InternalClasses.js';
-// import { Prisma } from 'database';
-// import prismaClient, { cameraIncludeStuff } from '../modules/prismaClient';
 import { CameraIdSchema, hasAtLeastSecurityLevel, SenderIdSchema, StreamId, StreamIdSchema, StreamUpdateSchema, CameraInsertSchema, CameraPortalInsertSchema, CameraUpdateSchema } from 'schemas';
-import { attachToFilteredEvent, NotifierInputData, NotifierSignature } from '../trpc/trpc-utils.js';
 import { z } from 'zod';
 import { atLeastModeratorP, currentVenueAdminP, isUserClientM, isVenueOwnerM, procedure as p, router } from '../trpc/trpc.js';
 import { db, schema } from 'database';
 import { and, eq } from 'drizzle-orm';
 import * as _ from 'lodash-es';
 
-type StreamStateAdminUpdate = NotifierSignature<ReturnType<Venue['getAdminOnlyState']>>;
-
 export const adminRouter = router({
-  subProducerCreated: atLeastModeratorP.subscription(({ctx}) => {
-    return attachToFilteredEvent(ctx.client.clientEvent, 'producerCreated', ctx.connectionId);
-  }),
   createNewStream: atLeastModeratorP.use(isUserClientM).input(z.object({
     name: z.string()
   })).mutation(async ({input, ctx}) => {
@@ -61,21 +53,6 @@ export const adminRouter = router({
   }),
   listMyStreams: atLeastModeratorP.query(async ({ ctx }) => {
     return ctx.client.ownedVenues.value.map(({ streamId, name }) => ({ streamId, name }));
-  }),
-  subSenderAddedOrRemoved: p.use(isVenueOwnerM).use(isUserClientM).subscription(({ctx}) => {
-    return observable<NotifierInputData<UserClient['notify']['senderAddedOrRemoved']>>((scriber) => {
-      log.info(`Attaching sender added notifier for client ${ctx.username} (${ctx.clientType})`);
-      ctx.client.notify.senderAddedOrRemoved = scriber.next;
-      return () => ctx.client.notify.senderAddedOrRemoved = undefined;
-    });
-  }),
-  subSomeSenderStateUpdated: atLeastModeratorP.subscription(({ctx}) => {
-    log.info(`${ctx.username} (${ctx.connectionId}) started subscribing to senderState`);
-    return attachToFilteredEvent(ctx.client.clientEvent, 'someClientStateUpdated', (data) => {
-      if(data.clientState.connectionId === ctx.connectionId) return false;
-      if(data.clientState.clientType === 'client') return false;
-      return true;
-    }, ({clientState, reason}) => ({senderState: clientState as ReturnType<SenderClient['getPublicState']>, reason}));
   }),
   createCamera: currentVenueAdminP.input(z.object({
     name: z.string(),
@@ -142,12 +119,5 @@ export const adminRouter = router({
     camera.reloadDbData('cameraportal deleted');
     camera._notifyStateUpdated('camera portal deleted');
     return dbResponse;
-  }),
-  subStreamStateUpdated: atLeastModeratorP.subscription(({ ctx }) => {
-    log.info(`attching (admin)streamStateUpdated notifier for client: ${ctx.username} (${ctx.connectionId})`);
-    return observable<NotifierInputData<StreamStateAdminUpdate>>((scriber) => {
-      ctx.client.notify.streamStateUpdatedAdminOnly = scriber.next;
-      return () => ctx.client.notify.streamStateUpdatedAdminOnly = undefined;
-    });
   }),
 });

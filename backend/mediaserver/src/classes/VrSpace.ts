@@ -72,43 +72,19 @@ export class VrSpace {
     const data = this.getPublicState();
     this.clients.forEach(c => {
       log.info(`notifying vrSpaceState (${reason}) to client ${c.username} (${c.connectionId})`);
-      for(const [id, c] of Object.entries(data.clients)){
-        log.info(`${id} pos: ${c.transform?.head.position}`);
-      }
-      c.notify.vrSpaceStateUpdated?.({data, reason});
+      // for(const [id, c] of Object.entries(data.clients)){
+      //   log.info(`${id} pos: ${c.transform?.head.position}`);
+      // }
+      // c.notify.vrSpaceStateUpdated?.({data, reason});
+      c.eventSender.vrSpace.vrSpaceStateUpdated({ data, reason });
     });
   }
 
   emitTransformsToAllClients = () => {
-    let allEmittersHadListeners = true;
-    // this.clients.forEach(c => {
-    //   const hadEmitter = c.userClientEvent.emit(event, ...args);
-    //   allEmittersHadListeners &&= hadEmitter;
-    //   log.debug(`emitted ${event} to ${c.username} (${c.connectionId}), had listener(s): ${hadEmitter}`);
-    // });
     this.clients.forEach(c => {
-      if(!c.notify.clientTransforms){
-        allEmittersHadListeners = false;
-        return;
-      }
-      c.notify.clientTransforms({data: this.pendingTransforms});
+      c.eventSender.vrSpace.clientTransforms(this.pendingTransforms);
     });
-    if(!allEmittersHadListeners){
-      log.warn('not all emitters had attached listeners');
-    }
-    return allEmittersHadListeners;
   };
-
-  // async Remove3DModel(modelId: string) {
-  //   if(this.prismaData.virtualSpace.virtualSpace3DModel){
-  //     this.prismaData.virtualSpace.virtualSpace3DModel = await prisma.virtualSpace3DModel.delete(
-  //       {
-  //         where: {modelId}
-  //       }
-  //     );
-  //     this._notifyStateUpdated('Removed 3d model');
-  //   }
-  // }
 
   // make this instance eligible for GC. Make sure we cut all the references to the instance in here!
   unload() {

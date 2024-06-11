@@ -242,7 +242,6 @@ export class Venue {
     this.clients.forEach(c => {
       if(hasAtLeastSecurityLevel(c.role, 'moderator')){
         log.info(`notifying adminOnlyVenuestate (${reason}) to client ${c.username} (${c.connectionId})`);
-        // c.notify.streamStateUpdatedAdminOnly?.({ data, reason });
         c.eventSender.stream.streamStateUpdatedAdminOnly({ data, reason });
       }
     });

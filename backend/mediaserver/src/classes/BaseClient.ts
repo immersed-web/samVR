@@ -8,7 +8,6 @@ import { types as soupTypes } from 'mediasoup';
 import type { types as soupClientTypes } from 'mediasoup-client';
 import { ConsumerId, CreateProducerPayload, ProducerId, TransportId  } from 'schemas/mediasoup';
 import { SenderClient, UserClient, Venue, Camera } from './InternalClasses.js';
-// import { FilteredEvents, NonFilteredEvents, NotifierSignature } from 'trpc/trpc-utils.js';
 import { randomUUID } from 'crypto';
 import { db, schema } from 'database';
 import { computed, ref, shallowRef, effect } from '@vue/reactivity';
@@ -21,15 +20,14 @@ export type DataAndReason<T> = Prettify<{ data: T, reason?: string }>
 export type BaseClientEventMap = {
   test: Payload<string>
   soup: {
-    producerCreated: Payload<{ data: { producer: PublicProducers['videoProducer'], producingConnectionId: ConnectionId } }>,
+    // producerCreated: Payload<DataAndReason<{ producer: PublicProducers['videoProducer'], producingConnectionId: ConnectionId }>>,
     soupObjectClosed: Payload<DataAndReason<SoupObjectClosePayload>>,
     consumerPausedOrResumed: Payload<DataAndReason<{ consumerId: ConsumerId, wasPaused: boolean }>>,
     producerPausedOrResumed: Payload<DataAndReason<{ producerId: ProducerId, wasPaused: boolean }>>,
-    senderAddedOrRemoved: Payload<{ senderState: ReturnType<SenderClient['getPublicState']>, added: boolean }>,
   },
   stream: {
-  // clientAddedOrRemoved: Payload<{ data: { client: ReturnType<UserClient['getPublicState']>, added: boolean } }>,
-  // senderAddedOrRemoved: Payload<{ data: { client: ReturnType<SenderClient['getPublicState']>, added: boolean } }>,
+    // clientAddedOrRemoved: Payload<{ data: ReturnType<UserClient['getPublicState']>, added: boolean }>,
+    // senderAddedOrRemoved: Payload<DataAndReason<{ sender: ReturnType<SenderClient['getPublicState']>, added: boolean }>>,
     streamWasUnloaded: Payload<{ streamId: StreamId }>,
 
     streamStateUpdated: Payload<DataAndReason<ReturnType<Venue['getPublicState']>>>,
@@ -48,31 +46,6 @@ type SoupObjectClosePayload =
       | {type: 'consumer', consumerInfo: { consumerId: ConsumerId, producerId: ProducerId }}
 
 type CreateConsumerResponse = Pick<soupTypes.Consumer, 'kind' | 'rtpParameters'> & { alreadyExisted?: boolean, producerId: ProducerId, id: ConsumerId}
-
-// type ClientSoupEvents = FilteredEvents<{
-//   'producerCreated': (data: {producer: PublicProducers['videoProducer'], producingConnectionId: ConnectionId}) => void
-// }, ConnectionId>
-// & NonFilteredEvents<{
-//   'soupObjectClosed': (data: SoupObjectClosePayload & { reason: string}) => void
-//   'consumerPausedOrResumed': (data: {consumerId: ConsumerId, wasPaused: boolean}) => void
-//   'producerPausedOrResumed': (data: {producerId: ProducerId, wasPaused: boolean}) => void
-// }>
-
-// type ClientStateUnion = ReturnType<UserClient['getPublicState']> | ReturnType<SenderClient['getPublicState']>
-
-// type ClientVenueEvents = FilteredEvents<{
-//   'clientAddedOrRemoved': (data: {client: ReturnType<UserClient['getPublicState']>, added: boolean}) => void,
-//   'senderAddedOrRemoved': (data: {client: ReturnType<SenderClient['getPublicState']>, added: boolean}) => void,
-// }, ConnectionId>
-// & NonFilteredEvents<{
-//   'venueWasUnloaded': (venueId: StreamId) => void,
-// }>
-
-// type ClientClientEvents = FilteredEvents<{
-//   'someClientStateUpdated': (data: { clientState: ClientStateUnion, reason?: string }) => void
-// }, ConnectionId>
-
-// export type AllClientEvents = ClientSoupEvents & ClientVenueEvents & ClientClientEvents
 
 export async function loadUserDBData(userId: UserId) {
   const response = await db.query.users.findFirst({
@@ -126,35 +99,9 @@ export class BaseClient {
     this.connectionId = connectionId;
     this.jwtUserData = jwtUserData;
     this.dbData.value = dbData;
-
-
-    // this.clientEvent = new TypedEmitter();
-
-    // this.event = new TypedEmitter();
-    // this.soupEvents = new TypedEmitter();
-    // this.venueEvents = new TypedEmitter();
-    // this.clientEvents.addListener('clientStateUpdated', (state) => log.info(`${this.userId} received clientStateUpdated event triggered by ${triggeringConnection}:`, state.clientPublicState));
   }
 
-  // clientEvent: TypedEmitter<AllClientEvents>;
-
   connected = true;
-
-  // notify = {
-  //   streamStateUpdated: undefined as NotifierSignature<ReturnType<Venue['getPublicState']>>,
-  //   streamStateUpdatedAdminOnly: undefined as NotifierSignature<ReturnType<Venue['getAdminOnlyState']>>,
-  //   // camera: {
-  //   cameraStateUpdated: undefined as NotifierSignature<ReturnType<Camera['getPublicState']>>,
-  //   // newProducerInCamera: undefined as NotifierSignature<{added: true} & ReturnType<typeof this.getPublicProducers>['videoProducer']>,
-  //   // producerRemovedInCamera: undefined as NotifierSignature<{added: false, producerId: ProducerId }>,
-  //   // },
-  //   // soup: {
-  //   soupObjectClosed: undefined as NotifierSignature<SoupObjectClosePayload>,
-  //   consumerPausedOrResumed: undefined as NotifierSignature<{consumerId: ConsumerId, wasPaused: boolean}>,
-  //   producerPausedOrResumed: undefined as NotifierSignature<{producerId: ProducerId, wasPaused: boolean}>,
-  //   // },
-  // };
-
 
   /**
   * The id of the actual connection. This differs from the userId, as a user could potentially have multiple concurrent active connections

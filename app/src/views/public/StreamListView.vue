@@ -37,11 +37,11 @@ import { streamConsideredActive } from '@/stores/streamStore';
 import UserBanner from '@/components/UserBanner.vue';
 
 const router = useRouter();
-const streamsAllowed = ref<RouterOutputs['stream']['listAllowedStreams']>([]);
+const streamsAllowed = ref<RouterOutputs['stream']['listPublicStreams']>([]);
 
 const connection = useConnectionStore();
 onBeforeMount(async () => {
-  streamsAllowed.value = await connection.client.stream.listAllowedStreams.query();
+  streamsAllowed.value = await connection.client.stream.listPublicStreams.query();
 });
 
 const streamsOngoing = computed(() => {

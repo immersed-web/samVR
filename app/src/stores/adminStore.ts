@@ -17,42 +17,22 @@ export const useAdminStore = defineStore('admin', () => {
 
   const adminOnlyStreamState = ref<_ReceivedAdminStreamState>();
 
-  // connection.client.admin.subStreamStateUpdated.subscribe(undefined, {
-  //   onData({data, reason}){
-  //     console.log('streamState (adminonly) updated:', { data, reason });
-  //     adminOnlyStreamState.value = data;
-  //   },
-  // });
-
   eventReceiver.stream.streamStateUpdatedAdminOnly.subscribe(payload => {
     adminOnlyStreamState.value = payload.data;
   });
 
-  // connectionStore.client.admin.subSenderAddedOrRemoved.subscribe(undefined, {
-  //   onData({data, reason}) {
-  //     console.log('senderAddedOrRemoved triggered!:', data, reason);
-  //     const client = data.senderState;
-  //     if(data.added){
-  //       connectedSenders.set(client.connectionId ,client);
-  //     } else {
-  //       connectedSenders.delete(client.connectionId);
-  //     }
-  //   },
-  // });
+  // eventReceiver.soup.producerCreated.subscribe(({ data, reason }) => {
+  //   console.log('received new producer:', data, reason);
+  // })
 
-  // connectionStore.client.admin.subProducerCreated.subscribe(undefined, {
-  //   onData(data) {
-  //     console.log('received new producer:', data);
-  //     const { producingConnectionId, producer } = data;
-  //     const sender = connectedSenders.get(producingConnectionId);
-  //     if(!sender) {
-  //       console.warn('The created producer wasnt in the list of connected senders. Perhaps a normal user?');
-  //       return;
-  //     }
-  //     sender.producers[producer.producerId] = producer;
-  //     connectedSenders.set(producingConnectionId, sender);
-  //   },
-  // });
+  // eventReceiver.stream.senderAddedOrRemoved.subscribe(({data, reason}) => {
+  //   console.log('senderAddedOrRemoved triggered!', reason);
+  //   if(data.added){
+  //     connectedSenders.set(data.sender.connectionId, data.sender)
+  //   } else {
+  //     connectedSenders.delete(data.sender.connectionId);
+  //   }
+  // })
 
   async function createStream() {
     const streamId = await connection.client.admin.createNewStream.mutate({ name: `event-${Math.trunc(Math.random() * 1000)}` });

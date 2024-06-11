@@ -8,7 +8,6 @@ import { soupRouter } from './soupRouter.js';
 import { vrRouter } from './vrRouter.js';
 import { streamRouter } from './streamRouter.js';
 import { TypedEmitter } from 'tiny-typed-emitter';
-import { attachToEvent } from '../trpc/trpc-utils.js';
 import { userRouter } from './userRouter.js';
 import { senderRouter } from './senderRouter.js';
 import { adminRouter } from './adminRouter.js';
@@ -30,10 +29,6 @@ export const appRouter = router({
   greeting: procedure.query(({ctx}) => `Hello ${ctx.username}!`),
   health: procedure.query(({ctx}) => {
     return 'Yooo! I\'m healthy' as const;
-  }),
-  subHeartBeat: procedure.subscription(({ctx}) => {
-    console.log('heartbeat subscription requested by:', ctx.username);
-    return attachToEvent(appRouterEvents, 'heartbeat');
   }),
 });
 

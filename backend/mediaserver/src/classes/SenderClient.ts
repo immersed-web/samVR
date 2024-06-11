@@ -1,5 +1,4 @@
 import { TypedEmitter } from 'tiny-typed-emitter';
-import { NonFilteredEvents, NotifierSignature } from 'trpc/trpc-utils.js';
 import { BaseClient, BaseClientEventMap, DataAndReason, Venue } from './InternalClasses.js';
 
 import { Log } from 'debug-level';

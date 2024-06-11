@@ -7,8 +7,6 @@ import { z } from 'zod';
 import { router, procedure as p, isInCameraM, userInVenueP, userClientP, atLeastModeratorP, isVenueOwnerM } from '../trpc/trpc.js';
 import { CameraIdSchema } from 'schemas';
 import { TRPCError } from '@trpc/server';
-import { NotifierInputData } from 'trpc/trpc-utils.js';
-import { observable } from '@trpc/server/observable';
 import { ConnectionIdSchema } from 'schemas';
 
 
@@ -34,13 +32,4 @@ export const cameraRouter = router({
   leaveCurrentCamera: userInVenueP.use(isInCameraM).mutation(({ctx}) => {
     return ctx.client.leaveCurrentCamera();
   }),
-  subCameraStateUpdated: p.subscription(({ctx}) => {
-    return observable<NotifierInputData<typeof ctx.client.notify.cameraStateUpdated>>(scriber => {
-      ctx.client.notify.cameraStateUpdated = scriber.next;
-
-      return () =>{
-        ctx.client.notify.cameraStateUpdated = undefined;
-      };
-    });
-  })
 });

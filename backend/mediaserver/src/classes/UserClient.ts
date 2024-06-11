@@ -7,7 +7,6 @@ log.enable(process.env.DEBUG);
 
 import { ClientTransform, ClientTransforms, StreamId, CameraId, ClientType } from 'schemas';
 import { loadUserDBData, SenderClient, Venue, VrSpace, BaseClient, DataAndReason, BaseClientEventMap } from './InternalClasses.js';
-import { NonFilteredEvents, NotifierSignature, Prettify } from 'trpc/trpc-utils.js';
 import { effect } from '@vue/reactivity';
 import { EventSender, Payload, createTypedEvents } from 'ts-event-bridge/sender';
 import { MyWebsocketType } from 'index.js';
@@ -23,21 +22,7 @@ type EventMapAdditions = {
     myStateUpdated: Payload<DataAndReason<ReturnType<UserClient['getPublicState']>>>,
   }
 }
-
 export type UserClientEventMap = EventMapAdditions & BaseClientEventMap
-// const { createSender } = createTypedEvents<UserClientEventMap>();
-
-// type UserClientEvents =
-// NonFilteredEvents<{
-//   'myStateUpdated': (data: { myState: ReturnType<UserClient['getPublicState']>, reason?: string }) => void
-// }>;
-
-// const userNotifyAdditions = {
-//   senderAddedOrRemoved: undefined as NotifierSignature<{senderState: ReturnType<SenderClient['getPublicState']>, added: boolean}>,
-//   vrSpaceStateUpdated: undefined as NotifierSignature<ReturnType<VrSpace['getPublicState']>>,
-//   clientTransforms: undefined as NotifierSignature<Prettify<ClientTransforms>>
-// };
-// type UserNotifyMap = BaseClient['notify'] & typeof userNotifyAdditions;
 
 /**
  * @class

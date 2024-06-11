@@ -7,10 +7,7 @@ import { TRPCError } from '@trpc/server';
 import {CreateProducerPayloadSchema, ConnectTransportPayloadSchema, ProducerId, RtpCapabilitiesSchema, CreateConsumerPayloadSchema, ProducerIdSchema, ConsumerId, ConsumerIdSchema } from 'schemas/mediasoup';
 import { z } from 'zod';
 import { procedure as p, clientInVenueP, router, userClientP, atLeastModeratorP, isUserClientM, isInCameraM } from '../trpc/trpc.js';
-import { NotifierInputData } from '../trpc/trpc-utils.js';
 import { UserClient, SenderClient } from 'classes/InternalClasses.js';
-import { observable } from '@trpc/server/observable';
-
 
 export const soupRouter = router({
   getRouterRTPCapabilities: clientInVenueP.query(({ctx}) => {
@@ -120,18 +117,4 @@ export const soupRouter = router({
       consumer.resume();
     }
   }),
-  subSoupObjectClosed: p.subscription(({ctx}) => {
-    log.info(`client (${ctx.clientType}) ${ctx.username} (${ctx.connectionId}) started susbscribing to soupObjectClosed`);
-    return observable<NotifierInputData<typeof ctx.client.notify.soupObjectClosed>>(scriber =>{
-      log.info(ctx.client.notify);
-      ctx.client.notify['soupObjectClosed'] = (d) => {
-        log.info(`soupObject ${d.data.type} closed triggered for client ${ctx.username} (${ctx.clientType}). reason: ${d.reason}`);
-        scriber.next(d);
-      };
-      log.info(ctx.client.notify);
-      return () => {
-        ctx.client.notify.soupObjectClosed = undefined;
-      };
-    });
-  })
 });
