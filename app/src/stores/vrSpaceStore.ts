@@ -1,53 +1,48 @@
 import { defineStore } from 'pinia';
 
-import type { ClientTransform, ConnectionId } from 'schemas';
+import { type ClientTransform, type ClientTransforms, type ConnectionId, type VrSpaceId } from 'schemas';
 import { ref } from 'vue';
 import { useConnectionStore } from './connectionStore';
-import type { RouterOutputs, SubscriptionValue } from '@/modules/trpcClient';
+import { eventReceiver, type ExtractPayload, type RouterOutputs, type SubscriptionValue } from '@/modules/trpcClient';
 import { useClientStore } from './clientStore';
+
+type _ReceivedVrSpaceState = ExtractPayload<typeof eventReceiver.vrSpace.vrSpaceStateUpdated.subscribe>['data'];
 
 export const useVrSpaceStore = defineStore('vrSpace', () => {
   
   const connection = useConnectionStore();
   const clientStore = useClientStore();
 
-  const currentVrSpace = ref<SubscriptionValue<RouterOutputs['vr']['subVrSpaceStateUpdated']>['data']>();
+  const currentVrSpace = ref<_ReceivedVrSpaceState>();
 
-
-  connection.client.vr.subVrSpaceStateUpdated.subscribe(undefined, {
-    onData(vrSpaceState) {
-      console.log(`vrSpaceState updated. ${vrSpaceState.reason}:`, vrSpaceState.data);
-      currentVrSpace.value = vrSpaceState.data;
-    },
+  eventReceiver.vrSpace.vrSpaceStateUpdated.subscribe(({ data, reason }) => {
+    console.log(`vrSpaceState updated. ${reason}:`, data);
+    currentVrSpace.value = data;
   });
   
-  connection.client.vr.transform.subClientTransforms.subscribe(undefined, {
-    onData(subscribeValue) {
-      if(!currentVrSpace.value) return;
-      // console.log('clientTransforms update received:', subscribeValue.data);
-      for(const [cId, tsfm] of Object.entries(subscribeValue.data)) {
-        const cIdTyped = cId as ConnectionId;
-        // if(cId === clientStore.clientState?.connectionId){
-        //   continue;
-        // }
-        // TODO: why should we skip ourselves. We wont perhaps use it, but if we did we would at least have our own latest transform
-        if(clientStore.clientState?.connectionId === cId){
-          // console.log('skipping because is own transform. cId:', cId);
-          continue;
-        }
-        if(!currentVrSpace.value.clients[cIdTyped]){
-          console.warn('received a clientTransform for a client that isnt listed in vrSpaceState');
-          return;
-        }
-        currentVrSpace.value.clients[cId as ConnectionId].transform = tsfm;
-        // clientTransforms.value.set(cId as ConnectionId, tsfm);
+  eventReceiver.vrSpace.clientTransforms.subscribe((data) => {
+    console.log(`clientTransforms updated:`, data);
+    if (!currentVrSpace.value) return;
+    for (const [cId, tsfm] of Object.entries(data)) {
+      const cIdTyped = cId as ConnectionId;
+      if (clientStore.clientState?.connectionId === cId) {
+        // console.log('skipping because is own transform. cId:', cId);
+        continue;
       }
-    },
+      if (!currentVrSpace.value.clients[cIdTyped]) {
+        console.warn('received a clientTransform for a client that isnt listed in vrSpaceState');
+        return;
+      }
+      currentVrSpace.value.clients[cId as ConnectionId].transform = tsfm;
+    }
   });
 
+  async function createVrSpace(name: string) {
+    currentVrSpace.value = await connection.client.vr.createVrSpace.mutate({ name });
+  }
   
-  async function enterVrSpace() {
-    currentVrSpace.value = await connection.client.vr.enterVrSpace.mutate();
+  async function enterVrSpace(vrSpaceId: VrSpaceId) {
+    currentVrSpace.value = await connection.client.vr.enterVrSpace.mutate({ vrSpaceId });
   }
   async function leaveVrSpace() {
     await connection.client.vr.leaveVrSpace.mutate();
@@ -59,6 +54,7 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
   
   return {
     currentVrSpace,
+    createVrSpace,
     enterVrSpace,
     leaveVrSpace,
     updateTransform,

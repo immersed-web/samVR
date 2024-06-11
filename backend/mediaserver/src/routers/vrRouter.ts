@@ -3,13 +3,27 @@ const log = new Log('Router:VR');
 process.env.DEBUG = 'Router:VR*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
-import { ClientTransformSchema } from 'schemas';
-import { procedure as p, router, isVenueOwnerM, isUserClientM, userInVenueP, currentVenueAdminP, currentVenueHasVrSpaceM, currentVenueHasNoVrSpaceM } from '../trpc/trpc.js';
-import { TRPCError } from '@trpc/server';
+import { ClientTransformSchema, VrSpaceIdSchema } from 'schemas';
+import { procedure as p, router, isUserClientM, userClientP, atLeastUserP, userInVrSpaceP } from '../trpc/trpc.js';
+import { VrSpace } from 'classes/VrSpace.js';
+import { z } from 'zod';
+import { db, schema } from 'database';
+import { eq } from 'drizzle-orm';
 
 export const vrRouter = router({
-  createVrSpace: currentVenueAdminP.use(isVenueOwnerM).use(currentVenueHasNoVrSpaceM).mutation(({ctx}) => {
-    // ctx.venue.CreateAndAddVirtualSpace();
+  listAvailableVrSpaces: userClientP.query(async ({ ctx }) => {
+    const dbResponse = await db.query.vrSpaces.findMany({
+      with: {
+        panoramicPreview: true,
+        allowedUsers: true,
+      },
+      where: eq(schema.vrSpaces.visibility, 'public'),
+    })
+    return dbResponse;
+  }),
+  createVrSpace: atLeastUserP.use(isUserClientM).input(z.object({ name: z.string() })).mutation(async ({ ctx, input }) => {
+    const vrSpaceId = await VrSpace.createNewVrSpace(input.name, ctx.userId);
+    return vrSpaceId
   }),
   // openVrSpace: currentVenueAdminP.use(isVenueOwnerM).use(currentVenueHasVrSpaceM).mutation(({ctx}) => {
   //   ctx.vrSpace.open();
@@ -17,20 +31,20 @@ export const vrRouter = router({
   // closeVrSpace: currentVenueAdminP.use(isVenueOwnerM).use(currentVenueHasVrSpaceM).mutation(({ctx}) => {
   //   ctx.vrSpace.close();
   // }),
-  enterVrSpace: userInVenueP.use(currentVenueHasVrSpaceM).mutation(({ctx}) =>{
+  enterVrSpace: userClientP.input(z.object({ vrSpaceId: VrSpaceIdSchema })).mutation(async ({ input, ctx }) => {
     // if(!ctx.venue.doorsAreOpen){
     //   throw new TRPCError({code: 'FORBIDDEN', message: 'The vr space is not opened to users at this point. Very sad!'});
     // }
-    ctx.client.joinVrSpace();
-    return ctx.vrSpace.getPublicState();
+    await ctx.client.enterVrSpace(input.vrSpaceId);
+    return ctx.client.vrSpace?.getPublicState();
   }),
-  leaveVrSpace: userInVenueP.use(currentVenueHasVrSpaceM).mutation(({ctx, input}) => {
-    ctx.client.leaveVrSpace();
+  leaveVrSpace: userClientP.mutation(({ ctx }) => {
+    ctx.client.leaveCurrentVrSpace();
     // ctx.vrSpace.removeClient(ctx.client);
   }),
-  getState: userInVenueP.use(currentVenueHasVrSpaceM).query(({ctx}) => {
-    ctx.vrSpace.getPublicState();
-  }),
+  // getState: userInVrSpaceP.query(({ ctx }) => {
+  //   ctx.vrSpace.getPublicState();
+  // }),
   // create3DModel: currentVenueAdminP.use(isVenueOwnerM).use(currentVenueHasVrSpaceM).input(VirtualSpace3DModelCreateSchema).mutation(({input, ctx}) => {
   //   ctx.venue.Create3DModel(input.modelUrl);
   // }),
@@ -46,16 +60,15 @@ export const vrRouter = router({
   // }),
   // setSkyColor: currentVenueAdminP.use(isVenueOwnerM).use(currentVenueHasVrSpaceM).input({})
   transform: router({
-    updateTransform: userInVenueP.use(currentVenueHasVrSpaceM).input(ClientTransformSchema).mutation(({input, ctx}) =>{
+    updateTransform: userInVrSpaceP.input(ClientTransformSchema).mutation(({ input, ctx }) => {
       log.debug(`transform received from ${ctx.username} (${ctx.connectionId})`);
       log.debug(input);
       ctx.client.transform = input;
       const vrSpace = ctx.vrSpace;
       vrSpace.pendingTransforms[ctx.connectionId] = input;
       vrSpace.sendPendingTransforms();
-
     }),
-    getClientTransforms: userInVenueP.use(currentVenueHasVrSpaceM).query(({ input, ctx }) => {
+    getClientTransforms: userInVrSpaceP.query(({ input, ctx }) => {
       return 'NOT IMPLEMENTED' as const;
     }),
   })

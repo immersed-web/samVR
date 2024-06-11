@@ -111,8 +111,6 @@ export class BaseClient {
     this.ws = undefined;
   }
 
-  connected = true;
-
   /**
   * The id of the actual connection. This differs from the userId, as a user could potentially have multiple concurrent active connections
   */
@@ -214,7 +212,6 @@ export class BaseClient {
   // NOTE: It's important we release all references here!
   unload() {
     // log.info(`unloading base client ${ this.username } ${this.connectionId} `);
-    this.connected = false;
   }
 
   /** clean up clients state related to venue when removed */

@@ -1,8 +1,50 @@
 <template>
   <UserBanner>Hej&nbsp; </UserBanner>
   <h3>Vr miljöer</h3>
+  <div>
+    <p v-for="space in availableVrSpaces">{{ space.name }}</p>
+  </div>
+  <div class="space-x-2" v-if="canCreateVrSpace">
+    <input class="input input-primary" v-model="spaceName" />
+    <button class="btn btn-primary" :disabled="!spaceName" @click="createVrSpace">Skapa
+      Vr-miljö</button>
+  </div>
 </template>
 <script setup lang="ts">
 import UserBanner from '@/components/UserBanner.vue';
+import type { RouterOutputs } from '@/modules/trpcClient';
+import { useClientStore } from '@/stores/clientStore';
+import { useConnectionStore } from '@/stores/connectionStore';
+import { useVrSpaceStore } from '@/stores/vrSpaceStore';
+import { type VrSpaceId, hasAtLeastSecurityLevel } from 'schemas';
+import { computed, onBeforeMount, ref } from 'vue';
+
+const connection = useConnectionStore()
+const vrSpaceStore = useVrSpaceStore();
+const clientStore = useClientStore();
+
+
+const availableVrSpaces = ref<RouterOutputs['vr']['listAvailableVrSpaces']>([]);
+onBeforeMount(async () => {
+  fetchVrSpaceList();
+})
+
+async function fetchVrSpaceList() {
+  availableVrSpaces.value = await connection.client.vr.listAvailableVrSpaces.query()
+}
+
+
+const spaceName = ref('');
+const canCreateVrSpace = computed(() => {
+  if (!clientStore.clientState) return false;
+  return hasAtLeastSecurityLevel(clientStore.clientState.role, 'user');
+})
+
+async function createVrSpace() {
+  await vrSpaceStore.createVrSpace(spaceName.value);
+  fetchVrSpaceList();
+}
+
+
 
 </script>

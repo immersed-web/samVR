@@ -3,7 +3,7 @@ import { throttle, pick } from 'lodash-es';
 import type { UserClient, Venue } from './InternalClasses.js';
 
 import { Log } from 'debug-level';
-import { VrSpaceWithIncludes, db, queryVrSpaceWithIncludes } from 'database';
+import { VrSpaceWithIncludes, db, queryVrSpaceWithIncludes, schema } from 'database';
 const log = new Log('VR:Space');
 process.env.DEBUG = 'VR:Space*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
@@ -50,14 +50,14 @@ export class VrSpace {
 
   addClient(client: UserClient) {
     this.clients.set(client.connectionId, client);
+    client._setVrSpace(this.vrSpaceId);
     log.info(`added client ${client.connectionId} to vrSpace`);
-    client.isInVrSpace = true;
     this._notifyStateUpdated('client added to vrSpace');
   }
 
-  removeClient (client: UserClient){
-    client.isInVrSpace = false;
+  removeClient(client: UserClient) {
     this.clients.delete(client.connectionId);
+    client._setVrSpace(undefined);
     this._notifyStateUpdated('client removed from vrSpace');
   }
 
@@ -87,7 +87,11 @@ export class VrSpace {
     //clean up listeners and such in here!
   }
   
+  // Static stuff for global housekeeping
+  private static vrSpaces: Map<VrSpaceId, VrSpace> = new Map();
+
   static async loadVrSpace(vrSpaceId: VrSpaceId) {
+    log.info(`loading vrSpace ${vrSpaceId}`);
     const dbResponse = await queryVrSpaceWithIncludes.execute({ vrSpaceId });
   // const response = await prismaClient.virtualSpace.findUnique({
   //   where: {
@@ -101,5 +105,28 @@ export class VrSpace {
       throw Error('failed to load vrSpace. Didnt find vrSpace with that id in db');
     }
     return new VrSpace(dbResponse);
+  }
+
+  static async createNewVrSpace(name: string, ownerUserId: UserId) {
+    log.info(`creating new vrSpace ${name} for user ${ownerUserId}`);
+    try {
+      const [response] = await db.insert(schema.vrSpaces).values({
+        name,
+        ownerUserId
+      }).returning()
+      return response.vrSpaceId;
+    } catch (e) {
+      log.error(e);
+      throw e;
+    }
+  }
+
+  static getVrSpace(vrSpaceId: VrSpaceId) {
+    // const vrSpace = VrSpace.vrSpaces.get(vrSpaceId);
+    // if (!vrSpace) {
+    //   throw new Error('No vrSpace with that id is loaded');
+    // }
+    // return vrSpace;
+    return this.vrSpaces.get(vrSpaceId);
   }
 }

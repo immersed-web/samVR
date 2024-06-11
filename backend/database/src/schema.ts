@@ -115,7 +115,7 @@ export const permissionsRelations = relations(permissions, ({ one }) => ({
 export const streams = pgTable("Streams", {
 	streamId: uuid("streamId").defaultRandom().primaryKey().notNull().$type<StreamId>(),
 	name: text("name").notNull(),
-	ownerUserId: uuid("ownerUserId").notNull().$type<UserId>(),//.references(() => users.userId, { onDelete: "cascade", onUpdate: "cascade" }),
+	ownerUserId: uuid("ownerUserId").notNull().$type<UserId>().references(() => users.userId, { onDelete: "cascade", onUpdate: "cascade" }),
 	// doorsOpeningTime: timestamp("doorsOpeningTime", { precision: 3, mode: 'string' }),
 	// doorsAutoOpen: boolean("doorsAutoOpen").default(false).notNull(),
 	// doorsManuallyOpened: boolean("doorsManuallyOpened").default(false).notNull(),
@@ -259,6 +259,8 @@ export const assetsRelations = relations(assets, ({ one, many }) => ({
 
 export const vrSpaces = pgTable("VrSpaces", {
 	vrSpaceId: uuid("vrSpaceId").defaultRandom().primaryKey().notNull().$type<VrSpaceId>(),
+	name: text("name").notNull(),
+	ownerUserId: uuid("ownerUserId").notNull().$type<UserId>().references(() => users.userId, { onDelete: "cascade", onUpdate: "cascade" }),
 	worldModelAssetId: uuid("worldModelAssetId").references(() => assets.assetId).$type<AssetId>(),
 	navMeshAssetId: uuid("navMeshAssetId").references(() => assets.assetId).$type<AssetId>(),
 	panoramicPreviewAssetId: uuid('panoramicPreview').references(() => assets.assetId),

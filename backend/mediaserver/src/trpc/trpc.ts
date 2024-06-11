@@ -41,7 +41,7 @@ const createAuthMiddleware = (userRole: JwtUserData['role']) => {
 export const atLeastSuperadminP = procedure.use(createAuthMiddleware('superadmin'));
 export const atLeastAdminP = procedure.use(createAuthMiddleware('admin'));
 export const atLeastModeratorP = procedure.use(createAuthMiddleware('moderator'));
-export const atLeastSenderP = procedure.use(createAuthMiddleware('sender'));
+// export const atLeastSenderP = procedure.use(createAuthMiddleware('sender'));
 export const atLeastUserP = procedure.use(createAuthMiddleware('user'));
 
 
@@ -81,35 +81,6 @@ export const isInVenueM = middleware(({ctx, next, path})=> {
   }});
 });
 
-export const currentVenueHasVrSpaceM = isInVenueM.unstable_pipe(({ctx, next}) => {
-  if (!ctx.stream.vrSpace) {
-    throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'the venue doesnt have a vr space. Now cry!'});
-  }
-  return next({
-    ctx: {
-      vrSpace: ctx.stream.vrSpace,
-    }
-  });
-});
-
-// export const currentVrSpaceHasModelM = isInVenueM.unstable_pipe(({ctx, next}) => {
-//   if(!ctx.venue.vrSpace?.getPublicState().virtualSpace3DModel){
-//     throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'the VR space doesnt have a model. Now cry!'});
-//   }
-//   return next({
-//     ctx: {
-//       vr3DModel: ctx.venue.vrSpace.getPublicState().virtualSpace3DModel,
-//     }
-//   });
-// });
-
-export const currentVenueHasNoVrSpaceM = isInVenueM.unstable_pipe(({ctx, next, path}) => {
-  if (ctx.stream.vrSpace) {
-    throw new TRPCError({ code: 'PRECONDITION_FAILED', message: `the venue already have a vr space. Action not allowed: ${path}`});
-  }
-  return next();
-});
-
 export const isVenueOwnerM = isInVenueM.unstable_pipe(({ctx, next, path}) => {
   // log.info('venueOwner middleware. venueowners:',ctx.venue.owners);
   if (!(ctx.userId === ctx.stream.owner.userId)) {
@@ -136,5 +107,13 @@ export const isInCameraM = isUserClientM.unstable_pipe(({ctx, next, path}) => {
   });
 });
 
-// TODO: Implement this procedure
-// export const clientInCameraP = procedure.use(isInVenueM).use(isInCameraM);
+export const userInVrSpaceP = userClientP.use(({ ctx, next, path }) => {
+  if (!ctx.client.vrSpace) {
+    throw new TRPCError({ code: 'PRECONDITION_FAILED', message: `Must be inside a vr space to perform action: ${path}` });
+  }
+  return next({
+    ctx: {
+      vrSpace: ctx.client.vrSpace
+    }
+  });
+});

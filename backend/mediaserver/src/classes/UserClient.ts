@@ -3,7 +3,7 @@ const log = new Log('UserClient');
 process.env.DEBUG = 'UserClient*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
-import { ClientTransform, ClientTransforms, StreamId, CameraId, ClientType } from 'schemas';
+import { ClientTransform, ClientTransforms, StreamId, CameraId, ClientType, VrSpaceId } from 'schemas';
 import { loadUserDBData, SenderClient, Venue, VrSpace, BaseClient, DataAndReason, BaseClientEventMap } from './InternalClasses.js';
 import { effect } from '@vue/reactivity';
 import { EventSender, Payload, createTypedEvents } from 'ts-event-bridge/sender';
@@ -39,6 +39,8 @@ export class UserClient extends BaseClient {
   }
   readonly clientType = 'client' as const satisfies ClientType;
 
+  vrSpaceId?: VrSpaceId;
+
   transform: ClientTransform | undefined;
 
   // sneaky hack so we can share the instance between base, user and senderclient but different intellisense.
@@ -69,21 +71,22 @@ export class UserClient extends BaseClient {
     return camera;
   }
 
-  isInVrSpace = false;
-  get vrSpace(){
-    if(this.isInVrSpace){
-      try{
-        if(!this.venue){
-          // log.error('The client is considered to be part of a vr space without being in a venue. That shouldnt be possible!');
-          throw Error('The client is considered to be part of a vr space without being in a venue. That shouldnt be possible!');
-        }
-        return this.venue.vrSpace;
-      } catch (e) {
-        console.error(e);
-        return undefined;
-      }
+  /**
+   * **WARNING**: You should never need to call this function in "user land", since the vrSpace instance calls this for you when it adds a client to itself.
+   */
+  _setVrSpace(vrSpaceId: VrSpaceId | undefined) {
+    this.vrSpaceId = vrSpaceId;
+  }
+
+  get vrSpace() {
+    try {
+      if (!this.vrSpaceId) return undefined;
+      // return getVenue(this.venueId);
+      return VrSpace.getVrSpace(this.vrSpaceId);
+    } catch (e) {
+      console.error(e);
+      return undefined;
     }
-    return undefined;
   }
 
   getPublicState(){
@@ -92,7 +95,7 @@ export class UserClient extends BaseClient {
       clientType: this.clientType,
       transform: this.transform,
       currentCameraId: this.currentCamera?.cameraId,
-      isInVrSpace: this.isInVrSpace,
+      isInVrSpace: !!this.vrSpace,
     };
   }
 
@@ -103,8 +106,8 @@ export class UserClient extends BaseClient {
   }
 
   _onClientStateUpdated(reason?: string) {
-    if(!this.connected){
-      log.info('skipped emitting to client because socket was already closed');
+    if (!this.ws) {
+      log.info('skipped emitting to client because socket was undefined');
       return;
     }
     log.info(`notyfying myStateUpdated for ${this.username} (${this.connectionId}) to itself`);
@@ -129,27 +132,36 @@ export class UserClient extends BaseClient {
       // throw Error('cant leave a venue if you are not in one!');
     }
     // super._onRemovedFromVenue();
+    this.leaveCurrentCamera();
     this.venue.removeClient(this);
     this._onClientStateUpdated('user client left a stream');
     return true;
   }
 
-  joinVrSpace(){
-    this.leaveCurrentCamera();
-    if(!this.venue){
-      throw Error('cant join vrspace if isnt in a venue!');
+  /**
+   * joins the given vrSpace, trying to load/instantiate it if needed
+   */
+  async enterVrSpace(vrSpaceId: VrSpaceId) {
+    if (this.venue) {
+      this.leaveCurrentStream();
     }
-    if(!this.venue.vrSpace){
-      throw Error('cant join vrspace if the venue doesnt have one!');
+    this.leaveCurrentVrSpace();
+    let vrSpace = VrSpace.getVrSpace(vrSpaceId);
+    if (!vrSpace) {
+      log.info(`vrSpace (${vrSpaceId}) wasnt loaded yet. loading it now.`);
+      vrSpace = await VrSpace.loadVrSpace(vrSpaceId);
     }
-    this.venue.vrSpace.addClient(this);
+    vrSpace.addClient(this);
     this._onClientStateUpdated('user client joined vrSpace');
   }
 
-  leaveVrSpace() {
-    if(this.venue?.vrSpace?.removeClient(this)){
-      this._onClientStateUpdated('user client left vrSpace');
+  leaveCurrentVrSpace() {
+    if (!this.vrSpace) {
+      log.warn('tried to leave a vrSpace when not in one');
+      return;
     }
+    this.vrSpace.removeClient(this)
+    this._onClientStateUpdated('user client left vrSpace');
   }
 
   joinCamera(cameraId: CameraId) {
