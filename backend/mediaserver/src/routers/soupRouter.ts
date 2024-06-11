@@ -50,7 +50,6 @@ export const soupRouter = router({
     }
     await chosenTransport.connect({dtlsParameters});
   }),
-  // TODO: We should increase security so clients cant produce at all
   createProducer: clientInVenueP.input(CreateProducerPayloadSchema).mutation(async ({ctx, input}) => {
     log.info('received createProducer request!');
     const client: UserClient | SenderClient = ctx.client;
@@ -61,11 +60,7 @@ export const soupRouter = router({
       throw new TRPCError({code: 'BAD_REQUEST', message:'the provided transporId didnt match the id of the sendTransport'});
     }
     const producerId = await client.createProducer(input);
-    // log.info('gonna emit producerCreated');
-    // ctx.stream._notifyStateUpdated('producer added');
     ctx.stream._notifyAdminOnlyState('producer added');
-    // ctx.stream.emitToAllClients('producerCreated', {producingConnectionId: ctx.connectionId, producer: {producerId, paused: input.producerInfo.isPaused, kind: input.kind}});
-    // ctx.stream.emitToAllClients('someClientStateUpdated', { clientState: client.getPublicState(), reason: `client (${client.clientType}) created producer` });
     return producerId;
   }),
   closeVideoProducer: clientInVenueP.mutation(({ctx}) =>{

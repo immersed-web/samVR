@@ -224,16 +224,11 @@ export class Venue {
     const publicState = this.getPublicState();
     this.clients.forEach(c => {
       log.info(`notifying streamState (${reason}) to client ${c.username} (${c.connectionId})`);
-      c.notify.streamStateUpdated?.({ data: publicState, reason });
       c.eventSender.stream.streamStateUpdated({ data: publicState, reason })
     });
     this.senderClients.forEach(s => {
       log.info(`notifying streamstate (${reason}) to sender ${s.username} (${s.connectionId})`);
-      if (!s.notify.streamStateUpdated) {
-        log.warn('sender didnt have subscriver attached');
-        return;
-      }
-      s.notify.streamStateUpdated({ data: publicState, reason });
+      s.eventSender.stream.streamStateUpdated({ data: publicState, reason })
     });
   }
 
@@ -259,32 +254,16 @@ export class Venue {
         }
       }
       this.senderClients.set(client.connectionId, client);
-      // this._notifyStateUpdated('sender added to stream');
       client._setVenue(this.streamId);
       this.tryMatchCamera(client);
       this._notifyAdminOnlyState('sender added to stream');
     }
     else {
-      // log.info('client wants to join');
-      // log.info('doors:', this.doorsManuallyOpened);
-      // if(!hasAtLeastSecurityLevel(client.role, 'moderator')){
-      //   log.info('requsting client is below moderator');
-      //   let doorsAreOpen = this.doorsManuallyOpened;
-      //   if(this.doorsOpeningTime && isPast(this.doorsOpeningTime) ){
-      //     doorsAreOpen = true;
-      //   }
-      //   if(!doorsAreOpen){
-      //     throw Error('doors are not open');
-      //   }
-      // }
       this.clients.set(client.connectionId, client);
       client._setVenue(this.streamId);
-      // this._notifyStateUpdated('Client added to Venue');
       this._notifyAdminOnlyState('client added to Venue');
     }
     log.info(`Client (${client.clientType}) ${client.username} added to the stream ${this.dbData.name}`);
-
-    // this._notifyClients('venueStateUpdated', this.getPublicState(), 'because I wanna');
   }
 
   /**
@@ -304,8 +283,6 @@ export class Venue {
         vrSpace.removeClient(client);
       }
       this.clients.delete(client.connectionId);
-      // this.emitToAllClients('clientAddedOrRemoved', {client: client.getPublicState(), added: false}, client.connectionId);
-      // this._notifyStateUpdated('client removed from stream');
       this._notifyAdminOnlyState('client removed from stream');
     } else {
 
@@ -316,8 +293,6 @@ export class Venue {
       client.camera?.setSender(undefined);
       this.senderClients.delete(client.connectionId);
 
-      // this.emitToAllClients('senderAddedOrRemoved', {client: client.getPublicState(), added: false}, client.connectionId);
-      // this._notifySenderAddedOrRemoved(client.getPublicState(), false, 'sender was removed');
       this._notifyAdminOnlyState('sender removed from stream');
     }
     client.onRemovedFromVenue();
@@ -328,19 +303,6 @@ export class Venue {
       this.unload();
     }
   }
-
-  emitToAllClients: BaseClient['clientEvent']['emit'] = (event, ...args) => {
-    log.info(`emitting ${event} to all clients`);
-    let allEmittersHadListeners = true;
-    this.clients.forEach((client) => {
-      log.debug('emitting to client: ', client.username);
-      allEmittersHadListeners &&= client.clientEvent.emit(event, ...args);
-    });
-    if(!allEmittersHadListeners){
-      log.warn(`at least one client didnt have any listener registered for the ${event} event type`);
-    }
-    return allEmittersHadListeners;
-  };
 
   /**
    * Adds a senderClient to the stream. senderClients are distinct from normal clients in that

@@ -1,5 +1,3 @@
-import { TypedEmitter } from 'tiny-typed-emitter';
-
 import { Log } from 'debug-level';
 const log = new Log('UserClient');
 process.env.DEBUG = 'UserClient*, ' + process.env.DEBUG;
@@ -12,7 +10,6 @@ import { EventSender, Payload, createTypedEvents } from 'ts-event-bridge/sender'
 import { MyWebsocketType } from 'index.js';
 
 type EventMapAdditions = {
-  // userClientHealhty: Payload<string>,
   vrSpace: {
     vrSpaceStateUpdated: Payload<DataAndReason<ReturnType<VrSpace['getPublicState']>>>,
     clientTransforms: Payload<ClientTransforms>
@@ -29,7 +26,6 @@ export type UserClientEventMap = EventMapAdditions & BaseClientEventMap
  * This class represents the backend state of a user client connection.
  */
 export class UserClient extends BaseClient {
-  // eventSender: EventSender<MyWebsocketType, UserClientEventMap>;
   constructor(...args: ConstructorParameters<typeof BaseClient>){
     super(...args);
     log.info(`Creating user client ${this.username} (${this.connectionId})`);
@@ -40,22 +36,13 @@ export class UserClient extends BaseClient {
       this.publicProducers;
       this.vrSpace._notifyStateUpdated('a client updated producers');
     });
-
-    // this.userClientEvent = new TypedEmitter();
-
-    // Object.assign(this.notify, userNotifyAdditions);
   }
   readonly clientType = 'client' as const satisfies ClientType;
 
   transform: ClientTransform | undefined;
 
-  // userClientEvent: TypedEmitter<UserClientEvents>;
-
   // sneaky hack so we can share the instance between base, user and senderclient but different intellisense.
   declare eventSender: EventSender<MyWebsocketType, UserClientEventMap>;
-
-  // declare notify: UserNotifyMap; // Make typescript happy and allow to add our local notify keys in the constructor
-
 
   unload() {
     log.info(`unloading user client ${ this.username } ${this.connectionId} `);
@@ -120,15 +107,8 @@ export class UserClient extends BaseClient {
       log.info('skipped emitting to client because socket was already closed');
       return;
     }
-    log.info(`notyfyin myStateUpdated for ${this.username} (${this.connectionId}) to itself`);
+    log.info(`notyfying myStateUpdated for ${this.username} (${this.connectionId}) to itself`);
     // we emit the new clientstate to the client itself.
-    // try {
-    //   log.debug('trying to trigger ts-event-bridge')
-    //   this.eventSender.test('test');
-    // } catch (e) {
-    //   console.error(e);
-    // }
-    // this.userClientEvent.emit('myStateUpdated', {myState: this.getPublicState(), reason });
     this.eventSender.user.myStateUpdated({ data: this.getPublicState(), reason });
   }
 

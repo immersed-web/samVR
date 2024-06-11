@@ -135,8 +135,7 @@ export class Camera {
     this._notifyStateUpdated('client added to camera', client.connectionId);
   }
 
-  removeClient(client: UserClient){
-    //TODO: If we rebuild so some producers can cover over many cameras this will have to be changed.
+  removeClient(client: UserClient) {
     client.closeAllConsumers();
     const wasRemoved = this.clients.delete(client.connectionId);
     if(wasRemoved){

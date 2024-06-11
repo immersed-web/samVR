@@ -7,16 +7,10 @@ import { router, procedure } from '../trpc/trpc.js';
 import { soupRouter } from './soupRouter.js';
 import { vrRouter } from './vrRouter.js';
 import { streamRouter } from './streamRouter.js';
-import { TypedEmitter } from 'tiny-typed-emitter';
 import { userRouter } from './userRouter.js';
 import { senderRouter } from './senderRouter.js';
 import { adminRouter } from './adminRouter.js';
 import { cameraRouter } from './cameraRouter.js';
-
-const appRouterEvents = new TypedEmitter<{
-  'heartbeat': (msg: string) => void
-}>();
-setInterval(() => appRouterEvents.emit('heartbeat', `heartBeat at ${Date.now()}`), 5000);
 
 export const appRouter = router({
   user: userRouter,

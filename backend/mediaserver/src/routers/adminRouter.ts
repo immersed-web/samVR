@@ -87,7 +87,6 @@ export const adminRouter = router({
     const camera = ctx.stream.cameras.get(cameraId);
     if(!camera) return;
     camera.reloadDbData('camera db data was updated');
-    // camera.prismaData = dbResponse;
     const reasonForPrint = reason ?? 'unknown';
     camera._notifyStateUpdated(`camera was updated: ${reasonForPrint}`);
     ctx.stream._notifyAdminOnlyState(`camera was updated: ${reasonForPrint}`);

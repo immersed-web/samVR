@@ -56,25 +56,7 @@ export const vrRouter = router({
 
     }),
     getClientTransforms: userInVenueP.use(currentVenueHasVrSpaceM).query(({ input, ctx }) => {
-      return 'NOT IMPLEMENTED YET' as const;
-      // const state = ctx.vrSpace.getPublicState();
-      // const transformDict: Record<ConnectionId, ClientTransform> = {};
-      // for(const [cId, {transform}] of Object.entries(state.clients)){
-      //   const cIdTyped = cId as ConnectionId;
-      //   if(transform){
-      //     transformDict[cIdTyped] = transform;
-      //   }
-      // }
-      // return transformDict;
+      return 'NOT IMPLEMENTED' as const;
     }),
-    // subClientTransforms: p.use(isUserClientM).subscription(({ctx}) => {
-    //   console.log(`${ctx.username} started subscription to transforms`);
-    //   // return attachToEvent(ctx.client.userClientEvent, 'clientTransforms');
-    //   // return attachEmitter(venue.vrSpace.emitter, 'transforms');
-    //   return observable<NotifierInputData<typeof ctx.client.notify.clientTransforms>>(scriber => {
-    //     ctx.client.notify.clientTransforms = scriber.next;
-    //     return () => ctx.client.notify.clientTransforms = undefined;
-    //   });
-    // }),
   })
 });

@@ -15,7 +15,7 @@ if(process.env.DEVELOPMENT){
   printSoupStats = attachMediasoupObservers();
 }
 
-import { printClassInstances, printClientListeners } from './DebugObservers.js';
+import { printClassInstances } from './DebugObservers.js';
 import uWebSockets, { WebSocket } from 'uWebSockets.js';
 const { DEDICATED_COMPRESSOR_3KB } = uWebSockets;
 import { createWorkers } from './modules/mediasoupWorkers.js';
@@ -65,8 +65,6 @@ if(stdin && stdin.isTTY){
       case 'c':
         printClassInstances(clientConnections);
         break;
-      case 'e':
-        printClientListeners(clientConnections);
     // write the key to stdout all normal like
     // process.stdout.write( 'bajs' );
     }

@@ -72,10 +72,6 @@ export class VrSpace {
     const data = this.getPublicState();
     this.clients.forEach(c => {
       log.info(`notifying vrSpaceState (${reason}) to client ${c.username} (${c.connectionId})`);
-      // for(const [id, c] of Object.entries(data.clients)){
-      //   log.info(`${id} pos: ${c.transform?.head.position}`);
-      // }
-      // c.notify.vrSpaceStateUpdated?.({data, reason});
       c.eventSender.vrSpace.vrSpaceStateUpdated({ data, reason });
     });
   }

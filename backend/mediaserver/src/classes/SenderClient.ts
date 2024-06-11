@@ -1,4 +1,3 @@
-import { TypedEmitter } from 'tiny-typed-emitter';
 import { BaseClient, BaseClientEventMap, DataAndReason, Venue } from './InternalClasses.js';
 
 import { Log } from 'debug-level';
@@ -11,21 +10,7 @@ const log = new Log('SenderClient');
 process.env.DEBUG = 'SenderClient*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
-// type SenderControlEvents = NonFilteredEvents<{
-//   'startProduceVideoRequest': () => void
-//   'startProduceAudioRequest': () => void
-// }>
-// type SenderClientEvents =  SenderControlEvents
-// & NonFilteredEvents<{
-//   'myStateUpdated': (data: { myState: ReturnType<SenderClient['getPublicState']>, reason?: string }) => void
-// }>;
-
 type SenderConstructorInput = ConstructorParameters<typeof BaseClient>[0] & {senderId?: SenderId};
-
-// const senderNotifyAdditions = {
-//   myStateUpdated: undefined as NotifierSignature<ReturnType<SenderClient['getPublicState']>>
-// };
-// type SenderNotifyMap = BaseClient['notify'] & typeof senderNotifyAdditions;
 
 type EventMapAdditions = {
   sender: {
@@ -39,13 +24,8 @@ export class SenderClient extends BaseClient{
   constructor({senderId = SenderIdSchema.parse(randomUUID()), ...args}: SenderConstructorInput){
     super(args);
     this.senderId = senderId;
-    // this.base = new BaseClient(...args);
     log.info(`Creating sender client ${this.username} (${this.connectionId})`);
     log.debug('prismaData:', this.dbData);
-    
-    // Object.assign(this.notify, senderNotifyAdditions);
-
-    // this.senderClientEvent = new TypedEmitter();
   }
   readonly clientType = 'sender' as const satisfies ClientType;
   senderId: SenderId;
@@ -69,10 +49,7 @@ export class SenderClient extends BaseClient{
     }
     return camera;
   }
-  // base: BaseClient;
-  // senderClientEvent: TypedEmitter<SenderClientEvents>;
 
-  // declare notify: SenderNotifyMap;
   declare eventSender: EventSender<MyWebsocketType, SenderClientEventMap>;
 
   getPublicState(){
@@ -91,7 +68,6 @@ export class SenderClient extends BaseClient{
       return;
     }
     log.info(`notifying senderState (${reason}) for ${this.username} (${this.connectionId}) to itself`);
-    // this.notify.myStateUpdated?.({data: this.getPublicState(), reason});
     this.eventSender.sender.myStateUpdated({ data: this.getPublicState(), reason });
   }
 
@@ -116,7 +92,6 @@ export class SenderClient extends BaseClient{
     // super._onRemovedFromVenue();
     // this.teardownMediasoupObjects();
     this.venue.removeClient(this);
-    // this._notifyClientStateUpdated('user client left a venue');
     return true;
   }
 }
