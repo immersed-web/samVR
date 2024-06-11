@@ -104,7 +104,9 @@ export class VrSpace {
     if (!dbResponse) {
       throw Error('failed to load vrSpace. Didnt find vrSpace with that id in db');
     }
-    return new VrSpace(dbResponse);
+    const vrSpace = new VrSpace(dbResponse);
+    VrSpace.vrSpaces.set(vrSpace.vrSpaceId, vrSpace);
+    return vrSpace;
   }
 
   static async createNewVrSpace(name: string, ownerUserId: UserId) {
@@ -122,11 +124,11 @@ export class VrSpace {
   }
 
   static getVrSpace(vrSpaceId: VrSpaceId) {
-    // const vrSpace = VrSpace.vrSpaces.get(vrSpaceId);
+    const vrSpace = VrSpace.vrSpaces.get(vrSpaceId);
+    // log.info('get vrSpace', vrSpace);
     // if (!vrSpace) {
     //   throw new Error('No vrSpace with that id is loaded');
     // }
-    // return vrSpace;
-    return this.vrSpaces.get(vrSpaceId);
+    return vrSpace;
   }
 }

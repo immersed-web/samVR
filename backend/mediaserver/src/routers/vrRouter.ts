@@ -54,7 +54,9 @@ export const vrRouter = router({
     //   throw new TRPCError({code: 'FORBIDDEN', message: 'The vr space is not opened to users at this point. Very sad!'});
     // }
     await ctx.client.enterVrSpace(input.vrSpaceId);
-    return ctx.client.vrSpace?.getPublicState();
+    const vrSpace = ctx.client.vrSpace!;
+    // log.info('entering vrSpace', vrSpace);
+    return vrSpace.getPublicState();
   }),
   leaveVrSpace: userClientP.mutation(({ ctx }) => {
     ctx.client.leaveCurrentVrSpace();

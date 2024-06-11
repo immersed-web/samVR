@@ -81,7 +81,6 @@ export class UserClient extends BaseClient {
   get vrSpace() {
     try {
       if (!this.vrSpaceId) return undefined;
-      // return getVenue(this.venueId);
       return VrSpace.getVrSpace(this.vrSpaceId);
     } catch (e) {
       console.error(e);
