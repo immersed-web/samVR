@@ -26,7 +26,7 @@ export const vrRouter = router({
       name: schema.vrSpaces.name,
       visibility: schema.vrSpaces.visibility,
       ownerUserId: schema.vrSpaces.ownerUserId,
-      permissions: schema.permissions
+      permissions: schema.permissions.permissionLevel
     }).from(schema.vrSpaces)
       .leftJoin(schema.permissions, and(
         eq(schema.permissions.targetType, 'vrSpace'),

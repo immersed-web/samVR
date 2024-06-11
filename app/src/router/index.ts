@@ -29,8 +29,8 @@ const router = createRouter({
       component:  () => import('@/views/LoginView.vue'),
     },
     {
-      name: 'logout',
       path: '/logout',
+      name: 'logout',
       component: () => import('@/views/LogoutView.vue'),
     },
     {
@@ -50,16 +50,29 @@ const router = createRouter({
           component: () => import('@/views/public/StartView.vue'),
         },
         {
-          name: 'streamList',
           path: 'streams',
+          name: 'streamList',
           meta: { requiredRole: 'guest', requiredConnectionType: 'client' },
           component: () => import('@/views/public/StreamListView.vue'),
         },
         {
-          name: 'vrList',
-          path: 'vrSpaces',
+          path: 'vrSpace',
+          name: '',
           meta: { requiredRole: 'guest', requiredConnectionType: 'client' },
-          component: () => import('@/views/public/VrListView.vue'),
+          children: [
+            {
+              path: '',
+              name: 'vrList',
+              component: () => import('@/views/public/VrListView.vue'),
+            },
+            {
+              path: ':vrSpaceId',
+              name: 'vrSpaceSettings',
+              props: true,
+              meta: { requiredRole: 'user' },
+              component: () => import('@/views/user/VrSpaceSettings.vue'),
+            }
+          ]
         },
       ],
     },
