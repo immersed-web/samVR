@@ -184,7 +184,7 @@ export function createWSClient(opts: WebSocketClientOptions) {
 
       if ('method' in msg) {
         handleIncomingRequest(msg);
-      } else if ('result' in msg) {
+      } else if ('result' in msg || 'error' in msg) {
         handleIncomingResponse(msg);
       } else {
         // console.warn('couldnt parse trpcs message');

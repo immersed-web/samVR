@@ -635,11 +635,6 @@ export class Venue {
   }
 
   static async getStreamPublicInfo(streamId: StreamId, userId: UserId) {
-  // const venue = Venue.streams.get(venueId);
-  // if(!venue){
-  //   throw new Error('No stream with that id is loaded');
-  // }
-
     const response = await db.query.streams.findFirst({
       where: eq(schema.streams.streamId, streamId),
       with: {
