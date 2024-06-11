@@ -34,7 +34,7 @@ export const vrRouter = router({
       )).where(or(
         eq(schema.vrSpaces.visibility, 'public'),
         eq(schema.permissions.userId, ctx.userId)
-      ))
+      ));
 
     log.info(dbResponse)
     return dbResponse;
