@@ -268,6 +268,13 @@ const freezeableCameraStore = computedWithControl(()=> undefined, () => {
   return {currentCamera: camera.currentCamera, FOV: camera.FOV, portals: camera.portals, is360Camera: camera.is360Camera, isRoofMounted: camera.isRoofMounted };
 });
 
+watch(() => freezeableCameraStore.value.currentCamera?.producers, (newVal, oldVal) => {
+  if (!oldVal) return;
+  console.log('oldProducers:', oldVal, 'newProducers:', newVal);
+  console.log('producers changed. Consuming camera again');
+  consumeAndHandleResult();
+})
+
 let activeVideoTagIndex = 1; // Since we switch _before_ retrieving video stream we set initial value to the second videotag so it will switch to first videotag on pageload. Yes, its a bit hacky :-)
 const activeVideoTag = shallowRef<HTMLVideoElement>();
 
