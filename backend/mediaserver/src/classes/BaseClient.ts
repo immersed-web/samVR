@@ -86,16 +86,29 @@ interface ClientConstructorParams {
  * Base class for backend state of client connection. You should probably not use the base class directly.
  */
 export class BaseClient {
-  protected ws: MyWebsocketType;
+  protected ws: MyWebsocketType | undefined;
   // protected eventSender: ReturnType<typeof createStandaloneEventSender<BaseClientEvents>>;
   protected eventSender: EventSender<MyWebsocketType, BaseClientEventMap>;
   constructor({ connectionId = ConnectionIdSchema.parse(randomUUID()), jwtUserData, dbData, ws }: ClientConstructorParams) {
     // super();
     this.ws = ws;
-    this.eventSender = createSender(this.ws, (msg: any) => this.ws.send(msg));
+    this.eventSender = createSender(this.ws, (msg: any) => {
+      if (!this.ws) {
+        log.error('Tried to access WS instance after closed');
+        return;
+      }
+      this.ws.send(msg)
+    });
     this.connectionId = connectionId;
     this.jwtUserData = jwtUserData;
     this.dbData.value = dbData;
+  }
+
+  /**
+   * Unset the websocket instance. Should (likely) only be called from the socket close handler
+   */
+  removeWSInstance() {
+    this.ws = undefined;
   }
 
   connected = true;

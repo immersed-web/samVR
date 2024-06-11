@@ -1,12 +1,12 @@
 import { defineStore } from 'pinia';
 import { useConnectionStore } from './connectionStore';
 import type { CameraId } from 'schemas';
-import { eventReceiver, type RouterOutputs } from '@/modules/trpcClient';
+import { eventReceiver, type ExtractPayload, type RouterOutputs } from '@/modules/trpcClient';
 import { computed, ref } from 'vue';
 import { useSoupStore } from './soupStore';
 import { useStreamStore } from './streamStore';
 
-type _ReceivedPublicCameraState = RouterOutputs['camera']['joinCamera'];
+type _ReceivedPublicCameraState = ExtractPayload<typeof eventReceiver.camera.cameraStateUpdated.subscribe>['data'];
 
 export const useCameraStore = defineStore('camera', () => {
   const connection = useConnectionStore();

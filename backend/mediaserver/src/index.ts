@@ -217,6 +217,7 @@ app.ws<WSUserData>('/*', {
     const userData = ws.getUserData();
     logUws.info(`socket diconnected ${userData.jwtUserData.username} (${userData.jwtUserData.userId})`);
     const client = clientConnections.get(ws);
+    client?.removeWSInstance();
     if(!client){
       logUws.error('a disconnecting client was not in client list! Something is astray!');
       throw Error('a disconnecting client was not in client list! Something is astray!');
