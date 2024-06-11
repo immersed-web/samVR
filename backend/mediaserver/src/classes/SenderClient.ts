@@ -12,21 +12,21 @@ const log = new Log('SenderClient');
 process.env.DEBUG = 'SenderClient*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
-type SenderControlEvents = NonFilteredEvents<{
-  'startProduceVideoRequest': () => void
-  'startProduceAudioRequest': () => void
-}>
-type SenderClientEvents =  SenderControlEvents
-& NonFilteredEvents<{
-  'myStateUpdated': (data: { myState: ReturnType<SenderClient['getPublicState']>, reason?: string }) => void
-}>;
+// type SenderControlEvents = NonFilteredEvents<{
+//   'startProduceVideoRequest': () => void
+//   'startProduceAudioRequest': () => void
+// }>
+// type SenderClientEvents =  SenderControlEvents
+// & NonFilteredEvents<{
+//   'myStateUpdated': (data: { myState: ReturnType<SenderClient['getPublicState']>, reason?: string }) => void
+// }>;
 
 type SenderConstructorInput = ConstructorParameters<typeof BaseClient>[0] & {senderId?: SenderId};
 
-const senderNotifyAdditions = {
-  myStateUpdated: undefined as NotifierSignature<ReturnType<SenderClient['getPublicState']>>
-};
-type SenderNotifyMap = BaseClient['notify'] & typeof senderNotifyAdditions;
+// const senderNotifyAdditions = {
+//   myStateUpdated: undefined as NotifierSignature<ReturnType<SenderClient['getPublicState']>>
+// };
+// type SenderNotifyMap = BaseClient['notify'] & typeof senderNotifyAdditions;
 
 type EventMapAdditions = {
   sender: {
@@ -44,9 +44,9 @@ export class SenderClient extends BaseClient{
     log.info(`Creating sender client ${this.username} (${this.connectionId})`);
     log.debug('prismaData:', this.dbData);
     
-    Object.assign(this.notify, senderNotifyAdditions);
+    // Object.assign(this.notify, senderNotifyAdditions);
 
-    this.senderClientEvent = new TypedEmitter();
+    // this.senderClientEvent = new TypedEmitter();
   }
   readonly clientType = 'sender' as const satisfies ClientType;
   senderId: SenderId;
@@ -71,9 +71,9 @@ export class SenderClient extends BaseClient{
     return camera;
   }
   // base: BaseClient;
-  senderClientEvent: TypedEmitter<SenderClientEvents>;
+  // senderClientEvent: TypedEmitter<SenderClientEvents>;
 
-  declare notify: SenderNotifyMap;
+  // declare notify: SenderNotifyMap;
   declare eventSender: EventSender<MyWebsocketType, SenderClientEventMap>;
 
   getPublicState(){

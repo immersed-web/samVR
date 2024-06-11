@@ -8,10 +8,9 @@ import { types as soupTypes } from 'mediasoup';
 import type { types as soupClientTypes } from 'mediasoup-client';
 import { ConsumerId, CreateProducerPayload, ProducerId, TransportId  } from 'schemas/mediasoup';
 import { SenderClient, UserClient, Venue, Camera } from './InternalClasses.js';
-import { FilteredEvents, NonFilteredEvents, NotifierSignature } from 'trpc/trpc-utils.js';
+// import { FilteredEvents, NonFilteredEvents, NotifierSignature } from 'trpc/trpc-utils.js';
 import { randomUUID } from 'crypto';
 import { db, schema } from 'database';
-import { TypedEmitter } from 'tiny-typed-emitter';
 import { computed, ref, shallowRef, effect } from '@vue/reactivity';
 import { eq } from 'drizzle-orm';
 import type { MyWebsocketType } from 'index.js';
@@ -50,30 +49,30 @@ type SoupObjectClosePayload =
 
 type CreateConsumerResponse = Pick<soupTypes.Consumer, 'kind' | 'rtpParameters'> & { alreadyExisted?: boolean, producerId: ProducerId, id: ConsumerId}
 
-type ClientSoupEvents = FilteredEvents<{
-  'producerCreated': (data: {producer: PublicProducers['videoProducer'], producingConnectionId: ConnectionId}) => void
-}, ConnectionId>
-& NonFilteredEvents<{
-  'soupObjectClosed': (data: SoupObjectClosePayload & { reason: string}) => void
-  'consumerPausedOrResumed': (data: {consumerId: ConsumerId, wasPaused: boolean}) => void
-  'producerPausedOrResumed': (data: {producerId: ProducerId, wasPaused: boolean}) => void
-}>
+// type ClientSoupEvents = FilteredEvents<{
+//   'producerCreated': (data: {producer: PublicProducers['videoProducer'], producingConnectionId: ConnectionId}) => void
+// }, ConnectionId>
+// & NonFilteredEvents<{
+//   'soupObjectClosed': (data: SoupObjectClosePayload & { reason: string}) => void
+//   'consumerPausedOrResumed': (data: {consumerId: ConsumerId, wasPaused: boolean}) => void
+//   'producerPausedOrResumed': (data: {producerId: ProducerId, wasPaused: boolean}) => void
+// }>
 
-type ClientStateUnion = ReturnType<UserClient['getPublicState']> | ReturnType<SenderClient['getPublicState']>
+// type ClientStateUnion = ReturnType<UserClient['getPublicState']> | ReturnType<SenderClient['getPublicState']>
 
-type ClientVenueEvents = FilteredEvents<{
-  'clientAddedOrRemoved': (data: {client: ReturnType<UserClient['getPublicState']>, added: boolean}) => void,
-  'senderAddedOrRemoved': (data: {client: ReturnType<SenderClient['getPublicState']>, added: boolean}) => void,
-}, ConnectionId>
-& NonFilteredEvents<{
-  'venueWasUnloaded': (venueId: StreamId) => void,
-}>
+// type ClientVenueEvents = FilteredEvents<{
+//   'clientAddedOrRemoved': (data: {client: ReturnType<UserClient['getPublicState']>, added: boolean}) => void,
+//   'senderAddedOrRemoved': (data: {client: ReturnType<SenderClient['getPublicState']>, added: boolean}) => void,
+// }, ConnectionId>
+// & NonFilteredEvents<{
+//   'venueWasUnloaded': (venueId: StreamId) => void,
+// }>
 
-type ClientClientEvents = FilteredEvents<{
-  'someClientStateUpdated': (data: { clientState: ClientStateUnion, reason?: string }) => void
-}, ConnectionId>
+// type ClientClientEvents = FilteredEvents<{
+//   'someClientStateUpdated': (data: { clientState: ClientStateUnion, reason?: string }) => void
+// }, ConnectionId>
 
-export type AllClientEvents = ClientSoupEvents & ClientVenueEvents & ClientClientEvents
+// export type AllClientEvents = ClientSoupEvents & ClientVenueEvents & ClientClientEvents
 
 export async function loadUserDBData(userId: UserId) {
   const response = await db.query.users.findFirst({
@@ -129,7 +128,7 @@ export class BaseClient {
     this.dbData.value = dbData;
 
 
-    this.clientEvent = new TypedEmitter();
+    // this.clientEvent = new TypedEmitter();
 
     // this.event = new TypedEmitter();
     // this.soupEvents = new TypedEmitter();
@@ -137,24 +136,24 @@ export class BaseClient {
     // this.clientEvents.addListener('clientStateUpdated', (state) => log.info(`${this.userId} received clientStateUpdated event triggered by ${triggeringConnection}:`, state.clientPublicState));
   }
 
-  clientEvent: TypedEmitter<AllClientEvents>;
+  // clientEvent: TypedEmitter<AllClientEvents>;
 
   connected = true;
 
-  notify = {
-    streamStateUpdated: undefined as NotifierSignature<ReturnType<Venue['getPublicState']>>,
-    streamStateUpdatedAdminOnly: undefined as NotifierSignature<ReturnType<Venue['getAdminOnlyState']>>,
-    // camera: {
-    cameraStateUpdated: undefined as NotifierSignature<ReturnType<Camera['getPublicState']>>,
-    // newProducerInCamera: undefined as NotifierSignature<{added: true} & ReturnType<typeof this.getPublicProducers>['videoProducer']>,
-    // producerRemovedInCamera: undefined as NotifierSignature<{added: false, producerId: ProducerId }>,
-    // },
-    // soup: {
-    soupObjectClosed: undefined as NotifierSignature<SoupObjectClosePayload>,
-    consumerPausedOrResumed: undefined as NotifierSignature<{consumerId: ConsumerId, wasPaused: boolean}>,
-    producerPausedOrResumed: undefined as NotifierSignature<{producerId: ProducerId, wasPaused: boolean}>,
-    // },
-  };
+  // notify = {
+  //   streamStateUpdated: undefined as NotifierSignature<ReturnType<Venue['getPublicState']>>,
+  //   streamStateUpdatedAdminOnly: undefined as NotifierSignature<ReturnType<Venue['getAdminOnlyState']>>,
+  //   // camera: {
+  //   cameraStateUpdated: undefined as NotifierSignature<ReturnType<Camera['getPublicState']>>,
+  //   // newProducerInCamera: undefined as NotifierSignature<{added: true} & ReturnType<typeof this.getPublicProducers>['videoProducer']>,
+  //   // producerRemovedInCamera: undefined as NotifierSignature<{added: false, producerId: ProducerId }>,
+  //   // },
+  //   // soup: {
+  //   soupObjectClosed: undefined as NotifierSignature<SoupObjectClosePayload>,
+  //   consumerPausedOrResumed: undefined as NotifierSignature<{consumerId: ConsumerId, wasPaused: boolean}>,
+  //   producerPausedOrResumed: undefined as NotifierSignature<{producerId: ProducerId, wasPaused: boolean}>,
+  //   // },
+  // };
 
 
   /**
@@ -296,7 +295,8 @@ export class BaseClient {
     }
     transport.addListener('routerclose', () => {
       log.info('transport event: router closed');
-      this.clientEvent.emit('soupObjectClosed', {type: 'transport', id: transport.id as TransportId, reason: 'router was closed'});
+      // this.clientEvent.emit('soupObjectClosed', {type: 'transport', id: transport.id as TransportId, reason: 'router was closed'});
+      this.eventSender.soup.soupObjectClosed({ data: { type: 'transport', id: transport.id as TransportId }, reason: 'router was closed' });
       if(direction == 'receive'){
         this.receiveTransport = undefined;
       } else {
@@ -363,7 +363,8 @@ export class BaseClient {
         throw Error('the closed producer wasnt one of the clients producers');
       }
       // this.clientEvent.emit('soupObjectClosed', {type: 'producer', id: producer.id as ProducerId, reason: 'transport was closed'});
-      this.notify.soupObjectClosed?.({data: {type: 'producer', id: producer.id as ProducerId}, reason: 'transport was closed'});
+      // this.notify.soupObjectClosed?.({data: {type: 'producer', id: producer.id as ProducerId}, reason: 'transport was closed'});
+      this.eventSender.soup.soupObjectClosed({ data: { type: 'producer', id: producer.id as ProducerId }, reason: 'transport was closed' });
     });
     if(kind === 'video'){
       this.videoProducer.value = producer;
@@ -412,17 +413,19 @@ export class BaseClient {
     consumer.on('transportclose', () => {
       log.info(`---consumer transport close--- clientConnection: ${this.connectionId} consumer_id: ${consumerId}`);
       this.consumers.delete(producerId);
-      this.notify.soupObjectClosed?.({data: {type: 'consumer', consumerInfo: { consumerId, producerId }}, reason: 'transport for the consumer was closed'});
+      // this.notify.soupObjectClosed?.({data: {type: 'consumer', consumerInfo: { consumerId, producerId }}, reason: 'transport for the consumer was closed'});
+      this.eventSender.soup.soupObjectClosed({ data: { type: 'consumer', consumerInfo: { consumerId, producerId } }, reason: 'transport for the consumer was closed' });
     });
 
     consumer.on('producerclose', () => {
       log.info(`the producer associated with consumer ${consumer.id} closed so the consumer was also closed`);
       this.consumers.delete(producerId);
-      if(!this.notify.soupObjectClosed){
-        log.info('NO NOTIFIER ATTACHED for Client!');
-        return;
-      }
-      this.notify.soupObjectClosed({data: {type: 'consumer', consumerInfo: { consumerId, producerId }}, reason: 'producer for the consumer was closed'});
+      // if(!this.notify.soupObjectClosed){
+      //   log.info('NO NOTIFIER ATTACHED for Client!');
+      //   return;
+      // }
+      // this.notify.soupObjectClosed({data: {type: 'consumer', consumerInfo: { consumerId, producerId }}, reason: 'producer for the consumer was closed'});
+      this.eventSender.soup.soupObjectClosed({ data: { type: 'consumer', consumerInfo: { consumerId, producerId } }, reason: 'producer for the consumer was closed' });
     });
 
     consumer.on('producerpause', () => {
@@ -445,16 +448,17 @@ export class BaseClient {
     }
     consumer.close();
     // this.clientEvent.emit('soupObjectClosed', {type: 'consumer', consumerInfo: {consumerId: consumer.id as ConsumerId, producerId}, reason: 'closing all consumers for client'});
-    this.notify.soupObjectClosed?.({
-      data: {
-        type: 'consumer',
-        consumerInfo: {
-          producerId,
-          consumerId: consumer.id as ConsumerId
-        }
-      },
-      reason
-    });
+    // this.notify.soupObjectClosed?.({
+    //   data: {
+    //     type: 'consumer',
+    //     consumerInfo: {
+    //       producerId,
+    //       consumerId: consumer.id as ConsumerId
+    //     }
+    //   },
+    //   reason
+    // });
+    this.eventSender.soup.soupObjectClosed({ data: { type: 'consumer', consumerInfo: { consumerId: consumer.id as ConsumerId, producerId } }, reason });
     this.consumers.delete(producerId);
   }
 
@@ -463,13 +467,15 @@ export class BaseClient {
       this.sendTransport.close();
       // this.event.emit('transportClosed', this.sendTransport.id as TransportId);
       // this.clientEvent.emit('soupObjectClosed', {type: 'transport', id: this.sendTransport.id as TransportId, reason: 'closing all transports for client'});
-      this.notify.soupObjectClosed?.({data: {type: 'transport', id: this.sendTransport.id as TransportId}, reason: 'closing all transports for client'});
+      // this.notify.soupObjectClosed?.({data: {type: 'transport', id: this.sendTransport.id as TransportId}, reason: 'closing all transports for client'});
+      this.eventSender.soup.soupObjectClosed({ data: { type: 'transport', id: this.sendTransport.id as TransportId }, reason: 'closing all transports for client' });
       this.sendTransport = undefined;
     }
     if(this.receiveTransport){
       this.receiveTransport.close();
       // this.clientEvent.emit('soupObjectClosed', {type: 'transport', id: this.receiveTransport.id as TransportId, reason: 'closing all transports for client'});
-      this.notify.soupObjectClosed?.({data: {type: 'transport', id: this.receiveTransport.id as TransportId }, reason: 'closing all transports for client'});
+      // this.notify.soupObjectClosed?.({data: {type: 'transport', id: this.receiveTransport.id as TransportId }, reason: 'closing all transports for client'});
+      this.eventSender.soup.soupObjectClosed({ data: { type: 'transport', id: this.receiveTransport.id as TransportId }, reason: 'closing all transports for client' });
       this.receiveTransport = undefined;
     }
   }
@@ -481,7 +487,8 @@ export class BaseClient {
         continue;
       }
       producer.close();
-      this.notify.soupObjectClosed?.({data: {type: 'producer', id: producer.id as ProducerId }, reason: 'closing all producers for client'});
+      // this.notify.soupObjectClosed?.({data: {type: 'producer', id: producer.id as ProducerId }, reason: 'closing all producers for client'});
+      this.eventSender.soup.soupObjectClosed({ data: { type: 'producer', id: producer.id as ProducerId }, reason: 'closing all producers for client' });
     }
     this.videoProducer.value = undefined;
     this.audioProducer.value = undefined;

@@ -25,19 +25,19 @@ type EventMapAdditions = {
 }
 
 export type UserClientEventMap = EventMapAdditions & BaseClientEventMap
-const { createSender } = createTypedEvents<UserClientEventMap>();
+// const { createSender } = createTypedEvents<UserClientEventMap>();
 
-type UserClientEvents =
-NonFilteredEvents<{
-  'myStateUpdated': (data: { myState: ReturnType<UserClient['getPublicState']>, reason?: string }) => void
-}>;
+// type UserClientEvents =
+// NonFilteredEvents<{
+//   'myStateUpdated': (data: { myState: ReturnType<UserClient['getPublicState']>, reason?: string }) => void
+// }>;
 
-const userNotifyAdditions = {
-  senderAddedOrRemoved: undefined as NotifierSignature<{senderState: ReturnType<SenderClient['getPublicState']>, added: boolean}>,
-  vrSpaceStateUpdated: undefined as NotifierSignature<ReturnType<VrSpace['getPublicState']>>,
-  clientTransforms: undefined as NotifierSignature<Prettify<ClientTransforms>>
-};
-type UserNotifyMap = BaseClient['notify'] & typeof userNotifyAdditions;
+// const userNotifyAdditions = {
+//   senderAddedOrRemoved: undefined as NotifierSignature<{senderState: ReturnType<SenderClient['getPublicState']>, added: boolean}>,
+//   vrSpaceStateUpdated: undefined as NotifierSignature<ReturnType<VrSpace['getPublicState']>>,
+//   clientTransforms: undefined as NotifierSignature<Prettify<ClientTransforms>>
+// };
+// type UserNotifyMap = BaseClient['notify'] & typeof userNotifyAdditions;
 
 /**
  * @class
@@ -56,20 +56,20 @@ export class UserClient extends BaseClient {
       this.vrSpace._notifyStateUpdated('a client updated producers');
     });
 
-    this.userClientEvent = new TypedEmitter();
+    // this.userClientEvent = new TypedEmitter();
 
-    Object.assign(this.notify, userNotifyAdditions);
+    // Object.assign(this.notify, userNotifyAdditions);
   }
   readonly clientType = 'client' as const satisfies ClientType;
 
   transform: ClientTransform | undefined;
 
-  userClientEvent: TypedEmitter<UserClientEvents>;
+  // userClientEvent: TypedEmitter<UserClientEvents>;
 
   // sneaky hack so we can share the instance between base, user and senderclient but different intellisense.
   declare eventSender: EventSender<MyWebsocketType, UserClientEventMap>;
 
-  declare notify: UserNotifyMap; // Make typescript happy and allow to add our local notify keys in the constructor
+  // declare notify: UserNotifyMap; // Make typescript happy and allow to add our local notify keys in the constructor
 
 
   unload() {
