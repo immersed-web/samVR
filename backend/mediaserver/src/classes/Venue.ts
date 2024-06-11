@@ -118,7 +118,6 @@ export class Venue {
   }
 
   router: soupTypes.Router;
-  vrSpace?: VrSpace;
 
   cameras = shallowReactive<Map<CameraId, Camera>>(new Map());
   // get mainCameraId() { return this.dbData.mainCameraId as CameraId | null; }
@@ -183,7 +182,6 @@ export class Venue {
       streamId, name, visibility,
       // doorsOpeningTime, doorsAutoOpen, doorsManuallyOpened,
       streamStartTime, streamAutoStart, streamManuallyStarted, streamManuallyEnded,
-      vrSpace: this.vrSpace?.getPublicState(),
       cameras,
       mainCameraId,
       mainAudioProducerId,
@@ -209,7 +207,6 @@ export class Venue {
     this.router.close();
     // this.cameras.forEach(room => room.destroy());
     Venue.streams.delete(this.streamId);
-    this.vrSpace?.unload();
   }
 
   async update(input: StreamUpdate) {
