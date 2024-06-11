@@ -334,7 +334,7 @@ const getAllowedUsersForStream: RequestHandler = async (req: GetSenderRequest, r
     // const { targetType, ...permissionColumns } = getTableColumns(schema.permissions);
     const dbResponse = await db.select(nonPasswords)
       .from(schema.users)
-      .innerJoin(schema.permissions, eq(schema.permissions.userId, schema.users.userId))
+      .innerJoin(schema.permissions, and(eq(schema.permissions.userId, schema.users.userId), eq(schema.permissions.targetType, 'stream')))
       .where(
         eq(schema.permissions.targetId, streamId),
       );
