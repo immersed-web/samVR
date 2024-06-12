@@ -3,10 +3,10 @@ const log = new Log('Stats:Instances');
 process.env.DEBUG = 'Stats:Instances*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
-import { Venue } from './classes/InternalClasses.js';
+import { Stream } from './classes/InternalClasses.js';
 
 // @ts-expect-error: We allow reading private field here
-type venueDict = typeof Venue.venues extends Map<infer K, any>?Record<K, {clients: number, senders: number}>:never
+type venueDict = typeof Stream.venues extends Map<infer K, any> ? Record<K, { clients: number, senders: number }> : never
 
 export const printClassInstances = (clientList: Map<any, any>) => {
   const totalNrOf = {
@@ -16,7 +16,7 @@ export const printClassInstances = (clientList: Map<any, any>) => {
   };
 
   // @ts-expect-error: In ooonly this specific case we want to ignore the private field (streams). But never elsewhere
-  for (const [venueKey, venue] of Venue.streams.entries()) {
+  for (const [venueKey, venue] of Stream.streams.entries()) {
     totalNrOf.nrOfVenues++;
     totalNrOf.venueClients[venueKey] = {
       clients: 0,

@@ -4,7 +4,7 @@ process.env.DEBUG = 'UserClient*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
 import { ClientTransform, ClientTransforms, StreamId, CameraId, ClientType, VrSpaceId } from 'schemas';
-import { loadUserDBData, SenderClient, Venue, VrSpace, BaseClient, DataAndReason, BaseClientEventMap } from './InternalClasses.js';
+import { loadUserDBData, SenderClient, Stream, VrSpace, BaseClient, DataAndReason, BaseClientEventMap } from './InternalClasses.js';
 import { effect } from '@vue/reactivity';
 import { EventSender, Payload, createTypedEvents } from 'ts-event-bridge/sender';
 import { MyWebsocketType } from 'index.js';
@@ -61,10 +61,10 @@ export class UserClient extends BaseClient {
   }
   get currentCamera() {
     if(!this.currentCameraId) return undefined;
-    if(!this.venue){
+    if (!this.stream) {
       throw Error('Something is really off! currentCameraId is set but client isnt in a venue! Invalid state!');
     }
-    const camera = this.venue.cameras.get(this.currentCameraId);
+    const camera = this.stream.cameras.get(this.currentCameraId);
     if(!camera){
       throw Error('client had an assigned currentCameraId but that camera was not found in venue. Invalid state!');
     }
@@ -117,7 +117,7 @@ export class UserClient extends BaseClient {
   async joinStream(streamId: StreamId) {
     this.leaveCurrentStream();
     // const venue = await Venue.getPublicVenue(venueId, this.userId);
-    const stream = Venue.getStream(streamId);
+    const stream = Stream.getStream(streamId);
     stream.addClient(this);
     // this.sendTransport = await venue.createWebRtcTransport();
     // this.receiveTransport = await venue.createWebRtcTransport();
@@ -126,13 +126,13 @@ export class UserClient extends BaseClient {
   }
 
   leaveCurrentStream() {
-    if(!this.venue) {
+    if (!this.stream) {
       return false;
       // throw Error('cant leave a venue if you are not in one!');
     }
     // super._onRemovedFromVenue();
     this.leaveCurrentCamera();
-    this.venue.removeClient(this);
+    this.stream.removeClient(this);
     this._onClientStateUpdated('user client left a stream');
     return true;
   }
@@ -141,7 +141,7 @@ export class UserClient extends BaseClient {
    * joins the given vrSpace, trying to load/instantiate it if needed
    */
   async enterVrSpace(vrSpaceId: VrSpaceId) {
-    if (this.venue) {
+    if (this.stream) {
       this.leaveCurrentStream();
     }
     this.leaveCurrentVrSpace();
@@ -164,7 +164,7 @@ export class UserClient extends BaseClient {
   }
 
   joinCamera(cameraId: CameraId) {
-    const camera = this.venue?.cameras.get(cameraId);
+    const camera = this.stream?.cameras.get(cameraId);
     if(!camera){
       throw Error('no camera with that id exist in the venue');
     }

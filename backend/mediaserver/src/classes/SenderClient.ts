@@ -1,4 +1,4 @@
-import { BaseClient, BaseClientEventMap, DataAndReason, Venue } from './InternalClasses.js';
+import { BaseClient, BaseClientEventMap, DataAndReason, Stream } from './InternalClasses.js';
 
 import { Log } from 'debug-level';
 import { CameraId, ClientType, SenderId, SenderIdSchema, StreamId } from 'schemas';
@@ -40,12 +40,12 @@ export class SenderClient extends BaseClient{
   }
   get camera() {
     if(!this.cameraId) return undefined;
-    if(!this.venue){
-      throw Error('Something is really off! currentCameraId is set but sender isnt in a venue! Invalid state!');
+    if (!this.stream) {
+      throw Error('Something is really off! currentCameraId is set but sender isnt in a stream! Invalid state!');
     }
-    const camera = this.venue.cameras.get(this.cameraId);
+    const camera = this.stream.cameras.get(this.cameraId);
     if(!camera){
-      throw Error('client had an assigned currentCameraId but that camera was not found in venue. Invalid state!');
+      throw Error('client had an assigned currentCameraId but that camera was not found in stream. Invalid state!');
     }
     return camera;
   }
@@ -77,21 +77,21 @@ export class SenderClient extends BaseClient{
     this.leaveCurrentStream();
   }
 
-  async joinStream(venueId: StreamId) {
+  async joinStream(streamId: StreamId) {
     this.leaveCurrentStream();
-    const venue = Venue.getStream(venueId);
-    venue.addClient(this);
-    this._notifyStateUpdated('sender client joined venue');
-    return venue.getPublicState();
+    const stream = Stream.getStream(streamId);
+    stream.addClient(this);
+    this._notifyStateUpdated('sender client joined stream');
+    return stream.getPublicState();
   }
 
   leaveCurrentStream() {
-    if(!this.venue) {
+    if (!this.stream) {
       return false;
     }
     // super._onRemovedFromVenue();
     // this.teardownMediasoupObjects();
-    this.venue.removeClient(this);
+    this.stream.removeClient(this);
     return true;
   }
 }

@@ -1,7 +1,7 @@
 
 import { Log } from 'debug-level';
 import type { CameraId, ConnectionId, SenderId  } from 'schemas';
-import { Venue, UserClient, SenderClient, PublicProducers } from './InternalClasses.js';
+import { Stream, UserClient, SenderClient, PublicProducers } from './InternalClasses.js';
 import { ProducerId } from 'schemas/mediasoup';
 import { computed, shallowRef, effect } from '@vue/reactivity';
 import { CameraWithIncludes, StreamWithIncludes, db, queryCameraWithIncludes, schema } from 'database'
@@ -13,7 +13,7 @@ process.env.DEBUG = 'Camera*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
 export class Camera {
-  constructor(dbCamera: CameraWithIncludes, venue: Venue, sender?: SenderClient) {
+  constructor(dbCamera: CameraWithIncludes, venue: Stream, sender?: SenderClient) {
     this.dbData = dbCamera;
     this.venue = venue;
     this.clients = new Map();
@@ -36,7 +36,7 @@ export class Camera {
     this.saveToDb();
   }
 
-  venue: Venue;
+  venue: Stream;
   sender = shallowRef<SenderClient>();
   producers = computed(() => {
     if(!this.sender.value) {
@@ -45,7 +45,7 @@ export class Camera {
     }
     return this.sender.value?.publicProducers.value;
   });
-  clients: Venue['clients'];
+  clients: Stream['clients'];
   get clientIds() {
     return Array.from(this.clients.keys());
   }

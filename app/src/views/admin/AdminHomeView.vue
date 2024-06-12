@@ -127,7 +127,7 @@ const editedPassword = ref<string>();
 
 const streamsAsArray = computed(() => {
   if(!clientStore.clientState) return [];
-  return Object.values(clientStore.clientState?.ownedVenues);
+  return Object.values(clientStore.clientState?.ownedStreams);
 });
 
 async function updateAdmin(userData: any) {

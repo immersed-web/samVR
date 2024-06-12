@@ -6,7 +6,7 @@ log.enable(process.env.DEBUG);
 import mediasoupConfig from '../mediasoupConfig.js';
 import { getMediasoupWorker } from '../modules/mediasoupWorkers.js';
 
-import {types as soupTypes} from 'mediasoup';
+import { types as soupTypes } from 'mediasoup';
 import { ConnectionId, UserId, StreamId, CameraId, StreamUpdate, SenderId, hasAtLeastSecurityLevel, Prettify } from 'schemas';
 
 import { db, schema, queryStreamWithIncludes, basicUserSelect, CameraWithIncludes, StreamWithIncludes, queryCameraWithIncludes } from 'database';
@@ -38,7 +38,7 @@ import { and, eq } from 'drizzle-orm';
 // } satisfies StreamQueryWithInput;
 
 
-export class Venue {
+export class Stream {
   private constructor(dbData: StreamWithIncludes, router: soupTypes.Router) {
     this.router = router;
 
@@ -48,7 +48,7 @@ export class Venue {
     //   dbData.vrSpace = null;
     // }
 
-    
+
     // TODO: do same as we do with vrspace and exclude cameras from dbData before we assign. We want one source of truth and that should be
     // the dbData in each class instance. The reason we include it in the constructor is because constructors are not allowed to be async, and
     // thus we cant load data in each class's constructor. So we pass prisma data down from parents to child classes. But after that we should strive to 
@@ -58,7 +58,7 @@ export class Venue {
     });
     // Slight hack to circumvent typescript
     delete (dbData as Partial<StreamWithIncludes>).cameras;
-    
+
     this.dbData = dbData;
     effect(() => {
       this.mainAudioProducer;
@@ -137,7 +137,7 @@ export class Venue {
   }
 
   private detachedDirtyFlag = ref<number>(0);
-  invalidateDetachedSenders(){
+  invalidateDetachedSenders() {
     this.detachedDirtyFlag.value++;
   }
   private senderClients = shallowReactive<Map<ConnectionId, SenderClient>>(new Map());
@@ -153,10 +153,10 @@ export class Venue {
     return new Map(sendersWithoutCameraArray);
   });
   publicDetachedSenders = computed(() => {
-    if(this.detachedSenders.value.size === 0) return undefined;
-    const publicDetachedSenders: Record<ConnectionId, {senderId: SenderId, connectionId: ConnectionId, username: string, producers: PublicProducers }> = {};
-    this.detachedSenders.value.forEach(s => publicDetachedSenders[s.connectionId] = {senderId: s.senderId, connectionId: s.connectionId, username: s.username, producers: s.publicProducers.value});
-    
+    if (this.detachedSenders.value.size === 0) return undefined;
+    const publicDetachedSenders: Record<ConnectionId, { senderId: SenderId, connectionId: ConnectionId, username: string, producers: PublicProducers }> = {};
+    this.detachedSenders.value.forEach(s => publicDetachedSenders[s.connectionId] = { senderId: s.senderId, connectionId: s.connectionId, username: s.username, producers: s.publicProducers.value });
+
     return publicDetachedSenders;
   });
 
@@ -206,7 +206,7 @@ export class Venue {
 
     this.router.close();
     // this.cameras.forEach(room => room.destroy());
-    Venue.streams.delete(this.streamId);
+    Stream.streams.delete(this.streamId);
   }
 
   async update(input: StreamUpdate) {
@@ -217,7 +217,7 @@ export class Venue {
     return dbResponse
   }
 
-  _notifyStateUpdated(reason?: string){
+  _notifyStateUpdated(reason?: string) {
     const publicState = this.getPublicState();
     this.clients.forEach(c => {
       log.info(`notifying streamState (${reason}) to client ${c.username} (${c.connectionId})`);
@@ -229,10 +229,10 @@ export class Venue {
     });
   }
 
-  _notifyAdminOnlyState(reason?: string){
+  _notifyAdminOnlyState(reason?: string) {
     const data = this.getAdminOnlyState();
     this.clients.forEach(c => {
-      if(hasAtLeastSecurityLevel(c.role, 'moderator')){
+      if (hasAtLeastSecurityLevel(c.role, 'moderator')) {
         log.info(`notifying adminOnlyVenuestate (${reason}) to client ${c.username} (${c.connectionId})`);
         c.eventSender.stream.streamStateUpdatedAdminOnly({ data, reason });
       }
@@ -243,21 +243,21 @@ export class Venue {
    * adds a client (client or sender) to this stream's collection of clients. Also takes care of assigning the stream inside the client itself
    * @param client the client instance to add to the stream
    */
-  addClient ( client : UserClient | SenderClient){
-    if(client.clientType === 'sender'){
-      for(const v of this.senderClients.values()){
-        if(v.senderId === client.senderId){
+  addClient(client: UserClient | SenderClient) {
+    if (client.clientType === 'sender') {
+      for (const v of this.senderClients.values()) {
+        if (v.senderId === client.senderId) {
           throw Error('already joined with that senderId!');
         }
       }
       this.senderClients.set(client.connectionId, client);
-      client._setVenue(this.streamId);
+      client._setStream(this.streamId);
       this.tryMatchCamera(client);
       this._notifyAdminOnlyState('sender added to stream');
     }
     else {
       this.clients.set(client.connectionId, client);
-      client._setVenue(this.streamId);
+      client._setStream(this.streamId);
       this._notifyAdminOnlyState('client added to Venue');
     }
     log.info(`Client (${client.clientType}) ${client.username} added to the stream ${this.dbData.name}`);
@@ -267,16 +267,16 @@ export class Venue {
    * Removes the client (client or sender) from the stream. Also automatically unloads the stream if it becomes empty
    * Also removes the client from camera or a vrSpace if its inside one
    */
-  removeClient (client: UserClient | SenderClient) {
+  removeClient(client: UserClient | SenderClient) {
     log.info(`removing ${client.username} (${client.connectionId}) from the stream ${this.name}`);
-    if(client.clientType === 'client'){
+    if (client.clientType === 'client') {
       // TODO: We should also probably cleanup if client is in a camera or perhaps a VR place to avoid invalid states?
       const camera = client.currentCamera;
-      if(camera){
+      if (camera) {
         camera.removeClient(client);
       }
       const vrSpace = client.vrSpace;
-      if(vrSpace){
+      if (vrSpace) {
         vrSpace.removeClient(client);
       }
       this.clients.delete(client.connectionId);
@@ -292,11 +292,11 @@ export class Venue {
 
       this._notifyAdminOnlyState('sender removed from stream');
     }
-    client.onRemovedFromVenue();
-    client._setVenue(undefined);
+    client.onRemovedFromStream();
+    client._setStream(undefined);
 
     // If this was the last client in the stream, lets unload it!
-    if(this._isEmpty){
+    if (this._isEmpty) {
       this.unload();
     }
   }
@@ -330,16 +330,16 @@ export class Venue {
   async createWebRtcTransport() {
     const transport = await this.router.createWebRtcTransport(mediasoupConfig.webRtcTransport);
 
-    if(mediasoupConfig.maxIncomingBitrate){
-      try{
+    if (mediasoupConfig.maxIncomingBitrate) {
+      try {
         await transport.setMaxIncomingBitrate(mediasoupConfig.maxIncomingBitrate);
-      } catch (e){
+      } catch (e) {
         log.error('failed to set maximum incoming bitrate');
       }
     }
 
     transport.on('dtlsstatechange', (dtlsState: soupTypes.DtlsState) => {
-      if(dtlsState === 'closed'){
+      if (dtlsState === 'closed') {
         log.info('---transport close--- transport with id ' + transport.id + ' closed');
         transport.close();
       }
@@ -421,7 +421,7 @@ export class Venue {
 
   async deleteCamera(cameraId: CameraId) {
     const foundCamera = this.cameras.get(cameraId);
-    if(foundCamera){
+    if (foundCamera) {
       log.info('camera was loaded. Unloading before removal');
       foundCamera.unload();
       // foundCamera.delete();
@@ -441,7 +441,7 @@ export class Venue {
 
     fromPortals.forEach((portal) => {
       const loadedCamera = this.cameras.get(portal.fromCameraId);
-      if(loadedCamera){
+      if (loadedCamera) {
         loadedCamera.reloadDbData('portal removed');
       }
     });
@@ -460,7 +460,7 @@ export class Venue {
   _closeAllConsumersOfProducer(producerId: ProducerId) {
     this.clients.forEach(client => {
       for (const testedProducerId of client.consumers.keys()) {
-        if(testedProducerId === producerId){
+        if (testedProducerId === producerId) {
           client.closeConsumer(testedProducerId, 'closing all consumers for that producer');
           break;
         }
@@ -470,8 +470,8 @@ export class Venue {
   }
 
   private findSenderFromSenderId(senderId: SenderId) {
-    for(const s of this.senderClients.values()){
-      if(s.senderId === senderId){
+    for (const s of this.senderClients.values()) {
+      if (s.senderId === senderId) {
         return s;
       }
     }
@@ -494,17 +494,17 @@ export class Venue {
     }
     const camera = new Camera(dbResponse, this, maybeSender);
     this.cameras.set(camera.cameraId, camera);
-    
+
     this._notifyStateUpdated('camera loaded');
     this._notifyAdminOnlyState('camera loaded');
   }
 
-  tryMatchCamera(senderClient: SenderClient){
+  tryMatchCamera(senderClient: SenderClient) {
     log.info('TRYING TO FIND MATCHING CAMERA!');
     log.info('senderId:', senderClient.senderId);
-    for(const [cKey, c] of this.cameras) {
+    for (const [cKey, c] of this.cameras) {
       log.info('comparing against cameraId:', c.senderId);
-      if(c.senderId === senderClient.senderId){
+      if (c.senderId === senderClient.senderId) {
         log.info(`Found matched camera for sender ${senderClient.username} (${senderClient.senderId}). Attaching to it.`);
         c.setSender(senderClient);
         break;
@@ -512,14 +512,14 @@ export class Venue {
     }
   }
 
-  async setSenderForCamera(senderId: SenderId, cameraId: CameraId){
+  async setSenderForCamera(senderId: SenderId, cameraId: CameraId) {
     // const foundSender = this.senderClients.get(senderConnectionId);
     const foundSender = this.findSenderFromSenderId(senderId);
-    if(!foundSender){
+    if (!foundSender) {
       throw Error('No sender with that connectionId in stream');
     }
     const foundCamera = this.cameras.get(cameraId);
-    if(!foundCamera){
+    if (!foundCamera) {
       throw Error('No camera with that cameraId in stream');
     }
     await foundCamera.setSender(foundSender);
@@ -528,7 +528,7 @@ export class Venue {
   }
 
   // Static stuff for global housekeeping
-  private static streams: Map<StreamId, Venue> = new Map();
+  private static streams: Map<StreamId, Stream> = new Map();
 
   static async createNewStream(name: string, ownerUserId: UserId) {
     try {
@@ -537,7 +537,7 @@ export class Venue {
         ownerUserId,
       }).returning()
       return response.streamId;
-    } catch(e) {
+    } catch (e) {
       log.error(e);
       throw e;
     }
@@ -552,11 +552,10 @@ export class Venue {
   static async loadStream(streamId: StreamId, ownerUserId: UserId, worker?: soupTypes.Worker) {
     log.info(`*****TRYING TO LOAD STREAM: ${streamId}`);
     try {
-      const loadedStream = Venue.streams.get(streamId);
+      const loadedStream = Stream.streams.get(streamId);
       if (loadedStream) {
         log.warn('Stream with that streamId already loaded');
         return loadedStream;
-        // throw new Error('Venue with that venueId already loaded');
       }
       const dbResponse = await queryStreamWithIncludes.execute({ streamId });
       // const dbResponse = await db.query.streams.findFirst({
@@ -578,15 +577,14 @@ export class Venue {
         }
       }
 
-      if(!worker){
+      if (!worker) {
         worker = getMediasoupWorker();
       }
       const router = await worker.createRouter(mediasoupConfig.router);
-      const stream = new Venue(dbResponse, router);
-      // log.info('venueIncludeStuff: ', venueIncludeStuff);
+      const stream = new Stream(dbResponse, router);
       // log.info('stream was loaded with db data:', dbResponse);
 
-      Venue.streams.set(stream.streamId, stream);
+      Stream.streams.set(stream.streamId, stream);
       log.info(`*****LOADED STREAM: ${stream.name} ${stream.streamId})`);
       return stream;
     } catch (e) {
@@ -598,12 +596,12 @@ export class Venue {
 
 
   static streamIsLoaded(params: { streamId: StreamId }) {
-    return Venue.streams.has(params.streamId);
+    return Stream.streams.has(params.streamId);
   }
 
   static getLoadedStreams() {
     const obj: Record<StreamId, { streamId: StreamId, name: string }> = {};
-    for (const [key, stream] of Venue.streams.entries()) {
+    for (const [key, stream] of Stream.streams.entries()) {
       obj[key] = {
         name: stream.dbData.name,
         streamId: stream.streamId,
@@ -613,8 +611,8 @@ export class Venue {
   }
 
   static getLoadedStreamsPublicState() {
-    const obj: Record<StreamId, { streamId: StreamId, state: ReturnType<Venue['getPublicState']> }> = {};
-    for (const [key, stream] of Venue.streams.entries()) {
+    const obj: Record<StreamId, { streamId: StreamId, state: ReturnType<Stream['getPublicState']> }> = {};
+    for (const [key, stream] of Stream.streams.entries()) {
       obj[key] = {
         streamId: stream.streamId,
         state: stream.getPublicState()
@@ -624,7 +622,7 @@ export class Venue {
   }
 
   static getStream(streamId: StreamId) {
-    const stream = Venue.streams.get(streamId);
+    const stream = Stream.streams.get(streamId);
     if (!stream) {
       throw new Error('No stream with that id is loaded');
     }

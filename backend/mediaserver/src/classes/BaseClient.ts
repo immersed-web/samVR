@@ -7,7 +7,7 @@ import { ConnectionId, JwtUserData, UserId, UserRole, StreamId, ConnectionIdSche
 import { types as soupTypes } from 'mediasoup';
 import type { types as soupClientTypes } from 'mediasoup-client';
 import { ConsumerId, CreateProducerPayload, ProducerId, TransportId  } from 'schemas/mediasoup';
-import { SenderClient, UserClient, Venue, Camera } from './InternalClasses.js';
+import { SenderClient, UserClient, Stream, Camera } from './InternalClasses.js';
 import { randomUUID } from 'crypto';
 import { db, schema } from 'database';
 import { computed, ref, shallowRef, effect } from '@vue/reactivity';
@@ -30,8 +30,8 @@ export type BaseClientEventMap = {
     // senderAddedOrRemoved: Payload<DataAndReason<{ sender: ReturnType<SenderClient['getPublicState']>, added: boolean }>>,
     streamWasUnloaded: Payload<{ streamId: StreamId }>,
 
-    streamStateUpdated: Payload<DataAndReason<ReturnType<Venue['getPublicState']>>>,
-    streamStateUpdatedAdminOnly: Payload<DataAndReason<ReturnType<Venue['getAdminOnlyState']>>>,
+    streamStateUpdated: Payload<DataAndReason<ReturnType<Stream['getPublicState']>>>,
+    streamStateUpdatedAdminOnly: Payload<DataAndReason<ReturnType<Stream['getAdminOnlyState']>>>,
   },
   camera: {
     cameraStateUpdated: Payload<DataAndReason<ReturnType<Camera['getPublicState']>>>,
@@ -153,19 +153,18 @@ export class BaseClient {
   videoProducer = shallowRef<soupTypes.Producer>();
   audioProducer = shallowRef<soupTypes.Producer>();
 
-  protected venueId?: StreamId;
+  protected streamId?: StreamId;
   /**
-   * **WARNING**: You should never need to call this function, since the venue instance calls this for you when it adds a client to itself.
+   * **WARNING**: You should never need to call this function, since the stream instance calls this for you when it adds a client to itself.
    */
-  _setVenue(venueId: StreamId | undefined) {
-    this.venueId = venueId;
+  _setStream(streamId: StreamId | undefined) {
+    this.streamId = streamId;
     // this.getVenue()?.createWebRtcTransport();
   }
-  get venue() {
+  get stream() {
     try{
-      if(!this.venueId) return undefined;
-      // return getVenue(this.venueId);
-      return Venue.getStream(this.venueId);
+      if (!this.streamId) return undefined;
+      return Stream.getStream(this.streamId);
     } catch (e) {
       console.error(e);
       return undefined;
@@ -190,12 +189,9 @@ export class BaseClient {
   
 
   getPublicState(){
-    // const ownedVenues = this.ownedVenues.map(v => v.venueId);
-
-    // const ownedVenues = keyBy(this.ownedVenues.value, (v) => v.venueId);
-    const ownedVenues = this.ownedVenues.value.reduce<Record<StreamId, StreamListInfo>>((acc, venue) => {
-      const { streamId: venueId } = venue;
-      acc[venueId as StreamId] = venue;
+    const ownedStreams = this.ownedVenues.value.reduce<Record<StreamId, StreamListInfo>>((acc, stream) => {
+      const { streamId } = stream;
+      acc[streamId as StreamId] = stream;
       return acc;
     }, {});
     return {
@@ -203,9 +199,9 @@ export class BaseClient {
       userId: this.userId,
       username: this.username,
       role: this.role,
-      currentVenueId: this.venue?.streamId,
+      currentVenueId: this.stream?.streamId,
       producers: this.publicProducers.value,
-      ownedVenues
+      ownedStreams
     };
   }
 
@@ -214,8 +210,8 @@ export class BaseClient {
     // log.info(`unloading base client ${ this.username } ${this.connectionId} `);
   }
 
-  /** clean up clients state related to venue when removed */
-  onRemovedFromVenue(){
+  /** clean up clients state related to stream when removed */
+  onRemovedFromStream() {
     this.teardownMediasoupObjects();
   }
 
@@ -232,10 +228,10 @@ export class BaseClient {
 
   async createWebRtcTransport(direction: 'send' | 'receive'){
     log.info(`creating (${direction}) webrtcTransport`);
-    if(!this.venue) {
-      throw Error('must be in a venue in order to create transport');
+    if (!this.stream) {
+      throw Error('must be in a stream in order to create transport');
     }
-    const transport = await this.venue.createWebRtcTransport();
+    const transport = await this.stream.createWebRtcTransport();
     if(!transport){
       throw new Error('failed to create transport!!');
     }
@@ -334,7 +330,7 @@ export class BaseClient {
         rtpParameters: preExistingConsumer.rtpParameters,
       };
     }
-    const canConsume = this.venue?.router.canConsume({ producerId, rtpCapabilities: this.rtpCapabilities});
+    const canConsume = this.stream?.router.canConsume({ producerId, rtpCapabilities: this.rtpCapabilities });
     if( !canConsume){
       throw Error('Client is not capable of consuming the producer according to provided rtpCapabilities');
     }

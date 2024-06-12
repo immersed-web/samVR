@@ -72,7 +72,7 @@ export const userClientP = procedure.use(isUserClientM);
 export const senderClientP = procedure.use(isSenderClientM);
 
 export const isInVenueM = middleware(({ctx, next, path})=> {
-  const stream = ctx.client.venue;
+  const stream = ctx.client.stream;
   if (!stream) {
     throw new TRPCError({code: 'PRECONDITION_FAILED', message: `You have to be added to a venue before performing action: ${path}`});
   }

@@ -7,7 +7,7 @@ import { StreamListInfo, StreamIdSchema } from 'schemas';
 import { z } from 'zod';
 import { db, schema } from 'database';
 import { procedure as p, router, isInVenueM, clientInVenueP } from '../trpc/trpc.js';
-import { UserClient, Venue } from '../classes/InternalClasses.js';
+import { UserClient, Stream } from '../classes/InternalClasses.js';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 
@@ -38,7 +38,7 @@ export const streamRouter = router({
   //   return Venue.getLoadedVenuesPublicState();
   // }),
   loadAndJoinStream: p.input(z.object({ streamId: StreamIdSchema })).mutation(async ({ input, ctx }) => {
-    await Venue.loadStream(input.streamId, ctx.userId);
+    await Stream.loadStream(input.streamId, ctx.userId);
     const vState = await ctx.client.joinStream(input.streamId);
     return vState;
   }),

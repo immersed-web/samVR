@@ -3,7 +3,7 @@ export * from './BaseClient.js';
 export * from './UserClient.js';
 export * from './SenderClient.js';
 
-export * from './Venue.js';
+export * from './Stream.js';
 
 export * from './Camera.js';
 export * from './VrSpace.js';

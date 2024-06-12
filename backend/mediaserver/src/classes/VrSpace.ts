@@ -1,6 +1,6 @@
 import { ClientTransforms, ConnectionId, UserId, VrSpaceId } from 'schemas';
 import { throttle, pick } from 'lodash-es';
-import type { UserClient, Venue } from './InternalClasses.js';
+import type { UserClient, Stream } from './InternalClasses.js';
 
 import { Log } from 'debug-level';
 import { VrSpaceWithIncludes, db, queryVrSpaceWithIncludes, schema } from 'database';

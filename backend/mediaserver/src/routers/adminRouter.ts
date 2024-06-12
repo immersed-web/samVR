@@ -5,7 +5,7 @@ log.enable(process.env.DEBUG);
 
 import { TRPCError } from '@trpc/server';
 import { observable } from '@trpc/server/observable';
-import { BaseClient, Camera, loadUserDBData, SenderClient, UserClient, Venue } from '../classes/InternalClasses.js';
+import { BaseClient, Camera, loadUserDBData, SenderClient, UserClient, Stream } from '../classes/InternalClasses.js';
 import { CameraIdSchema, hasAtLeastSecurityLevel, SenderIdSchema, StreamId, StreamIdSchema, StreamUpdateSchema, CameraInsertSchema, CameraPortalInsertSchema, CameraUpdateSchema } from 'schemas';
 import { z } from 'zod';
 import { atLeastModeratorP, currentVenueAdminP, isUserClientM, isVenueOwnerM, procedure as p, router } from '../trpc/trpc.js';
@@ -17,7 +17,7 @@ export const adminRouter = router({
   createNewStream: atLeastModeratorP.use(isUserClientM).input(z.object({
     name: z.string()
   })).mutation(async ({input, ctx}) => {
-    const streamId = await Venue.createNewStream(input.name, ctx.userId);
+    const streamId = await Stream.createNewStream(input.name, ctx.userId);
     ctx.client.loadPrismaDataAndNotifySelf('Stream created');
     return streamId;
   }),
@@ -28,7 +28,7 @@ export const adminRouter = router({
   }),
   deleteStream: atLeastModeratorP.use(isUserClientM).input(z.object({ streamId: StreamIdSchema })).mutation(async ({ ctx, input }) => {
     const streamId = input.streamId;
-    if (Venue.streamIsLoaded({ streamId: streamId })) {
+    if (Stream.streamIsLoaded({ streamId: streamId })) {
       throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'Cant delete a stream when its loaded. Unload it first!' });
     }
     if(
@@ -37,16 +37,16 @@ export const adminRouter = router({
       throw new TRPCError({code: 'PRECONDITION_FAILED', message: 'You are not owner or dont have high enough permission. Now Cry!'});
     }
 
-    const [deletedVenue] = await Venue.deleteStream(streamId);
+    const [deletedVenue] = await Stream.deleteStream(streamId);
     await ctx.client.loadPrismaDataAndNotifySelf('stream deleted');
     return deletedVenue.streamId;
   }),
   loadStream: atLeastModeratorP.input(z.object({ streamId: StreamIdSchema })).mutation(async ({ input, ctx }) => {
-    const stream = await Venue.loadStream(input.streamId, ctx.userId);
+    const stream = await Stream.loadStream(input.streamId, ctx.userId);
     return { publicVenueState: stream.getPublicState(), adminOnlyVenueState: stream.getAdminOnlyState() };
   }),
   loadAndJoinStream: atLeastModeratorP.input(z.object({ streamId: StreamIdSchema })).mutation(async ({ input, ctx }) => {
-    const stream = await Venue.loadStream(input.streamId, ctx.userId);
+    const stream = await Stream.loadStream(input.streamId, ctx.userId);
     const vState = await ctx.client.joinStream(input.streamId);
     const adminOnlyState = stream.getAdminOnlyState();
     return { publicStreamState: vState, adminOnlyStramState: adminOnlyState };
