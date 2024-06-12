@@ -68,14 +68,8 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     currentVrSpace.value = undefined;
   }
   async function updateVrSpace() {
-    console.log('UPDATE');
     if (!currentVrSpace.value) return;
     console.log('gonna send update for VrSpace');
-    // const data = omit<_ReceivedVrSpaceState, keyof _ReceivedVrSpaceState>(currentVrSpace.value, ['navMeshAsset', 'clients', 'panoramicPreview', 'placedObjects', 'worldModelAsset', 'updatedAt', 'createdAt']);
-    // const ss= data.
-    // const sendData: VrSpaceUpdate = {
-    //   ...currentVrSpace.value.dbData
-    // }
     await connection.client.vr.updateVrSpace.mutate(currentVrSpace.value.dbData);
   }
 
