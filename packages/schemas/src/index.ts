@@ -2,7 +2,9 @@ import { z } from 'zod';
 import type { JwtPayload as JwtShapeFromLib } from 'jsonwebtoken'
 // import { Role, Venue, VirtualSpace3DModel, Visibility, Camera, CameraType as PrismaCameraType, Prisma, ModelFileFormat } from "database";
 import * as schema from 'database/schema';
-import { createInsertSchema } from 'drizzle-zod';
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+import { is } from 'drizzle-orm';
+import { PgUUID } from 'drizzle-orm/pg-core';
 
 // const PlacedObjectInsertSchema = createInsertSchema(schema.placedObjects)
 
@@ -196,7 +198,6 @@ export type StreamListInfo = Prettify<Pick<typeof schema.streams.$inferSelect,
 export const StreamInsertSchema = createInsertSchema(schema.streams, {
   streamId: StreamIdSchema.optional(),
   ownerUserId: UserIdSchema,
-  // vrSpaceId: VrSpaceIdSchema.optional(),
   mainCameraId: CameraIdSchema.optional(),
 })
   .omit(timestampKeys)
@@ -285,6 +286,28 @@ export const PermissionInsertSchema = createInsertSchema(schema.permissions, {
   userId: UserIdSchema,
   targetId: z.union([StreamIdSchema, VrSpaceIdSchema])
 })
+
+const PermissionSelectSchema = createSelectSchema(schema.permissions, {
+  targetId: z.union([StreamIdSchema, VrSpaceIdSchema]),
+  userId: UserIdSchema,
+})
+type PermissionSelect = Prettify<z.TypeOf<typeof PermissionSelectSchema>>;
+
+const StreamPermissionSelectSchema = PermissionSelectSchema.extend({ targetType: z.literal('stream'), targetId: StreamIdSchema })
+type StreamPermission = z.TypeOf<typeof StreamPermissionSelectSchema>
+export function isStreamPermission(dbPermission: PermissionSelect): dbPermission is StreamPermission {
+  return dbPermission.targetType === 'stream';
+}
+
+const VrSpacePermissionSelectSchema = PermissionSelectSchema.extend({ targetType: z.literal('vrSpace'), targetId: VrSpaceIdSchema })
+type VrSpacePermission = z.TypeOf<typeof VrSpacePermissionSelectSchema>
+export function isVrSpacePermission(dbPermission: PermissionSelect): dbPermission is VrSpacePermission {
+  return dbPermission.targetType === 'vrSpace';
+}
+
+
+
+
 export const JwtUserDataSchema = z.object({
   userId: UserIdSchema,
   username: z.string(),

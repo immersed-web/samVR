@@ -90,12 +90,18 @@ export const usersRelations = relations(users, ({ many }) => ({
 
 export const PermissionTargetType = pgEnum("PermissionTargetType", ['stream', 'vrSpace'])
 export const PermissionLevel = pgEnum("PermissionLevel", ['edit', 'owner'])
+
 export const permissions = pgTable("Permissions", {
 	userId: uuid("userId").notNull().$type<UserId>().references(() => users.userId, { onDelete: "cascade", onUpdate: "cascade" }),
 	targetType: PermissionTargetType("targetType").notNull(),
 	targetId: uuid("targetId").notNull().$type<StreamId | VrSpaceId>(),
 	permissionLevel: PermissionLevel("permissionLevel").default('edit').notNull(),
-})
+},
+	(table) => {
+		return {
+			userId_targetType_targetId_key: primaryKey({ columns: [table.userId, table.targetType, table.targetId], name: "permissions_pkey" }),
+		}
+	});
 
 export const permissionsRelations = relations(permissions, ({ one }) => ({
 	user: one(users, {

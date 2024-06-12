@@ -16,23 +16,10 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
 
   const currentVrSpace = ref<_ReceivedVrSpaceState>();
 
-  const { ignoreUpdates, } = watchIgnorable(() => currentVrSpace, (newPos) => {
+  const { ignoreUpdates, } = watchIgnorable(() => currentVrSpace.value, (newVal, oldVal) => {
+    console.log('currentVrSpace watcher triggered', oldVal, newVal);
     updateVrSpace();
   }, { deep: true });
-
-  // watch(() => vrSpaceStore.writableState, (newPos) => {
-  //   console.log('vrSpace updated');
-  //   vrSpaceStore.updateVrSpace();
-  // }, { deep: true });
-
-  // const writableState = computed({
-  //   get() {
-  //     return currentVrSpace.value
-  //   },
-  //   set(newValue) {
-  //     currentVrSpace.value = newValue;
-  //   }
-  // })
 
   eventReceiver.vrSpace.vrSpaceStateUpdated.subscribe(({ data, reason }) => {
     console.log(`vrSpaceState updated. ${reason}:`, data);
@@ -57,7 +44,9 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
   });
 
   async function createVrSpace(name: string) {
-    currentVrSpace.value = await connection.client.vr.createVrSpace.mutate({ name });
+    const vrSpaceId = await connection.client.vr.createVrSpace.mutate({ name });
+    return vrSpaceId
+    // currentVrSpace.value = 
   }
   
   async function enterVrSpace(vrSpaceId: VrSpaceId) {
@@ -69,7 +58,7 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
   }
   async function updateVrSpace() {
     if (!currentVrSpace.value) return;
-    console.log('gonna send update for VrSpace');
+    console.log('gonna send update for VrSpace', currentVrSpace.value.dbData);
     await connection.client.vr.updateVrSpace.mutate(currentVrSpace.value.dbData);
   }
 

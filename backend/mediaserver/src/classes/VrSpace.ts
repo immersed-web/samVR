@@ -104,6 +104,15 @@ export class VrSpace {
     // log.info(this.dbData);
   }
 
+  async reloadDbData(reason?: string) {
+    const dbResponse = await queryVrSpaceWithIncludes.execute({ vrSpaceId: this.vrSpaceId });
+    if (!dbResponse) {
+      throw Error('No vrSpace with that vrSpaceId in db');
+    }
+    this.dbData = dbResponse;
+    this._notifyStateUpdated(reason ?? 'dbData was updated');
+  }
+
   // Static stuff for global housekeeping
   private static vrSpaces: Map<VrSpaceId, VrSpace> = new Map();
 

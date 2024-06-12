@@ -216,6 +216,15 @@ export class Stream {
     return dbResponse
   }
 
+  async reloadDbData(reason?: string) {
+    const dbResponse = await queryStreamWithIncludes.execute({ streamId: this.streamId });
+    if (!dbResponse) {
+      throw Error('No stream with that streamId in db');
+    }
+    this.dbData = dbResponse;
+    this._notifyStateUpdated(reason ?? 'dbData was updated');
+  }
+
   _notifyStateUpdated(reason?: string) {
     const publicState = this.getPublicState();
     this.clients.forEach(c => {

@@ -43,7 +43,17 @@ export const queryStreamWithIncludes = db.query.streams.findFirst({
     owner: {
       columns: basicUserSelect,
     },
-    allowedUsers: true,
+    allowedUsers: {
+      where: eq(schema.permissions.targetType, 'stream'),
+      columns: {
+        permissionLevel: true,
+      },
+      with: {
+        user: {
+          columns: basicUserSelect
+        }
+      }
+    },
     // vrSpace: {
     //   with: {
     //     worldModelAsset: true,
@@ -78,7 +88,17 @@ export const queryVrSpaceWithIncludes = db.query.vrSpaces.findFirst({
     navMeshAsset: true,
     panoramicPreview: true,
     placedObjects: true,
-    allowedUsers: true,
+    allowedUsers: {
+      where: eq(schema.permissions.targetType, 'vrSpace'),
+      columns: {
+        permissionLevel: true,
+      },
+      with: {
+        user: {
+          columns: basicUserSelect
+        }
+      }
+    },
   }
 }).prepare('queryVrSpaceWithIncludes');
 export type VrSpaceWithIncludes = NonNullable<Awaited<ReturnType<typeof queryVrSpaceWithIncludes.execute>>>
