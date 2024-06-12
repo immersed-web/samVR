@@ -1,5 +1,5 @@
-import { createWorker, types as soupTypes} from 'mediasoup';
-import config from '../mediasoupConfig';
+import { createWorker, types as soupTypes } from 'mediasoup';
+import config from '../soupConfig.js';
 
 import { cpus } from 'os';
 
@@ -8,7 +8,7 @@ const workerOptions = config.worker;
 const numWorkers = cpus().length;
 
 const workers: soupTypes.Worker[] = [];
-export async function createWorkers(){
+export async function createWorkers() {
   for (let i = 0; i < numWorkers; i++) {
     const worker = await createWorker(workerOptions);
 
@@ -33,7 +33,7 @@ export function getMediasoupWorker() {
   if (++nextMediasoupWorkerIdx === workers.length)
     nextMediasoupWorkerIdx = 0;
 
-  if(!worker){
+  if (!worker) {
     throw new Error('no soup workers available! Have you created any?');
   }
   return worker;

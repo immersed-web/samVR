@@ -3,6 +3,7 @@ const log = new Log('BaseClient');
 process.env.DEBUG = 'BaseClient*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
+
 import { ConnectionId, JwtUserData, UserId, UserRole, StreamId, ConnectionIdSchema, StreamListInfo, Prettify } from 'schemas';
 import { types as soupTypes } from 'mediasoup';
 import type { types as soupClientTypes } from 'mediasoup-client';
@@ -14,6 +15,7 @@ import { computed, ref, shallowRef, effect } from '@vue/reactivity';
 import { eq } from 'drizzle-orm';
 import type { MyWebsocketType } from 'index.js';
 import { Payload, createTypedEvents, EventSender } from 'ts-event-bridge/sender';
+import { createWebRtcTransport } from 'modules/soupUtils.js';
 
 export type DataAndReason<T> = Prettify<{ data: T, reason?: string }>
 
@@ -89,6 +91,7 @@ export class BaseClient {
   protected ws: MyWebsocketType | undefined;
   // protected eventSender: ReturnType<typeof createStandaloneEventSender<BaseClientEvents>>;
   protected eventSender: EventSender<MyWebsocketType, BaseClientEventMap>;
+  protected get currentRouter() { return this.stream?.router; }
   constructor({ connectionId = ConnectionIdSchema.parse(randomUUID()), jwtUserData, dbData, ws }: ClientConstructorParams) {
     // super();
     this.ws = ws;
@@ -159,7 +162,6 @@ export class BaseClient {
    */
   _setStream(streamId: StreamId | undefined) {
     this.streamId = streamId;
-    // this.getVenue()?.createWebRtcTransport();
   }
   get stream() {
     try{
@@ -231,7 +233,11 @@ export class BaseClient {
     if (!this.stream) {
       throw Error('must be in a stream in order to create transport');
     }
-    const transport = await this.stream.createWebRtcTransport();
+    const router = this.currentRouter;
+    if (!router) {
+      throw Error('no mediasoup router found!');
+    }
+    const transport = await createWebRtcTransport(router);
     if(!transport){
       throw new Error('failed to create transport!!');
     }

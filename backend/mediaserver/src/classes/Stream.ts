@@ -3,8 +3,8 @@ const log = new Log('Stream');
 process.env.DEBUG = 'Stream*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
-import mediasoupConfig from '../mediasoupConfig.js';
-import { getMediasoupWorker } from '../modules/mediasoupWorkers.js';
+import mediasoupConfig from '../soupConfig.js';
+import { getMediasoupWorker } from '../modules/soupWorkers.js';
 
 import { types as soupTypes } from 'mediasoup';
 import { ConnectionId, UserId, StreamId, CameraId, StreamUpdate, SenderId, hasAtLeastSecurityLevel, Prettify } from 'schemas';
@@ -199,7 +199,7 @@ export class Stream {
   //
   // NOTE: It's important we release all references here!
   unload() {
-    log.info(`*****UNLOADING VENUE: ${this.name} (${this.streamId})`);
+    log.info(`*****UNLOADING STREAM: ${this.name} (${this.streamId})`);
     this.clients.forEach(c => {
       c.eventSender.stream.streamWasUnloaded({ streamId: this.streamId });
     })
@@ -327,26 +327,6 @@ export class Stream {
   //   this.emitToAllClients('senderAddedOrRemoved', {client: senderClient.getPublicState(), added: false}, senderClient.connectionId);
   // }
 
-  async createWebRtcTransport() {
-    const transport = await this.router.createWebRtcTransport(mediasoupConfig.webRtcTransport);
-
-    if (mediasoupConfig.maxIncomingBitrate) {
-      try {
-        await transport.setMaxIncomingBitrate(mediasoupConfig.maxIncomingBitrate);
-      } catch (e) {
-        log.error('failed to set maximum incoming bitrate');
-      }
-    }
-
-    transport.on('dtlsstatechange', (dtlsState: soupTypes.DtlsState) => {
-      if (dtlsState === 'closed') {
-        log.info('---transport close--- transport with id ' + transport.id + ' closed');
-        transport.close();
-      }
-    });
-
-    return transport;
-  }
 
   // Virtual space (lobby) stuff
 
@@ -548,7 +528,6 @@ export class Stream {
     return deletedStream;
   }
 
-  // static async clientRequestLoadVenue()
   static async loadStream(streamId: StreamId, ownerUserId: UserId, worker?: soupTypes.Worker) {
     log.info(`*****TRYING TO LOAD STREAM: ${streamId}`);
     try {
@@ -558,15 +537,6 @@ export class Stream {
         return loadedStream;
       }
       const dbResponse = await queryStreamWithIncludes.execute({ streamId });
-      // const dbResponse = await db.query.streams.findFirst({
-      //   where: eq(schema.streams.streamId, streamId),
-      //   with: {
-      //     owner: { columns: basicUserSelect },
-      //     cameras: true,
-      //     mainCamera: true,
-      //     vrSpace: true,
-      //   }
-      // });
       if (!dbResponse) {
         throw Error('No stream with that streamId in db');
       }

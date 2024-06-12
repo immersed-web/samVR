@@ -6,13 +6,14 @@ log.enable(process.env.DEBUG);
 import { ClientTransform, ClientTransforms, StreamId, CameraId, ClientType, VrSpaceId } from 'schemas';
 import { loadUserDBData, SenderClient, Stream, VrSpace, BaseClient, DataAndReason, BaseClientEventMap } from './InternalClasses.js';
 import { effect } from '@vue/reactivity';
-import { EventSender, Payload, createTypedEvents } from 'ts-event-bridge/sender';
+import { EventSender, Payload } from 'ts-event-bridge/sender';
 import { MyWebsocketType } from 'index.js';
 
 type EventMapAdditions = {
   vrSpace: {
     vrSpaceStateUpdated: Payload<DataAndReason<ReturnType<VrSpace['getPublicState']>>>,
     clientTransforms: Payload<ClientTransforms>
+    vrSpaceWasUnloaded: Payload<{ vrSpaceId: VrSpaceId }>,
   },
   user: {
     someClientStateUpdated: Payload<DataAndReason<ReturnType<UserClient['getPublicState']>>>,
@@ -26,6 +27,11 @@ export type UserClientEventMap = EventMapAdditions & BaseClientEventMap
  * This class represents the backend state of a user client connection.
  */
 export class UserClient extends BaseClient {
+  get currentRouter() {
+    if (this.vrSpace) return this.vrSpace.router;
+    if (this.stream) return this.stream.router;
+    return undefined;
+  }
   constructor(...args: ConstructorParameters<typeof BaseClient>){
     super(...args);
     log.info(`Creating user client ${this.username} (${this.connectionId})`);

@@ -1,9 +1,12 @@
 import { ClientTransforms, ConnectionId, UserId, VrSpaceId } from 'schemas';
+import { types as soupTypes } from 'mediasoup';
 import { throttle, pick } from 'lodash-es';
 import type { UserClient, Stream } from './InternalClasses.js';
 
 import { Log } from 'debug-level';
 import { VrSpaceWithIncludes, db, queryVrSpaceWithIncludes, schema } from 'database';
+import { getMediasoupWorker } from 'modules/soupWorkers.js';
+import mediasoupConfig from 'soupConfig.js';
 const log = new Log('VR:Space');
 process.env.DEBUG = 'VR:Space*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
@@ -17,8 +20,11 @@ export class VrSpace {
     return this.dbData.vrSpaceId;
   }
 
+  router: soupTypes.Router;
+
   pendingTransforms: ClientTransforms = {};
-  constructor(vrSpace: VrSpaceWithIncludes) {
+  constructor(vrSpace: VrSpaceWithIncludes, router: soupTypes.Router) {
+    this.router = router;
     this.dbData = vrSpace;
     this.clients = new Map();
   }
@@ -85,12 +91,17 @@ export class VrSpace {
   // make this instance eligible for GC. Make sure we cut all the references to the instance in here!
   unload() {
     //clean up listeners and such in here!
+    this.clients.forEach(client => {
+      client.eventSender.vrSpace.vrSpaceWasUnloaded({ vrSpaceId: this.vrSpaceId });
+    })
+    this.router.close();
+    VrSpace.vrSpaces.delete(this.vrSpaceId);
   }
   
   // Static stuff for global housekeeping
   private static vrSpaces: Map<VrSpaceId, VrSpace> = new Map();
 
-  static async loadVrSpace(vrSpaceId: VrSpaceId) {
+  static async loadVrSpace(vrSpaceId: VrSpaceId, worker?: soupTypes.Worker) {
     log.info(`loading vrSpace ${vrSpaceId}`);
     const dbResponse = await queryVrSpaceWithIncludes.execute({ vrSpaceId });
   // const response = await prismaClient.virtualSpace.findUnique({
@@ -104,7 +115,11 @@ export class VrSpace {
     if (!dbResponse) {
       throw Error('failed to load vrSpace. Didnt find vrSpace with that id in db');
     }
-    const vrSpace = new VrSpace(dbResponse);
+    if (!worker) {
+      worker = getMediasoupWorker();
+    }
+    const router = await worker.createRouter(mediasoupConfig.router);
+    const vrSpace = new VrSpace(dbResponse, router);
     VrSpace.vrSpaces.set(vrSpace.vrSpaceId, vrSpace);
     return vrSpace;
   }

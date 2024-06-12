@@ -9,16 +9,17 @@ process.env.DEBUG = 'Index*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
 
-import { attachMediasoupObservers } from './mediasoupObservers.js';
+import { attachMediasoupObservers } from './soupObservers.js';
 let printSoupStats : (() => void) | undefined;
 if(process.env.DEVELOPMENT){
   printSoupStats = attachMediasoupObservers();
 }
 
+
 import { printClassInstances } from './DebugObservers.js';
 import uWebSockets, { WebSocket } from 'uWebSockets.js';
 const { DEDICATED_COMPRESSOR_3KB } = uWebSockets;
-import { createWorkers } from './modules/mediasoupWorkers.js';
+import { createWorkers } from './modules/soupWorkers.js';
 import { verifyJwtToken } from 'shared-modules/jwtUtils';
 import { extractMessageFromCatch } from 'shared-modules/utilFns';
 import { JwtUserData, JwtUserDataSchema, hasAtLeastSecurityLevel, UserId, UserIdSchema, ClientType } from 'schemas';
@@ -65,11 +66,13 @@ if(stdin && stdin.isTTY){
       case 'c':
         printClassInstances(clientConnections);
         break;
-    // write the key to stdout all normal like
-    // process.stdout.write( 'bajs' );
+      // write the key to stdout all normal like
     }
+    process.stdout.write(asString);
   });
 }
+
+
 
 
 const {onSocketOpen, onSocketMessage, onSocketClose} = applyWSHandler<AppRouter, Context>({router: appRouter});
