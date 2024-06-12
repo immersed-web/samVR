@@ -91,7 +91,7 @@ export const usersRelations = relations(users, ({ many }) => ({
 export const PermissionTargetType = pgEnum("PermissionTargetType", ['stream', 'vrSpace'])
 export const PermissionLevel = pgEnum("PermissionLevel", ['edit', 'owner'])
 export const permissions = pgTable("Permissions", {
-	userId: uuid("userId").notNull().references(() => users.userId, { onDelete: "cascade", onUpdate: "cascade" }),
+	userId: uuid("userId").notNull().$type<UserId>().references(() => users.userId, { onDelete: "cascade", onUpdate: "cascade" }),
 	targetType: PermissionTargetType("targetType").notNull(),
 	targetId: uuid("targetId").notNull().$type<StreamId | VrSpaceId>(),
 	permissionLevel: PermissionLevel("permissionLevel").default('edit').notNull(),
@@ -263,7 +263,7 @@ export const vrSpaces = pgTable("VrSpaces", {
 	ownerUserId: uuid("ownerUserId").notNull().$type<UserId>().references(() => users.userId, { onDelete: "cascade", onUpdate: "cascade" }),
 	worldModelAssetId: uuid("worldModelAssetId").references(() => assets.assetId).$type<AssetId>(),
 	navMeshAssetId: uuid("navMeshAssetId").references(() => assets.assetId).$type<AssetId>(),
-	panoramicPreviewAssetId: uuid('panoramicPreview').references(() => assets.assetId),
+	panoramicPreviewAssetId: uuid('panoramicPreview').references(() => assets.assetId).$type<AssetId>(),
 	visibility: VisibilityEnum("visibility").default('public').notNull(),
 	worldModelScale: doublePrecision("worldModelScale").default(1).notNull(),
 	spawnPosition: real("spawnPosition").array(),

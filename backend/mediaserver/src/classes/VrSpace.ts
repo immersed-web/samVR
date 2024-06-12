@@ -1,4 +1,4 @@
-import { ClientTransforms, ConnectionId, UserId, VrSpaceId } from 'schemas';
+import { ClientTransforms, ConnectionId, UserId, VrSpaceId, VrSpaceUpdate } from 'schemas';
 import { types as soupTypes } from 'mediasoup';
 import { throttle, pick } from 'lodash-es';
 import type { UserClient, Stream } from './InternalClasses.js';
@@ -51,7 +51,7 @@ export class VrSpace {
       return [cId, cData] as const;
     });
     const clientsRecord = Object.fromEntries(clientsWithProducers);
-    return { ...returnState, clients: clientsRecord as Record<ConnectionId, (typeof clientsRecord)[string]> };
+    return { dbData: returnState, clients: clientsRecord as Record<ConnectionId, (typeof clientsRecord)[string]> };
   }
 
   addClient(client: UserClient) {
@@ -98,6 +98,12 @@ export class VrSpace {
     VrSpace.vrSpaces.delete(this.vrSpaceId);
   }
   
+  async setDbData(data: VrSpaceUpdate) {
+    this.dbData = { ...this.dbData, ...data };
+    this._notifyStateUpdated('the dbData was updated');
+    // log.info(this.dbData);
+  }
+
   // Static stuff for global housekeeping
   private static vrSpaces: Map<VrSpaceId, VrSpace> = new Map();
 

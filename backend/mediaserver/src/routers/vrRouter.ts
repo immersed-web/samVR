@@ -3,13 +3,14 @@ const log = new Log('Router:VR');
 process.env.DEBUG = 'Router:VR*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
-import { ClientTransformSchema, VrSpaceIdSchema } from 'schemas';
+import { ClientTransformSchema, VrSpaceIdSchema, vrSpaceUpdateSchema } from 'schemas';
 import { procedure as p, router, isUserClientM, userClientP, atLeastUserP, userInVrSpaceP } from '../trpc/trpc.js';
 import { VrSpace } from 'classes/VrSpace.js';
 import { z } from 'zod';
 import { db, schema } from 'database';
 import { eq, and, or } from 'drizzle-orm';
 import { permissions } from 'database/schema';
+import { update } from 'lodash-es';
 
 export const vrRouter = router({
   listAvailableVrSpaces: userClientP.query(async ({ ctx }) => {
@@ -61,6 +62,14 @@ export const vrRouter = router({
   leaveVrSpace: userClientP.mutation(({ ctx }) => {
     ctx.client.leaveCurrentVrSpace();
     // ctx.vrSpace.removeClient(ctx.client);
+  }),
+  updateVrSpace: atLeastUserP.use(isUserClientM).input(vrSpaceUpdateSchema).mutation(async ({ ctx, input }) => {
+    // log.info('updating vrSpace', input);
+    const { vrSpaceId, ...data } = input;
+    const [dbResponse] = await db.update(schema.vrSpaces).set(data).where(eq(schema.vrSpaces.vrSpaceId, vrSpaceId)).returning();
+    const vrSpace = VrSpace.getVrSpace(vrSpaceId);
+    if (!vrSpace) return;
+    vrSpace.setDbData(dbResponse)
   }),
   // getState: userInVrSpaceP.query(({ ctx }) => {
   //   ctx.vrSpace.getPublicState();

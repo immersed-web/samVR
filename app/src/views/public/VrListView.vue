@@ -4,6 +4,7 @@
   <div>
     <div class="flex gap-2 items-center" v-for="space in availableVrSpaces">
       <p>{{ space.name }}</p>
+      <pre>{{ space }}</pre>
       <button v-if="space.ownerUserId === clientStore.clientState?.userId" @click="goToVrSpaceSettings(space.vrSpaceId)"
         class="btn btn-xs">redigera</button>
     </div>

@@ -212,7 +212,6 @@ export class Stream {
   async update(input: StreamUpdate) {
     log.info('Update stream db data', input);
     this.dbData = { ...this.dbData, ...input };
-    log.info('Update stream db data', this.dbData);
     const dbResponse = await db.update(schema.streams).set(this.dbData).where(eq(schema.streams.streamId, this.dbData.streamId)).returning();
     return dbResponse
   }

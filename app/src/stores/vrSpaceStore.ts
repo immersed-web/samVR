@@ -1,10 +1,11 @@
 import { defineStore } from 'pinia';
 
-import { type ClientTransform, type ClientTransforms, type ConnectionId, type VrSpaceId } from 'schemas';
-import { ref } from 'vue';
+import { type ClientTransform, type ClientTransforms, type ConnectionId, type VrSpaceId, type VrSpaceUpdate } from 'schemas';
+import { computed, ref } from 'vue';
 import { useConnectionStore } from './connectionStore';
 import { eventReceiver, type ExtractPayload, type RouterOutputs, type SubscriptionValue } from '@/modules/trpcClient';
 import { useClientStore } from './clientStore';
+import { watchIgnorable } from '@vueuse/core';
 
 type _ReceivedVrSpaceState = ExtractPayload<typeof eventReceiver.vrSpace.vrSpaceStateUpdated.subscribe>['data'];
 
@@ -15,9 +16,27 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
 
   const currentVrSpace = ref<_ReceivedVrSpaceState>();
 
+  const { ignoreUpdates, } = watchIgnorable(() => currentVrSpace, (newPos) => {
+    updateVrSpace();
+  }, { deep: true });
+
+  // watch(() => vrSpaceStore.writableState, (newPos) => {
+  //   console.log('vrSpace updated');
+  //   vrSpaceStore.updateVrSpace();
+  // }, { deep: true });
+
+  // const writableState = computed({
+  //   get() {
+  //     return currentVrSpace.value
+  //   },
+  //   set(newValue) {
+  //     currentVrSpace.value = newValue;
+  //   }
+  // })
+
   eventReceiver.vrSpace.vrSpaceStateUpdated.subscribe(({ data, reason }) => {
     console.log(`vrSpaceState updated. ${reason}:`, data);
-    currentVrSpace.value = data;
+    ignoreUpdates(() => currentVrSpace.value = data);
   });
   
   eventReceiver.vrSpace.clientTransforms.subscribe((data) => {
@@ -48,6 +67,18 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     await connection.client.vr.leaveVrSpace.mutate();
     currentVrSpace.value = undefined;
   }
+  async function updateVrSpace() {
+    console.log('UPDATE');
+    if (!currentVrSpace.value) return;
+    console.log('gonna send update for VrSpace');
+    // const data = omit<_ReceivedVrSpaceState, keyof _ReceivedVrSpaceState>(currentVrSpace.value, ['navMeshAsset', 'clients', 'panoramicPreview', 'placedObjects', 'worldModelAsset', 'updatedAt', 'createdAt']);
+    // const ss= data.
+    // const sendData: VrSpaceUpdate = {
+    //   ...currentVrSpace.value.dbData
+    // }
+    await connection.client.vr.updateVrSpace.mutate(currentVrSpace.value.dbData);
+  }
+
   async function updateTransform(transform: ClientTransform){
     await connection.client.vr.transform.updateTransform.mutate(transform);
   }
@@ -57,6 +88,7 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     createVrSpace,
     enterVrSpace,
     leaveVrSpace,
+    updateVrSpace,
     updateTransform,
   };
 });

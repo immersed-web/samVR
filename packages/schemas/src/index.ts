@@ -228,6 +228,19 @@ export type CameraInsert = z.TypeOf<typeof CameraInsertSchema>;
 export const CameraUpdateSchema = CameraInsertSchema.partial().required({ cameraId: true });
 export type CameraUpdate = z.TypeOf<typeof CameraUpdateSchema>;
 
+export const VrSpaceInserSchema = createInsertSchema(schema.vrSpaces, {
+  vrSpaceId: VrSpaceIdSchema.optional(),
+  worldModelAssetId: AssetIdSchema,
+  navMeshAssetId: AssetIdSchema.optional(),
+  panoramicPreviewAssetId: AssetIdSchema.optional(),
+})
+  .omit(timestampKeys)
+  .omit({ ownerUserId: true })
+  .merge(optionalReason);
+export type VrSpaceInsert = z.TypeOf<typeof VrSpaceInserSchema>;
+export const vrSpaceUpdateSchema = VrSpaceInserSchema.partial().required({ vrSpaceId: true });
+export type VrSpaceUpdate = z.TypeOf<typeof vrSpaceUpdateSchema>;
+
 // type CameraUpdatePayload = Partial<Pick<Prisma.CameraUpdateInput,
 //   'name'
 //   | 'fovStart'
@@ -268,6 +281,10 @@ export const CameraFOVUpdateSchema = z.object({
 })
 export type CameraFOVUpdate = z.TypeOf<typeof CameraFOVUpdateSchema>;
 
+export const PermissionInsertSchema = createInsertSchema(schema.permissions, {
+  userId: UserIdSchema,
+  targetId: z.union([StreamIdSchema, VrSpaceIdSchema])
+})
 export const JwtUserDataSchema = z.object({
   userId: UserIdSchema,
   username: z.string(),
@@ -291,6 +308,7 @@ export const ClientTransformSchema = z.object({
 })
 export type ClientTransform = z.TypeOf<typeof ClientTransformSchema>;
 export type ClientTransforms = Record<ConnectionId, ClientTransform>;
+
 
 // export const ClientInfoSchema = z.object({
 //   userId: UserIdSchema,

@@ -43,6 +43,7 @@ export const queryStreamWithIncludes = db.query.streams.findFirst({
     owner: {
       columns: basicUserSelect,
     },
+    allowedUsers: true,
     // vrSpace: {
     //   with: {
     //     worldModelAsset: true,
@@ -77,6 +78,7 @@ export const queryVrSpaceWithIncludes = db.query.vrSpaces.findFirst({
     navMeshAsset: true,
     panoramicPreview: true,
     placedObjects: true,
+    allowedUsers: true,
   }
 }).prepare('queryVrSpaceWithIncludes');
 export type VrSpaceWithIncludes = NonNullable<Awaited<ReturnType<typeof queryVrSpaceWithIncludes.execute>>>
