@@ -76,10 +76,20 @@ export function groupUserPermissions(permissions: PermissionInclude) {
   }, { streams: [], vrSpaces: [] });
   return groupedData;
 }
+type TargetObjectWithAllowedUsers = {
+  ownerUserId: UserId,
+  allowedUsers: {
+    userId: UserId;
+    targetType: PermissionTargetType;
+    targetId: TargetId;
+    permissionLevel: typeof schema.permissions.permissionLevel.enumValues[number];
+  }[]
+}
 type TargetId = InferModelFromColumns<typeof schema.permissions._.columns>['targetId']
 export async function getPermissionLevelForTarget(targetType: PermissionTargetType, targetId: TargetId, userId: UserId) {
+  let targetObject: TargetObjectWithAllowedUsers | undefined;
   if (targetType === 'stream') {
-    const stream = await db.query.streams.findFirst({
+    targetObject = await db.query.streams.findFirst({
       where: (stream, { eq }) => eq(stream.streamId, targetId as StreamId),
       with: {
         allowedUsers: {
@@ -87,13 +97,8 @@ export async function getPermissionLevelForTarget(targetType: PermissionTargetTy
         }
       }
     });
-    if (!stream) return 'unauthorized';
-    if (stream.ownerUserId === userId) return 'owner';
-    if (stream.allowedUsers.length === 0) return 'unauthorized';
-    const foundPerm = stream.allowedUsers.find(perm => perm.userId === userId);
-    if (foundPerm) return foundPerm.permissionLevel;
   } else if (targetType === 'vrSpace') {
-    const vrSpace = await db.query.vrSpaces.findFirst({
+    targetObject = await db.query.vrSpaces.findFirst({
       where: (vrSpace, { eq }) => eq(vrSpace.vrSpaceId, targetId as VrSpaceId),
       with: {
         allowedUsers: {
@@ -101,14 +106,14 @@ export async function getPermissionLevelForTarget(targetType: PermissionTargetTy
         }
       }
     });
-    if (!vrSpace) return 'unauthorized';
-    if (vrSpace.ownerUserId === userId) return 'owner';
-    if (vrSpace.allowedUsers.length === 0) return 'unauthorized';
-    const foundPerm = vrSpace.allowedUsers.find(perm => perm.userId === userId);
-    if (foundPerm) return foundPerm.permissionLevel;
   } else {
     throw new Error('Invalid target type');
   }
+  if (!targetObject) return undefined;
+  if (targetObject.ownerUserId === userId) return 'owner';
+  const foundPerm = targetObject.allowedUsers.find(perm => perm.userId === userId);
+  if (!foundPerm) return undefined;
+  return foundPerm.permissionLevel;
   // const permission = await db.query.permissions.findFirst({
   //   where: (perm, { eq }) => and(eq(perm.targetType, targetType), eq(perm.userId, userId), eq(perm.targetId, targetId)),
   //   with: {
