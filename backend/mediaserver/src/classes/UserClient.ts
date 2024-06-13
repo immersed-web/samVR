@@ -56,6 +56,7 @@ export class UserClient extends BaseClient {
     log.info(`unloading user client ${ this.username } ${this.connectionId} `);
     super.unload();
     this.leaveCurrentStream();
+    this.leaveCurrentVrSpace();
   }
 
   private currentCameraId?: CameraId;
@@ -150,7 +151,9 @@ export class UserClient extends BaseClient {
     if (this.stream) {
       this.leaveCurrentStream();
     }
-    this.leaveCurrentVrSpace();
+    if (this.vrSpace) {
+      this.leaveCurrentVrSpace();
+    }
     let vrSpace = VrSpace.getVrSpace(vrSpaceId);
     if (!vrSpace) {
       log.info(`vrSpace (${vrSpaceId}) wasnt loaded yet. loading it now.`);
