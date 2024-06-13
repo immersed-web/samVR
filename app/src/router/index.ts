@@ -2,7 +2,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useConnectionStore } from '@/stores/connectionStore';
 import { useClientStore } from '@/stores/clientStore';
 // import { useSenderStore } from '@/stores/senderStore';
-import { hasAtLeastSecurityLevel, type UserRole, type ClientType, type StreamId } from 'schemas';
+import { hasAtLeastSecurityRole, type UserRole, type ClientType, type StreamId } from 'schemas';
 import { createRouter, createWebHistory } from 'vue-router';
 import { useStreamStore } from '@/stores/streamStore';
 import { useAdminStore } from '@/stores/adminStore';
@@ -236,7 +236,7 @@ router.beforeEach(async (to, from) => {
       }
     }
 
-    if(!authStore.role || !hasAtLeastSecurityLevel(authStore.role, to.meta.requiredRole)){
+    if (!authStore.role || !hasAtLeastSecurityRole(authStore.role, to.meta.requiredRole)) {
       const redirect = to.meta.loginNeededRedirect || 'login';
       console.log('No role or role too low. Redirecting to:', redirect);
       return { name: redirect /*, query: { next: to.fullPath } */ };
@@ -281,7 +281,7 @@ router.beforeEach(async (to, from) => {
         return { name: routeName};
       }
       const connection = useConnectionStore();
-      if(connection.connectionType === 'client' && hasAtLeastSecurityLevel(authStore.role, 'moderator')){
+      if (connection.connectionType === 'client' && hasAtLeastSecurityRole(authStore.role, 'moderator')) {
         const adminStore = useAdminStore();
         try{
           console.log('Trying to loadAndJoinStreamAsAdmin');

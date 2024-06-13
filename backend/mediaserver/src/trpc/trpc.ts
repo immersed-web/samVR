@@ -4,7 +4,7 @@ process.env.DEBUG = 'TrpcModule*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 import { initTRPC, TRPCError } from '@trpc/server';
 import { SenderClient, UserClient } from '../classes/InternalClasses.js';
-import { JwtUserData, ConnectionId, hasAtLeastSecurityLevel, ClientType } from 'schemas';
+import { JwtUserData, ConnectionId, hasAtLeastSecurityRole, ClientType } from 'schemas';
 // import { z } from 'zod';
 import superjson from 'superjson';
 
@@ -31,7 +31,7 @@ export const procedure = trpc.procedure;
 
 const createAuthMiddleware = (userRole: JwtUserData['role']) => {
   return middleware(({ctx, next}) => {
-    if(!hasAtLeastSecurityLevel(ctx.role, userRole)){
+    if (!hasAtLeastSecurityRole(ctx.role, userRole)) {
       throw new TRPCError({code: 'UNAUTHORIZED', message: 'Du saknar behörighet! Vi uppskattar INTE dina försök att kringå dina befogenheter!'});
     }
     return next();

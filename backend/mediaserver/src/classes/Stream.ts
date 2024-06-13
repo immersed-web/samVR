@@ -7,7 +7,7 @@ import mediasoupConfig from '../soupConfig.js';
 import { getMediasoupWorker } from '../modules/soupWorkers.js';
 
 import { types as soupTypes } from 'mediasoup';
-import { ConnectionId, UserId, StreamId, CameraId, StreamUpdate, SenderId, hasAtLeastSecurityLevel, Prettify } from 'schemas';
+import { ConnectionId, UserId, StreamId, CameraId, StreamUpdate, SenderId, hasAtLeastSecurityRole, Prettify } from 'schemas';
 
 import { db, schema, queryStreamWithIncludes, basicUserSelect, CameraWithIncludes, StreamWithIncludes, queryCameraWithIncludes } from 'database';
 // import { } from 'drizzle-orm'
@@ -240,7 +240,7 @@ export class Stream {
   _notifyAdminOnlyState(reason?: string) {
     const data = this.getAdminOnlyState();
     this.clients.forEach(c => {
-      if (hasAtLeastSecurityLevel(c.role, 'moderator')) {
+      if (hasAtLeastSecurityRole(c.role, 'moderator')) {
         log.info(`notifying adminOnlyVenuestate (${reason}) to client ${c.username} (${c.connectionId})`);
         c.eventSender.stream.streamStateUpdatedAdminOnly({ data, reason });
       }

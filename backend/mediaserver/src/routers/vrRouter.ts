@@ -7,38 +7,48 @@ import { ClientTransformSchema, VrSpaceIdSchema, vrSpaceUpdateSchema } from 'sch
 import { procedure as p, router, isUserClientM, userClientP, atLeastUserP, userInVrSpaceP } from '../trpc/trpc.js';
 import { VrSpace } from 'classes/VrSpace.js';
 import { z } from 'zod';
-import { db, schema } from 'database';
-import { eq, and, or } from 'drizzle-orm';
-import { permissions } from 'database/schema';
+import { basicUserSelect, db, schema } from 'database';
+import { eq, and, or, not, sql } from 'drizzle-orm';
+import { PermissionLevel } from 'database/schema';
 import { update } from 'lodash-es';
+
+type PermLev = typeof PermissionLevel.enumValues[number] | 'owner' | undefined;
 
 export const vrRouter = router({
   listAvailableVrSpaces: userClientP.query(async ({ ctx }) => {
-    // const dbResponse = await db.query.vrSpaces.findMany({
-    //   with: {
-    //     panoramicPreview: true,
-    //     allowedUsers: true,
-    //   },
-    //   where: eq(schema.vrSpaces.visibility, 'public'),
-    // })
-    // return dbResponse;
+    log.info('vrSpace listing requested')
+    try {
+
     const dbResponse = await db.select({
       vrSpaceId: schema.vrSpaces.vrSpaceId,
       name: schema.vrSpaces.name,
       visibility: schema.vrSpaces.visibility,
       ownerUserId: schema.vrSpaces.ownerUserId,
-      permissions: schema.permissions.permissionLevel
+      // permisions: schema.permissions.permissionLevel
+      permissionLevel: sql<PermLev>`case 
+          when ${schema.vrSpaces.ownerUserId} = ${ctx.userId} then 'owner'
+          else ${schema.permissions.permissionLevel}::TEXT
+          end`.as('permissionLevelsss'),
+      // when ${schema.permissions.permissionLevel} is NULL then 'unauthorized'
     }).from(schema.vrSpaces)
       .leftJoin(schema.permissions, and(
         eq(schema.permissions.targetType, 'vrSpace'),
-        eq(schema.permissions.targetId, schema.vrSpaces.vrSpaceId)
+        and(
+          // we dont want duplicates. So join only if not already owner
+          not(eq(schema.vrSpaces.ownerUserId, ctx.userId)),
+          eq(schema.permissions.targetId, schema.vrSpaces.vrSpaceId)
+        )
       )).where(or(
+        eq(schema.permissions.userId, ctx.userId),
+        eq(schema.vrSpaces.ownerUserId, ctx.userId),
         eq(schema.vrSpaces.visibility, 'public'),
-        eq(schema.permissions.userId, ctx.userId)
       ));
 
     log.info(dbResponse)
     return dbResponse;
+    } catch (e) {
+      log.error(e);
+    }
   }),
   createVrSpace: atLeastUserP.use(isUserClientM).input(z.object({ name: z.string() })).mutation(async ({ ctx, input }) => {
     const vrSpaceId = await VrSpace.createNewVrSpace(input.name, ctx.userId);

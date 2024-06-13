@@ -3,7 +3,7 @@
     <h2>
       <slot>Välkommen&nbsp;</slot>
     </h2>
-    <template v-if="authStore.role && hasAtLeastSecurityLevel(authStore.role, 'admin')">
+    <template v-if="authStore.role && hasAtLeastSecurityRole(authStore.role, 'admin')">
       <h2 class="inline">
         <span class="underline decoration-dashed decoration-accent">
           {{ authStore.username }}!
@@ -27,7 +27,7 @@
       </button>
     </div>
     <div class="join" v-else>
-      <input @keypress.enter="updateUsername" v-model="username" class="input join-item input-bordered input">
+      <input @keypress.enter="updateUsername" v-model="username" class="input join-item input-bordered">
       <button @click="updateUsername" class="join-item btn btn-primary "><span
           class="material-icons">save</span></button>
       <button @click="isEditingUsername = false" class="join-item btn btn-error"><span
@@ -38,7 +38,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { hasAtLeastSecurityLevel } from 'schemas';
+import { hasAtLeastSecurityRole } from 'schemas';
 import { useAuthStore } from '@/stores/authStore';
 
 const authStore = useAuthStore();

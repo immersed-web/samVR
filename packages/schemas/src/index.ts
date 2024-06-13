@@ -95,12 +95,12 @@ export const roleHierarchy = schema.RoleEnum.enumValues;
 // export const roleHierarchy = (['gunnar', 'superadmin', 'admin', 'moderator', 'sender', 'user', 'guest'] as const) satisfies Readonly<Role[]>;
 
 export function throwIfUnauthorized(role: UserRole, minimumUserRole: UserRole) {
-  if(!hasAtLeastSecurityLevel(role, minimumUserRole)){
+  if (!hasAtLeastSecurityRole(role, minimumUserRole)) {
     throw new Error('Unauthorized! You fool!');
   }
 }
 
-export function hasAtLeastSecurityLevel(role: UserRole | undefined, minimumUserRole: UserRole) {
+export function hasAtLeastSecurityRole(role: UserRole | undefined, minimumUserRole: UserRole) {
   if(!role){
     // return false;
     throw new Error('no userRole provided for auth check!');
@@ -114,6 +114,26 @@ export function hasAtLeastSecurityLevel(role: UserRole | undefined, minimumUserR
   if(minimumRoleLevel < 0) throw Error('invalid minimum role provided');
 
   return clientSecurityLevel <= minimumRoleLevel
+}
+
+export const insertablePermissionHierarchy = schema.PermissionLevel.enumValues;
+export const returnedPermissionHierarchy = ['owner', ...insertablePermissionHierarchy, undefined] as const;
+type ReturnedPermissionLevel = typeof returnedPermissionHierarchy[number];
+export function hasAtLeastPermissionLevel(userPermissionLevel: ReturnedPermissionLevel, requiredPermissionLevel: Exclude<ReturnedPermissionLevel, undefined>) {
+  if (!userPermissionLevel) {
+    console.warn('undefined userPermissionLevel provided for permission check!');
+    return false;
+    // throw new Error('no userPermissionLevel provided for permission check!');
+  }
+  if (!requiredPermissionLevel) {
+    throw new Error('no requiredPermissionLevel provided for permission check!');
+  }
+
+  const userPermissionLevelIdx = returnedPermissionHierarchy.indexOf(userPermissionLevel);
+  if (userPermissionLevelIdx < 0) throw Error('invalid userPermissionLevel provided');
+  const requiredPermissionLevelIdx = returnedPermissionHierarchy.indexOf(requiredPermissionLevel);
+  if (requiredPermissionLevelIdx < 0) throw Error('invalid requiredPermissionLevel provided');
+  return userPermissionLevelIdx <= requiredPermissionLevelIdx;
 }
 
 // type RoleSet = Set<Role>;
@@ -286,6 +306,7 @@ export const PermissionInsertSchema = createInsertSchema(schema.permissions, {
   userId: UserIdSchema,
   targetId: z.union([StreamIdSchema, VrSpaceIdSchema])
 })
+type PermissionInsert = z.TypeOf<typeof PermissionInsertSchema>;
 
 const PermissionSelectSchema = createSelectSchema(schema.permissions, {
   targetId: z.union([StreamIdSchema, VrSpaceIdSchema]),

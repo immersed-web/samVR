@@ -31,7 +31,11 @@
           </ComboboxOptions>
         </div>
       </Combobox>
-      <button @click="addOwnerPermission" class="btn btn-primary">Lägg till som ägare</button>
+      <select v-model="selectedPermission" class="select select-bordered">
+        <option :value="permissionLevel" v-for="permissionLevel in insertablePermissionHierarchy"
+          :key="permissionLevel">{{ permissionLevel }}</option>
+      </select>
+      <button @click="addEditPermission" class="btn btn-primary">Lägg till som ägare</button>
     </div>
     <pre>{{ vrSpaceStore.currentVrSpace }}</pre>
     <div>
@@ -106,7 +110,7 @@ import VrAFramePreview from '@/components/lobby/LobbyAFramePreview.vue';
 import { ref, watch, onMounted, computed } from 'vue';
 import { throttle } from 'lodash-es';
 import { Combobox, ComboboxInput, ComboboxOptions, ComboboxOption, ComboboxButton } from '@headlessui/vue';
-import type { VrSpaceId } from 'schemas';
+import { insertablePermissionHierarchy, type VrSpaceId } from 'schemas';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import { useConnectionStore } from '@/stores/connectionStore';
 import type { RouterOutputs } from '@/modules/trpcClient';
@@ -125,13 +129,14 @@ const users = ref<RouterOutputs['user']['getAllUsers']>();
 const filteredUsers = computed(() => users.value?.filter((user) => user.username.toLowerCase().includes(query.value.toLowerCase())));
 const selectedUser = ref<NonNullable<(typeof users.value)>[number]>();
 
-async function addOwnerPermission() {
+const selectedPermission = ref<typeof insertablePermissionHierarchy[number]>('edit');
+async function addEditPermission() {
   if (!selectedUser.value) return
   const repsonse = await backendConnection.client.user.createPermission.mutate({
     userId: selectedUser.value.userId,
     targetId: props.vrSpaceId,
     targetType: 'vrSpace',
-    permissionLevel: 'owner'
+    permissionLevel: selectedPermission.value
   })
 }
 

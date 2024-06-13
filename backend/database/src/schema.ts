@@ -84,18 +84,19 @@ export type User = typeof users.$inferSelect;
 
 export const usersRelations = relations(users, ({ many }) => ({
 	assets: many(assets),
-	streams: many(streams),
+	ownedStreams: many(streams),
+	ownedVrSpaces: many(vrSpaces),
 	permissions: many(permissions),
 }));
 
 export const PermissionTargetType = pgEnum("PermissionTargetType", ['stream', 'vrSpace'])
-export const PermissionLevel = pgEnum("PermissionLevel", ['edit', 'owner'])
+export const PermissionLevel = pgEnum("PermissionLevel", ['admin', 'edit', 'view'])
 
 export const permissions = pgTable("Permissions", {
 	userId: uuid("userId").notNull().$type<UserId>().references(() => users.userId, { onDelete: "cascade", onUpdate: "cascade" }),
 	targetType: PermissionTargetType("targetType").notNull(),
 	targetId: uuid("targetId").notNull().$type<StreamId | VrSpaceId>(),
-	permissionLevel: PermissionLevel("permissionLevel").default('edit').notNull(),
+	permissionLevel: PermissionLevel("permissionLevel").default('view').notNull(),
 },
 	(table) => {
 		return {
@@ -279,6 +280,10 @@ export const vrSpaces = pgTable("VrSpaces", {
 });
 
 export const vrSpacesRelations = relations(vrSpaces, ({ one, many }) => ({
+	owner: one(users, {
+		fields: [vrSpaces.ownerUserId],
+		references: [users.userId],
+	}),
 	worldModelAsset: one(assets, {
 		fields: [vrSpaces.worldModelAssetId],
 		references: [assets.assetId],

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { logout as authLogout, login as authLogin, userAutoToken, guestAutoToken } from '@/modules/authClient';
-import { hasAtLeastSecurityLevel, type JwtPayload } from 'schemas';
+import { hasAtLeastSecurityRole, type JwtPayload } from 'schemas';
 import jwtDecode from 'jwt-decode';
 import { computed, ref } from 'vue';
 
@@ -56,8 +56,8 @@ export const useAuthStore = defineStore('auth', () => {
   /**
    * Has a user id. Can be any role, except guest.
    */
-  const isLoggedIn = computed(() => isAuthenticated.value && hasAtLeastSecurityLevel(role.value, 'user'));
-  const routePrefix = computed(() => role.value && hasAtLeastSecurityLevel(role.value, 'admin') ? 'admin' : 'user');
+  const isLoggedIn = computed(() => isAuthenticated.value && hasAtLeastSecurityRole(role.value, 'user'));
+  const routePrefix = computed(() => role.value && hasAtLeastSecurityRole(role.value, 'admin') ? 'admin' : 'user');
   async function autoGuest(username?: string) {
     await logout();
     await guestAutoToken((t) => {

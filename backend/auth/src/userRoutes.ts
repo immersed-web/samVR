@@ -3,7 +3,7 @@ import bcrypt from 'bcrypt';
 import { createJwt } from 'shared-modules/jwtUtils';
 import { exclude, extractMessageFromCatch } from 'shared-modules/utilFns';
 import { isLoggedIn } from './utils.js';
-import { StreamId, UserId, UserRole, hasAtLeastSecurityLevel, roleHierarchy, throwIfUnauthorized } from 'schemas';
+import { StreamId, UserId, UserRole, hasAtLeastSecurityRole, roleHierarchy, throwIfUnauthorized } from 'schemas';
 import { basicUserSelect, db, schema, userSelectExcludePassword } from 'database';
 import { and, eq, getTableColumns } from 'drizzle-orm';
 import * as _ from 'lodash-es'
@@ -264,7 +264,7 @@ const getAdmins: RequestHandler = async (req, res) => {
   const clientSecurityLevel = roleHierarchy.indexOf(userData.role);
 
   try {
-    if (!hasAtLeastSecurityLevel(userData.role, 'superadmin')) {
+    if (!hasAtLeastSecurityRole(userData.role, 'superadmin')) {
       throw new Error('Too low security clearance! You loooser!');
     }
   } catch (e) {
@@ -306,7 +306,7 @@ const getAllowedUsersForStream: RequestHandler = async (req: GetSenderRequest, r
   const clientSecurityLevel = roleHierarchy.indexOf(userData.role);
 
   try {
-    if (!hasAtLeastSecurityLevel(userData.role, 'admin')) {
+    if (!hasAtLeastSecurityRole(userData.role, 'admin')) {
       throw new Error('Too low security clearance! You looose!');
     }
   } catch (e) {

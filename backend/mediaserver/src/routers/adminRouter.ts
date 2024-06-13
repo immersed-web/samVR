@@ -6,7 +6,7 @@ log.enable(process.env.DEBUG);
 import { TRPCError } from '@trpc/server';
 import { observable } from '@trpc/server/observable';
 import { BaseClient, Camera, loadUserDBData, SenderClient, UserClient, Stream } from '../classes/InternalClasses.js';
-import { CameraIdSchema, hasAtLeastSecurityLevel, SenderIdSchema, StreamId, StreamIdSchema, StreamUpdateSchema, CameraInsertSchema, CameraPortalInsertSchema, CameraUpdateSchema } from 'schemas';
+import { CameraIdSchema, hasAtLeastSecurityRole, SenderIdSchema, StreamId, StreamIdSchema, StreamUpdateSchema, CameraInsertSchema, CameraPortalInsertSchema, CameraUpdateSchema } from 'schemas';
 import { z } from 'zod';
 import { atLeastModeratorP, currentVenueAdminP, isUserClientM, isVenueOwnerM, procedure as p, router } from '../trpc/trpc.js';
 import { db, schema } from 'database';
@@ -32,7 +32,7 @@ export const adminRouter = router({
       throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'Cant delete a stream when its loaded. Unload it first!' });
     }
     if(
-      !hasAtLeastSecurityLevel(ctx.role, 'admin')
+      !hasAtLeastSecurityRole(ctx.role, 'admin')
       && -1 === ctx.client.ownedVenues.value.findIndex(v => v.streamId === streamId)) {
       throw new TRPCError({code: 'PRECONDITION_FAILED', message: 'You are not owner or dont have high enough permission. Now Cry!'});
     }

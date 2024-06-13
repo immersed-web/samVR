@@ -5,8 +5,8 @@
     <div class="flex gap-2 items-center" v-for="space in availableVrSpaces">
       <p>{{ space.name }}</p>
       <pre>{{ space }}</pre>
-      <button v-if="space.ownerUserId === clientStore.clientState?.userId" @click="goToVrSpaceSettings(space.vrSpaceId)"
-        class="btn btn-xs">redigera</button>
+      <button v-if="space.permissionLevel && hasAtLeastPermissionLevel(space.permissionLevel, 'edit')"
+        @click="goToVrSpaceSettings(space.vrSpaceId)" class="btn btn-xs">redigera</button>
     </div>
   </div>
   <div class="space-x-2" v-if="canCreateVrSpace">
@@ -21,7 +21,7 @@ import type { RouterOutputs } from '@/modules/trpcClient';
 import { useClientStore } from '@/stores/clientStore';
 import { useConnectionStore } from '@/stores/connectionStore';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
-import { type VrSpaceId, hasAtLeastSecurityLevel } from 'schemas';
+import { type VrSpaceId, hasAtLeastSecurityRole, hasAtLeastPermissionLevel } from 'schemas';
 import { computed, onBeforeMount, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
@@ -43,7 +43,7 @@ async function fetchVrSpaceList() {
 const spaceName = ref('');
 const canCreateVrSpace = computed(() => {
   if (!clientStore.clientState) return false;
-  return hasAtLeastSecurityLevel(clientStore.clientState.role, 'user');
+  return hasAtLeastSecurityRole(clientStore.clientState.role, 'user');
 })
 
 async function createVrSpace() {

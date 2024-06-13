@@ -30,7 +30,7 @@ import type { RouterOutputs } from '@/modules/trpcClient';
 import { useConnectionStore } from '@/stores/connectionStore';
 import { computed, onBeforeMount, ref } from 'vue';
 import StreamList from '@/components/stream/StreamList.vue';
-import { type StreamId, hasAtLeastSecurityLevel } from 'schemas';
+import { type StreamId, hasAtLeastSecurityRole } from 'schemas';
 import { useRouter } from 'vue-router';
 import { isPast } from 'date-fns';
 import { streamConsideredActive } from '@/stores/streamStore';

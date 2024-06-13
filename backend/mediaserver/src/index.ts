@@ -22,7 +22,7 @@ const { DEDICATED_COMPRESSOR_3KB } = uWebSockets;
 import { createWorkers } from './modules/soupWorkers.js';
 import { verifyJwtToken } from 'shared-modules/jwtUtils';
 import { extractMessageFromCatch } from 'shared-modules/utilFns';
-import { JwtUserData, JwtUserDataSchema, hasAtLeastSecurityLevel, UserId, UserIdSchema, ClientType } from 'schemas';
+import { JwtUserData, JwtUserDataSchema, hasAtLeastSecurityRole, UserId, UserIdSchema, ClientType } from 'schemas';
 import { applyWSHandler } from './trpc/ws-adapter.js';
 import { appRouter, AppRouter } from './routers/appRouter.js';
 import { loadUserDBData, SenderClient, UserClient } from './classes/InternalClasses.js';
@@ -135,11 +135,11 @@ app.ws<WSUserData>('/*', {
 
       const userDataOnly = JwtUserDataSchema.parse(validJwt);
 
-      if (isSender && !hasAtLeastSecurityLevel(userDataOnly.role, 'user')) {
+      if (isSender && !hasAtLeastSecurityRole(userDataOnly.role, 'user')) {
         throw Error('must at least have sender role to do that...');
       }
       const isAlreadyConnected = connectedUsers.has(userDataOnly.userId);
-      if (!hasAtLeastSecurityLevel(userDataOnly.role, 'user') && isAlreadyConnected) {
+      if (!hasAtLeastSecurityRole(userDataOnly.role, 'user') && isAlreadyConnected) {
         throw Error('already logged in!!!');
       }
       wsUserData = {

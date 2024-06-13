@@ -24,16 +24,30 @@ const db = drizzle(queryClient, { schema });
 // async function createWithIncludes<T extends (typeof schema)[keyof typeof schema]>(includes: T) {
 
 // }
-const hashedPassword = bcrypt.hashSync('hemligt', 10);
+const hashedPassword = bcrypt.hashSync('123', 10);
 
 try {
   await db.transaction(async (tx) => {
-    const newUser = await tx.insert(schema.users).values({
+    const createdUsers = [];
+    let newUser = await tx.insert(schema.users).values({
       password: hashedPassword,
       username: 'klas',
       role: 'gunnar',
     }).returning();
-    console.log(newUser);
+    createdUsers.push(newUser[0]);
+    newUser = await tx.insert(schema.users).values({
+      password: hashedPassword,
+      username: 'göran',
+      role: 'user',
+    }).returning();
+    createdUsers.push(newUser[0]);
+    newUser = await tx.insert(schema.users).values({
+      password: hashedPassword,
+      username: 'fia',
+      role: 'user',
+    }).returning();
+    createdUsers.push(newUser[0]);
+    console.log(createdUsers);
     // const cameraUuid = randomUUID();
     // console.log(cameraUuid);
     const newStream = await tx.insert(schema.streams).values({

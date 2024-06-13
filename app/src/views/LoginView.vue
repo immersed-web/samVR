@@ -82,7 +82,7 @@ import { useRouter } from 'vue-router';
 // import { useClientStore } from '@/stores/clientStore';
 import { onMounted, ref } from 'vue';
 import { useAuthStore } from '@/stores/authStore';
-import { hasAtLeastSecurityLevel, type UserRole } from 'schemas';
+import { hasAtLeastSecurityRole, type UserRole } from 'schemas';
 import { useConnectionStore } from '@/stores/connectionStore';
 // import StreamListView from '@/views/public/StreamListView.vue';
 
@@ -124,7 +124,7 @@ const login = async () => {
     } else {
       // console.log('Regular login', authStore.role);
       // router.push('/');
-      if(authStore.role && hasAtLeastSecurityLevel(authStore.role, 'admin')){
+      if (authStore.role && hasAtLeastSecurityRole(authStore.role, 'admin')) {
         router.push({name: 'adminHome'});
       }
       else {
