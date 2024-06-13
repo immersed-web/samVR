@@ -27,12 +27,12 @@ const savePathRelative = './uploads/'
 // const jwtHandler = jwt({ secret: 'secret' });
 // const jwtAuthHandler = createMiddleware<{ Variables: { jwtPayload: JwtPayload } }>(jwtHandler);
 
-const user = await db.query.users.findFirst({
-  columns: basicUserSelect
-});
-if (!user) {
-  process.exit(1);
-}
+// const user = await db.query.users.findFirst({
+//   columns: basicUserSelect
+// });
+// if (!user) {
+//   process.exit(1);
+// }
 
 const publicRoutes = new Hono()
   .get('/file/:filename',
@@ -88,6 +88,7 @@ const privateRoutes = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
   }).post('/upload', zValidator('form', z.object({ file: z.instanceof(File), assetType: AssetTypeSchema.optional() })), async (c, next) => {
     // const body = await c.req.parseBody();
     let { file, assetType } = c.req.valid('form');
+    const user = c.get('jwtPayload');
   // const file = body['file']
   // if (!(file instanceof File)) {
   //   // const badRequest = constants.HTTP_STATUS_BAD_REQUEST as StatusCode;
@@ -158,6 +159,7 @@ const privateRoutes = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
 });
 
 const app = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
+// const app = new Hono()
 app.route('/', publicRoutes);
 app.route('/', privateRoutes);
 const port = 3000
