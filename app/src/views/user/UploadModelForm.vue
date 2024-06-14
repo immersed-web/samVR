@@ -103,10 +103,15 @@ const derivedAssetType = computed(() => {
   if (!extensionOfPickedFile.value) {
     return undefined;
   }
-  const ext = extensionOfPickedFile.value
-  for (const [assetType, extensionList] of Object.entries(assetTypesToExtensionsMap)) {
-    if (extensionList.includes(ext)) {
-      return assetType as AssetType;
+  // const ext = extensionOfPickedFile.value
+  let aT = props.acceptedAssetTypes;
+  if (!(aT instanceof Array)) {
+    aT = [aT]
+  }
+  for (const assetType of aT) {
+    // @ts-ignore
+    if (assetTypesToExtensionsMap[assetType].includes(extensionOfPickedFile.value)) {
+      return assetType; 
     }
   }
   console.warn('failed to match extension to a valid asset type');

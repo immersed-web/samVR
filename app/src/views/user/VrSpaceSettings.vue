@@ -92,7 +92,7 @@
         <div>
           <div>
             <h4>3D-modell för miljön</h4>
-            <UploadModelForm :acceptedAssetTypes="['image', 'model', 'document']" />
+            <UploadModelForm :acceptedAssetTypes="['navmesh']" />
           </div>
           <div v-if="vrSpaceStore.currentVrSpace?.dbData.worldModelAsset">
             <h4>3D-modell för gåbara ytor (navmesh)</h4>
