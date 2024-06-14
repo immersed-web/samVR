@@ -1,12 +1,12 @@
 import { defineStore } from 'pinia';
 
 import { hasAtLeastPermissionLevel, type ClientTransform, type ClientTransforms, type ConnectionId, type VrSpaceId, type VrSpaceUpdate } from 'schemas';
-import { computed, readonly, ref } from 'vue';
+import { readonly, ref } from 'vue';
 import { useConnectionStore } from './connectionStore';
 import { eventReceiver, type ExtractPayload, type RouterOutputs, type SubscriptionValue } from '@/modules/trpcClient';
 import { useClientStore } from './clientStore';
 import { watchIgnorable, pausableWatch } from '@vueuse/core';
-import { debounce, throttle } from 'lodash-es'
+import { debounce } from 'lodash-es'
 
 type _ReceivedVrSpaceState = ExtractPayload<typeof eventReceiver.vrSpace.vrSpaceStateUpdated.subscribe>['data'];
 
