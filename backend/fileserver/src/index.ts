@@ -162,7 +162,7 @@ const app = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
 // const app = new Hono()
 app.route('/', publicRoutes);
 app.route('/', privateRoutes);
-const port = 3000
+const port = process.env.FILESERVER_PORT
 console.log(`Server is running on port ${port}`)
 
 serve({

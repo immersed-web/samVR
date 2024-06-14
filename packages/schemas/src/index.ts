@@ -166,7 +166,68 @@ export type Visibility = z.infer<typeof VisibilitySchema>;
 export const AssetTypeSchema = z.enum(schema.AssetTypeEnum.enumValues);
 export type AssetType = z.infer<typeof AssetTypeSchema>;
 
-// export type { Visibility } from 'database'
+export const maxFileSize = 50 * 1024 * 1024;
+export const maxFileSizeSchema = z.number().max(maxFileSize);
+
+export const assetTypesToExtensionsMap = {
+  video: ['mp4', 'mkv', 'mov', 'webm'],
+  image: ['png', 'jpg', 'jpeg', 'webp'],
+  document: ['pdf'],
+  model: ['glb'],
+  navmesh: ['glb'],
+} as const satisfies Record<AssetType, string[]>
+function concat<T extends unknown[], U extends unknown[]>(t: [...T], u: [...U]): [...T, ...U] {
+  return [...t, ...u];
+}
+
+// function buildList<T extends AssetType>(t: T[]): [typeof assetTypesToExtensionsMap[T][number]] {
+//   return t.reduce<[typeof assetTypesToExtensionsMap[T][number]]>((acc, curr) => {
+//     return acc.push(...assetTypesToExtensionsMap[curr]);
+//   },[]);
+// }
+
+// const s = buildList(['image', 'video']);
+
+// const schem = z.enum(s)
+
+// const combList = concat(assetTypesToExtensionsMap['image'], assetTypesToExtensionsMap['video']);
+
+type AcceptedExtensions<T extends AssetType> = [typeof assetTypesToExtensionsMap[T][number]]
+// type Test = AcceptedExtensions<'image' | 'video'>
+
+// function test<T extends AssetType[]>(assetType: T) {
+//   const list = ['glb'] as Prettify<AcceptedExtensions<T[number]>>
+//   // return z.enum(list);
+//   return list
+// }
+
+// const tt = test(['image', 'video'])
+
+export function assetTypeListToExtensionList<T extends AssetType>(assetTypes: T | T[]) {
+  if (!(assetTypes instanceof Array)) {
+    assetTypes = [assetTypes];
+  }
+  // @ts-ignore
+  const extensionList: AcceptedExtensions<T> = assetTypes.reduce<AcceptedExtensions<T>>((acc, assetType) => {
+    return [...acc, ...assetTypesToExtensionsMap[assetType]];
+  }, []);
+  return extensionList;
+}
+
+export function createFileExtensionSchema<T extends AssetType>(assetTypes: T | T[]) {
+  const extensionList = assetTypeListToExtensionList(assetTypes);
+  // if (!(assetTypes instanceof Array)) {
+  //   assetTypes = [assetTypes];
+  // }
+  // // @ts-ignore
+  // const extensionList: AcceptedExtensions<T> = assetTypes.reduce<AcceptedExtensions<T>>((acc, assetType) => {
+  //   return [...acc, ...assetTypesToExtensionsMap[assetType]];
+  // }, []);
+  // const extensionList: typeof assetTypesToExtensionsMap[T] = assetTypesToExtensionsMap[assetTypes];
+  return z.enum(extensionList);
+}
+
+const imageVideoSchema = createFileExtensionSchema(['image', 'video']);
 
 const timestampKeys = {
   createdAt: true, updatedAt: true,

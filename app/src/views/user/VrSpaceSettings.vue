@@ -9,11 +9,10 @@
       </h2>
       <input type="checkbox" class="toggle toggle-success" true-value="public" false-value="private"
         v-model="vrSpaceStore.writableVrSpaceState.dbData.visibility">
-      <!-- <div>{{ selectedUser }}</div> -->
-      <!-- <pre>{{ users }}</pre> -->
     </div>
     <div>
-      <!-- <Combobox v-model="selectedUser">
+      <div>{{ selectedUser?.username }}</div>
+      <Combobox v-model="selectedUser">
         <div class="w-72 relative">
 
           <div class="join input input-bordered">
@@ -32,14 +31,19 @@
             </ComboboxOption>
           </ComboboxOptions>
         </div>
-      </Combobox> -->
-      <!-- <select v-model="selectedPermission" class="select select-bordered">
+      </Combobox>
+      <select v-model="selectedPermission" class="select select-bordered">
         <option :value="permissionLevel" v-for="permissionLevel in insertablePermissionHierarchy"
           :key="permissionLevel">{{ permissionLevel }}</option>
       </select>
-      <button @click="addEditPermission" class="btn btn-primary">Lägg till som ägare</button> -->
+      <button @click="addEditPermission" class="btn btn-primary">Lägg till som ägare</button>
+      <div>
+        <h3>Tillagda användare</h3>
+        <div v-for="userPermission in vrSpaceStore.currentVrSpace?.dbData.allowedUsers"
+          :key="userPermission.user.userId">{{ userPermission.user.username }}: {{ userPermission.permissionLevel }}
+        </div>
+      </div>
     </div>
-    <pre>{{ vrSpaceStore.currentVrSpace }}</pre>
     <div>
       <div v-if="vrSpaceStore.currentVrSpace" class="flex flex-col gap-4">
         <div class="flex items-center justify-start gap-2 -mb-2">
@@ -85,21 +89,21 @@
               class="range">
           </label> -->
         </div>
-        <!-- <div>
+        <div>
           <div>
             <h4>3D-modell för miljön</h4>
-            <AdminUploadModelForm model-type="model" />
+            <UploadModelForm :acceptedAssetTypes="['image', 'model', 'document']" />
           </div>
-          <div v-if="streamStore.currentStream?.vrSpace?.virtualSpace3DModel">
+          <div v-if="vrSpaceStore.currentVrSpace?.dbData.worldModelAsset">
             <h4>3D-modell för gåbara ytor (navmesh)</h4>
-            <AdminUploadModelForm model-type="navmesh" name="navmesh" />
+            <UploadModelForm acceptedAssetTypes="navmesh" name="navmesh" />
           </div>
         </div>
         <div class="flex gap-4">
           <h4>Färg på himmelen</h4>
           <input class="rounded-md border-black border border-2" type="color"
-            :value="streamStore.currentStream.vrSpace.virtualSpace3DModel.skyColor" @input="setSkyColor">
-        </div> -->
+            v-model="vrSpaceStore.writableVrSpaceState.dbData.skyColor">
+        </div>
       </div>
     </div>
   </div>
@@ -107,7 +111,7 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import AdminUploadModelForm from './UploadModelForm.vue';
+import UploadModelForm from './UploadModelForm.vue';
 import VrAFramePreview from '@/components/lobby/LobbyAFramePreview.vue';
 import { ref, watch, onMounted, computed } from 'vue';
 import { throttle } from 'lodash-es';
@@ -143,19 +147,10 @@ async function addEditPermission() {
   })
 }
 
-// watch(() => vrSpaceStore.writableState, (newPos) => {
-//   console.log('vrSpace updated');
-//   vrSpaceStore.updateVrSpace();
-// }, { deep: true });
-
-// vrSpaceStore.$subscribe((mutation, state) => {
-//   console.log('vrSpaceStroe patched', mutation, state);
-// })
-
 onMounted(async () => {
   await vrSpaceStore.enterVrSpace(props.vrSpaceId);
 
-  // users.value = await backendConnection.client.user.getAllUsers.query();
+  users.value = await backendConnection.client.user.getAllUsers.query();
 
   // const storeRot = vrSpaceStore.currentVrSpace?.worldModelAsset?.entranceRotation;
   // if (storeRot) {

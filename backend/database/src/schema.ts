@@ -7,12 +7,13 @@ import type { StreamId, UserId, VrSpaceId, AssetId, CameraId, PlacementId, Sende
 
 export const CameraTypeEnum = pgEnum("CameraType", ['panoramic360', 'normal'])
 // export const AssetFileFormat = pgEnum("AssetFileFormat", ['glb', 'png', 'jpg', 'jpeg', 'pdf',])
-export const AssetTypeEnum = pgEnum("AssetType", ['image', 'video', 'model', 'navmesh', 'document', 'unknown']);
+export const AssetTypeEnum = pgEnum("AssetType", ['image', 'video', 'model', 'navmesh', 'document']);
+// export type AssetTypes = typeof AssetTypeEnum.enumValues[number];
+
 export const PlacedObjectTypeEnum = pgEnum("PlacedObjectType", ['asset', 'vrPortal', 'streamPortal', 'externalLinkPortal', 'pointLight', 'directionalLight', 'ambientLight']);
 // export const PortalType = pgEnum("PortalType", ['vrSpace', 'stream', 'externalUrl']);
 export const RoleEnum = pgEnum("Role", ['gunnar', 'superadmin', 'admin', 'moderator', 'user', 'guest'])
 export const VisibilityEnum = pgEnum("Visibility", ['private', 'unlisted', 'public'])
-export type Visibility = typeof VisibilityEnum.enumValues[number];
 
 const createdAndUpdatedAt = {
 	createdAt: timestamp("createdAt", { precision: 3, mode: 'date' }).defaultNow(),
