@@ -73,6 +73,7 @@ export const vrRouter = router({
     ctx.client.leaveCurrentVrSpace();
     // ctx.vrSpace.removeClient(ctx.client);
   }),
+  // TODO: only allow users with permission
   updateVrSpace: atLeastUserP.use(isUserClientM).input(vrSpaceUpdateSchema).mutation(async ({ ctx, input }) => {
     // log.info('updating vrSpace', input);
     const { vrSpaceId, ...data } = input;

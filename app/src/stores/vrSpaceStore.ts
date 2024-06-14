@@ -1,11 +1,12 @@
 import { defineStore } from 'pinia';
 
-import { type ClientTransform, type ClientTransforms, type ConnectionId, type VrSpaceId, type VrSpaceUpdate } from 'schemas';
-import { computed, ref } from 'vue';
+import { hasAtLeastPermissionLevel, type ClientTransform, type ClientTransforms, type ConnectionId, type VrSpaceId, type VrSpaceUpdate } from 'schemas';
+import { computed, readonly, ref } from 'vue';
 import { useConnectionStore } from './connectionStore';
 import { eventReceiver, type ExtractPayload, type RouterOutputs, type SubscriptionValue } from '@/modules/trpcClient';
 import { useClientStore } from './clientStore';
-import { watchIgnorable } from '@vueuse/core';
+import { watchIgnorable, pausableWatch } from '@vueuse/core';
+import { debounce, throttle } from 'lodash-es'
 
 type _ReceivedVrSpaceState = ExtractPayload<typeof eventReceiver.vrSpace.vrSpaceStateUpdated.subscribe>['data'];
 
@@ -14,16 +15,26 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
   const connection = useConnectionStore();
   const clientStore = useClientStore();
 
-  const currentVrSpace = ref<_ReceivedVrSpaceState>();
+  const writableVrSpaceState = ref<_ReceivedVrSpaceState>()
+  const currentVrSpace = readonly(writableVrSpaceState);
 
-  const { ignoreUpdates, } = watchIgnorable(() => currentVrSpace.value, (newVal, oldVal) => {
-    console.log('currentVrSpace watcher triggered', oldVal, newVal);
-    updateVrSpace();
-  }, { deep: true });
+
+  const { ignoreUpdates } = watchIgnorable(() => writableVrSpaceState.value, async (newVal, oldVal) => {
+    // console.log('currentVrSpace watcher triggered', oldVal, newVal);
+    if (newVal?.dbData.ownerUserId === clientStore.clientState?.userId
+      || newVal?.dbData.allowedUsers.some(p => {
+        p.user.userId === clientStore.clientState?.userId && hasAtLeastPermissionLevel(p.permissionLevel, 'edit')
+      })) {
+      await updateVrSpace();
+    }
+  }, {
+    deep: true,
+  });
 
   eventReceiver.vrSpace.vrSpaceStateUpdated.subscribe(({ data, reason }) => {
     console.log(`vrSpaceState updated. ${reason}:`, data);
-    ignoreUpdates(() => currentVrSpace.value = data);
+    ignoreUpdates(() => writableVrSpaceState.value = data);
+    console.log('finished setting ignored state update');
   });
   
   eventReceiver.vrSpace.clientTransforms.subscribe((data) => {
@@ -46,21 +57,32 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
   async function createVrSpace(name: string) {
     const vrSpaceId = await connection.client.vr.createVrSpace.mutate({ name });
     return vrSpaceId
-    // currentVrSpace.value = 
   }
   
   async function enterVrSpace(vrSpaceId: VrSpaceId) {
-    currentVrSpace.value = await connection.client.vr.enterVrSpace.mutate({ vrSpaceId });
+    console.log('gonna enter VrSpace', vrSpaceId);
+    const response = await connection.client.vr.enterVrSpace.mutate({ vrSpaceId });
+
+    ignoreUpdates(() => {
+      console.log('setting ignored enter response');
+      writableVrSpaceState.value = response
+    })
   }
   async function leaveVrSpace() {
     await connection.client.vr.leaveVrSpace.mutate();
-    currentVrSpace.value = undefined;
+    ignoreUpdates(() => writableVrSpaceState.value = undefined)
   }
-  async function updateVrSpace() {
+
+  /**
+   * Throttled update of the backend VrSpaceState.
+   */
+  const updateVrSpace = debounce(async () => {
     if (!currentVrSpace.value) return;
-    console.log('gonna send update for VrSpace', currentVrSpace.value.dbData);
+    console.log(`*** Gonna send update for VrSpace ${currentVrSpace.value.dbData.vrSpaceId}`);
+
+    // @ts-ignore
     await connection.client.vr.updateVrSpace.mutate(currentVrSpace.value.dbData);
-  }
+  }, 700);
 
   async function updateTransform(transform: ClientTransform){
     await connection.client.vr.transform.updateTransform.mutate(transform);
@@ -68,6 +90,7 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
   
   return {
     currentVrSpace,
+    writableVrSpaceState,
     createVrSpace,
     enterVrSpace,
     leaveVrSpace,

@@ -1,17 +1,19 @@
 <template>
-  <div>
+  <UserBanner></UserBanner>
+  <div v-if="!vrSpaceStore.writableVrSpaceState">loading...</div>
+  <div v-else>
     <div class="flex mb-4">
       <h2 class="flex-1">
-        VR-lobby <input v-if="vrSpaceStore.currentVrSpace" class="input input-bordered"
-          v-model="vrSpaceStore.currentVrSpace.dbData.name">
+        VR-lobby
+        <input class="input input-bordered" v-model="vrSpaceStore.writableVrSpaceState.dbData.name">
       </h2>
-      <input v-if="vrSpaceStore.currentVrSpace" type="checkbox" class="toggle toggle-success" true-value="public"
-        false-value="private" v-model="vrSpaceStore.currentVrSpace.dbData.visibility">
-      <div>{{ selectedUser }}</div>
+      <input type="checkbox" class="toggle toggle-success" true-value="public" false-value="private"
+        v-model="vrSpaceStore.writableVrSpaceState.dbData.visibility">
+      <!-- <div>{{ selectedUser }}</div> -->
       <!-- <pre>{{ users }}</pre> -->
     </div>
     <div>
-      <Combobox v-model="selectedUser">
+      <!-- <Combobox v-model="selectedUser">
         <div class="w-72 relative">
 
           <div class="join input input-bordered">
@@ -30,12 +32,12 @@
             </ComboboxOption>
           </ComboboxOptions>
         </div>
-      </Combobox>
-      <select v-model="selectedPermission" class="select select-bordered">
+      </Combobox> -->
+      <!-- <select v-model="selectedPermission" class="select select-bordered">
         <option :value="permissionLevel" v-for="permissionLevel in insertablePermissionHierarchy"
           :key="permissionLevel">{{ permissionLevel }}</option>
       </select>
-      <button @click="addEditPermission" class="btn btn-primary">Lägg till som ägare</button>
+      <button @click="addEditPermission" class="btn btn-primary">Lägg till som ägare</button> -->
     </div>
     <pre>{{ vrSpaceStore.currentVrSpace }}</pre>
     <div>
@@ -54,7 +56,7 @@
           </div>
         </div>
         <div v-if="vrSpaceStore.currentVrSpace.dbData.worldModelAsset" class="grid gap-2">
-          <VrAFramePreview class="flex-1 border"
+          <!-- <VrAFramePreview class="flex-1 border"
             :model-url="vrSpaceStore.currentVrSpace.dbData.worldModelAsset.generatedName"
             :navmesh-url="vrSpaceStore.currentVrSpace.dbData.navMeshAsset?.generatedName"
             :cursor-target="currentCursorType" @cursor-placed="onCursorPlaced" />
@@ -67,7 +69,7 @@
             <button v-if="currentCursorType" class="btn btn-sm btn-circle" @click="currentCursorType = undefined">
               <span class="material-icons">close</span>
             </button>
-          </div>
+          </div> -->
           <!-- <label class="label gap-2">
             <span class="label-text font-semibold whitespace-nowrap">
               Entré rotation
@@ -114,6 +116,7 @@ import { insertablePermissionHierarchy, type VrSpaceId } from 'schemas';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import { useConnectionStore } from '@/stores/connectionStore';
 import type { RouterOutputs } from '@/modules/trpcClient';
+import UserBanner from '@/components/UserBanner.vue';
 
 // Use imports
 const router = useRouter();
@@ -152,16 +155,16 @@ async function addEditPermission() {
 onMounted(async () => {
   await vrSpaceStore.enterVrSpace(props.vrSpaceId);
 
-  users.value = await backendConnection.client.user.getAllUsers.query();
+  // users.value = await backendConnection.client.user.getAllUsers.query();
 
   // const storeRot = vrSpaceStore.currentVrSpace?.worldModelAsset?.entranceRotation;
   // if (storeRot) {
   //   entranceRotation.value = storeRot;
   // }
-  const sRadius = vrSpaceStore.currentVrSpace?.dbData.spawnRadius;
-  if (sRadius) {
-    spawnRadius.value = sRadius;
-  }
+  // const sRadius = vrSpaceStore.currentVrSpace?.dbData.spawnRadius;
+  // if (sRadius) {
+  //   spawnRadius.value = sRadius;
+  // }
 
 });
 
@@ -174,11 +177,11 @@ const currentCursorType = ref<'spawnPosition' | 'entrancePosition' | undefined>(
 //   vrSpaceStore.currentStream.vrSpace.virtualSpace3DModel.entranceRotation = rot;
 // });
 
-const spawnRadius = ref(0);
-watch(spawnRadius, (radius) => {
-  if (!vrSpaceStore.currentVrSpace?.dbData.spawnRadius) return;
-  vrSpaceStore.currentVrSpace.dbData.spawnRadius = radius;
-});
+// const spawnRadius = ref(0);
+// watch(spawnRadius, (radius) => {
+//   if (!vrSpaceStore.currentVrSpace?.dbData.spawnRadius) return;
+//   vrSpaceStore.currentVrSpace.dbData.spawnRadius = radius;
+// });
 
 type Point = [number, number, number];
 
