@@ -82,13 +82,13 @@
             <input type="range" min="0" max="360" v-model.number="entranceRotation" @change="onEntranceRotationCommited"
               class="range">
           </label> -->
-          <!-- <label class="label gap-2">
+          <label class="label gap-2">
             <span class="label-text font-semibold whitespace-nowrap">
               Startplats storlek
             </span>
-            <input type="range" min="1" max="20" step="0.1" v-model.number="spawnRadius" @change="onSpawnRadiusCommited"
-              class="range">
-          </label> -->
+            <input type="range" min="1" max="20" step="0.1"
+              v-model.number="vrSpaceStore.writableVrSpaceState.dbData.spawnRadius" class="range">
+          </label>
         </div>
         <div>
           <div>

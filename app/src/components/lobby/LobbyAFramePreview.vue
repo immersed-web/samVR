@@ -25,7 +25,8 @@
         message="Till kameror"
       /> -->
       <a-entity v-if="spawnPosString" :position="spawnPosString">
-        <a-circle color="yellow" transparent="true" opacity="0.5" rotation="-90 0 0" position="0 0.05 0" :radius="3" />
+        <a-circle color="yellow" transparent="true" opacity="0.5" rotation="-90 0 0" position="0 0.05 0"
+          :radius="vrSpaceStore.currentVrSpace?.dbData.spawnRadius" />
       </a-entity>
 
       <!-- for some super weird reason orbit controls doesnt work with the a-camera primitive  -->
