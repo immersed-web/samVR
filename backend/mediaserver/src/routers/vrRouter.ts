@@ -80,7 +80,7 @@ export const vrRouter = router({
     const [dbResponse] = await db.update(schema.vrSpaces).set(data).where(eq(schema.vrSpaces.vrSpaceId, vrSpaceId)).returning();
     const vrSpace = VrSpace.getVrSpace(vrSpaceId);
     if (!vrSpace) return;
-    vrSpace.setDbData(dbResponse)
+    vrSpace.reloadDbData(data.reason ?? 'dbData updated. Reloading');
   }),
   // getState: userInVrSpaceP.query(({ ctx }) => {
   //   ctx.vrSpace.getPublicState();

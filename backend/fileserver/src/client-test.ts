@@ -14,17 +14,20 @@ const res = await client.upload.$post({
 if (res.ok) {
   const data = await res.json()
 }
+else {
 
-const fetchedAsset = await client.file[':filename'].$get({
-  param: {
-    filename: 'hello.txt'
-  }
-})
-const res2 = await assetRoute.$get({
-  param: {
-    assetId: '1'
-  }
-})
-if (res2.ok) {
-  const data = await res2.json();
 }
+
+// const fetchedAsset = await client.file[':filename'].$get({
+//   param: {
+//     filename: 'hello.txt'
+//   }
+// })
+// const res2 = await assetRoute.$get({
+//   param: {
+//     assetId: '1'
+//   }
+// })
+// if (res2.ok) {
+//   const data = await res2.json();
+// }

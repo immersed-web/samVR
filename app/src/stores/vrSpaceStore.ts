@@ -20,10 +20,13 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
 
 
   const { ignoreUpdates } = watchIgnorable(() => writableVrSpaceState.value, async (newVal, oldVal) => {
-    // console.log('currentVrSpace watcher triggered', oldVal, newVal);
+    console.log('currentVrSpace watcher triggered', oldVal, newVal);
     if (newVal?.dbData.ownerUserId === clientStore.clientState?.userId
       || newVal?.dbData.allowedUsers.some(p => {
-        p.user.userId === clientStore.clientState?.userId && hasAtLeastPermissionLevel(p.permissionLevel, 'edit')
+        const permissionMatched = p.user.userId === clientStore.clientState?.userId
+        const isAtLeastEditor = hasAtLeastPermissionLevel(p.permissionLevel, 'edit')
+        console.log(permissionMatched, isAtLeastEditor);
+        return permissionMatched && isAtLeastEditor;
       })) {
       await updateVrSpace();
     }
@@ -76,12 +79,12 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
   /**
    * Throttled update of the backend VrSpaceState.
    */
-  const updateVrSpace = debounce(async () => {
+  const updateVrSpace = debounce(async (reason?: string) => {
     if (!currentVrSpace.value) return;
     console.log(`*** Gonna send update for VrSpace ${currentVrSpace.value.dbData.vrSpaceId}`);
 
     // @ts-ignore
-    await connection.client.vr.updateVrSpace.mutate(currentVrSpace.value.dbData);
+    await connection.client.vr.updateVrSpace.mutate({ ...currentVrSpace.value.dbData, reason });
   }, 700);
 
   async function updateTransform(transform: ClientTransform){

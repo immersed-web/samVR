@@ -214,6 +214,30 @@ export function assetTypeListToExtensionList<T extends AssetType>(assetTypes: T 
   return extensionList;
 }
 
+/**
+ * Will try to match an assetType for the provided extension (without the dot)
+ * @param extension file extension without the dot (examples: pdf, glb or png)
+ * @param acceptedAssetTypes optional assetType or list of accepted assetTypes. If not provied, extension will be matched against all assetTypes
+ * 
+ */
+export function getAssetTypeFromExtension(extension: string, acceptedAssetTypes?: AssetType | AssetType[]) {
+  if (acceptedAssetTypes === undefined) {
+    acceptedAssetTypes = Object.keys(assetTypesToExtensionsMap) as AssetType[]
+  }
+
+  if (!(acceptedAssetTypes instanceof Array)) {
+    acceptedAssetTypes = [acceptedAssetTypes]
+  }
+  for (const assetType of acceptedAssetTypes) {
+    // @ts-ignore
+    if (assetTypesToExtensionsMap[assetType].includes(extension)) {
+      return assetType;
+    }
+  }
+  console.warn('failed to match extension to a valid asset type');
+  return undefined
+}
+
 export function createFileExtensionSchema<T extends AssetType>(assetTypes: T | T[]) {
   const extensionList = assetTypeListToExtensionList(assetTypes);
   // if (!(assetTypes instanceof Array)) {
@@ -224,10 +248,10 @@ export function createFileExtensionSchema<T extends AssetType>(assetTypes: T | T
   //   return [...acc, ...assetTypesToExtensionsMap[assetType]];
   // }, []);
   // const extensionList: typeof assetTypesToExtensionsMap[T] = assetTypesToExtensionsMap[assetTypes];
-  return z.enum(extensionList);
+  return z.enum(extensionList)//.transform((ext) => ext.toLowerCase());
 }
 
-const imageVideoSchema = createFileExtensionSchema(['image', 'video']);
+// const imageVideoSchema = createFileExtensionSchema(['image', 'video']);
 
 const timestampKeys = {
   createdAt: true, updatedAt: true,

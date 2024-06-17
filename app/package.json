@@ -25,6 +25,7 @@
     "database": "workspace:^",
     "date-fns": "^2.30.0",
     "devalue": "^4.3.3",
+    "fileserver": "workspace:^",
     "i": "^0.3.7",
     "jwt-decode": "^3.1.2",
     "lodash-es": "^4.17.21",

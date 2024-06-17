@@ -1,23 +1,21 @@
 {
+  "name": "fileserver",
   "type": "module",
   "scripts": {
     "dev": "dotenv -e ../../.env tsx watch src/index.ts"
   },
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "dependencies": {
-    "@hono-storage/core": "^0.0.12",
-    "@hono-storage/node-disk": "^0.0.14",
     "@hono/node-server": "^1.11.2",
     "@hono/zod-validator": "^0.2.2",
     "database": "workspace:^",
     "hono": "^4.4.2",
-    "hono-upload": "^0.2.0",
     "http-status-ts": "^2.0.1",
-    "schemas": "workspace:^",
-    "write-file-atomic": "^5.0.1"
+    "schemas": "workspace:^"
   },
   "devDependencies": {
-    "@types/node": "^20.11.17",
-    "@types/write-file-atomic": "^4.0.3",
-    "tsx": "^4.7.1"
+    "@types/node": "^20.11.17"
   }
 }

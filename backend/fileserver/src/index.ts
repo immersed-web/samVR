@@ -13,9 +13,11 @@ import { randomUUID } from 'crypto'
 import { Stream } from 'node:stream';
 import fs from 'fs'
 
+import { hc, InferRequestType, InferResponseType } from 'hono/client'
+
 
 import { basicUserSelect, db, schema } from 'database'
-import { AssetIdSchema, AssetType, AssetTypeSchema, JwtPayload, UserId } from 'schemas'
+import { AssetIdSchema, AssetType, AssetTypeSchema, JwtPayload, UserId, assetTypesToExtensionsMap, createFileExtensionSchema, getAssetTypeFromExtension } from 'schemas'
 import { eq } from 'drizzle-orm';
 import path from 'path';
 import { z } from 'zod';
@@ -86,83 +88,65 @@ const privateRoutes = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
     })
     return c.text('file deleted', HttpStatus.OK);
   }).post('/upload', zValidator('form', z.object({ file: z.instanceof(File), assetType: AssetTypeSchema.optional() })), async (c, next) => {
-    // const body = await c.req.parseBody();
     let { file, assetType } = c.req.valid('form');
     const user = c.get('jwtPayload');
-  // const file = body['file']
-  // if (!(file instanceof File)) {
-  //   // const badRequest = constants.HTTP_STATUS_BAD_REQUEST as StatusCode;
-  //   // return c.text('no file found in request body', HttpStatus.BAD_REQUEST);
-  //   return c.json({ error: 'no file found in request body' }, HttpStatus.BAD_REQUEST);
-  // }
-  console.log(file.type);
-  const extension = file.name.slice((file.name.lastIndexOf(".") - 1 >>> 0) + 2);
-  console.log(extension);
-  // const [mime, extension] = file.type.split('/');
-  // const parseResult = AssetTypeSchema.safeParse(body['assetType']);
-  // let assetType: AssetType;
-  if (!assetType) {
-    switch (extension) {
-      case 'glb':
-        assetType = 'model';
-        break;
-      case 'pdf':
-        assetType = 'document';
-        break;
-      case 'png':
-      case 'jpg':
-      case 'jpeg':
-        assetType = 'image';
-        break;
-      case 'mkv':
-      case 'mp4':
-        assetType = 'video';
-        break;
-      default:
-        assetType = 'unknown';
-        break;
+    console.log(file.type);
+    const incomingExtension = file.name.slice((file.name.lastIndexOf(".") - 1 >>> 0) + 2).toLowerCase();
+    let acceptedAssetTypes = assetType ?? Object.keys(assetTypesToExtensionsMap) as AssetType[]
+    const validatedExtension = createFileExtensionSchema(acceptedAssetTypes).safeParse(incomingExtension);
+    if (validatedExtension.error) {
+      return c.json({ error: 'unallowed file extension' as const }, HttpStatus.FORBIDDEN);
     }
-  }
-  console.log(file.name);
-  const uuid = randomUUID();
-  const generatedName = `${uuid}.${extension}`;
-  // const path = './uploads/temp/';
-  const fileStream = file.stream();
-  const nodeReadStream = Stream.Readable.fromWeb(fileStream);
-  const writeStream = fs.createWriteStream(`${savePathAbsolute}/${generatedName}`);
-  nodeReadStream.pipe(writeStream);
+    if (!assetType) {
+      assetType = getAssetTypeFromExtension(incomingExtension);
+      if (!assetType) {
+        console.error('couldnt match extension to a valid asset type');
+        return c.json({ error: 'couldnt match extension to a valid asset type' as const }, HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+    }
+    console.log(file.name);
+    const uuid = randomUUID();
+    const generatedName = `${uuid}.${validatedExtension.data}`;
+    const fileStream = file.stream();
 
-  let resolve, reject;
-  const fileWritePromise = new Promise((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-  writeStream.on('finish', () => {
-    resolve();
-  });
-  writeStream.on('error', (err) => {
-    reject('upload failed', err);
-  });
-  await fileWritePromise;
-  const [dbResponse] = await db.insert(schema.assets).values({
-    assetType,
-    assetFileExtension: extension,
-    generatedName: generatedName,
-    size: file.size,
-    mimeType: file.type,
-    originalFileName: file.name,
-    ownerUserId: user.userId,
-  }).returning();
+    // @ts-ignore
+    const nodeReadStream = Stream.Readable.fromWeb(fileStream);
+    const writeStream = fs.createWriteStream(`${savePathAbsolute}/${generatedName}`);
+    nodeReadStream.pipe(writeStream);
 
-  // return c.text('file uploaded');
-  return c.json(dbResponse, HttpStatus.OK);
-});
+    let resolve: Parameters<ConstructorParameters<typeof Promise<void>>[0]>[0];
+    let reject: Parameters<ConstructorParameters<typeof Promise<void>>[0]>[1];
+    const fileWritePromise = new Promise((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+    writeStream.on('finish', () => {
+      resolve();
+    });
+    writeStream.on('error', (err) => {
+      console.error(err);
+      c.text('upload failed', HttpStatus.INTERNAL_SERVER_ERROR);
+      reject(err);
+    });
+    await fileWritePromise;
+    const [dbResponse] = await db.insert(schema.assets).values({
+      assetType,
+      assetFileExtension: validatedExtension.data,
+      generatedName: generatedName,
+      size: file.size,
+      mimeType: file.type,
+      originalFileName: file.name,
+      ownerUserId: user.userId,
+    }).returning();
+
+    return c.json(dbResponse, HttpStatus.OK);
+  });
 
 const app = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
-// const app = new Hono()
-app.route('/', publicRoutes);
-app.route('/', privateRoutes);
-const port = process.env.FILESERVER_PORT
+  .route('/', publicRoutes)
+  .route('/', privateRoutes);
+
+const port = Number.parseInt(process.env.FILESERVER_PORT ?? '3000');
 console.log(`Server is running on port ${port}`)
 
 serve({
@@ -171,3 +155,9 @@ serve({
 })
 
 export type AppType = typeof app;
+type HC = ReturnType<typeof hc<AppType>>
+export type UploadRequest = InferRequestType<HC['upload']['$post']>;
+export type UploadResponse = InferResponseType<HC['upload']['$post']>
+export type ExtractSuccessResponse<T> = T extends { error: string } ? never : T
+
+// export type InferResponseType<HC['upload']['$post']>

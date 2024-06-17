@@ -92,18 +92,19 @@
         <div>
           <div>
             <h4>3D-modell för miljön</h4>
-            <UploadModelForm :acceptedAssetTypes="['navmesh']" />
+            <pre>{{ vrSpaceStore.currentVrSpace.dbData.worldModelAsset }}</pre>
+            <UploadModelForm @uploaded="onModelUploaded" :acceptedAssetTypes="['model']" />
           </div>
           <div v-if="vrSpaceStore.currentVrSpace?.dbData.worldModelAsset">
             <h4>3D-modell för gåbara ytor (navmesh)</h4>
             <UploadModelForm acceptedAssetTypes="navmesh" name="navmesh" />
           </div>
         </div>
-        <div class="flex gap-4">
+        <!-- <div class="flex gap-4">
           <h4>Färg på himmelen</h4>
           <input class="rounded-md border-black border border-2" type="color"
             v-model="vrSpaceStore.writableVrSpaceState.dbData.skyColor">
-        </div>
+        </div> -->
       </div>
     </div>
   </div>
@@ -111,9 +112,9 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import UploadModelForm from './UploadModelForm.vue';
+import UploadModelForm, { type EmitTypes } from './UploadModelForm.vue';
 import VrAFramePreview from '@/components/lobby/LobbyAFramePreview.vue';
-import { ref, watch, onMounted, computed } from 'vue';
+import { ref, watch, onMounted, computed, type ComponentInstance, type Component, type EmitsOptions, type ObjectEmitsOptions } from 'vue';
 import { throttle } from 'lodash-es';
 import { Combobox, ComboboxInput, ComboboxOptions, ComboboxOption, ComboboxButton } from '@headlessui/vue';
 import { insertablePermissionHierarchy, type VrSpaceId } from 'schemas';
@@ -121,6 +122,11 @@ import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import { useConnectionStore } from '@/stores/connectionStore';
 import type { RouterOutputs } from '@/modules/trpcClient';
 import UserBanner from '@/components/UserBanner.vue';
+import { Parameter } from 'mediasoup/node/lib/fbs/rtp-parameters';
+
+// TODO: refine/find alternative way to get these types so we get intellisense for the emit key
+type ExtractEmitData<T extends string, emitUnion extends (...args: any[]) => void> = T extends Parameters<emitUnion>[0] ? Parameters<emitUnion>[1] : never
+type UploadEventPayload = ExtractEmitData<'uploaded', EmitTypes>
 
 // Use imports
 const router = useRouter();
@@ -130,6 +136,12 @@ const vrSpaceStore = useVrSpaceStore();
 const props = defineProps<{
   vrSpaceId: VrSpaceId
 }>();
+
+function onModelUploaded(uploadDetails: UploadEventPayload) {
+  console.log(uploadDetails);
+  if (!vrSpaceStore.writableVrSpaceState) return;
+  vrSpaceStore.writableVrSpaceState.dbData.worldModelAssetId = uploadDetails.assetId;
+}
 
 const query = ref('');
 const users = ref<RouterOutputs['user']['getAllUsers']>();

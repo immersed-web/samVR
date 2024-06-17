@@ -98,6 +98,11 @@ export class VrSpace {
     VrSpace.vrSpaces.delete(this.vrSpaceId);
   }
   
+  /**
+   * Manually assigns new dbData. You can use this if you are only performing a shallow update that wont affect relational data.
+   * If you change relational data (like foreign keys or such) use the {@link reloadDbData} function instead, so that nested data
+   * is properly loaded
+   */
   async setDbData(data: VrSpaceUpdate) {
     this.dbData = { ...this.dbData, ...data };
     this._notifyStateUpdated('the dbData was updated');
@@ -110,7 +115,7 @@ export class VrSpace {
       throw Error('No vrSpace with that vrSpaceId in db');
     }
     this.dbData = dbResponse;
-    this._notifyStateUpdated(reason ?? 'dbData was updated');
+    this._notifyStateUpdated(reason ?? 'dbData was reloaded');
   }
 
   // Static stuff for global housekeeping

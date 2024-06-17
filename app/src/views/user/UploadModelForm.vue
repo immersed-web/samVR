@@ -42,31 +42,26 @@
 import { ref, computed, shallowRef } from 'vue';
 import { autoResetRef, useTransition } from '@vueuse/core';
 import axios from 'axios';
+import type { ExtractSuccessResponse, UploadRequest, UploadResponse } from 'fileserver'
 import { useConnectionStore } from '@/stores/connectionStore';
-import { useStreamStore } from '@/stores/streamStore';
 import { useAuthStore } from '@/stores/authStore';
-import { type AssetType, assetTypesToExtensionsMap, maxFileSizeSchema, maxFileSize, createFileExtensionSchema, assetTypeListToExtensionList } from 'schemas';
-
-// Props & emits
-// const props = defineProps({
-//   model: {type: String, required: true, validator(value: string){return ['model','navmesh'].includes(value);} },
-//   name: {type: String, default: '3D-modell'},
-// });
+import { type AssetType, maxFileSizeSchema, maxFileSize, createFileExtensionSchema, assetTypeListToExtensionList, getAssetTypeFromExtension } from 'schemas';
 
 const props = withDefaults(defineProps<{
   acceptedAssetTypes: AssetType | AssetType[],
   name?: string,
 }>(), {
-  name: '3D-modell',
+  name: '',
 });
 
-// const connectionStore = useConnectionStore();
-// const streamStore = useStreamStore();
+const emit = defineEmits<{
+  uploaded: [uploadDetails: ExtractSuccessResponse<UploadResponse>]
+}>()
+
+export type EmitTypes = typeof emit
+
 const authStore = useAuthStore();
 
-// const modelExists = computed(() => {
-//   return props.acceptedAssetTypes === 'model' ? !!streamStore.currentStream?.vrSpace?.virtualSpace3DModel?.modelFileFormat : !!streamStore.currentStream?.vrSpace?.virtualSpace3DModel?.navmeshFileFormat;
-// });
 const acceptedExtensions = computed(() => {
   return assetTypeListToExtensionList(props.acceptedAssetTypes);
 })
@@ -81,17 +76,6 @@ const config = {
   },
 };
 
-const uploadedFileName = computed(() => {
-  // const modelId = streamStore.currentStream?.vrSpace?.virtualSpace3DModelId;
-  // const modelFileFormat = streamStore.currentStream?.vrSpace?.virtualSpace3DModel?.modelFileFormat;
-  // const navmeshFileFormat = streamStore.currentStream?.vrSpace?.virtualSpace3DModel?.navmeshFileFormat;
-  // const fileFormat = props.acceptedAssetTypes === 'model' ? modelFileFormat : navmeshFileFormat;
-  // if(!modelId || !fileFormat) {
-  //   return undefined;
-  // }
-  // return `${modelId}.${props.acceptedAssetTypes}.${fileFormat}`;
-});
-
 const uploadDisabled = computed(() => {
   return !pickedFile.value || !extensionOfPickedFile.value || uploadProgress.value !== 0;
 });
@@ -103,23 +87,15 @@ const derivedAssetType = computed(() => {
   if (!extensionOfPickedFile.value) {
     return undefined;
   }
-  // const ext = extensionOfPickedFile.value
-  let aT = props.acceptedAssetTypes;
-  if (!(aT instanceof Array)) {
-    aT = [aT]
+  const assetType = getAssetTypeFromExtension(extensionOfPickedFile.value, props.acceptedAssetTypes);
+  if (!assetType) {
+    console.warn('failed to match extension to a valid asset type');
   }
-  for (const assetType of aT) {
-    // @ts-ignore
-    if (assetTypesToExtensionsMap[assetType].includes(extensionOfPickedFile.value)) {
-      return assetType; 
-    }
-  }
-  console.warn('failed to match extension to a valid asset type');
-  return undefined
+  return assetType
 })
-// const maxSize = 50 * 1024 * 1024;
 const uploadProgress = ref(0);
 const smoothedProgress = useTransition(uploadProgress);
+
 function onFilesPicked(evt: Event) {
   pickedFile.value = undefined;
   console.log('files picked:', evt);
@@ -133,7 +109,7 @@ function onFilesPicked(evt: Event) {
     return;
   }
   const ext = file.name.split('.').pop();
-  const validatedExt = createFileExtensionSchema(props.acceptedAssetTypes).safeParse(ext);
+  const validatedExt = createFileExtensionSchema(props.acceptedAssetTypes).safeParse(ext?.toLowerCase());
   if (validatedExt.error) {
     error.value = 'otillåtet filformat'
     return;
@@ -143,7 +119,8 @@ function onFilesPicked(evt: Event) {
 }
 
 const fileInput = ref<HTMLInputElement>();
-const uploadFile = async () => {
+
+async function uploadFile() {
   if (!extensionOfPickedFile.value || !derivedAssetType.value) {
     return;
   }
@@ -153,25 +130,12 @@ const uploadFile = async () => {
       const data = new FormData();
       data.append('file', pickedFile.value, pickedFile.value.name);
       data.set('assetType', derivedAssetType.value)
-      // Array.from(fileInput.value.files).forEach(file => {
-      //   data.append('gltf', file, file.name);
-      // });
       pickedFile.value = undefined;
 
-      // if (!streamStore.currentStream?.vrSpace?.virtualSpace3DModelId) {
-      //   console.error('no virtualSpace3DModelId');
-      //   return;
-      // }
-      // data.set('venueId', venueStore.currentVenue.venueId);
-      // data.set('token', authStore.tokenOrThrow());
-
-      const response = await axios.post(config.url + '/upload', data, {
+      const response = await axios.post<UploadResponse>(config.url + '/upload', data, {
         headers: {
           'Content-Type': 'multipart/form-data;',
           'Authorization': `Bearer ${authStore.tokenOrThrow()}`,
-          // 'venueId': venueStore.currentVenue.venueId,
-          // 'model-id': streamStore.currentStream.vrSpace.virtualSpace3DModelId,
-          // 'file-name-suffix': props.acceptedAssetTypes,
         },
         signal: ctl.signal,
         timeout: 4 * 60 * 1000,
@@ -181,16 +145,12 @@ const uploadFile = async () => {
           uploadProgress.value = progressEvent.progress * 100;
         },
       });
-      console.log(extensionOfPickedFile);
-      // update3DModel(extensionOfPickedFile.value);
       uploadProgress.value = 0;
-      // console.log(response);
-      // if(props.model === 'model'){
-      //   create3DModel(response.data.modelUrl);
-      // }
-      // else if (props.model === 'navmesh'){
-      //   updateNavmesh(response.data.modelUrl);
-      // }
+      if ('error' in response.data) {
+        error.value = response.data['error'];
+      } else {
+        emit('uploaded', response.data);
+      }
     }
   } catch (err) {
     console.error(err);
@@ -198,28 +158,22 @@ const uploadFile = async () => {
     uploadProgress.value = 0;
     extensionOfPickedFile.value = undefined;
     ctl.abort('failed to send file');
-
-    // throw new Error(err);
   }
 };
 
-// const create3DModel = async (modelUrl: string) => {
-//   await connectionStore.client.vr.create3DModel.mutate({modelUrl});
+// const update3DModel = async (extension: 'gltf' | 'glb' | null) => {
+//   const modelId = streamStore.currentStream?.vrSpace?.virtualSpace3DModelId;
+//   if(!modelId) return;
+//   await connectionStore.client.vr.update3DModel.mutate({
+//     vr3DModelId: modelId,
+//     data: {
+//       modelFileFormat: props.acceptedAssetTypes === 'model' ? extension : undefined,
+//       navmeshFileFormat: props.acceptedAssetTypes === 'navmesh' ? extension : undefined,
+//     },
+//     reason: props.acceptedAssetTypes === 'model' ? '3D-model updated' : 'navmesh model updated',
+//   });
+
 // };
-
-const update3DModel = async (extension: 'gltf' | 'glb' | null) => {
-  const modelId = streamStore.currentStream?.vrSpace?.virtualSpace3DModelId;
-  if(!modelId) return;
-  await connectionStore.client.vr.update3DModel.mutate({
-    vr3DModelId: modelId,
-    data: {
-      modelFileFormat: props.acceptedAssetTypes === 'model' ? extension : undefined,
-      navmeshFileFormat: props.acceptedAssetTypes === 'navmesh' ? extension : undefined,
-    },
-    reason: props.acceptedAssetTypes === 'model' ? '3D-model updated' : 'navmesh model updated',
-  });
-
-};
 
 // Remove 3d model
 const removeFile = async () => {
@@ -237,21 +191,10 @@ const removeFile = async () => {
       },
       timeout: 60000,
     });
-    update3DModel(null);
   } catch (err) {
     console.log(err);
   }
 };
 </script>
 
-<style scoped>
-
-.break {
-  word-break: break-all;
-}
-
-#aframe {
-
-}
-
-</style>
+<style scoped></style>
