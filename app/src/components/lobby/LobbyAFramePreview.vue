@@ -24,38 +24,21 @@
         :direction="entranceRotation"
         message="Till kameror"
       /> -->
-      <!-- <a-entity
-        v-if="spawnPosString"
-        :position="spawnPosString"
-      >
-        <a-circle
-          color="yellow"
-          transparent="true"
-          opacity="0.5"
-          rotation="-90 0 0"
-          position="0 0.05 0"
-          :radius="spawnRadius"
-        />
-      </a-entity> -->
+      <a-entity v-if="spawnPosString" :position="spawnPosString">
+        <a-circle color="yellow" transparent="true" opacity="0.5" rotation="-90 0 0" position="0 0.05 0" :radius="3" />
+      </a-entity>
 
       <!-- for some super weird reason orbit controls doesnt work with the a-camera primitive  -->
       <a-entity camera ref="cameraTag" />
-      <!-- <a-sky :color="skyColor" /> -->
+      <a-sky :color="skyColor" />
 
       <!-- The model -->
       <a-entity>
         <a-gltf-model v-if="props.modelUrl" @model-loaded="onModelLoaded" id="model" ref="modelTag"
           :src="props.modelUrl" />
-        <!-- <a-gltf-model
-          id="navmesh"
-          ref="navmeshTag"
-          @model-loaded="onNavMeshLoaded"
-          :model-opacity="`opacity: ${navMeshOpacity}`"
-          :src="props.navmeshUrl?props.navmeshUrl:props.modelUrl"
-          @raycast-change="onIntersection"
-          @raycast-out="onNoIntersection"
-          @click="placeCursor"
-        /> -->
+        <a-gltf-model id="navmesh" ref="navmeshTag" @model-loaded="onNavMeshLoaded"
+          :model-opacity="`opacity: ${navMeshOpacity}`" :src="props.navmeshUrl ? props.navmeshUrl : props.modelUrl"
+          @raycast-change="onIntersection" @raycast-out="onNoIntersection" @click="placeCursor" />
       </a-entity>
     </a-scene>
   </div>
@@ -63,15 +46,14 @@
 
 <script setup lang="ts">
 import { type Scene, type Entity, type DetailEvent, THREE } from 'aframe';
-import { ref, watch, computed }  from 'vue';
+import { ref, watch, computed } from 'vue';
 import { useTimeoutFn } from '@vueuse/core';
-import StreamEntrance from './StreamEntrance.vue';
-import { useStreamStore } from '@/stores/streamStore';
+import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import c from '@/ts/aframe/components';
 c.registerAframeComponents();
 
 
-const streamStore = useStreamStore();
+const vrSpaceStore = useVrSpaceStore();
 
 const props = withDefaults(defineProps<{
   modelUrl?: string,
@@ -96,20 +78,20 @@ const cameraTag = ref<Entity>();
 
 const showNavMesh = ref(false);
 const navMeshOpacity = computed(() => {
-  return showNavMesh.value?0.7:0.0;
+  return showNavMesh.value ? 0.7 : 0.0;
 });
 
 let stopAutoRotateTimeout: ReturnType<typeof useTimeoutFn>['stop'] | undefined = undefined;
 
 watch(() => props.cursorTarget, (cTarget) => {
-  if(cTarget) {
-    if(stopAutoRotateTimeout) stopAutoRotateTimeout();
-    if(!navmeshTag.value) console.error('navmeshTag undefined');
+  if (cTarget) {
+    if (stopAutoRotateTimeout) stopAutoRotateTimeout();
+    if (!navmeshTag.value) console.error('navmeshTag undefined');
 
     // the  raycaster seem to keep a reference to the intersected object which leads to us missing "new" intersection after reattaching raycaster-listen.
     // This is a hacky work-around to "reset" the raycasting logic
     sceneTag.value?.setAttribute('raycaster', 'objects', '#navmesh');
-    sceneTag.value?.setAttribute('cursor', {fuse: false, rayOrigin: 'mouse'});
+    sceneTag.value?.setAttribute('cursor', { fuse: false, rayOrigin: 'mouse' });
     navmeshTag.value?.setAttribute('raycaster-listen', true);
     cameraTag.value!.setAttribute('orbit-controls', 'autoRotate', false);
   } else {
@@ -134,50 +116,55 @@ watch(() => props.cursorTarget, (cTarget) => {
 //   return streamStore.currentStream.vrSpace.virtualSpace3DModel.entranceRotation;
 // });
 
-// const spawnPosString = computed(() => {
-//   const posArr = streamStore.currentStream?.vrSpace?.virtualSpace3DModel?.spawnPosition;
-//   if (!posArr) return undefined;
-//   const v = new AFRAME.THREE.Vector3(...posArr as [number, number, number]);
-//   return AFRAME.utils.coordinates.stringify(v);
-// });
+const spawnPosition = ref<THREE.Vector3Tuple>();
+const spawnPosString = computed(() => {
+  // const posArr = vrSpaceStore.currentVrSpace?.dbData.spawnPosition;
+  const posArr = spawnPosition.value;
+  if (!posArr) return undefined;
+  const v = new AFRAME.THREE.Vector3(...posArr as [number, number, number]);
+  return AFRAME.utils.coordinates.stringify(v);
+});
 
 // const spawnRadius = computed(() => {
 //   if (!streamStore.currentStream?.vrSpace?.virtualSpace3DModel?.spawnRadius) return 0.2;
 //   return streamStore.currentStream.vrSpace.virtualSpace3DModel.spawnRadius;
 // });
 
-// const skyColor = computed(() => {
-//   if (!streamStore.currentStream?.vrSpace?.virtualSpace3DModel.skyColor) return 'lightskyblue'
-//   return streamStore.currentStream?.vrSpace?.virtualSpace3DModel.skyColor;
-// })
+const skyColor = computed(() => {
+  const storeSkyColor = vrSpaceStore.currentVrSpace?.dbData.skyColor
+  if (!storeSkyColor) return 'lightskyblue'
+  return storeSkyColor;
+})
 
-// function onIntersection(evt: DetailEvent<any>) {
-//   console.log('model hovered', evt);
-//   const point: THREE.Vector3 = evt.detail.intersection.point;
-//   if (!point) {
-//     console.error('no point from intersection event');
-//     return;
-//   }
-//   if (props.cursorTarget === 'spawnPosition') {
-//     if (streamStore.currentStream?.vrSpace?.virtualSpace3DModel) {
-//       streamStore.currentStream.vrSpace.virtualSpace3DModel.spawnPosition = point.toArray();
-//     }
-//   }
-//   if (props.cursorTarget === 'entrancePosition') {
-//     if (streamStore.currentStream?.vrSpace?.virtualSpace3DModel) {
-//       streamStore.currentStream.vrSpace.virtualSpace3DModel.entrancePosition = point.toArray();
-//     }
-//   }
-//   // if(!cursorTag.value) return;
-//   // cursorTag.value?.setAttribute('visible', props.isCursorActive); 
-//   // cursorTag.value.object3D.position.set(...point.toArray());
-// }
+function onIntersection(evt: DetailEvent<any>) {
+  console.log('model hovered', evt);
+  const point: THREE.Vector3 = evt.detail.intersection.point;
+  if (!point) {
+    console.error('no point from intersection event');
+    return;
+  }
+  if (props.cursorTarget === 'spawnPosition') {
+    // console.log('intersect while spawnpointing');
+    spawnPosition.value = point.toArray();
+    // if (vrSpaceStore.writableVrSpaceState?.dbData.spawnPosition) {
+    //   // vrSpaceStore.writableVrSpaceState.dbData.spawnPosition = point.toArray();
+    // }
+  }
+  // if (props.cursorTarget === 'entrancePosition') {
+  //   if (vrSpaceStore.currentStream?.vrSpace?.virtualSpace3DModel) {
+  //     vrSpaceStore.currentStream.vrSpace.virtualSpace3DModel.entrancePosition = point.toArray();
+  //   }
+  // }
+  // if(!cursorTag.value) return;
+  // cursorTag.value?.setAttribute('visible', props.isCursorActive); 
+  // cursorTag.value.object3D.position.set(...point.toArray());
+}
 
-// function onNoIntersection(evt: DetailEvent<any>){
-//   console.log('raycast-out');
-//   // if(!cursorTag.value) return;
-//   // cursorTag.value?.setAttribute('visible', false); 
-// }
+function onNoIntersection(evt: DetailEvent<any>) {
+  console.log('raycast-out');
+  // if(!cursorTag.value) return;
+  // cursorTag.value?.setAttribute('visible', false); 
+}
 
 function placeCursor(evt: DetailEvent<{intersection: {point: THREE.Vector3}}>){
   console.log(evt.detail.intersection);

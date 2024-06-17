@@ -64,7 +64,7 @@
             :model-url="getAssetUrl(vrSpaceStore.currentVrSpace.dbData.worldModelAsset.generatedName)"
             :navmesh-url="getAssetUrl(vrSpaceStore.currentVrSpace.dbData.navMeshAsset?.generatedName)"
             :cursor-target="currentCursorType" @cursor-placed="onCursorPlaced" />
-          <!-- <div class="flex gap-2">
+          <div class="flex gap-2">
             <input type="radio" :value="undefined" class="hidden" v-model="currentCursorType">
             <input type="radio" value="spawnPosition" aria-label="Placera startplats" class="btn btn-sm btn-primary"
               v-model="currentCursorType">
@@ -73,7 +73,8 @@
             <button v-if="currentCursorType" class="btn btn-sm btn-circle" @click="currentCursorType = undefined">
               <span class="material-icons">close</span>
             </button>
-          </div> -->
+            <div>{{ vrSpaceStore.currentVrSpace.dbData.spawnPosition }}</div>
+          </div>
           <!-- <label class="label gap-2">
             <span class="label-text font-semibold whitespace-nowrap">
               Entré rotation
@@ -103,7 +104,7 @@
         </div>
         <div class="flex gap-4">
           <h4>Färg på himmelen</h4>
-          <input class="rounded-md border-black border border-2" type="color"
+          <input class="rounded-md border-black border-2" type="color"
             v-model="vrSpaceStore.writableVrSpaceState.dbData.skyColor">
         </div>
       </div>
@@ -204,7 +205,7 @@ function onCursorPlaced(point: Point) {
   if (currentCursorType.value === 'entrancePosition') {
     // setEntrancePosition(point);
   } else if (currentCursorType.value === 'spawnPosition') {
-    // setSpawnPosition(point);
+    setSpawnPosition(point);
   }
   currentCursorType.value = undefined;
 }
@@ -219,16 +220,10 @@ function onCursorPlaced(point: Point) {
 //     },
 //   });
 // }
-// async function setSpawnPosition(point: Point) {
-//   const modelId = vrSpaceStore.currentVrSpace?.spawnPosition;
-//   if (!modelId) return;
-//   await connectionStore.client.vr.update3DModel.mutate({
-//     vr3DModelId: modelId,
-//     data: {
-//       spawnPosition: point,
-//     },
-//   });
-// }
+async function setSpawnPosition(point: Point) {
+  if (!vrSpaceStore.writableVrSpaceState) return;
+  vrSpaceStore.writableVrSpaceState.dbData.spawnPosition = point
+}
 
 // async function onEntranceRotationCommited() {
 //   console.log('rotation changed', entranceRotation.value);
