@@ -25,7 +25,7 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
       || newVal?.dbData.allowedUsers.some(p => {
         const permissionMatched = p.user.userId === clientStore.clientState?.userId
         const isAtLeastEditor = hasAtLeastPermissionLevel(p.permissionLevel, 'edit')
-        console.log(permissionMatched, isAtLeastEditor);
+        // console.log(permissionMatched, isAtLeastEditor);
         return permissionMatched && isAtLeastEditor;
       })) {
       await updateVrSpace();

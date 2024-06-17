@@ -159,5 +159,3 @@ type HC = ReturnType<typeof hc<AppType>>
 export type UploadRequest = InferRequestType<HC['upload']['$post']>;
 export type UploadResponse = InferResponseType<HC['upload']['$post']>
 export type ExtractSuccessResponse<T> = T extends { error: string } ? never : T
-
-// export type InferResponseType<HC['upload']['$post']>

@@ -60,11 +60,11 @@
           </div>
         </div>
         <div v-if="vrSpaceStore.currentVrSpace.dbData.worldModelAsset" class="grid gap-2">
-          <!-- <VrAFramePreview class="flex-1 border"
-            :model-url="vrSpaceStore.currentVrSpace.dbData.worldModelAsset.generatedName"
-            :navmesh-url="vrSpaceStore.currentVrSpace.dbData.navMeshAsset?.generatedName"
+          <VrAFramePreview class="flex-1 border"
+            :model-url="getAssetUrl(vrSpaceStore.currentVrSpace.dbData.worldModelAsset.generatedName)"
+            :navmesh-url="getAssetUrl(vrSpaceStore.currentVrSpace.dbData.navMeshAsset?.generatedName)"
             :cursor-target="currentCursorType" @cursor-placed="onCursorPlaced" />
-          <div class="flex gap-2">
+          <!-- <div class="flex gap-2">
             <input type="radio" :value="undefined" class="hidden" v-model="currentCursorType">
             <input type="radio" value="spawnPosition" aria-label="Placera startplats" class="btn btn-sm btn-primary"
               v-model="currentCursorType">
@@ -92,19 +92,20 @@
         <div>
           <div>
             <h4>3D-modell för miljön</h4>
-            <pre>{{ vrSpaceStore.currentVrSpace.dbData.worldModelAsset }}</pre>
-            <UploadModelForm @uploaded="onModelUploaded" :acceptedAssetTypes="['model']" />
+            <pre>{{ vrSpaceStore.currentVrSpace.dbData.worldModelAsset?.originalFileName }}</pre>
+            <UploadModelForm @uploaded="onModelUploaded" :acceptedAssetTypes="['model']" name="miljömodell" />
           </div>
           <div v-if="vrSpaceStore.currentVrSpace?.dbData.worldModelAsset">
             <h4>3D-modell för gåbara ytor (navmesh)</h4>
-            <UploadModelForm acceptedAssetTypes="navmesh" name="navmesh" />
+            <pre>{{ vrSpaceStore.currentVrSpace.dbData.navMeshAsset?.originalFileName }}</pre>
+            <UploadModelForm @uploaded="onNavmeshUploaded" acceptedAssetTypes="navmesh" name="navmesh" />
           </div>
         </div>
-        <!-- <div class="flex gap-4">
+        <div class="flex gap-4">
           <h4>Färg på himmelen</h4>
           <input class="rounded-md border-black border border-2" type="color"
             v-model="vrSpaceStore.writableVrSpaceState.dbData.skyColor">
-        </div> -->
+        </div>
       </div>
     </div>
   </div>
@@ -114,22 +115,22 @@
 import { useRouter } from 'vue-router';
 import UploadModelForm, { type EmitTypes } from './UploadModelForm.vue';
 import VrAFramePreview from '@/components/lobby/LobbyAFramePreview.vue';
-import { ref, watch, onMounted, computed, type ComponentInstance, type Component, type EmitsOptions, type ObjectEmitsOptions } from 'vue';
-import { throttle } from 'lodash-es';
+import { ref, onMounted, computed } from 'vue';
+// import { throttle } from 'lodash-es';
 import { Combobox, ComboboxInput, ComboboxOptions, ComboboxOption, ComboboxButton } from '@headlessui/vue';
 import { insertablePermissionHierarchy, type VrSpaceId } from 'schemas';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import { useConnectionStore } from '@/stores/connectionStore';
 import type { RouterOutputs } from '@/modules/trpcClient';
 import UserBanner from '@/components/UserBanner.vue';
-import { Parameter } from 'mediasoup/node/lib/fbs/rtp-parameters';
+import { getAssetUrl } from '@/modules/utils';
 
 // TODO: refine/find alternative way to get these types so we get intellisense for the emit key
 type ExtractEmitData<T extends string, emitUnion extends (...args: any[]) => void> = T extends Parameters<emitUnion>[0] ? Parameters<emitUnion>[1] : never
 type UploadEventPayload = ExtractEmitData<'uploaded', EmitTypes>
 
 // Use imports
-const router = useRouter();
+// const router = useRouter();
 const backendConnection = useConnectionStore();
 const vrSpaceStore = useVrSpaceStore();
 
@@ -141,6 +142,12 @@ function onModelUploaded(uploadDetails: UploadEventPayload) {
   console.log(uploadDetails);
   if (!vrSpaceStore.writableVrSpaceState) return;
   vrSpaceStore.writableVrSpaceState.dbData.worldModelAssetId = uploadDetails.assetId;
+}
+
+function onNavmeshUploaded(uploadDetails: UploadEventPayload) {
+  console.log(uploadDetails);
+  if (!vrSpaceStore.writableVrSpaceState) return;
+  vrSpaceStore.writableVrSpaceState.dbData.navMeshAssetId = uploadDetails.assetId;
 }
 
 const query = ref('');
