@@ -63,7 +63,7 @@
           <VrAFramePreview class="flex-1 border"
             :model-url="getAssetUrl(vrSpaceStore.currentVrSpace.dbData.worldModelAsset.generatedName)"
             :navmesh-url="getAssetUrl(vrSpaceStore.currentVrSpace.dbData.navMeshAsset?.generatedName)"
-            :cursor-target="currentCursorType" @cursor-placed="onCursorPlaced" />
+            :cursor-target="currentCursorType" @cursor-placed="onCursorPlaced" @screenshot="onScreenshot" />
           <div class="flex gap-2">
             <input type="radio" :value="undefined" class="hidden" v-model="currentCursorType">
             <input type="radio" value="spawnPosition" aria-label="Placera startplats" class="btn btn-sm btn-primary"
@@ -89,6 +89,9 @@
             <input type="range" min="1" max="20" step="0.1"
               v-model.number="vrSpaceStore.writableVrSpaceState.dbData.spawnRadius" class="range">
           </label>
+          <div id="canvas-container" class="*:w-4/5">
+
+          </div>
         </div>
         <div>
           <div>
@@ -116,7 +119,7 @@
 import { useRouter } from 'vue-router';
 import UploadModelForm, { type EmitTypes } from './UploadModelForm.vue';
 import VrAFramePreview from '@/components/lobby/LobbyAFramePreview.vue';
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, type ComponentInstance } from 'vue';
 // import { throttle } from 'lodash-es';
 import { Combobox, ComboboxInput, ComboboxOptions, ComboboxOption, ComboboxButton } from '@headlessui/vue';
 import { insertablePermissionHierarchy, type VrSpaceId } from 'schemas';
@@ -129,6 +132,7 @@ import { getAssetUrl } from '@/modules/utils';
 // TODO: refine/find alternative way to get these types so we get intellisense for the emit key
 type ExtractEmitData<T extends string, emitUnion extends (...args: any[]) => void> = T extends Parameters<emitUnion>[0] ? Parameters<emitUnion>[1] : never
 type UploadEventPayload = ExtractEmitData<'uploaded', EmitTypes>
+type ScreenshotPayload = ExtractEmitData<'screenshot', ComponentInstance<typeof VrAFramePreview>['$emit']>
 
 // Use imports
 // const router = useRouter();
@@ -208,6 +212,12 @@ function onCursorPlaced(point: Point) {
     setSpawnPosition(point);
   }
   currentCursorType.value = undefined;
+}
+
+function onScreenshot(canvas: ScreenshotPayload) {
+  console.log('screenshot');
+  const c = document.querySelector('#canvas-container');
+  c.appendChild(canvas);
 }
 
 // async function setEntrancePosition(point: Point) {

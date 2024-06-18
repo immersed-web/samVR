@@ -5,6 +5,7 @@
         <span class="label-text mr-1 font-bold">visa navmesh</span>
         <input type="checkbox" class="toggle toggle-xs" v-model="showNavMesh">
       </label>
+      <button class="btn btn-xs btn-primary" @click="screenShot">screenshot</button>
     </div>
     <a-scene embedded ref="sceneTag" id="ascene" xr-mode-ui="enabled: false">
       <a-assets timeout="20000">
@@ -47,13 +48,16 @@
 
 <script setup lang="ts">
 import { type Scene, type Entity, type DetailEvent, THREE } from 'aframe';
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, onMounted } from 'vue';
 import { useTimeoutFn } from '@vueuse/core';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
+import { useAuthStore } from '@/stores/authStore';
 import c from '@/ts/aframe/components';
+import axios from 'axios';
+import type { UploadResponse } from 'fileserver';
 c.registerAframeComponents();
 
-
+const authStore = useAuthStore();
 const vrSpaceStore = useVrSpaceStore();
 
 const props = withDefaults(defineProps<{
@@ -69,6 +73,7 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{
   'cursorPlaced': [point: [number, number, number]]
+  'screenshot': [canvas: HTMLCanvasElement]
 }>();
 
 // A-frame
@@ -105,6 +110,49 @@ watch(() => props.cursorTarget, (cTarget) => {
   }
 });
 
+async function screenShot() {
+  if (sceneTag.value) {
+    // sceneTag.value.setAttribute('orbit-controls', 'enabled', false);
+    // cameraTag.value?.removeAttribute('orbit-controls');
+    if (!spawnPosition.value) return;
+    const vec3 = new THREE.Vector3(...spawnPosition.value);
+    // const localSpawnPos = sceneTag.value.camera.worldToLocal(vec3);
+    // sceneTag.value.camera.position.copy(vec3)
+    const screenshotComponent = sceneTag.value.components.screenshot;
+    // @ts-ignore
+    const canvasScreenshot: HTMLCanvasElement = screenshotComponent.getCanvas();
+    emit('screenshot', canvasScreenshot);
+    // canvasScreenshot.width = 500;
+
+    // document.querySelector('body')?.appendChild(canvasScreenshot);
+
+    // console.log(canvasScreenshot);
+    // const dataUrl = canvasScreenshot.toDataURL();
+
+    // UPLOAD TO SERVER
+    // const ctl = new AbortController();
+    // canvasScreenshot.toBlob(async (canvasBlob) => {
+    //   if (!canvasBlob) return;
+    //   const data = new FormData();
+    //   data.append('file', canvasBlob, 'screenshot.png');
+    //   data.set('assetType', 'image')
+    //   const fileserverUrl = `https://${import.meta.env.EXPOSED_SERVER_URL}${import.meta.env.EXPOSED_FILESERVER_PATH}`
+    //   const response = await axios.post<UploadResponse>(fileserverUrl + '/upload', data, {
+    //     headers: {
+    //       'Content-Type': 'multipart/form-data;',
+    //       'Authorization': `Bearer ${authStore.tokenOrThrow()}`,
+    //     },
+    //     signal: ctl.signal,
+    //     timeout: 4 * 60 * 1000,
+    //     onUploadProgress(progressEvent) {
+    //       console.log(progressEvent);
+    //     },
+    //   });
+    // sceneTag.value?.setAttribute('orbit-controls', 'enabled', true);
+    // });
+  }
+}
+
 // const entrancePosString = computed(() => {
 //   const posArr = streamStore.currentStream?.vrSpace?.virtualSpace3DModel?.entrancePosition;
 //   if(!posArr) return undefined;
@@ -117,6 +165,11 @@ watch(() => props.cursorTarget, (cTarget) => {
 //   return streamStore.currentStream.vrSpace.virtualSpace3DModel.entranceRotation;
 // });
 
+onMounted(() => {
+  const sp = vrSpaceStore.currentVrSpace?.dbData.spawnPosition;
+  if (sp) spawnPosition.value = sp as THREE.Vector3Tuple
+})
+
 const spawnPosition = ref<THREE.Vector3Tuple>();
 const spawnPosString = computed(() => {
   // const posArr = vrSpaceStore.currentVrSpace?.dbData.spawnPosition;
@@ -125,11 +178,6 @@ const spawnPosString = computed(() => {
   const v = new AFRAME.THREE.Vector3(...posArr as [number, number, number]);
   return AFRAME.utils.coordinates.stringify(v);
 });
-
-// const spawnRadius = computed(() => {
-//   if (!streamStore.currentStream?.vrSpace?.virtualSpace3DModel?.spawnRadius) return 0.2;
-//   return streamStore.currentStream.vrSpace.virtualSpace3DModel.spawnRadius;
-// });
 
 const skyColor = computed(() => {
   const storeSkyColor = vrSpaceStore.currentVrSpace?.dbData.skyColor
@@ -163,8 +211,6 @@ function onIntersection(evt: DetailEvent<any>) {
 
 function onNoIntersection(evt: DetailEvent<any>) {
   console.log('raycast-out');
-  // if(!cursorTag.value) return;
-  // cursorTag.value?.setAttribute('visible', false); 
 }
 
 function placeCursor(evt: DetailEvent<{intersection: {point: THREE.Vector3}}>){
@@ -188,17 +234,6 @@ function onModelLoaded(){
     orbitControlSettings += `target:${modelCenter.x} ${modelCenter.y} ${modelCenter.z};`;
     cameraTag.value.setAttribute('orbit-controls', orbitControlSettings);
   }
-  
-  // Below is testcode for trying out the built-in equirectangular screen capture of aframe scene
-  // if(sceneTag.value){
-  //   const screenshotComponent = sceneTag.value.components.screenshot;
-  //   // @ts-ignore
-  //   const canvasScreenshot = screenshotComponent.getCanvas();
-  //   console.log(canvasScreenshot);
-
-  //   // @ts-ignore
-  //   screenshotComponent.saveCapture();
-  // }
 }
 
 function onNavMeshLoaded() {
