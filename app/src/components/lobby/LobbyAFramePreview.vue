@@ -115,6 +115,8 @@ async function screenShot() {
   if (sceneTag.value) {
     if (!spawnPosTag.value || !spawnPosition.value) return;
     spawnPosTag.value.setAttribute('visible', 'false');
+    const navMeshVisibleRestoreState = navmeshTag.value?.getAttribute('visible');
+    navmeshTag.value?.setAttribute('visible', 'false');
     const spawnPosVec3 = new THREE.Vector3(...spawnPosition.value);
     spawnPosVec3.y += 1.7;
     const savedPos = sceneTag.value.camera.position.clone();
@@ -124,6 +126,7 @@ async function screenShot() {
     const canvasScreenshot: HTMLCanvasElement = screenshotComponent.getCanvas();
     sceneTag.value.camera.position.copy(savedPos);
     spawnPosTag.value.setAttribute('visible', 'true');
+    navmeshTag.value?.setAttribute('visible', navMeshVisibleRestoreState);
     emit('screenshot', canvasScreenshot);
     // canvasScreenshot.width = 500;
 
