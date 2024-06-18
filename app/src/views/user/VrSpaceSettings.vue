@@ -68,8 +68,8 @@
             <input type="radio" :value="undefined" class="hidden" v-model="currentCursorType">
             <input type="radio" value="spawnPosition" aria-label="Placera startplats" class="btn btn-sm btn-primary"
               v-model="currentCursorType">
-            <input type="radio" value="entrancePosition" aria-label="Placera streaming-entré"
-              class="btn btn-sm btn-primary" v-model="currentCursorType">
+            <!-- <input type="radio" value="entrancePosition" aria-label="Placera streaming-entré"
+              class="btn btn-sm btn-primary" v-model="currentCursorType"> -->
             <button v-if="currentCursorType" class="btn btn-sm btn-circle" @click="currentCursorType = undefined">
               <span class="material-icons">close</span>
             </button>

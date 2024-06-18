@@ -37,7 +37,7 @@
       <a-entity>
         <a-gltf-model v-if="props.modelUrl" @model-loaded="onModelLoaded" id="model" ref="modelTag"
           :src="props.modelUrl" />
-        <a-gltf-model id="navmesh" ref="navmeshTag" @model-loaded="onNavMeshLoaded"
+        <a-gltf-model id="navmesh" ref="navmeshTag" @model-loaded="onNavMeshLoaded" :visible="showNavMesh"
           :model-opacity="`opacity: ${navMeshOpacity}`" :src="props.navmeshUrl ? props.navmeshUrl : props.modelUrl"
           @raycast-change="onIntersection" @raycast-out="onNoIntersection" @click="placeCursor" />
       </a-entity>
