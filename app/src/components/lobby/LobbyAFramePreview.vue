@@ -58,12 +58,14 @@ import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import c from '@/ts/aframe/components';
 c.registerAframeComponents();
 
+export type CursorTarget = 'spawnPosition' | 'selfPlacement' | undefined;
+
 const vrSpaceStore = useVrSpaceStore();
 
 const props = withDefaults(defineProps<{
   modelUrl?: string,
   navmeshUrl?: string,
-  cursorTarget?: 'spawnPosition' | 'entrancePosition' | undefined
+  cursorTarget?: CursorTarget
 }>(), {
   modelUrl: undefined,
   navmeshUrl: undefined,
@@ -192,8 +194,16 @@ function onNoIntersection(evt: DetailEvent<any>) {
 
 function placeCursor(evt: DetailEvent<{intersection: {point: THREE.Vector3}}>){
   console.log(evt.detail.intersection);
+  switch (props.cursorTarget) {
+    case 'spawnPosition':
+      screenShot();
+      break;
+    case 'selfPlacement':
+      console.log('placing self');
+      break;
+  }
   emit('cursorPlaced', evt.detail.intersection.point.toArray());
-  screenShot();
+
 }
 
 function onModelLoaded(){

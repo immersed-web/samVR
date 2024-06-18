@@ -68,8 +68,8 @@
             <input type="radio" :value="undefined" class="hidden" v-model="currentCursorType">
             <input type="radio" value="spawnPosition" aria-label="Placera startplats" class="btn btn-sm btn-primary"
               v-model="currentCursorType">
-            <!-- <input type="radio" value="entrancePosition" aria-label="Placera streaming-entré"
-              class="btn btn-sm btn-primary" v-model="currentCursorType"> -->
+            <input type="radio" value="selfPlacement" aria-label="Hoppa in världen" class="btn btn-sm btn-secondary"
+              v-model="currentCursorType">
             <button v-if="currentCursorType" class="btn btn-sm btn-circle" @click="currentCursorType = undefined">
               <span class="material-icons">close</span>
             </button>
@@ -118,7 +118,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 import UploadModelForm, { type EmitTypes } from './UploadModelForm.vue';
-import VrAFramePreview from '@/components/lobby/LobbyAFramePreview.vue';
+import VrAFramePreview, { type CursorTarget } from '@/components/lobby/LobbyAFramePreview.vue';
 import { ref, onMounted, computed, type ComponentInstance } from 'vue';
 // import { throttle } from 'lodash-es';
 import { Combobox, ComboboxInput, ComboboxOptions, ComboboxOption, ComboboxButton } from '@headlessui/vue';
@@ -129,8 +129,6 @@ import { useAuthStore } from '@/stores/authStore';
 import type { RouterOutputs } from '@/modules/trpcClient';
 import UserBanner from '@/components/UserBanner.vue';
 import { getAssetUrl, uploadFileData } from '@/modules/utils';
-import axios from 'axios';
-import type { UploadResponse } from 'fileserver';
 
 // TODO: refine/find alternative way to get these types so we get intellisense for the emit key
 type ExtractEmitData<T extends string, emitUnion extends (...args: any[]) => void> = T extends Parameters<emitUnion>[0] ? Parameters<emitUnion>[1] : never
@@ -193,7 +191,7 @@ onMounted(async () => {
 
 const skyColor = ref();
 
-const currentCursorType = ref<'spawnPosition' | 'entrancePosition' | undefined>();
+const currentCursorType = ref<CursorTarget>();
 // const entranceRotation = ref(0);
 // watch(entranceRotation, (rot) => {
 //   if (!vrSpaceStore.currentVrSpace?.placedObjects) return;
@@ -210,10 +208,11 @@ type Point = [number, number, number];
 
 function onCursorPlaced(point: Point) {
   console.log('cursor placed:', point);
-  if (currentCursorType.value === 'entrancePosition') {
+  if (currentCursorType.value === 'selfPlacement') {
     // setEntrancePosition(point);
   } else if (currentCursorType.value === 'spawnPosition') {
-    setSpawnPosition(point);
+    if (!vrSpaceStore.writableVrSpaceState) return;
+    vrSpaceStore.writableVrSpaceState.dbData.spawnPosition = point
   }
   currentCursorType.value = undefined;
 }
@@ -255,10 +254,6 @@ function onScreenshot(canvas: ScreenshotPayload) {
 //     },
 //   });
 // }
-async function setSpawnPosition(point: Point) {
-  if (!vrSpaceStore.writableVrSpaceState) return;
-  vrSpaceStore.writableVrSpaceState.dbData.spawnPosition = point
-}
 
 // async function onEntranceRotationCommited() {
 //   console.log('rotation changed', entranceRotation.value);
