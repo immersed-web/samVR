@@ -115,13 +115,17 @@ async function screenShot() {
     // sceneTag.value.setAttribute('orbit-controls', 'enabled', false);
     // cameraTag.value?.removeAttribute('orbit-controls');
     if (!spawnPosition.value) return;
-    const vec3 = new THREE.Vector3(...spawnPosition.value);
+    const spawnPosVec3 = new THREE.Vector3(...spawnPosition.value);
+    spawnPosVec3.y += 1.7;
     // const localSpawnPos = sceneTag.value.camera.worldToLocal(vec3);
-    // sceneTag.value.camera.position.copy(vec3)
+    // sceneTag.value.camera.position.copy(localSpawnPos)
+    const savedPos = sceneTag.value.camera.position.clone();
+    sceneTag.value.camera.position.copy(spawnPosVec3)
     const screenshotComponent = sceneTag.value.components.screenshot;
     // @ts-ignore
     const canvasScreenshot: HTMLCanvasElement = screenshotComponent.getCanvas();
     emit('screenshot', canvasScreenshot);
+    sceneTag.value.camera.position.copy(savedPos);
     // canvasScreenshot.width = 500;
 
     // document.querySelector('body')?.appendChild(canvasScreenshot);
