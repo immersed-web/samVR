@@ -25,7 +25,7 @@
         :direction="entranceRotation"
         message="Till kameror"
       /> -->
-      <a-entity v-if="spawnPosString" :position="spawnPosString">
+      <a-entity ref="spawnPosTag" :visible="showSpawnPosition" v-if="spawnPosString" :position="spawnPosString">
         <a-circle color="yellow" transparent="true" opacity="0.5" rotation="-90 0 0" position="0 0.05 0"
           :radius="vrSpaceStore.currentVrSpace?.dbData.spawnRadius" />
       </a-entity>
@@ -81,6 +81,7 @@ const sceneTag = ref<Scene>();
 const modelTag = ref<Entity>();
 const navmeshTag = ref<Entity>();
 const cameraTag = ref<Entity>();
+const spawnPosTag = ref<Entity>();
 
 const showNavMesh = ref(false);
 const navMeshOpacity = computed(() => {
@@ -112,20 +113,18 @@ watch(() => props.cursorTarget, (cTarget) => {
 
 async function screenShot() {
   if (sceneTag.value) {
-    // sceneTag.value.setAttribute('orbit-controls', 'enabled', false);
-    // cameraTag.value?.removeAttribute('orbit-controls');
-    if (!spawnPosition.value) return;
+    if (!spawnPosTag.value || !spawnPosition.value) return;
+    spawnPosTag.value.setAttribute('visible', 'false');
     const spawnPosVec3 = new THREE.Vector3(...spawnPosition.value);
     spawnPosVec3.y += 1.7;
-    // const localSpawnPos = sceneTag.value.camera.worldToLocal(vec3);
-    // sceneTag.value.camera.position.copy(localSpawnPos)
     const savedPos = sceneTag.value.camera.position.clone();
     sceneTag.value.camera.position.copy(spawnPosVec3)
     const screenshotComponent = sceneTag.value.components.screenshot;
     // @ts-ignore
     const canvasScreenshot: HTMLCanvasElement = screenshotComponent.getCanvas();
-    emit('screenshot', canvasScreenshot);
     sceneTag.value.camera.position.copy(savedPos);
+    spawnPosTag.value.setAttribute('visible', 'true');
+    emit('screenshot', canvasScreenshot);
     // canvasScreenshot.width = 500;
 
     // document.querySelector('body')?.appendChild(canvasScreenshot);
@@ -176,7 +175,6 @@ onMounted(() => {
 
 const spawnPosition = ref<THREE.Vector3Tuple>();
 const spawnPosString = computed(() => {
-  // const posArr = vrSpaceStore.currentVrSpace?.dbData.spawnPosition;
   const posArr = spawnPosition.value;
   if (!posArr) return undefined;
   const v = new AFRAME.THREE.Vector3(...posArr as [number, number, number]);
