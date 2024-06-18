@@ -12,6 +12,8 @@
             :style="`--value:${smoothedProgress}; --size:2.5rem`">
             {{ smoothedProgress.toFixed(0) }}%
           </div>
+          <button :class="{ 'invisible': uploadProgress === 0 }" class="btn btn-circle btn-error"
+            @click="abortController?.abort"><span class="material-icons">close</span></button>
         </div>
         <div v-if="error" role="alert" class="alert alert-error text-sm">
           {{ error }}
@@ -46,12 +48,15 @@ import type { ExtractSuccessResponse, UploadRequest, UploadResponse } from 'file
 import { useConnectionStore } from '@/stores/connectionStore';
 import { useAuthStore } from '@/stores/authStore';
 import { type AssetType, maxFileSizeSchema, maxFileSize, createFileExtensionSchema, assetTypeListToExtensionList, getAssetTypeFromExtension } from 'schemas';
+import { uploadFileData } from '@/modules/utils';
 
 const props = withDefaults(defineProps<{
   acceptedAssetTypes: AssetType | AssetType[],
+  showInUserLibrary?: boolean
   name?: string,
 }>(), {
   name: '',
+  showInUserLibrary: undefined
 });
 
 const emit = defineEmits<{
@@ -120,42 +125,57 @@ function onFilesPicked(evt: Event) {
 
 const fileInput = ref<HTMLInputElement>();
 
+let abortController: AbortController | undefined = undefined;
 async function uploadFile() {
   if (!extensionOfPickedFile.value || !derivedAssetType.value) {
     return;
   }
-  const ctl = new AbortController();
+  if (abortController) abortController.abort();
+  abortController = new AbortController();
   try {
     if(pickedFile.value){
       const data = new FormData();
       data.append('file', pickedFile.value, pickedFile.value.name);
       data.set('assetType', derivedAssetType.value)
+      if (props.showInUserLibrary) {
+        data.set('showInUserLibrary', Boolean(props.showInUserLibrary).toString());
+      }
       pickedFile.value = undefined;
 
       // We can apparently receive upload progress after the upload is actually finished.
       // Perhaps some race condition. We use this flag to mitigate that 👍
-      let uploadActive = true; 
+      // let uploadActive = true; 
 
-      const response = await axios.post<UploadResponse>(config.url + '/upload', data, {
-        headers: {
-          'Content-Type': 'multipart/form-data;',
-          'Authorization': `Bearer ${authStore.tokenOrThrow()}`,
-        },
-        signal: ctl.signal,
-        timeout: 4 * 60 * 1000,
-        onUploadProgress(progressEvent) {
-          if (!uploadActive) return;
-          console.log(progressEvent);
-          if(!progressEvent.progress) return;
+      // const response = await axios.post<UploadResponse>(config.url + '/upload', data, {
+      //   headers: {
+      //     'Content-Type': 'multipart/form-data;',
+      //     'Authorization': `Bearer ${authStore.tokenOrThrow()}`,
+      //   },
+      //   signal: ctl.signal,
+      //   timeout: 4 * 60 * 1000,
+      //   onUploadProgress(progressEvent) {
+      //     if (!uploadActive) return;
+      //     console.log(progressEvent);
+      //     if(!progressEvent.progress) return;
+      //     uploadProgress.value = progressEvent.progress * 100;
+      //   },
+      // });
+      // uploadActive = false;
+      const response = await uploadFileData({
+        data,
+        authToken: authStore.tokenOrThrow(),
+        abortController: abortController,
+        onProgress(progressEvent) {
+          if (!progressEvent.progress) return
           uploadProgress.value = progressEvent.progress * 100;
         },
       });
-      uploadActive = false;
+
       uploadProgress.value = 0;
-      if ('error' in response.data) {
-        error.value = response.data['error'];
+      if ('error' in response) {
+        error.value = response['error'];
       } else {
-        emit('uploaded', response.data);
+        emit('uploaded', response);
       }
     }
   } catch (err) {
@@ -163,7 +183,7 @@ async function uploadFile() {
     error.value = 'failed to send file';
     uploadProgress.value = 0;
     extensionOfPickedFile.value = undefined;
-    ctl.abort('failed to send file');
+    abortController.abort('failed to send file');
   }
 };
 

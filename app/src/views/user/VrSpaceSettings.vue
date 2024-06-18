@@ -125,9 +125,12 @@ import { Combobox, ComboboxInput, ComboboxOptions, ComboboxOption, ComboboxButto
 import { insertablePermissionHierarchy, type VrSpaceId } from 'schemas';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import { useConnectionStore } from '@/stores/connectionStore';
+import { useAuthStore } from '@/stores/authStore';
 import type { RouterOutputs } from '@/modules/trpcClient';
 import UserBanner from '@/components/UserBanner.vue';
-import { getAssetUrl } from '@/modules/utils';
+import { getAssetUrl, uploadFileData } from '@/modules/utils';
+import axios from 'axios';
+import type { UploadResponse } from 'fileserver';
 
 // TODO: refine/find alternative way to get these types so we get intellisense for the emit key
 type ExtractEmitData<T extends string, emitUnion extends (...args: any[]) => void> = T extends Parameters<emitUnion>[0] ? Parameters<emitUnion>[1] : never
@@ -138,6 +141,7 @@ type ScreenshotPayload = ExtractEmitData<'screenshot', ComponentInstance<typeof 
 // const router = useRouter();
 const backendConnection = useConnectionStore();
 const vrSpaceStore = useVrSpaceStore();
+const authStore = useAuthStore();
 
 const props = defineProps<{
   vrSpaceId: VrSpaceId
@@ -214,10 +218,31 @@ function onCursorPlaced(point: Point) {
   currentCursorType.value = undefined;
 }
 
+let abortController: AbortController | undefined = undefined;
 function onScreenshot(canvas: ScreenshotPayload) {
   console.log('screenshot');
-  const c = document.querySelector('#canvas-container');
-  c.appendChild(canvas);
+  if (abortController) abortController.abort();
+  // const c = document.querySelector('#canvas-container');
+  // c.appendChild(canvas);
+  abortController = new AbortController();
+  canvas.toBlob(async (canvasBlob) => {
+    if (!vrSpaceStore.writableVrSpaceState) return;
+    if (!canvasBlob) return;
+    const data = new FormData();
+    data.append('file', canvasBlob, `${vrSpaceStore.currentVrSpace?.dbData.name}-screenshot.png`);
+    data.set('assetType', 'image')
+    data.set('showInUserLibrary', 'false')
+    const response = await uploadFileData({
+      data,
+      authToken: authStore.tokenOrThrow(),
+      abortController: abortController,
+    });
+    if ('error' in response) {
+      console.error('failed to upload screenshot', response);
+      return;
+    };
+    vrSpaceStore.writableVrSpaceState.dbData.panoramicPreviewAssetId = response.assetId
+  });
 }
 
 // async function setEntrancePosition(point: Point) {

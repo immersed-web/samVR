@@ -11,6 +11,7 @@ import modelOpacity from './model-opacity';
 import grid from './grid';
 import followPosition from './follow-position';
 import lockRotationAxis from './lock-rotation-axis';
+import panoPortal from './pano-portal';
 
 let componentsAreRegistered = false;
 
@@ -31,6 +32,7 @@ const registerComponents = () => {
   grid();
   followPosition();
   lockRotationAxis();
+  panoPortal();
 
   // @ts-ignore
   // import('aframe-environment-component');

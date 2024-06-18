@@ -5,7 +5,7 @@
         <span class="label-text mr-1 font-bold">visa navmesh</span>
         <input type="checkbox" class="toggle toggle-xs" v-model="showNavMesh">
       </label>
-      <button class="btn btn-xs btn-primary" @click="screenShot">screenshot</button>
+      <!-- <button class="btn btn-xs btn-primary" @click="screenShot">screenshot</button> -->
     </div>
     <a-scene embedded ref="sceneTag" id="ascene" xr-mode-ui="enabled: false">
       <a-assets timeout="20000">
@@ -28,6 +28,9 @@
       <a-entity ref="spawnPosTag" v-if="spawnPosString" :position="spawnPosString">
         <a-circle color="yellow" transparent="true" opacity="0.5" rotation="-90 0 0" position="0 0.05 0"
           :radius="vrSpaceStore.currentVrSpace?.dbData.spawnRadius" />
+        <a-icosahedron v-if="vrSpaceStore.currentVrSpace?.dbData.panoramicPreview" detail="3" scale="-0.5 -0.5 -0.5"
+          :material="`shader: pano-portal-dither; src: ${getAssetUrl(vrSpaceStore.currentVrSpace?.dbData.panoramicPreview?.generatedName)}`">
+        </a-icosahedron>
       </a-entity>
 
       <!-- for some super weird reason orbit controls doesnt work with the a-camera primitive  -->
@@ -49,15 +52,12 @@
 <script setup lang="ts">
 import { type Scene, type Entity, type DetailEvent, THREE } from 'aframe';
 import { ref, watch, computed, onMounted } from 'vue';
+import { getAssetUrl } from '@/modules/utils';
 import { useTimeoutFn } from '@vueuse/core';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
-import { useAuthStore } from '@/stores/authStore';
 import c from '@/ts/aframe/components';
-import axios from 'axios';
-import type { UploadResponse } from 'fileserver';
 c.registerAframeComponents();
 
-const authStore = useAuthStore();
 const vrSpaceStore = useVrSpaceStore();
 
 const props = withDefaults(defineProps<{
@@ -128,34 +128,6 @@ async function screenShot() {
     spawnPosTag.value.setAttribute('visible', 'true');
     navmeshTag.value?.setAttribute('visible', navMeshVisibleRestoreState);
     emit('screenshot', canvasScreenshot);
-    // canvasScreenshot.width = 500;
-
-    // document.querySelector('body')?.appendChild(canvasScreenshot);
-
-    // console.log(canvasScreenshot);
-    // const dataUrl = canvasScreenshot.toDataURL();
-
-    // UPLOAD TO SERVER
-    // const ctl = new AbortController();
-    // canvasScreenshot.toBlob(async (canvasBlob) => {
-    //   if (!canvasBlob) return;
-    //   const data = new FormData();
-    //   data.append('file', canvasBlob, 'screenshot.png');
-    //   data.set('assetType', 'image')
-    //   const fileserverUrl = `https://${import.meta.env.EXPOSED_SERVER_URL}${import.meta.env.EXPOSED_FILESERVER_PATH}`
-    //   const response = await axios.post<UploadResponse>(fileserverUrl + '/upload', data, {
-    //     headers: {
-    //       'Content-Type': 'multipart/form-data;',
-    //       'Authorization': `Bearer ${authStore.tokenOrThrow()}`,
-    //     },
-    //     signal: ctl.signal,
-    //     timeout: 4 * 60 * 1000,
-    //     onUploadProgress(progressEvent) {
-    //       console.log(progressEvent);
-    //     },
-    //   });
-    // sceneTag.value?.setAttribute('orbit-controls', 'enabled', true);
-    // });
   }
 }
 
@@ -221,6 +193,7 @@ function onNoIntersection(evt: DetailEvent<any>) {
 function placeCursor(evt: DetailEvent<{intersection: {point: THREE.Vector3}}>){
   console.log(evt.detail.intersection);
   emit('cursorPlaced', evt.detail.intersection.point.toArray());
+  screenShot();
 }
 
 function onModelLoaded(){

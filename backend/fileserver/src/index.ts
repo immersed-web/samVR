@@ -66,8 +66,10 @@ const privateRoutes = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
 //   console.log(c.req.header());
 //   return next();
 // })
+  // TODO: check permission/ownership
   .delete('/delete', zValidator('json', z.object({ assetId: AssetIdSchema })), async (c, next) => {
     const { assetId } = c.req.valid('json');
+    // const user = c.get('jwtPayload');
     const result = await db.transaction(async (tx) => {
       const foundAsset = await tx.query.assets.findFirst({
         where: eq(schema.assets.assetId, assetId),
@@ -87,10 +89,15 @@ const privateRoutes = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
       return;
     })
     return c.text('file deleted', HttpStatus.OK);
-  }).post('/upload', zValidator('form', z.object({ file: z.instanceof(File), assetType: AssetTypeSchema.optional() })), async (c, next) => {
-    let { file, assetType } = c.req.valid('form');
+  }).post('/upload', zValidator('form', z.object({
+    file: z.instanceof(File),
+    assetType: AssetTypeSchema.optional(),
+    showInUserLibrary: z.preprocess(v => v === 'true' ? true : v === 'false' ? false : undefined, z.boolean()).optional(),
+  })), async (c, next) => {
+    let { file, assetType, showInUserLibrary } = c.req.valid('form');
     const user = c.get('jwtPayload');
-    console.log(file.type);
+    console.log('showInUserLibrary', showInUserLibrary);
+    // console.log(file.type);
     const incomingExtension = file.name.slice((file.name.lastIndexOf(".") - 1 >>> 0) + 2).toLowerCase();
     let acceptedAssetTypes = assetType ?? Object.keys(assetTypesToExtensionsMap) as AssetType[]
     const validatedExtension = createFileExtensionSchema(acceptedAssetTypes).safeParse(incomingExtension);
@@ -137,6 +144,7 @@ const privateRoutes = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
       mimeType: file.type,
       originalFileName: file.name,
       ownerUserId: user.userId,
+      showInUserLibrary
     }).returning();
 
     return c.json(dbResponse, HttpStatus.OK);
