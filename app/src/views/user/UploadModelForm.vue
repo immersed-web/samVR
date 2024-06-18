@@ -132,6 +132,10 @@ async function uploadFile() {
       data.set('assetType', derivedAssetType.value)
       pickedFile.value = undefined;
 
+      // We can apparently receive upload progress after the upload is actually finished.
+      // Perhaps some race condition. We use this flag to mitigate that 👍
+      let uploadActive = true; 
+
       const response = await axios.post<UploadResponse>(config.url + '/upload', data, {
         headers: {
           'Content-Type': 'multipart/form-data;',
@@ -140,11 +144,13 @@ async function uploadFile() {
         signal: ctl.signal,
         timeout: 4 * 60 * 1000,
         onUploadProgress(progressEvent) {
+          if (!uploadActive) return;
           console.log(progressEvent);
           if(!progressEvent.progress) return;
           uploadProgress.value = progressEvent.progress * 100;
         },
       });
+      uploadActive = false;
       uploadProgress.value = 0;
       if ('error' in response.data) {
         error.value = response.data['error'];
