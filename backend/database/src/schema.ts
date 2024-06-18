@@ -246,6 +246,7 @@ export const assets = pgTable("Assets", {
 	generatedName: text("generatedName").unique().notNull(),
 	size: doublePrecision("size"),
 	mimeType: text("mimeType"),
+	showInUserLibrary: boolean("showInUserLibrary").default(true).notNull(),
 	assetFileExtension: text("assetFileExtension").notNull(),
 	ownerUserId: uuid("ownerUserId").notNull().references(() => users.userId, { onDelete: "cascade", onUpdate: "cascade" }).$type<UserId>(),
 	// extraSettings: jsonb("extraSettings"),
