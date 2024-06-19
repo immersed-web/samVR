@@ -60,17 +60,27 @@
           </div>
         </div>
         <div v-if="vrSpaceStore.currentVrSpace.dbData.worldModelAsset" class="grid gap-2">
-          <VrAFramePreview class="flex-1 border"
+          <VrAFramePreview class="flex-1 border" ref="vrComponentTag"
             :model-url="getAssetUrl(vrSpaceStore.currentVrSpace.dbData.worldModelAsset.generatedName)"
             :navmesh-url="getAssetUrl(vrSpaceStore.currentVrSpace.dbData.navMeshAsset?.generatedName)"
-            :cursor-target="currentCursorType" @cursor-placed="onCursorPlaced" @screenshot="onScreenshot" />
+            :raycast="currentRaycastReason !== undefined" :auto-rotate="currentRaycastReason === undefined"
+            @raycast-click="onRaycastClick" @raycast-hover="onRaycastHover">
+            <a-entity ref="spawnPosTag" v-if="spawnPosString" :position="spawnPosString">
+              <a-circle color="yellow" transparent="true" opacity="0.5" rotation="-90 0 0" position="0 0.05 0"
+                :radius="vrSpaceStore.currentVrSpace?.dbData.spawnRadius" />
+              <a-icosahedron v-if="vrSpaceStore.currentVrSpace?.dbData.panoramicPreview" detail="3"
+                scale="-0.5 -0.5 -0.5"
+                :material="`shader: pano-portal-dither; src: ${getAssetUrl(vrSpaceStore.currentVrSpace?.dbData.panoramicPreview?.generatedName)}`">
+              </a-icosahedron>
+            </a-entity>
+          </VrAFramePreview>
           <div class="flex gap-2">
-            <input type="radio" :value="undefined" class="hidden" v-model="currentCursorType">
+            <input type="radio" :value="undefined" class="hidden" v-model="currentRaycastReason">
             <input type="radio" value="spawnPosition" aria-label="Placera startplats" class="btn btn-sm btn-primary"
-              v-model="currentCursorType">
-            <input type="radio" value="selfPlacement" aria-label="Hoppa in världen" class="btn btn-sm btn-secondary"
-              v-model="currentCursorType">
-            <button v-if="currentCursorType" class="btn btn-sm btn-circle" @click="currentCursorType = undefined">
+              v-model="currentRaycastReason">
+            <input type="radio" value="selfPlacement" aria-label="Hoppa in världen" class="btn btn-sm btn-primary"
+              v-model="currentRaycastReason">
+            <button v-if="currentRaycastReason" class="btn btn-sm btn-circle" @click="currentRaycastReason = undefined">
               <span class="material-icons">close</span>
             </button>
             <div>{{ vrSpaceStore.currentVrSpace.dbData.spawnPosition }}</div>
@@ -118,8 +128,8 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 import UploadModelForm, { type EmitTypes } from './UploadModelForm.vue';
-import VrAFramePreview, { type CursorTarget } from '@/components/lobby/LobbyAFramePreview.vue';
-import { ref, onMounted, computed, type ComponentInstance } from 'vue';
+import VrAFramePreview from '@/components/lobby/LobbyAFramePreview.vue';
+import { ref, watch, onMounted, computed, type ComponentInstance } from 'vue';
 // import { throttle } from 'lodash-es';
 import { Combobox, ComboboxInput, ComboboxOptions, ComboboxOption, ComboboxButton } from '@headlessui/vue';
 import { insertablePermissionHierarchy, type VrSpaceId } from 'schemas';
@@ -141,6 +151,8 @@ const backendConnection = useConnectionStore();
 const vrSpaceStore = useVrSpaceStore();
 const authStore = useAuthStore();
 
+const vrComponentTag = ref<ComponentInstance<typeof VrAFramePreview>>();
+
 const props = defineProps<{
   vrSpaceId: VrSpaceId
 }>();
@@ -156,6 +168,15 @@ function onNavmeshUploaded(uploadDetails: UploadEventPayload) {
   if (!vrSpaceStore.writableVrSpaceState) return;
   vrSpaceStore.writableVrSpaceState.dbData.navMeshAssetId = uploadDetails.assetId;
 }
+
+const uncommitedSpawnPosition = ref<Point>()
+const spawnPosString = computed(() => {
+  // const posArr = vrSpaceStore.currentVrSpace?.dbData.spawnPosition;
+  const posArr = uncommitedSpawnPosition.value;
+  if (!posArr) return undefined;
+  const v = new AFRAME.THREE.Vector3(...posArr);
+  return AFRAME.utils.coordinates.stringify(v);
+});
 
 const query = ref('');
 const users = ref<RouterOutputs['user']['getAllUsers']>();
@@ -177,6 +198,8 @@ onMounted(async () => {
   await vrSpaceStore.enterVrSpace(props.vrSpaceId);
 
   users.value = await backendConnection.client.user.getAllUsers.query();
+  const sp = vrSpaceStore.currentVrSpace?.dbData.spawnPosition;
+  if (sp) uncommitedSpawnPosition.value = sp as Point
 
   // const storeRot = vrSpaceStore.currentVrSpace?.worldModelAsset?.entranceRotation;
   // if (storeRot) {
@@ -191,34 +214,42 @@ onMounted(async () => {
 
 const skyColor = ref();
 
-const currentCursorType = ref<CursorTarget>();
-// const entranceRotation = ref(0);
-// watch(entranceRotation, (rot) => {
-//   if (!vrSpaceStore.currentVrSpace?.placedObjects) return;
-//   vrSpaceStore.currentStream.vrSpace.virtualSpace3DModel.entranceRotation = rot;
-// });
-
-// const spawnRadius = ref(0);
-// watch(spawnRadius, (radius) => {
-//   if (!vrSpaceStore.currentVrSpace?.dbData.spawnRadius) return;
-//   vrSpaceStore.currentVrSpace.dbData.spawnRadius = radius;
-// });
+type RaycastReason = 'spawnPosition' | 'selfPlacement' | undefined;
+const currentRaycastReason = ref<RaycastReason>();
 
 type Point = [number, number, number];
 
-function onCursorPlaced(point: Point) {
-  console.log('cursor placed:', point);
-  if (currentCursorType.value === 'selfPlacement') {
-    // setEntrancePosition(point);
-  } else if (currentCursorType.value === 'spawnPosition') {
-    if (!vrSpaceStore.writableVrSpaceState) return;
-    vrSpaceStore.writableVrSpaceState.dbData.spawnPosition = point
+async function onRaycastHover(point: Point) {
+  switch (currentRaycastReason.value) {
+    case 'spawnPosition':
+      uncommitedSpawnPosition.value = point
+      break;
+    // case 'selfPlacement':
+    //   break;
   }
-  currentCursorType.value = undefined;
+  console.log('raycast intersection:', point);
+}
+
+async function onRaycastClick(point: Point) {
+  console.log('raycast click:', point);
+  const raycastReason = currentRaycastReason.value;
+  currentRaycastReason.value = undefined;
+  switch (raycastReason) {
+    case 'spawnPosition':
+      if (!vrSpaceStore.writableVrSpaceState) return;
+      vrSpaceStore.writableVrSpaceState.dbData.spawnPosition = point
+      const canvas = await vrComponentTag.value?.getPanoScreenshotFromPoint(point);
+      if (!canvas) return;
+      uploadScreenshot(canvas);
+      break;
+    case 'selfPlacement':
+      if (!vrSpaceStore.writableVrSpaceState) return;
+      break;
+  }
 }
 
 let abortController: AbortController | undefined = undefined;
-function onScreenshot(canvas: ScreenshotPayload) {
+function uploadScreenshot(canvas: ScreenshotPayload) {
   console.log('screenshot');
   if (abortController) abortController.abort();
   // const c = document.querySelector('#canvas-container');
@@ -280,21 +311,6 @@ function onScreenshot(canvas: ScreenshotPayload) {
 //     },
 //   });
 // }
-
-// const setSkyColor = throttle(async (evt: InputEvent) => {
-//   // console.log(evt.data);
-//   // console.log(evt.target);
-//   // return;
-//   const modelId = vrSpaceStore.currentVrSpace.virtualSpace3DModelId;
-//   if (!modelId) return;
-//   await connectionStore.client.vr.update3DModel.mutate({
-//     vr3DModelId: modelId,
-//     reason: 'skycolor updated',
-//     data: {
-//       skyColor: evt.target.value,
-//     }
-//   })
-// }, 800, { trailing: true });
 
 // const openVirtualSpace = async () => {
 
