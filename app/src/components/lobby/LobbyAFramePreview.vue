@@ -52,7 +52,7 @@
 
 <script setup lang="ts">
 import { type Scene, type Entity, type DetailEvent, THREE } from 'aframe';
-import { ref, watch, computed, onMounted } from 'vue';
+import { ref, watch, computed, onMounted, nextTick } from 'vue';
 import { getAssetUrl } from '@/modules/utils';
 import { useTimeoutFn } from '@vueuse/core';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
@@ -81,7 +81,9 @@ const emit = defineEmits<{
 }>();
 
 defineExpose({
-  getPanoScreenshotFromPoint
+  getPanoScreenshotFromPoint,
+  enterFirstPersonView,
+  exitFirstPersonView,
 })
 
 // A-frame
@@ -96,17 +98,28 @@ const navMeshOpacity = computed(() => {
   return showNavMesh.value ? 0.7 : 0.0;
 });
 
+const orbitControlsEnabled = ref(true);
+watch(orbitControlsEnabled, (enabled) => {
+  if (!cameraTag.value) console.error('cameraTag undefined');
+  cameraTag.value!.setAttribute('orbit-controls', 'enabled', enabled);
+})
 let stopAutoRotateTimeout: ReturnType<typeof useTimeoutFn>['stop'] | undefined = undefined;
 
 watch(() => props.autoRotate, (rotate) => {
+  console.log('autorotate updated!');
   if (!rotate) {
     if (stopAutoRotateTimeout) stopAutoRotateTimeout();
     if (!navmeshTag.value) console.error('navmeshTag undefined');
 
-    cameraTag.value!.setAttribute('orbit-controls', 'autoRotate', false);
+    if (cameraTag.value?.getAttribute('orbit-controls')) {
+      cameraTag.value!.setAttribute('orbit-controls', 'autoRotate', false);
+    }
+
   } else {
     stopAutoRotateTimeout = useTimeoutFn(() => {
-      cameraTag.value!.setAttribute('orbit-controls', 'autoRotate', true);
+      if (cameraTag.value?.getAttribute('orbit-controls')) {
+        cameraTag.value!.setAttribute('orbit-controls', 'autoRotate', true);
+      }
     }, 5000).stop;
   }
 });
@@ -125,23 +138,56 @@ watch(() => props.raycast, (raycast) => {
   }
 })
 
+async function enterFirstPersonView(point: THREE.Vector3Tuple) {
+  console.log('enter first person triggered');
+  const camTag = cameraTag.value
+  if (!camTag || !point) {
+    console.error('no cameraTag or point provided');
+    return;
+  }
+  // camTag.removeAttribute('orbit-controls');
+  // orbitControlsEnabled.value = false;
+  // await nextTick();
+  // console.log(camTag.object3DMap);
+  camTag.setAttribute('look-controls', 'enabled', true);
+  camTag.setAttribute('wasd-controls', { fly: true });
+  camTag.removeAttribute('orbit-controls');
+  point[1] += 1.7;
+  camTag.object3D.position.set(...point);
+}
+
+function exitFirstPersonView() {
+  const camTag = cameraTag.value
+  if (!camTag) {
+    console.error('no cameratag provided');
+    return;
+  }
+  camTag.removeAttribute('look-controls');
+  camTag.removeAttribute('wasd-controls');
+  attachOrbitControls();
+
+  // orbitControlsEnabled.value = true;
+}
+
 async function getPanoScreenshotFromPoint(point: THREE.Vector3Tuple) {
   if (!sceneTag.value || !point) {
     console.error('no scene or point provided');
     return;
   }
-  // spawnPosTag.value.setAttribute('visible', 'false');
   const navMeshVisibleRestoreState = navmeshTag.value?.getAttribute('visible');
   navmeshTag.value?.setAttribute('visible', 'false');
   const spawnPosVec3 = new THREE.Vector3(...point);
   spawnPosVec3.y += 1.7;
   const savedPos = sceneTag.value.camera.position.clone();
+  const savedRot = sceneTag.value.camera.rotation.clone();
   sceneTag.value.camera.position.copy(spawnPosVec3)
+  sceneTag.value.camera.rotation.set(0, 0, 0);
   const screenshotComponent = sceneTag.value.components.screenshot;
+  await nextTick();
   // @ts-ignore
   const canvasScreenshot: HTMLCanvasElement = screenshotComponent.getCanvas();
   sceneTag.value.camera.position.copy(savedPos);
-  // spawnPosTag.value.setAttribute('visible', 'true');
+  sceneTag.value.camera.rotation.copy(savedRot);
   navmeshTag.value?.setAttribute('visible', navMeshVisibleRestoreState);
   return canvasScreenshot
   // emit('screenshot', canvasScreenshot);
@@ -218,22 +264,28 @@ function on3DClick(evt: DetailEvent<{ intersection: { point: THREE.Vector3 } }>)
   emit('raycastClick', evt.detail.intersection.point.toArray());
 }
 
+const modelCenter = new THREE.Vector3();
 function onModelLoaded(){
   if(modelTag.value && cameraTag.value){
     console.log('centering camera on model bbox');
     // const obj3D = modelTag.value.components.mesh;
     // const obj3D = modelTag.value.object3DMap;
     const obj3D = modelTag.value.getObject3D('mesh');
-    console.log(obj3D);
+    // console.log(obj3D);
     
     const bbox = new THREE.Box3().setFromObject(obj3D);
-    const modelCenter = bbox.getCenter(new THREE.Vector3());
+    bbox.getCenter(modelCenter);
+    // const modelCenter = bbox.getCenter(new THREE.Vector3());
     // cameraTag.value.object3D.position.set(modelCenter.x, modelCenter.y, modelCenter.z);
-
-    let orbitControlSettings = `autoRotate: true; rotateSpeed: 1; initialPosition: ${modelCenter.x} ${modelCenter.y+2} ${modelCenter.z+5};`;
-    orbitControlSettings += `target:${modelCenter.x} ${modelCenter.y} ${modelCenter.z};`;
-    cameraTag.value.setAttribute('orbit-controls', orbitControlSettings);
+    attachOrbitControls();
   }
+}
+
+function attachOrbitControls() {
+  if (!cameraTag.value) return;
+  let orbitControlSettings = `autoRotate: true; rotateSpeed: 1; initialPosition: ${modelCenter.x} ${modelCenter.y + 2} ${modelCenter.z + 5};`;
+  orbitControlSettings += `target:${modelCenter.x} ${modelCenter.y} ${modelCenter.z};`;
+  cameraTag.value.setAttribute('orbit-controls', orbitControlSettings);
 }
 
 function onNavMeshLoaded() {

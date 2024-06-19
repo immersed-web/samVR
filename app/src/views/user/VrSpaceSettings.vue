@@ -68,10 +68,19 @@
             <a-entity ref="spawnPosTag" v-if="spawnPosString" :position="spawnPosString">
               <a-circle color="yellow" transparent="true" opacity="0.5" rotation="-90 0 0" position="0 0.05 0"
                 :radius="vrSpaceStore.currentVrSpace?.dbData.spawnRadius" />
-              <a-icosahedron v-if="vrSpaceStore.currentVrSpace?.dbData.panoramicPreview" detail="3"
-                scale="-0.5 -0.5 -0.5"
-                :material="`shader: pano-portal-dither; src: ${getAssetUrl(vrSpaceStore.currentVrSpace?.dbData.panoramicPreview?.generatedName)}`">
+              <a-icosahedron v-if="vrSpaceStore.currentVrSpace?.dbData.panoramicPreview" detail="5"
+                scale="-0.5 -0.5 -0.5" position="0 1.1 0"
+                :material="`shader: pano-portal; warpParams: 3 0.7; src: ${getAssetUrl(vrSpaceStore.currentVrSpace.dbData.panoramicPreview?.generatedName)}`">
               </a-icosahedron>
+              <!-- <a-sphere :src="getAssetUrl(vrSpaceStore.currentVrSpace.dbData.panoramicPreview?.generatedName)"
+                scale="-1 1 1" position="0 1.1 0"></a-sphere> -->
+              <a-image scale="2 1 1"
+                :src="getAssetUrl(vrSpaceStore.currentVrSpace.dbData.panoramicPreview?.generatedName)"
+                position="4 1 0"></a-image>
+            </a-entity>
+            <a-entity :position="hoverPosString" :visible="hoverPosString !== undefined">
+              <a-ring color="yellow" radius-inner="0.1" radius-outer="0.2" material="shader: flat;"
+                rotation="-90 0 0" />
             </a-entity>
           </VrAFramePreview>
           <div class="flex gap-2">
@@ -83,7 +92,9 @@
             <button v-if="currentRaycastReason" class="btn btn-sm btn-circle" @click="currentRaycastReason = undefined">
               <span class="material-icons">close</span>
             </button>
-            <div>{{ vrSpaceStore.currentVrSpace.dbData.spawnPosition }}</div>
+            <button class="btn btn-sm btn-primary" @click="vrComponentTag?.exitFirstPersonView">hoppa ur
+              världen</button>
+            <div>{{ hoverPosString }}</div>
           </div>
           <!-- <label class="label gap-2">
             <span class="label-text font-semibold whitespace-nowrap">
@@ -129,7 +140,7 @@
 import { useRouter } from 'vue-router';
 import UploadModelForm, { type EmitTypes } from './UploadModelForm.vue';
 import VrAFramePreview from '@/components/lobby/LobbyAFramePreview.vue';
-import { ref, watch, onMounted, computed, type ComponentInstance } from 'vue';
+import { ref, watch, onMounted, computed, type ComponentInstance, nextTick } from 'vue';
 // import { throttle } from 'lodash-es';
 import { Combobox, ComboboxInput, ComboboxOptions, ComboboxOption, ComboboxButton } from '@headlessui/vue';
 import { insertablePermissionHierarchy, type VrSpaceId } from 'schemas';
@@ -169,8 +180,10 @@ function onNavmeshUploaded(uploadDetails: UploadEventPayload) {
   vrSpaceStore.writableVrSpaceState.dbData.navMeshAssetId = uploadDetails.assetId;
 }
 
+const hideGizmos = ref(false);
 const uncommitedSpawnPosition = ref<Point>()
 const spawnPosString = computed(() => {
+  if (hideGizmos.value) return undefined;
   // const posArr = vrSpaceStore.currentVrSpace?.dbData.spawnPosition;
   const posArr = uncommitedSpawnPosition.value;
   if (!posArr) return undefined;
@@ -216,10 +229,19 @@ const skyColor = ref();
 
 type RaycastReason = 'spawnPosition' | 'selfPlacement' | undefined;
 const currentRaycastReason = ref<RaycastReason>();
+const hoverPosition = ref<Point>();
+const hoverPosString = computed(() => {
+  if (hideGizmos.value) return undefined;
+  const posArr = hoverPosition.value;
+  if (!posArr || currentRaycastReason.value !== 'selfPlacement') return undefined;
+  const v = new AFRAME.THREE.Vector3(...posArr);
+  return AFRAME.utils.coordinates.stringify(v);
+})
 
 type Point = [number, number, number];
 
 async function onRaycastHover(point: Point) {
+  hoverPosition.value = point;
   switch (currentRaycastReason.value) {
     case 'spawnPosition':
       uncommitedSpawnPosition.value = point
@@ -230,6 +252,7 @@ async function onRaycastHover(point: Point) {
   console.log('raycast intersection:', point);
 }
 
+const firstPersonActive = ref(false);
 async function onRaycastClick(point: Point) {
   console.log('raycast click:', point);
   const raycastReason = currentRaycastReason.value;
@@ -237,13 +260,17 @@ async function onRaycastClick(point: Point) {
   switch (raycastReason) {
     case 'spawnPosition':
       if (!vrSpaceStore.writableVrSpaceState) return;
+      hideGizmos.value = true;
       vrSpaceStore.writableVrSpaceState.dbData.spawnPosition = point
       const canvas = await vrComponentTag.value?.getPanoScreenshotFromPoint(point);
       if (!canvas) return;
       uploadScreenshot(canvas);
+      hideGizmos.value = false;
       break;
     case 'selfPlacement':
-      if (!vrSpaceStore.writableVrSpaceState) return;
+      firstPersonActive.value = true;
+      await nextTick();
+      vrComponentTag.value?.enterFirstPersonView(point);
       break;
   }
 }
