@@ -158,7 +158,7 @@ async function enterFirstPersonView(point: THREE.Vector3Tuple) {
   // console.log(camTag.object3DMap);
   camTag.removeAttribute('orbit-controls');
   camTag.setAttribute('look-controls', 'enabled', true);
-  camTag.setAttribute('wasd-controls', { fly: true });
+  camTag.setAttribute('wasd-controls', { fly: false });
   point[1] += 1.7;
   camTag.object3D.position.set(...point);
 }
