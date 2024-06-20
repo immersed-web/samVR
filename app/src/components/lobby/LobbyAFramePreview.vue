@@ -180,24 +180,31 @@ async function exitFirstPersonView() {
 }
 
 async function getPanoScreenshotFromPoint(point: THREE.Vector3Tuple) {
-  if (!sceneTag.value || !point) {
-    console.error('no scene or point provided');
+  const camTag = cameraTag.value;
+  if (!camTag || !point) {
+    console.error('no cameraEntity or point provided');
     return;
   }
   const navMeshVisibleRestoreState = navmeshTag.value?.getAttribute('visible');
   navmeshTag.value?.setAttribute('visible', 'false');
   const spawnPosVec3 = new THREE.Vector3(...point);
   spawnPosVec3.y += 1.7;
-  const savedPos = sceneTag.value.camera.position.clone();
-  const savedRot = sceneTag.value.camera.rotation.clone();
-  sceneTag.value.camera.position.copy(spawnPosVec3)
-  sceneTag.value.camera.rotation.set(0, 0, 0);
-  const screenshotComponent = sceneTag.value.components.screenshot;
+  const savedEntityPos = camTag.object3D.position.clone();
+  const savedEntityRot = camTag.object3D.rotation.clone();
+  const savedCameraPos = camTag.getObject3D('camera').position.clone();
+  const savedCameraRot = camTag.getObject3D('camera').rotation.clone();
+  camTag.object3D.position.copy(spawnPosVec3)
+  camTag.object3D.rotation.set(0, THREE.MathUtils.degToRad(180), 0);
+  camTag.getObject3D('camera').position.set(0, 0, 0);
+  camTag.getObject3D('camera').rotation.set(0, 0, 0);
+  const screenshotComponent = camTag.sceneEl?.components.screenshot;
   await nextTick();
   // @ts-ignore
   const canvasScreenshot: HTMLCanvasElement = screenshotComponent.getCanvas();
-  sceneTag.value.camera.position.copy(savedPos);
-  sceneTag.value.camera.rotation.copy(savedRot);
+  camTag.object3D.position.copy(savedEntityPos);
+  camTag.object3D.rotation.copy(savedEntityRot);
+  camTag.getObject3D('camera').position.copy(savedCameraPos);
+  camTag.getObject3D('camera').rotation.copy(savedCameraRot);
   navmeshTag.value?.setAttribute('visible', navMeshVisibleRestoreState);
   return canvasScreenshot
   // emit('screenshot', canvasScreenshot);
