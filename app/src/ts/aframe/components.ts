@@ -12,6 +12,7 @@ import grid from './grid';
 import followPosition from './follow-position';
 import lockRotationAxis from './lock-rotation-axis';
 import panoPortal from './pano-portal';
+import outerGlow from './outer-glow';
 
 let componentsAreRegistered = false;
 
@@ -33,6 +34,7 @@ const registerComponents = () => {
   followPosition();
   lockRotationAxis();
   panoPortal();
+  outerGlow();
 
   // @ts-ignore
   // import('aframe-environment-component');

@@ -71,12 +71,15 @@
                 :key="placedObject.placedObjectId">
                 <a-entity v-if="placedObject.type === 'vrPortal'" :position="placedObject.position?.join(' ')">
                   <!-- <a-sphere color="red" /> -->
-                  <a-icosahedron v-if="placedObject.vrPortal?.panoramicPreview" detail="5" scale="-0.5 -0.5 -0.5"
-                    position="0 1.5 0"
-                    :material="`shader: pano-portal; warpParams: 3 0.9; src: ${getAssetUrl(placedObject.vrPortal?.panoramicPreview?.generatedName)}`">
-                  </a-icosahedron>
-                  <a-sphere v-else color="purple" transparent="true" opacity="0.5" scale="0.5 0.5 0.5"
-                    position="0 1.5 0" />
+                  <a-sphere v-if="placedObject.vrPortal?.panoramicPreview" transparent="true" scale="0.5 0.5 0.5"
+                    material="shader: outer-glow; start: 0.3; color: 0.5 0 1;" position="0 1.5 0">
+                    <a-icosahedron detail="5" scale="-0.98 -0.98 -0.98"
+                      :material="`shader: pano-portal; warpParams: 3 0.9; src: ${getAssetUrl(placedObject.vrPortal?.panoramicPreview?.generatedName)}`">
+                    </a-icosahedron>
+                  </a-sphere>
+                  <!-- <a-sphere v-else color="purple" transparent="true" opacity="0.5" scale="0.5 0.5 0.5"
+                    position="0 1.5 0" /> -->
+                  <a-sphere v-else transparent="true" material="shader: outer-glow;" />
                 </a-entity>
               </template>
             </a-entity>
