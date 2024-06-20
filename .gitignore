@@ -6,3 +6,5 @@ dist/
 docker-data/
 db_backups/
 *-gitignore
+
+certs/*.pem
