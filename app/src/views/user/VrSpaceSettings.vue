@@ -65,12 +65,28 @@
             :navmesh-url="getAssetUrl(vrSpaceStore.currentVrSpace.dbData.navMeshAsset?.generatedName)"
             :raycast="currentRaycastReason !== undefined" :auto-rotate="currentRaycastReason === undefined"
             @raycast-click="onRaycastClick" @raycast-hover="onRaycastHover">
+
+            <a-entity id="vr-portals">
+              <template v-for="placedObject in vrSpaceStore.currentVrSpace.dbData.placedObjects"
+                :key="placedObject.placedObjectId">
+                <a-entity v-if="placedObject.type === 'vrPortal'" :position="placedObject.position?.join(' ')">
+                  <!-- <a-sphere color="red" /> -->
+                  <a-icosahedron v-if="placedObject.vrPortal?.panoramicPreview" detail="5" scale="-0.5 -0.5 -0.5"
+                    position="0 1.5 0"
+                    :material="`shader: pano-portal; warpParams: 3 0.9; src: ${getAssetUrl(placedObject.vrPortal?.panoramicPreview?.generatedName)}`">
+                  </a-icosahedron>
+                  <a-sphere v-else color="purple" transparent="true" opacity="0.5" scale="0.5 0.5 0.5"
+                    position="0 1.5 0" />
+                </a-entity>
+              </template>
+            </a-entity>
+
             <a-entity ref="spawnPosTag" v-if="spawnPosString" :position="spawnPosString">
               <a-circle color="yellow" transparent="true" opacity="0.5" rotation="-90 0 0" position="0 0.05 0"
                 :radius="vrSpaceStore.currentVrSpace?.dbData.spawnRadius" />
               <a-icosahedron v-if="vrSpaceStore.currentVrSpace?.dbData.panoramicPreview" detail="5"
                 scale="-0.5 -0.5 -0.5" position="0 1.1 0"
-                :material="`shader: pano-portal; warpParams: 3 0.7; src: ${getAssetUrl(vrSpaceStore.currentVrSpace.dbData.panoramicPreview?.generatedName)}`">
+                :material="`shader: pano-portal; warpParams: 3 0.9; src: ${getAssetUrl(vrSpaceStore.currentVrSpace.dbData.panoramicPreview?.generatedName)}`">
               </a-icosahedron>
               <!-- <a-sphere :src="getAssetUrl(vrSpaceStore.currentVrSpace.dbData.panoramicPreview?.generatedName)"
                 scale="-1 1 1" position="0 1.1 0"></a-sphere> -->
@@ -89,12 +105,16 @@
               v-model="currentRaycastReason">
             <input type="radio" value="selfPlacement" aria-label="Hoppa in världen" class="btn btn-sm btn-primary"
               v-model="currentRaycastReason">
-            <button v-if="currentRaycastReason" class="btn btn-sm btn-circle" @click="currentRaycastReason = undefined">
-              <span class="material-icons">close</span>
-            </button>
             <button class="btn btn-sm btn-primary" @click="vrComponentTag?.exitFirstPersonView">hoppa ur
               världen</button>
-            <div>{{ hoverPosString }}</div>
+            <select class="select select-sm select-bordered" v-model="portalTargetVrSpace"
+              @change="currentRaycastReason = 'vrSpacePortal'">
+              <option v-for="vrSpace in allowedVrSpaces" :key="vrSpace.vrSpaceId" :value="vrSpace.vrSpaceId">{{
+                vrSpace.name }}</option>
+            </select>
+            <button v-if="currentRaycastReason" class="btn btn-sm btn-circle" @click="cancelRaycasting">
+              <span class="material-icons">close</span>
+            </button>
           </div>
           <!-- <label class="label gap-2">
             <span class="label-text font-semibold whitespace-nowrap">
@@ -107,7 +127,7 @@
             <span class="label-text font-semibold whitespace-nowrap">
               Startplats storlek
             </span>
-            <input type="range" min="1" max="20" step="0.1"
+            <input type="range" min="0.5" max="8" step="0.1"
               v-model.number="vrSpaceStore.writableVrSpaceState.dbData.spawnRadius" class="range">
           </label>
           <div id="canvas-container" class="*:w-4/5">
@@ -143,7 +163,7 @@ import VrAFramePreview from '@/components/lobby/LobbyAFramePreview.vue';
 import { ref, watch, onMounted, computed, type ComponentInstance, nextTick } from 'vue';
 // import { throttle } from 'lodash-es';
 import { Combobox, ComboboxInput, ComboboxOptions, ComboboxOption, ComboboxButton } from '@headlessui/vue';
-import { insertablePermissionHierarchy, type VrSpaceId } from 'schemas';
+import { insertablePermissionHierarchy, type PlacedObjectId, type VrSpaceId } from 'schemas';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import { useConnectionStore } from '@/stores/connectionStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -207,6 +227,8 @@ async function addEditPermission() {
   })
 }
 
+const allowedVrSpaces = ref<RouterOutputs['vr']['listAvailableVrSpaces']>();
+const portalTargetVrSpace = ref<VrSpaceId>();
 onMounted(async () => {
   await vrSpaceStore.enterVrSpace(props.vrSpaceId);
 
@@ -214,26 +236,19 @@ onMounted(async () => {
   const sp = vrSpaceStore.currentVrSpace?.dbData.spawnPosition;
   if (sp) uncommitedSpawnPosition.value = sp as Point
 
-  // const storeRot = vrSpaceStore.currentVrSpace?.worldModelAsset?.entranceRotation;
-  // if (storeRot) {
-  //   entranceRotation.value = storeRot;
-  // }
-  // const sRadius = vrSpaceStore.currentVrSpace?.dbData.spawnRadius;
-  // if (sRadius) {
-  //   spawnRadius.value = sRadius;
-  // }
-
+  allowedVrSpaces.value = await backendConnection.client.vr.listAvailableVrSpaces.query();
 });
 
 const skyColor = ref();
 
-type RaycastReason = 'spawnPosition' | 'selfPlacement' | undefined;
+type RaycastReason = 'spawnPosition' | 'selfPlacement' | 'vrSpacePortal' | undefined;
 const currentRaycastReason = ref<RaycastReason>();
 const hoverPosition = ref<Point>();
 const hoverPosString = computed(() => {
-  if (hideGizmos.value) return undefined;
+  const raycastReason = currentRaycastReason.value;
+  if (hideGizmos.value || !raycastReason) return undefined;
   const posArr = hoverPosition.value;
-  if (!posArr || currentRaycastReason.value !== 'selfPlacement') return undefined;
+  if (!posArr || raycastReason === 'spawnPosition') return undefined;
   const v = new AFRAME.THREE.Vector3(...posArr);
   return AFRAME.utils.coordinates.stringify(v);
 })
@@ -272,7 +287,20 @@ async function onRaycastClick(point: Point) {
       await nextTick();
       vrComponentTag.value?.enterFirstPersonView(point);
       break;
+    case 'vrSpacePortal':
+      if (!vrSpaceStore.writableVrSpaceState || !portalTargetVrSpace.value) return;
+      backendConnection.client.vr.createPlacedObject.mutate({
+        vrSpaceId: vrSpaceStore.writableVrSpaceState.dbData.vrSpaceId,
+        type: 'vrPortal',
+        objectId: portalTargetVrSpace.value,
+        position: point,
+      })
   }
+}
+
+function cancelRaycasting() {
+  currentRaycastReason.value = undefined;
+  portalTargetVrSpace.value = undefined;
 }
 
 let abortController: AbortController | undefined = undefined;

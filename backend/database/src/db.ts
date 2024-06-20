@@ -187,7 +187,30 @@ export const queryVrSpaceWithIncludes = db.query.vrSpaces.findFirst({
     worldModelAsset: true,
     navMeshAsset: true,
     panoramicPreview: true,
-    placedObjects: true,
+    placedObjects: {
+      columns: {
+        placedObjectId: true,
+        position: true,
+        orientation: true,
+        type: true,
+        scale: true,
+        objectSettings: true,
+      },
+      with: {
+        vrPortal: {
+          columns: {
+            vrSpaceId: true,
+            name: true,
+            visibility: true,
+          },
+          with: {
+            panoramicPreview: true
+          }
+        },
+        asset: true,
+        streamPortal: true,
+      }
+    },
     allowedUsers: {
       where: eq(schema.permissions.targetType, 'vrSpace'),
       columns: {

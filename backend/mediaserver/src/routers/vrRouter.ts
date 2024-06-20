@@ -3,7 +3,7 @@ const log = new Log('Router:VR');
 process.env.DEBUG = 'Router:VR*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
-import { ClientTransformSchema, VrSpaceIdSchema, vrSpaceUpdateSchema } from 'schemas';
+import { ClientTransformSchema, PlacedObjectInsertSchema, VrSpaceIdSchema, vrSpaceUpdateSchema } from 'schemas';
 import { procedure as p, router, isUserClientM, userClientP, atLeastUserP, userInVrSpaceP } from '../trpc/trpc.js';
 import { VrSpace } from 'classes/VrSpace.js';
 import { z } from 'zod';
@@ -76,11 +76,19 @@ export const vrRouter = router({
   // TODO: only allow users with permission
   updateVrSpace: atLeastUserP.use(isUserClientM).input(vrSpaceUpdateSchema).mutation(async ({ ctx, input }) => {
     // log.info('updating vrSpace', input);
-    const { vrSpaceId, ...data } = input;
+    const { vrSpaceId, reason, ...data } = input;
     const [dbResponse] = await db.update(schema.vrSpaces).set(data).where(eq(schema.vrSpaces.vrSpaceId, vrSpaceId)).returning();
     const vrSpace = VrSpace.getVrSpace(vrSpaceId);
     if (!vrSpace) return;
-    vrSpace.reloadDbData(data.reason ?? 'dbData updated. Reloading');
+    vrSpace.reloadDbData(reason ?? 'dbData updated. Reloading');
+  }),
+  createPlacedObject: atLeastUserP.use(isUserClientM).input(PlacedObjectInsertSchema).mutation(async ({ ctx, input }) => {
+    const { placedObjectId, reason, ...data } = input;
+    const [dbResponse] = await db.insert(schema.placedObjects).values(data).returning();
+    const vrSpace = VrSpace.getVrSpace(input.vrSpaceId);
+    if (!vrSpace) return;
+    vrSpace.reloadDbData(reason ?? 'placedObject created. Reloading');
+    return dbResponse;
   }),
   // getState: userInVrSpaceP.query(({ ctx }) => {
   //   ctx.vrSpace.getPublicState();

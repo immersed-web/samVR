@@ -283,8 +283,8 @@ export type AssetId = z.TypeOf<typeof AssetIdSchema>;
 export const VrSpaceIdSchema = UuidSchema.brand<'VrSpaceId'>();
 export type VrSpaceId = z.TypeOf<typeof VrSpaceIdSchema>;
 
-export const PlacementIdSchema = UuidSchema.brand<'PlacementId'>();
-export type PlacementId = z.TypeOf<typeof PlacementIdSchema>;
+export const PlacedObjectIdSchema = UuidSchema.brand<'PlacedObjectId'>();
+export type PlacedObjectId = z.TypeOf<typeof PlacedObjectIdSchema>;
 
 export const SenderIdSchema = UuidSchema.brand<'SenderId'>();
 export type SenderId = z.TypeOf<typeof SenderIdSchema>;
@@ -397,7 +397,7 @@ const PermissionSelectSchema = createSelectSchema(schema.permissions, {
   targetId: z.union([StreamIdSchema, VrSpaceIdSchema]),
   userId: UserIdSchema,
 })
-type PermissionSelect = Prettify<z.TypeOf<typeof PermissionSelectSchema>>;
+type PermissionSelect = z.TypeOf<typeof PermissionSelectSchema>;
 
 const StreamPermissionSelectSchema = PermissionSelectSchema.extend({ targetType: z.literal('stream'), targetId: StreamIdSchema })
 type StreamPermission = z.TypeOf<typeof StreamPermissionSelectSchema>
@@ -410,6 +410,16 @@ type VrSpacePermission = z.TypeOf<typeof VrSpacePermissionSelectSchema>
 export function isVrSpacePermission(dbPermission: PermissionSelect): dbPermission is VrSpacePermission {
   return dbPermission.targetType === 'vrSpace';
 }
+
+export const PlacedObjectInsertSchema = createInsertSchema(schema.placedObjects, {
+  placedObjectId: PlacedObjectIdSchema.optional(),
+  vrSpaceId: VrSpaceIdSchema,
+  objectId: z.union([AssetIdSchema, VrSpaceIdSchema, StreamIdSchema]),
+})
+  .omit(timestampKeys)
+  .merge(optionalReason);
+export type PlacedObjectInsert = z.TypeOf<typeof PlacedObjectInsertSchema>;
+
 
 
 
