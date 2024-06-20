@@ -5,7 +5,14 @@
         <span class="label-text mr-1 font-bold">visa navmesh</span>
         <input type="checkbox" class="toggle toggle-xs" v-model="showNavMesh">
       </label>
-      <!-- <button class="btn btn-xs btn-primary" @click="screenShot">screenshot</button> -->
+      <div>
+        <button class="btn btn-xs btn-primary" @click="attachOrbitControls">attach orbitctls</button>
+        <button class="btn btn-xs btn-primary" @click="removeOrbitControls">remove orbitctls</button>
+      </div>
+      <div>
+        <button class="btn btn-xs btn-primary" @click="attachFirstPersonComponents">attach fps comps</button>
+        <button class="btn btn-xs btn-primary" @click="removeFirstPersonComponents">remove fps comps</button>
+      </div>
     </div>
     <a-scene embedded ref="sceneTag" id="ascene" xr-mode-ui="enabled: false">
       <a-assets timeout="20000">
@@ -149,14 +156,14 @@ async function enterFirstPersonView(point: THREE.Vector3Tuple) {
   // orbitControlsEnabled.value = false;
   // await nextTick();
   // console.log(camTag.object3DMap);
+  camTag.removeAttribute('orbit-controls');
   camTag.setAttribute('look-controls', 'enabled', true);
   camTag.setAttribute('wasd-controls', { fly: true });
-  camTag.removeAttribute('orbit-controls');
   point[1] += 1.7;
   camTag.object3D.position.set(...point);
 }
 
-function exitFirstPersonView() {
+async function exitFirstPersonView() {
   const camTag = cameraTag.value
   if (!camTag) {
     console.error('no cameratag provided');
@@ -164,6 +171,9 @@ function exitFirstPersonView() {
   }
   camTag.removeAttribute('look-controls');
   camTag.removeAttribute('wasd-controls');
+  await nextTick();
+  // camTag.getObject3D('camera').position.set(0, 0, 0);
+  // camTag.getObject3D('camera').rotation.set(0, 0, 0);
   attachOrbitControls();
 
   // orbitControlsEnabled.value = true;
@@ -281,11 +291,33 @@ function onModelLoaded(){
   }
 }
 
+function attachFirstPersonComponents() {
+  if (!cameraTag.value) return;
+  cameraTag.value.setAttribute('look-controls', 'enabled', true);
+  cameraTag.value.setAttribute('wasd-controls', { fly: true });
+}
+
+function removeFirstPersonComponents() {
+  if (!cameraTag.value) return;
+  cameraTag.value.removeAttribute('look-controls');
+  cameraTag.value.removeAttribute('wasd-controls');
+}
+
 function attachOrbitControls() {
   if (!cameraTag.value) return;
+  cameraTag.value.setAttribute('position', '0 0 0')
   let orbitControlSettings = `autoRotate: true; rotateSpeed: 1; initialPosition: ${modelCenter.x} ${modelCenter.y + 2} ${modelCenter.z + 5};`;
   orbitControlSettings += `target:${modelCenter.x} ${modelCenter.y} ${modelCenter.z};`;
   cameraTag.value.setAttribute('orbit-controls', orbitControlSettings);
+}
+
+function removeOrbitControls() {
+  if (!cameraTag.value) return;
+  cameraTag.value.removeAttribute('orbit-controls');
+  const cameraEntityPos = cameraTag.value.object3D.position;
+  const cameraObj3DPos = cameraTag.value.getObject3D('camera').position;
+  console.log('camera entity pos:', cameraEntityPos);
+  console.log('camera obj3d pos:', cameraObj3DPos);
 }
 
 function onNavMeshLoaded() {

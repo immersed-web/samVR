@@ -1,3 +1,4 @@
+import { THREE } from 'aframe'
 // @ts-expect-error
 import { OrbitControls } from './lib/OrbitControls.js';
 // @ts-expect-error
@@ -42,6 +43,7 @@ AFRAME.registerComponent('orbit-controls', {
   target: undefined as THREE.Vector3 | undefined,
   cursor: undefined as THREE.Vector3 | undefined,
   controls: undefined as any,
+  rotateTimer: undefined as ReturnType<typeof setTimeout> | undefined,
   init: function () {
     const el = this.el;
     this.oldPosition = new THREE.Vector3();
@@ -53,19 +55,14 @@ AFRAME.registerComponent('orbit-controls', {
     const canvasEl = el.sceneEl!.canvas;
 
     canvasEl.style.cursor = 'grab';
-    let rotateTimer: ReturnType<typeof setTimeout> | undefined = undefined;
-    canvasEl.addEventListener('mousedown', () => {
-      canvasEl.style.cursor = 'grabbing';
-      if(rotateTimer) clearTimeout(rotateTimer);
-      this.controls.autoRotate = false;
-    });
-    canvasEl.addEventListener('mouseup', () => {
-      canvasEl.style.cursor = 'grab';
-      rotateTimer = setTimeout(() => this.controls.autoRotate = this.data.autoRotate, 5000);
-    });
+    canvasEl.addEventListener('mousedown', this.onMouseDown);
+    canvasEl.addEventListener('mouseup', this.onMouseUp);
     
     this.target = new THREE.Vector3();
     this.cursor = new THREE.Vector3();
+    // we need to reset the camera entity's position and rotation in order for the orbit-controls to not go crazy
+    el.object3D.rotation.set(0, 0, 0);
+    el.object3D.position.set(0, 0, 0);
     el.getObject3D('camera').position.copy(this.data.initialPosition);
   },
 
@@ -106,9 +103,23 @@ AFRAME.registerComponent('orbit-controls', {
     }
   },
 
+  onMouseDown: function () {
+    const canvasEl = this.el.sceneEl!.canvas;
+    canvasEl.style.cursor = 'grabbing';
+    if (this.rotateTimer) clearTimeout(this.rotateTimer);
+    this.controls.autoRotate = false;
+  },
+  onMouseUp: function () {
+    const canvasEl = this.el.sceneEl!.canvas;
+    canvasEl.style.cursor = 'grab';
+    this.rotateTimer = setTimeout(() => this.controls.autoRotate = this.data.autoRotate, 5000);
+  },
+
   bindMethods: function() {
     this.onEnterVR = bind(this.onEnterVR, this);
     this.onExitVR = bind(this.onExitVR, this);
+    this.onMouseDown = bind(this.onMouseDown, this);
+    this.onMouseUp = bind(this.onMouseUp, this);
   },
 
   update: function (oldData) {
@@ -167,7 +178,8 @@ AFRAME.registerComponent('orbit-controls', {
     }
   },
 
-  remove: function() {
+  remove: function () {
+    if (this.rotateTimer) clearTimeout(this.rotateTimer);
     this.controls.reset();
     this.controls.dispose();
     this.el.getObject3D('camera').position.set(0, 0, 0);
@@ -176,6 +188,10 @@ AFRAME.registerComponent('orbit-controls', {
 
     this.el.sceneEl?.removeEventListener('enter-vr', this.onEnterVR);
     this.el.sceneEl?.removeEventListener('exit-vr', this.onExitVR);
+    const canvasEl = this.el.sceneEl!.canvas;
+    canvasEl.removeEventListener('mousedown', this.onMouseDown);
+    canvasEl.removeEventListener('mouseup', this.onMouseUp);
+    canvasEl.style.cursor = 'auto';
   },
 });
 
