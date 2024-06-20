@@ -71,15 +71,15 @@
                 :key="placedObject.placedObjectId">
                 <a-entity v-if="placedObject.type === 'vrPortal'" :position="placedObject.position?.join(' ')">
                   <!-- <a-sphere color="red" /> -->
-                  <a-sphere v-if="placedObject.vrPortal?.panoramicPreview" transparent="true" scale="0.5 0.5 0.5"
+                  <a-sphere transparent="true" scale="0.5 0.5 0.5"
                     material="shader: outer-glow; start: 0.3; color: 0.5 0 1;" position="0 1.5 0">
-                    <a-icosahedron detail="5" scale="-0.98 -0.98 -0.98" transparent="true" opacity="0.5"
+                    <!-- <a-troika-text v-if="placedObject.vrPortal?.name" /> -->
+                    <a-icosahedron v-if="placedObject.vrPortal?.panoramicPreview" detail="5" scale="-0.98 -0.98 -0.98"
+                      transparent="true" opacity="0.5"
                       :material="`shader: pano-portal; warpParams: 3 0.9; opacity: 0.8; src: ${getAssetUrl(placedObject.vrPortal?.panoramicPreview?.generatedName)}`">
                     </a-icosahedron>
+                    <a-sphere v-else color="black" transparent="true" opacity="0.8" scale="0.98 0.98 0.98" />
                   </a-sphere>
-                  <!-- <a-sphere v-else color="purple" transparent="true" opacity="0.5" scale="0.5 0.5 0.5"
-                    position="0 1.5 0" /> -->
-                  <a-sphere v-else transparent="true" material="shader: outer-glow;" />
                 </a-entity>
               </template>
             </a-entity>
@@ -93,9 +93,9 @@
               </a-icosahedron>
               <!-- <a-sphere :src="getAssetUrl(vrSpaceStore.currentVrSpace.dbData.panoramicPreview?.generatedName)"
                 scale="-1 1 1" position="0 1.1 0"></a-sphere> -->
-              <a-image scale="2 1 1"
+              <!-- <a-image scale="2 1 1"
                 :src="getAssetUrl(vrSpaceStore.currentVrSpace.dbData.panoramicPreview?.generatedName)"
-                position="4 1 0"></a-image>
+                position="4 1 0"></a-image> -->
             </a-entity>
             <a-entity :position="hoverPosString" :visible="hoverPosString !== undefined">
               <a-ring color="yellow" radius-inner="0.1" radius-outer="0.2" material="shader: flat;"
