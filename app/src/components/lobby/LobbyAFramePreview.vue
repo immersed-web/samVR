@@ -25,13 +25,14 @@
         :direction="entranceRotation"
         message="Till kameror"
       /> -->
-      <a-entity ref="spawnPosTag" v-if="spawnPosString" :position="spawnPosString">
+      <slot />
+      <!-- <a-entity ref="spawnPosTag" v-if="spawnPosString" :position="spawnPosString">
         <a-circle color="yellow" transparent="true" opacity="0.5" rotation="-90 0 0" position="0 0.05 0"
           :radius="vrSpaceStore.currentVrSpace?.dbData.spawnRadius" />
         <a-icosahedron v-if="vrSpaceStore.currentVrSpace?.dbData.panoramicPreview" detail="3" scale="-0.5 -0.5 -0.5"
           :material="`shader: pano-portal-dither; src: ${getAssetUrl(vrSpaceStore.currentVrSpace?.dbData.panoramicPreview?.generatedName)}`">
         </a-icosahedron>
-      </a-entity>
+      </a-entity> -->
 
       <!-- for some super weird reason orbit controls doesnt work with the a-camera primitive  -->
       <a-entity camera ref="cameraTag" />
@@ -43,7 +44,7 @@
           :src="props.modelUrl" />
         <a-gltf-model id="navmesh" ref="navmeshTag" @model-loaded="onNavMeshLoaded" :visible="showNavMesh"
           :model-opacity="`opacity: ${navMeshOpacity}`" :src="props.navmeshUrl ? props.navmeshUrl : props.modelUrl"
-          @raycast-change="onIntersection" @raycast-out="onNoIntersection" @click="placeCursor" />
+          @raycast-change="onIntersection" @raycast-out="onNoIntersection" @click="on3DClick" />
       </a-entity>
     </a-scene>
   </div>
@@ -58,32 +59,37 @@ import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import c from '@/ts/aframe/components';
 c.registerAframeComponents();
 
-export type CursorTarget = 'spawnPosition' | 'selfPlacement' | undefined;
-
 const vrSpaceStore = useVrSpaceStore();
 
 const props = withDefaults(defineProps<{
   modelUrl?: string,
   navmeshUrl?: string,
-  cursorTarget?: CursorTarget
+  autoRotate?: boolean,
+  raycast?: boolean,
 }>(), {
   modelUrl: undefined,
   navmeshUrl: undefined,
-  cursorTarget: undefined,
+  autoRotate: true,
+  raycast: false,
 });
 
 
 const emit = defineEmits<{
-  'cursorPlaced': [point: [number, number, number]]
+  'raycastClick': [point: [number, number, number]]
+  'raycastHover': [point: [number, number, number]]
   'screenshot': [canvas: HTMLCanvasElement]
 }>();
+
+defineExpose({
+  getPanoScreenshotFromPoint
+})
 
 // A-frame
 const sceneTag = ref<Scene>();
 const modelTag = ref<Entity>();
 const navmeshTag = ref<Entity>();
 const cameraTag = ref<Entity>();
-const spawnPosTag = ref<Entity>();
+// const spawnPosTag = ref<Entity>();
 
 const showNavMesh = ref(false);
 const navMeshOpacity = computed(() => {
@@ -92,45 +98,53 @@ const navMeshOpacity = computed(() => {
 
 let stopAutoRotateTimeout: ReturnType<typeof useTimeoutFn>['stop'] | undefined = undefined;
 
-watch(() => props.cursorTarget, (cTarget) => {
-  if (cTarget) {
+watch(() => props.autoRotate, (rotate) => {
+  if (!rotate) {
     if (stopAutoRotateTimeout) stopAutoRotateTimeout();
     if (!navmeshTag.value) console.error('navmeshTag undefined');
 
-    // the  raycaster seem to keep a reference to the intersected object which leads to us missing "new" intersection after reattaching raycaster-listen.
-    // This is a hacky work-around to "reset" the raycasting logic
-    sceneTag.value?.setAttribute('raycaster', 'objects', '#navmesh');
-    sceneTag.value?.setAttribute('cursor', { fuse: false, rayOrigin: 'mouse' });
-    navmeshTag.value?.setAttribute('raycaster-listen', true);
     cameraTag.value!.setAttribute('orbit-controls', 'autoRotate', false);
   } else {
-    sceneTag.value?.removeAttribute('cursor');
-    sceneTag.value?.removeAttribute('raycaster');
-    navmeshTag.value?.removeAttribute('raycaster-listen');
     stopAutoRotateTimeout = useTimeoutFn(() => {
       cameraTag.value!.setAttribute('orbit-controls', 'autoRotate', true);
     }, 5000).stop;
   }
 });
 
-async function screenShot() {
-  if (sceneTag.value) {
-    if (!spawnPosTag.value || !spawnPosition.value) return;
-    spawnPosTag.value.setAttribute('visible', 'false');
-    const navMeshVisibleRestoreState = navmeshTag.value?.getAttribute('visible');
-    navmeshTag.value?.setAttribute('visible', 'false');
-    const spawnPosVec3 = new THREE.Vector3(...spawnPosition.value);
-    spawnPosVec3.y += 1.7;
-    const savedPos = sceneTag.value.camera.position.clone();
-    sceneTag.value.camera.position.copy(spawnPosVec3)
-    const screenshotComponent = sceneTag.value.components.screenshot;
-    // @ts-ignore
-    const canvasScreenshot: HTMLCanvasElement = screenshotComponent.getCanvas();
-    sceneTag.value.camera.position.copy(savedPos);
-    spawnPosTag.value.setAttribute('visible', 'true');
-    navmeshTag.value?.setAttribute('visible', navMeshVisibleRestoreState);
-    emit('screenshot', canvasScreenshot);
+watch(() => props.raycast, (raycast) => {
+  if (raycast) {
+    // the  raycaster seem to keep a reference to the intersected object which leads to us missing "new" intersection after reattaching raycaster-listen.
+    // This is a hacky work-around to "reset" the raycasting logic
+    sceneTag.value?.setAttribute('raycaster', 'objects', '#navmesh');
+    sceneTag.value?.setAttribute('cursor', { fuse: false, rayOrigin: 'mouse' });
+    navmeshTag.value?.setAttribute('raycaster-listen', true);
+  } else {
+    sceneTag.value?.removeAttribute('cursor');
+    sceneTag.value?.removeAttribute('raycaster');
+    navmeshTag.value?.removeAttribute('raycaster-listen');
   }
+})
+
+async function getPanoScreenshotFromPoint(point: THREE.Vector3Tuple) {
+  if (!sceneTag.value || !point) {
+    console.error('no scene or point provided');
+    return;
+  }
+  // spawnPosTag.value.setAttribute('visible', 'false');
+  const navMeshVisibleRestoreState = navmeshTag.value?.getAttribute('visible');
+  navmeshTag.value?.setAttribute('visible', 'false');
+  const spawnPosVec3 = new THREE.Vector3(...point);
+  spawnPosVec3.y += 1.7;
+  const savedPos = sceneTag.value.camera.position.clone();
+  sceneTag.value.camera.position.copy(spawnPosVec3)
+  const screenshotComponent = sceneTag.value.components.screenshot;
+  // @ts-ignore
+  const canvasScreenshot: HTMLCanvasElement = screenshotComponent.getCanvas();
+  sceneTag.value.camera.position.copy(savedPos);
+  // spawnPosTag.value.setAttribute('visible', 'true');
+  navmeshTag.value?.setAttribute('visible', navMeshVisibleRestoreState);
+  return canvasScreenshot
+  // emit('screenshot', canvasScreenshot);
 }
 
 // const entrancePosString = computed(() => {
@@ -146,17 +160,15 @@ async function screenShot() {
 // });
 
 onMounted(() => {
-  const sp = vrSpaceStore.currentVrSpace?.dbData.spawnPosition;
-  if (sp) spawnPosition.value = sp as THREE.Vector3Tuple
 })
 
-const spawnPosition = ref<THREE.Vector3Tuple>();
-const spawnPosString = computed(() => {
-  const posArr = spawnPosition.value;
-  if (!posArr) return undefined;
-  const v = new AFRAME.THREE.Vector3(...posArr as [number, number, number]);
-  return AFRAME.utils.coordinates.stringify(v);
-});
+// const spawnPosition = ref<THREE.Vector3Tuple>();
+// const spawnPosString = computed(() => {
+//   const posArr = spawnPosition.value;
+//   if (!posArr) return undefined;
+//   const v = new AFRAME.THREE.Vector3(...posArr as [number, number, number]);
+//   return AFRAME.utils.coordinates.stringify(v);
+// });
 
 const skyColor = computed(() => {
   const storeSkyColor = vrSpaceStore.currentVrSpace?.dbData.skyColor
@@ -165,19 +177,20 @@ const skyColor = computed(() => {
 })
 
 function onIntersection(evt: DetailEvent<any>) {
-  console.log('model hovered', evt);
+  // console.log('model hovered', evt);
   const point: THREE.Vector3 = evt.detail.intersection.point;
   if (!point) {
     console.error('no point from intersection event');
     return;
   }
-  if (props.cursorTarget === 'spawnPosition') {
-    // console.log('intersect while spawnpointing');
-    spawnPosition.value = point.toArray();
-    // if (vrSpaceStore.writableVrSpaceState?.dbData.spawnPosition) {
-    //   // vrSpaceStore.writableVrSpaceState.dbData.spawnPosition = point.toArray();
-    // }
-  }
+  emit('raycastHover', point.toArray());
+  // if (props.cursorTarget === 'spawnPosition') {
+  //   // console.log('intersect while spawnpointing');
+  //   spawnPosition.value = point.toArray();
+  //   // if (vrSpaceStore.writableVrSpaceState?.dbData.spawnPosition) {
+  //   //   // vrSpaceStore.writableVrSpaceState.dbData.spawnPosition = point.toArray();
+  //   // }
+  // }
   // if (props.cursorTarget === 'entrancePosition') {
   //   if (vrSpaceStore.currentStream?.vrSpace?.virtualSpace3DModel) {
   //     vrSpaceStore.currentStream.vrSpace.virtualSpace3DModel.entrancePosition = point.toArray();
@@ -192,18 +205,17 @@ function onNoIntersection(evt: DetailEvent<any>) {
   console.log('raycast-out');
 }
 
-function placeCursor(evt: DetailEvent<{intersection: {point: THREE.Vector3}}>){
+function on3DClick(evt: DetailEvent<{ intersection: { point: THREE.Vector3 } }>) {
   console.log(evt.detail.intersection);
-  switch (props.cursorTarget) {
-    case 'spawnPosition':
-      screenShot();
-      break;
-    case 'selfPlacement':
-      console.log('placing self');
-      break;
-  }
-  emit('cursorPlaced', evt.detail.intersection.point.toArray());
-
+  // switch (props.cursorTarget) {
+  //   case 'spawnPosition':
+  //     // getPanoScreenShotFromPoint();
+  //     break;
+  //   case 'selfPlacement':
+  //     console.log('placing self');
+  //     break;
+  // }
+  emit('raycastClick', evt.detail.intersection.point.toArray());
 }
 
 function onModelLoaded(){
