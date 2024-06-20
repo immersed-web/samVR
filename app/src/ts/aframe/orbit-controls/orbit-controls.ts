@@ -170,6 +170,9 @@ AFRAME.registerComponent('orbit-controls', {
   remove: function() {
     this.controls.reset();
     this.controls.dispose();
+    this.el.getObject3D('camera').position.set(0, 0, 0);
+    this.el.getObject3D('camera').rotation.set(0, 0, 0);
+
 
     this.el.sceneEl?.removeEventListener('enter-vr', this.onEnterVR);
     this.el.sceneEl?.removeEventListener('exit-vr', this.onExitVR);
