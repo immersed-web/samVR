@@ -7,7 +7,8 @@ export default () => {
   AFRAME.registerShader('pano-portal', {
     schema: {
       src: { type: 'map', is: 'uniform' },
-      warpParams: { type: 'vec4', is: 'uniform', default: "1.5 0.5 0.3 0.1" }
+      warpParams: { type: 'vec4', is: 'uniform', default: "1.5 0.5 0.3 0.1" },
+      opacity: { type: 'float', is: 'uniform', default: 1.0 }
     },
     vertexShader,
     fragmentShader,

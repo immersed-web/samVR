@@ -1,6 +1,7 @@
 #define M_PI 3.1415926535897932384626433832795
 uniform sampler2D src;
 uniform vec4 warpParams;
+uniform float opacity;
 varying vec3 worldNormal;
 varying vec3 worldViewDir;
 varying float warpAlpha;
@@ -18,5 +19,5 @@ void main() {
   vec3 ndir = normalize(worldViewDir);
   vec3 sampleDir = (warpAlpha)*ndir + (1.0 - warpAlpha)*nn;
   gl_FragColor.rgb = panoMap(sampleDir);
-  gl_FragColor.a = 1.0;
+  gl_FragColor.a = opacity;
 }
