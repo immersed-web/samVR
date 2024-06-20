@@ -1,5 +1,5 @@
-// Made by Pyrym: https://github.com/PyryM/aframe-pano-portal
-// I've used the source code directly so we can tweak stuff
+// Made by PyryM: https://github.com/PyryM/aframe-pano-portal
+// I've used the source code directly so we can tweak stuff and make it part of our bundling process
 import vertexShader from './shaders/vs_pano_warp.glsl?raw';
 import fragmentShaderDithered from './shaders/fs_pano_warp_dither.glsl?raw';
 import fragmentShader from './shaders/fs_pano_warp.glsl?raw';
