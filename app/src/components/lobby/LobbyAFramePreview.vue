@@ -189,6 +189,7 @@ async function getPanoScreenshotFromPoint(point: THREE.Vector3Tuple) {
   navmeshTag.value?.setAttribute('visible', 'false');
   const spawnPosVec3 = new THREE.Vector3(...point);
   spawnPosVec3.y += 1.7;
+  // we save all the camera pos and rot stuff so we can restore it afterwards
   const savedEntityPos = camTag.object3D.position.clone();
   const savedEntityRot = camTag.object3D.rotation.clone();
   const savedCameraPos = camTag.getObject3D('camera').position.clone();
@@ -207,7 +208,6 @@ async function getPanoScreenshotFromPoint(point: THREE.Vector3Tuple) {
   camTag.getObject3D('camera').rotation.copy(savedCameraRot);
   navmeshTag.value?.setAttribute('visible', navMeshVisibleRestoreState);
   return canvasScreenshot
-  // emit('screenshot', canvasScreenshot);
 }
 
 // const entrancePosString = computed(() => {
