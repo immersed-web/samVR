@@ -13,6 +13,7 @@ import followPosition from './follow-position';
 import lockRotationAxis from './lock-rotation-axis';
 import panoPortal from './pano-portal';
 import outerGlow from './outer-glow';
+import lootkAt from './lootk-at';
 
 let componentsAreRegistered = false;
 
@@ -35,6 +36,10 @@ const registerComponents = () => {
   lockRotationAxis();
   panoPortal();
   outerGlow();
+  lootkAt()
+
+  // @ts-ignore
+  import('aframe-troika-text');
 
   // @ts-ignore
   // import('aframe-environment-component');
@@ -45,6 +50,9 @@ const registerComponents = () => {
   // TODO: Find out why rig and camera seems to be a few decimeter of in horizontal position. Only in real VR though. Not in browser as it seems at least.
   // @ts-ignore
   import('aframe-blink-controls');
+
+  // @ts-ignore
+  // import('aframe-look-at-component');
 
   // // @ts-ignore
   // import('aframe-orbit-controls');

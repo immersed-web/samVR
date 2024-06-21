@@ -32,6 +32,10 @@
         :direction="entranceRotation"
         message="Till kameror"
       /> -->
+      <a-entity camera ref="cameraTag">
+        <a-sphere color="red" position="0.2 0 -1.5" scale="0.2 0.2 0.2" />
+      </a-entity>
+      <a-sky :color="skyColor" />
       <slot />
       <!-- <a-entity ref="spawnPosTag" v-if="spawnPosString" :position="spawnPosString">
         <a-circle color="yellow" transparent="true" opacity="0.5" rotation="-90 0 0" position="0 0.05 0"
@@ -42,8 +46,6 @@
       </a-entity> -->
 
       <!-- for some super weird reason orbit controls doesnt work with the a-camera primitive  -->
-      <a-entity camera ref="cameraTag" />
-      <a-sky :color="skyColor" />
 
       <!-- The model -->
       <a-entity>

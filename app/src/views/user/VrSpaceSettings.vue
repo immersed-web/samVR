@@ -71,9 +71,10 @@
                 :key="placedObject.placedObjectId">
                 <a-entity v-if="placedObject.type === 'vrPortal'" :position="placedObject.position?.join(' ')">
                   <!-- <a-sphere color="red" /> -->
+                  <a-troika-text look-at-camera :value="placedObject.vrPortal?.name" position="0 2.5 0" />
                   <a-sphere transparent="true" scale="0.5 0.5 0.5"
                     material="shader: outer-glow; start: 0.3; color: 0.5 0 1;" position="0 1.5 0">
-                    <!-- <a-troika-text v-if="placedObject.vrPortal?.name" /> -->
+                    <!-- <a-troika-text v-if="placedObject.vrPortal?.name" :value="placedObject.vrPortal?.name ?? ''" /> -->
                     <a-icosahedron v-if="placedObject.vrPortal?.panoramicPreview" detail="5" scale="-0.98 -0.98 -0.98"
                       transparent="true" opacity="0.5"
                       :material="`shader: pano-portal; warpParams: 3 0.9; opacity: 0.8; src: ${getAssetUrl(placedObject.vrPortal?.panoramicPreview?.generatedName)}`">
