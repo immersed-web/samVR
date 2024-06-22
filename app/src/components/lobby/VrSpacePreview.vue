@@ -106,11 +106,6 @@ const navMeshOpacity = computed(() => {
   return showNavMesh.value ? 0.7 : 0.0;
 });
 
-const orbitControlsEnabled = ref(true);
-watch(orbitControlsEnabled, (enabled) => {
-  if (!cameraTag.value) console.error('cameraTag undefined');
-  cameraTag.value!.setAttribute('orbit-controls', 'enabled', enabled);
-})
 let stopAutoRotateTimeout: ReturnType<typeof useTimeoutFn>['stop'] | undefined = undefined;
 
 watch(() => props.autoRotate, (rotate) => {
@@ -175,11 +170,7 @@ async function exitFirstPersonView() {
   camTag.removeAttribute('wasd-controls');
   camTag.removeAttribute('simple-navmesh-constraint');
   await nextTick();
-  // camTag.getObject3D('camera').position.set(0, 0, 0);
-  // camTag.getObject3D('camera').rotation.set(0, 0, 0);
   attachOrbitControls();
-
-  // orbitControlsEnabled.value = true;
 }
 
 async function getPanoScreenshotFromPoint(point: THREE.Vector3Tuple) {
