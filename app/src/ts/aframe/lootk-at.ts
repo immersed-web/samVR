@@ -1,3 +1,5 @@
+import { THREE } from "aframe";
+
 // var coordinates = AFRAME.utils.coordinates;
 
 // var isCoordinates = coordinates.isCoordinate;
@@ -34,8 +36,10 @@ export default function () {
       //   return data;
       // }
     },
+    worldPosition: undefined as unknown as THREE.Vector3,
 
     init: function () {
+      this.worldPosition = new THREE.Vector3();
       // this.target3D = null;
       // this.vector = new THREE.Vector3();
       // this.cameraListener = AFRAME.utils.bind(this.cameraListener, this);
@@ -85,7 +89,7 @@ export default function () {
         console.warn('No camera found');
         return;
       }
-      this.el.object3D.lookAt(camera.position)
+      this.el.object3D.lookAt(camera.getWorldPosition(this.worldPosition));
     },
 
     // remove: function () {
