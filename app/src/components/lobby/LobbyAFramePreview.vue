@@ -33,7 +33,6 @@
         message="Till kameror"
       /> -->
       <a-entity camera ref="cameraTag">
-        <a-sphere color="red" position="0.2 0 -1.5" scale="0.2 0.2 0.2" />
       </a-entity>
       <a-sky :color="skyColor" />
       <slot />
