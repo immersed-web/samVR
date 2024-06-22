@@ -162,6 +162,7 @@ async function enterFirstPersonView(point: THREE.Vector3Tuple) {
   camTag.setAttribute('wasd-controls', { fly: false });
   point[1] += 1.7;
   camTag.object3D.position.set(...point);
+  camTag.setAttribute('simple-navmesh-constraint', `navmesh:#${navmeshId.value}; fall:0.5; height:1.65;`);
 }
 
 async function exitFirstPersonView() {
@@ -172,6 +173,7 @@ async function exitFirstPersonView() {
   }
   camTag.removeAttribute('look-controls');
   camTag.removeAttribute('wasd-controls');
+  camTag.removeAttribute('simple-navmesh-constraint');
   await nextTick();
   // camTag.getObject3D('camera').position.set(0, 0, 0);
   // camTag.getObject3D('camera').rotation.set(0, 0, 0);
@@ -222,6 +224,10 @@ async function getPanoScreenshotFromPoint(point: THREE.Vector3Tuple) {
 //   if (!streamStore.currentStream?.vrSpace?.virtualSpace3DModel?.entranceRotation) return 0;
 //   return streamStore.currentStream.vrSpace.virtualSpace3DModel.entranceRotation;
 // });
+
+const navmeshId = computed(() => {
+  return vrSpaceStore.currentVrSpace?.dbData.navMeshAssetId !== undefined ? 'navmesh' : 'model';
+});
 
 onMounted(() => {
 })
