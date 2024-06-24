@@ -14,37 +14,13 @@
         <button class="btn btn-xs btn-primary" @click="removeFirstPersonComponents">remove fps comps</button>
       </div>
     </div>
-    <a-scene embedded ref="sceneTag" id="ascene" xr-mode-ui="enabled: false">
+    <a-scene embedded class=" min-h-96" ref="sceneTag" id="ascene" xr-mode-ui="enabled: false">
       <a-assets timeout="20000">
-        <!-- <a-asset-item
-        id="model-asset"
-        :src="props.modelUrl"
-      />
-      <a-asset-item
-        v-if="props.navmeshUrl"
-        id="navmesh-asset"
-        :src="props.navmeshUrl"
-      /> -->
       </a-assets>
-      <!-- <StreamEntrance
-        v-if="entrancePosString"
-        :position="entrancePosString"
-        :direction="entranceRotation"
-        message="Till kameror"
-      /> -->
       <a-entity camera ref="cameraTag">
       </a-entity>
       <a-sky :color="skyColor" />
       <slot />
-      <!-- <a-entity ref="spawnPosTag" v-if="spawnPosString" :position="spawnPosString">
-        <a-circle color="yellow" transparent="true" opacity="0.5" rotation="-90 0 0" position="0 0.05 0"
-          :radius="vrSpaceStore.currentVrSpace?.dbData.spawnRadius" />
-        <a-icosahedron v-if="vrSpaceStore.currentVrSpace?.dbData.panoramicPreview" detail="3" scale="-0.5 -0.5 -0.5"
-          :material="`shader: pano-portal-dither; src: ${getAssetUrl(vrSpaceStore.currentVrSpace?.dbData.panoramicPreview?.generatedName)}`">
-        </a-icosahedron>
-      </a-entity> -->
-
-      <!-- for some super weird reason orbit controls doesnt work with the a-camera primitive  -->
 
       <!-- The model -->
       <a-entity>
@@ -61,7 +37,6 @@
 <script setup lang="ts">
 import { type Scene, type Entity, type DetailEvent, THREE } from 'aframe';
 import { ref, watch, computed, onMounted, nextTick } from 'vue';
-import { getAssetUrl } from '@/modules/utils';
 import { useTimeoutFn } from '@vueuse/core';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import c from '@/ts/aframe/components';
@@ -112,7 +87,6 @@ watch(() => props.autoRotate, (rotate) => {
   console.log('autorotate updated!');
   if (!rotate) {
     if (stopAutoRotateTimeout) stopAutoRotateTimeout();
-    if (!navmeshTag.value) console.error('navmeshTag undefined');
 
     if (cameraTag.value?.getAttribute('orbit-controls')) {
       cameraTag.value!.setAttribute('orbit-controls', 'autoRotate', false);
@@ -148,10 +122,6 @@ async function enterFirstPersonView(point: THREE.Vector3Tuple) {
     console.error('no cameraTag or point provided');
     return;
   }
-  // camTag.removeAttribute('orbit-controls');
-  // orbitControlsEnabled.value = false;
-  // await nextTick();
-  // console.log(camTag.object3DMap);
   camTag.removeAttribute('orbit-controls');
   camTag.setAttribute('look-controls', 'enabled', true);
   camTag.setAttribute('wasd-controls', { fly: false });
@@ -204,32 +174,12 @@ async function getPanoScreenshotFromPoint(point: THREE.Vector3Tuple) {
   return canvasScreenshot
 }
 
-// const entrancePosString = computed(() => {
-//   const posArr = streamStore.currentStream?.vrSpace?.virtualSpace3DModel?.entrancePosition;
-//   if(!posArr) return undefined;
-//   const v = new AFRAME.THREE.Vector3(...posArr as [number, number, number]);
-//   return AFRAME.utils.coordinates.stringify(v);
-// });
-
-// const entranceRotation = computed(() => {
-//   if (!streamStore.currentStream?.vrSpace?.virtualSpace3DModel?.entranceRotation) return 0;
-//   return streamStore.currentStream.vrSpace.virtualSpace3DModel.entranceRotation;
-// });
-
 const navmeshId = computed(() => {
   return vrSpaceStore.currentVrSpace?.dbData.navMeshAssetId !== undefined ? 'navmesh' : 'model';
 });
 
 onMounted(() => {
 })
-
-// const spawnPosition = ref<THREE.Vector3Tuple>();
-// const spawnPosString = computed(() => {
-//   const posArr = spawnPosition.value;
-//   if (!posArr) return undefined;
-//   const v = new AFRAME.THREE.Vector3(...posArr as [number, number, number]);
-//   return AFRAME.utils.coordinates.stringify(v);
-// });
 
 const skyColor = computed(() => {
   const storeSkyColor = vrSpaceStore.currentVrSpace?.dbData.skyColor
@@ -245,37 +195,14 @@ function onIntersection(evt: DetailEvent<any>) {
     return;
   }
   emit('raycastHover', point.toArray());
-  // if (props.cursorTarget === 'spawnPosition') {
-  //   // console.log('intersect while spawnpointing');
-  //   spawnPosition.value = point.toArray();
-  //   // if (vrSpaceStore.writableVrSpaceState?.dbData.spawnPosition) {
-  //   //   // vrSpaceStore.writableVrSpaceState.dbData.spawnPosition = point.toArray();
-  //   // }
-  // }
-  // if (props.cursorTarget === 'entrancePosition') {
-  //   if (vrSpaceStore.currentStream?.vrSpace?.virtualSpace3DModel) {
-  //     vrSpaceStore.currentStream.vrSpace.virtualSpace3DModel.entrancePosition = point.toArray();
-  //   }
-  // }
-  // if(!cursorTag.value) return;
-  // cursorTag.value?.setAttribute('visible', props.isCursorActive); 
-  // cursorTag.value.object3D.position.set(...point.toArray());
 }
 
 function onNoIntersection(evt: DetailEvent<any>) {
-  console.log('raycast-out');
+  // console.log('raycast-out');
 }
 
 function on3DClick(evt: DetailEvent<{ intersection: { point: THREE.Vector3 } }>) {
-  console.log(evt.detail.intersection);
-  // switch (props.cursorTarget) {
-  //   case 'spawnPosition':
-  //     // getPanoScreenShotFromPoint();
-  //     break;
-  //   case 'selfPlacement':
-  //     console.log('placing self');
-  //     break;
-  // }
+  // console.log(evt.detail.intersection);
   emit('raycastClick', evt.detail.intersection.point.toArray());
 }
 
@@ -283,15 +210,10 @@ const modelCenter = new THREE.Vector3();
 function onModelLoaded(){
   if(modelTag.value && cameraTag.value){
     console.log('centering camera on model bbox');
-    // const obj3D = modelTag.value.components.mesh;
-    // const obj3D = modelTag.value.object3DMap;
     const obj3D = modelTag.value.getObject3D('mesh');
-    // console.log(obj3D);
     
     const bbox = new THREE.Box3().setFromObject(obj3D);
     bbox.getCenter(modelCenter);
-    // const modelCenter = bbox.getCenter(new THREE.Vector3());
-    // cameraTag.value.object3D.position.set(modelCenter.x, modelCenter.y, modelCenter.z);
     attachOrbitControls();
   }
 }
@@ -332,11 +254,4 @@ function onNavMeshLoaded() {
 
 </script>
 
-<style scoped>
-
-#ascene {
-  height: 0;
-  padding-top: 56.25%;
-}
-
-</style>
+<style scoped></style>

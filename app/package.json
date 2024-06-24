@@ -13,6 +13,7 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
   },
   "dependencies": {
+    "@cyhnkckali/vue3-color-picker": "^2.0.2",
     "@formkit/auto-animate": "1.0.0-beta.6",
     "@headlessui/vue": "^1.7.22",
     "@tweakpane/core": "^2.0.3",

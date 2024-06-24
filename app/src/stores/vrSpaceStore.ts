@@ -1,12 +1,13 @@
 import { defineStore } from 'pinia';
 
 import { hasAtLeastPermissionLevel, type ClientTransform, type ClientTransforms, type ConnectionId, type VrSpaceId, type VrSpaceUpdate } from 'schemas';
-import { readonly, ref } from 'vue';
+import { computed, readonly, ref } from 'vue';
 import { useConnectionStore } from './connectionStore';
 import { eventReceiver, type ExtractPayload, type RouterOutputs, type SubscriptionValue } from '@/modules/trpcClient';
 import { useClientStore } from './clientStore';
 import { watchIgnorable, pausableWatch } from '@vueuse/core';
 import { debounce } from 'lodash-es'
+import { getAssetUrl } from '@/modules/utils';
 
 type _ReceivedVrSpaceState = ExtractPayload<typeof eventReceiver.vrSpace.vrSpaceStateUpdated.subscribe>['data'];
 
@@ -18,6 +19,26 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
   const writableVrSpaceState = ref<_ReceivedVrSpaceState>()
   const currentVrSpace = readonly(writableVrSpaceState);
 
+  const worldModelUrl = computed(() => {
+    if (!writableVrSpaceState.value) return undefined;
+    const fileName = writableVrSpaceState.value.dbData.worldModelAsset?.generatedName;
+    if (!fileName) return undefined;
+    return getAssetUrl(fileName);
+  });
+
+  const navMeshUrl = computed(() => {
+    if (!writableVrSpaceState.value) return undefined;
+    const fileName = writableVrSpaceState.value.dbData.navMeshAsset?.generatedName;
+    if (!fileName) return undefined;
+    return getAssetUrl(fileName);
+  });
+
+  const panoramicPreviewUrl = computed(() => {
+    if (!writableVrSpaceState.value) return undefined;
+    const fileName = writableVrSpaceState.value.dbData.panoramicPreview?.generatedName;
+    if (!fileName) return undefined;
+    return getAssetUrl(fileName);
+  });
 
   const { ignoreUpdates } = watchIgnorable(() => writableVrSpaceState.value, async (newVal, oldVal) => {
     console.log('currentVrSpace watcher triggered', oldVal, newVal);
@@ -94,6 +115,9 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
   return {
     currentVrSpace,
     writableVrSpaceState,
+    worldModelUrl,
+    navMeshUrl,
+    panoramicPreviewUrl,
     createVrSpace,
     enterVrSpace,
     leaveVrSpace,

@@ -20,13 +20,10 @@
     </a-assets> -->
 
     <a-sky :color="skyColor" />
-    <StreamEntrance :visible="streamStore.streamIsActive" v-if="entrancePosString" @click="goToStream"
-      :position="entrancePosString" :direction="entranceRotation" :message="entranceMessage" class="clickable" />
-
     <!-- The model -->
     <a-entity>
-      <a-gltf-model @model-loaded="onModelLoaded" id="model" ref="modelTag" :src="streamStore.modelUrl" />
-      <a-gltf-model v-if="streamStore.navmeshUrl" id="navmesh" :src="streamStore.navmeshUrl" :visible="showNavMesh" />
+      <a-gltf-model @model-loaded="onModelLoaded" id="model" ref="modelTag" :src="vrSpaceStore.worldModelUrl" />
+      <a-gltf-model v-if="vrSpaceStore.navMeshUrl" id="navmesh" :src="vrSpaceStore.navMeshUrl" :visible="showNavMesh" />
     </a-entity>
 
     <!-- <a-sphere
@@ -97,7 +94,7 @@
 </template>
 
 <script setup lang="ts">
-import { type Entity, type DetailEvent, utils as aframeUtils } from 'aframe';
+import { type Entity, type DetailEvent, utils as aframeUtils, THREE } from 'aframe';
 import { ref, onMounted, onBeforeMount, computed, onBeforeUnmount, inject } from 'vue';
 import RemoteAvatar from './RemoteAvatar.vue';
 import type { ClientTransform } from 'schemas';
@@ -110,14 +107,12 @@ import { throttle } from 'lodash-es';
 // import type { SubscriptionValue, RouterOutputs } from '@/modules/trpcClient';
 import { useSoupStore } from '@/stores/soupStore';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
-import StreamEntrance from './StreamEntrance.vue';
 import { aFrameSceneProvideKey } from '@/modules/injectionKeys';
 
 const router = useRouter();
 // Stores
 const vrSpaceStore = useVrSpaceStore();
 const clientStore = useClientStore();
-const streamStore = useStreamStore();
 const soupStore = useSoupStore();
 
 // Props & emits
@@ -151,33 +146,13 @@ const rightHandTag = ref<Entity>();
 // });
 
 const navmeshId = computed(() => {
-  return streamStore.navmeshUrl !== '' ? 'navmesh' : 'model';
+  return vrSpaceStore.navMeshUrl !== undefined ? 'navmesh' : 'model';
 });
 
 const clients = computed(() => vrSpaceStore.currentVrSpace?.clients);
-// watch(clients, (newClients, oldClients) => {
-//   console.log('clients was updated. new:', newClients, 'old:', oldClients);
-// });
-
-const entrancePosString = computed(() => {
-  const posArr = vrSpaceStore.currentVrSpace?.virtualSpace3DModel?.entrancePosition;
-  if(!posArr) return undefined;
-  const v = new AFRAME.THREE.Vector3(...posArr as Point);
-  return AFRAME.utils.coordinates.stringify(v);
-});
-
-const entranceRotation = computed(() => {
-  if(!vrSpaceStore.currentVrSpace?.virtualSpace3DModel?.entranceRotation) return 0;
-  return vrSpaceStore.currentVrSpace.virtualSpace3DModel.entranceRotation;
-});
-
-const entranceMessage = computed(() => {
-  return streamStore.currentStream?.name ?? 'Klicka för att hoppa in i sändningen';
-});
 
 const skyColor = computed(() => {
-  if (!streamStore.currentStream?.vrSpace?.virtualSpace3DModel.skyColor) return 'lightskyblue'
-  return streamStore.currentStream?.vrSpace?.virtualSpace3DModel.skyColor;
+  return vrSpaceStore.currentVrSpace?.dbData.skyColor ?? 'lightskyblue';
 })
 
 onBeforeMount(async () => {
@@ -200,9 +175,6 @@ onBeforeMount(async () => {
     });
   } catch (e) {
     console.error('failed to setup the mediasoup stuff');
-  }
-  if (!vrSpaceStore.currentVrSpace) {
-    await vrSpaceStore.enterVrSpace();
   }
   // console.log('onBeforeMount completed');
 });
@@ -231,7 +203,7 @@ async function onModelLoaded() {
     let startPos = getRandomSpawnPosition();
     if (!startPos) {
       console.log('failed to calculate spawnpoint. centering player on model bbox as fallback');
-      const obj3D = modelTag.value.getObject3D('mesh');
+      const obj3D = modelTag.value.getObject3D('mesh') as THREE.Object3D;
       const bbox = new THREE.Box3().setFromObject(obj3D);
       startPos = new THREE.Vector3();
       bbox.getCenter(startPos);
@@ -278,8 +250,8 @@ function placeRandomSpheres() {
 }
 
 function getRandomSpawnPosition() {
-  const spawnPosition = vrSpaceStore.currentVrSpace?.virtualSpace3DModel?.spawnPosition as Point | undefined;
-  const spawnRadius = vrSpaceStore.currentVrSpace?.virtualSpace3DModel?.spawnRadius;
+  const spawnPosition = vrSpaceStore.currentVrSpace?.dbData.spawnPosition as Point | undefined;
+  const spawnRadius = vrSpaceStore.currentVrSpace?.dbData.spawnRadius;
   if (!spawnPosition || !spawnRadius) return;
   const randomRadianAngle = 2 * Math.PI * Math.random(); // radian angle
   // Why sqrt? Check here: https://programming.guide/random-point-within-circle.html
@@ -293,23 +265,23 @@ function getRandomSpawnPosition() {
   return spawnPointVector;
 }
 
-function goToStream() {
-  // router.push({name: 'basicVR'});
-  // console.log('sphere clicked');
-  if (!streamStore.currentStream) return;
-  let mainCameraId = streamStore.currentStream.mainCameraId;
-  if(!mainCameraId){
-    console.warn('No maincamera set. Falling back to using any camera');
-    mainCameraId = Object.values(streamStore.currentStream.cameras)[0].cameraId;
-  }
-  router.push({
-    name: 'userCamera',
-    params: {
-      streamId: streamStore.currentStream.streamId,
-      cameraId: mainCameraId,
-    },
-  });
-}
+// function goToStream() {
+//   // router.push({name: 'basicVR'});
+//   // console.log('sphere clicked');
+//   if (!streamStore.currentStream) return;
+//   let mainCameraId = streamStore.currentStream.mainCameraId;
+//   if(!mainCameraId){
+//     console.warn('No maincamera set. Falling back to using any camera');
+//     mainCameraId = Object.values(streamStore.currentStream.cameras)[0].cameraId;
+//   }
+//   router.push({
+//     name: 'userCamera',
+//     params: {
+//       streamId: streamStore.currentStream.streamId,
+//       cameraId: mainCameraId,
+//     },
+//   });
+// }
               
 const currentTransform: ClientTransform = {
   head: {

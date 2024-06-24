@@ -7,7 +7,6 @@
 </template>
 
 <script setup lang="ts">
-import ColumnCenter from '@/components/layout/ColumnCenter.vue';
 
 </script>
 

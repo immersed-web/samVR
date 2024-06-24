@@ -230,9 +230,9 @@ export class BaseClient {
 
   async createWebRtcTransport(direction: 'send' | 'receive'){
     log.info(`creating (${direction}) webrtcTransport`);
-    if (!this.stream) {
-      throw Error('must be in a stream in order to create transport');
-    }
+    // if (!this.stream) {
+    //   throw Error('must be in a stream in order to create transport');
+    // }
     const router = this.currentRouter;
     if (!router) {
       throw Error('no mediasoup router found!');

@@ -30,6 +30,11 @@ export class SenderClient extends BaseClient{
   readonly clientType = 'sender' as const satisfies ClientType;
   senderId: SenderId;
 
+  get currentRouter() {
+    if (this.stream) return this.stream.router;
+    return undefined;
+  }
+
   private cameraId?: CameraId;
   /**
    * **WARNING**: You should never need to call this function, since the camera instance calls this for you when it adds the sender to itself.
