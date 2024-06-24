@@ -56,8 +56,7 @@
       /> -->
       <a-camera @loaded="onCameraLoaded" id="camera" ref="playerTag"
         look-controls="reverseMouseDrag: true; reverseTouchDrag: true;" wasd-controls="acceleration:65;"
-        emit-move="interval: 20" position="0 1.65 0"
-        :simple-navmesh-constraint="'navmesh:#'+navmeshId+'; fall:0.5; height:1.65;'">
+        emit-move="interval: 20" position="0 1.65 0">
         <!-- <a-box
           position="0 -0.1 -0.2"
           scale="0.1 0.1 0.1"
@@ -148,6 +147,9 @@ const rightHandTag = ref<Entity>();
 const navmeshId = computed(() => {
   return vrSpaceStore.navMeshUrl !== undefined ? 'navmesh' : 'model';
 });
+// const navmeshId = computed(() => {
+//   return vrSpaceStore.currentVrSpace?.dbData.navMeshAssetId !== undefined ? 'navmesh' : 'model';
+// });
 
 const clients = computed(() => vrSpaceStore.currentVrSpace?.clients);
 
@@ -188,6 +190,7 @@ function onCameraLoaded() {
   console.log('camera loaded. attaching scene attributes');
   sceneTag.value!.setAttribute('cursor', { rayOrigin: 'mouse', fuse: false });
   sceneTag.value!.setAttribute('raycaster', { objects: '.clickable' });
+  playerTag.value!.setAttribute('simple-navmesh-constraint', `navmesh:#${navmeshId.value}; fall:0.5; height:1.65;`);
 }
 
 onBeforeUnmount(async () => {
