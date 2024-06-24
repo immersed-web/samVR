@@ -57,6 +57,9 @@ importers:
       '@headlessui/vue':
         specifier: ^1.7.22
         version: 1.7.22(vue@3.4.27(typescript@5.2.2))
+      '@tweakpane/core':
+        specifier: ^2.0.3
+        version: 2.0.3
       '@types/lodash-es':
         specifier: ^4.17.12
         version: 4.17.12
@@ -69,6 +72,9 @@ importers:
       aframe:
         specifier: ^1.6.0
         version: 1.6.0
+      aframe-atlas-uvs-component:
+        specifier: ^3.0.0
+        version: 3.0.0
       aframe-blink-controls:
         specifier: ^0.4.3
         version: 0.4.3
@@ -78,6 +84,9 @@ importers:
       aframe-look-at-component:
         specifier: ^1.0.0
         version: 1.0.0
+      aframe-orbit-controls:
+        specifier: ^1.3.2
+        version: 1.3.2
       aframe-troika-text:
         specifier: ^0.11.0
         version: 0.11.0(aframe@1.6.0)(three@0.149.0)
@@ -126,12 +135,18 @@ importers:
       superjson:
         specifier: ^1.13.3
         version: 1.13.3
+      three-mesh-ui:
+        specifier: ^6.5.4
+        version: 6.5.4(three@0.149.0)
       toolcool-range-slider:
         specifier: ^4.0.28
         version: 4.0.28
       ts-event-bridge:
         specifier: ^0.0.3
         version: 0.0.3
+      tweakpane:
+        specifier: ^4.0.3
+        version: 4.0.3
       vue:
         specifier: ^3.4.27
         version: 3.4.27(typescript@5.2.2)
@@ -1573,6 +1588,9 @@ packages:
   '@tsconfig/node18@18.2.4':
     resolution: {integrity: sha512-5xxU8vVs9/FNcvm3gE07fPbn9tl6tqGGWA9tSlwsUEkBxtRnTsNmwrV8gasZ9F/EobaSv9+nu8AxUKccw77JpQ==}
 
+  '@tweakpane/core@2.0.3':
+    resolution: {integrity: sha512-qHci4XA1Wngpwy8IzsLh5JEdscz8aDti/9YhyOaq01si+cgNDaZfwzTtXdn1+xTxSnCM+pW4Zb2/4eqn+K1ATw==}
+
   '@tweenjs/tween.js@23.1.2':
     resolution: {integrity: sha512-kMCNaZCJugWI86xiEHaY338CU5JpD0B97p1j1IKNn/Zto8PgACjQx0UxbHjmOcLl/dDOBnItwD07KmCs75pxtQ==}
 
@@ -2012,6 +2030,9 @@ packages:
     engines: {node: '>=0.4.0'}
     hasBin: true
 
+  aframe-atlas-uvs-component@3.0.0:
+    resolution: {integrity: sha512-zoGFRsPTyXjq9hmEkJ/QiC/Pr9FmQxBm93Td2j7BE0yZ05H3z9KZwLm/gweRKPDYfc6PdV5SVtpYdBnRfjhH2A==}
+
   aframe-blink-controls@0.4.3:
     resolution: {integrity: sha512-5KrioEmB/A41D2sctwD8SyCH2WmKYZONdox9xW4vepZeqjUFt87m7idVksnqcObYfWKNs2cwXMpK7funxQDYWg==}
 
@@ -2020,6 +2041,9 @@ packages:
 
   aframe-look-at-component@1.0.0:
     resolution: {integrity: sha512-urbsU4qaKg3drIShNDIrNQyuVh+yiFCbP50FMig7uDbVOlMZU3Tcj4oWbjxx3neD07Rn8atjpwBeqc6lceKGTw==}
+
+  aframe-orbit-controls@1.3.2:
+    resolution: {integrity: sha512-j4e14ko3ELmfMF8FWEXtVSqSObYtoJpyhyZ9l2HY23iLY3Z7qmT/kRJ24wDQT/CEmToi3a9j7MqUeLDcbLALDA==}
 
   aframe-troika-text@0.11.0:
     resolution: {integrity: sha512-EzqUX2NR/COI8jUYBg4sQwoX9K86/GuKTWkZk79+Hk7Q9ytKm/XFGUoBc5BE8tDVtNdxmGPvAqKqA4aXLWPwog==}
@@ -5380,6 +5404,12 @@ packages:
     resolution: {tarball: https://codeload.github.com/dmarcos/three-bmfont-text/tar.gz/eed4878795be9b3e38cf6aec6b903f56acd1f695}
     version: 3.0.0
 
+  three-mesh-ui@6.5.4:
+    resolution: {integrity: sha512-QA2KlHrbj7zGjKqpNXcwvini8g5gOXb44ExdupVpxCqmHln/sWNGOmN0yIa/HjnMGYJWP4M+NchTHvwUp+MWIw==}
+    engines: {node: x.x.x}
+    peerDependencies:
+      three: '>=0.144.0'
+
   three@0.149.0:
     resolution: {integrity: sha512-tohpUxPDht0qExRLDTM8sjRLc5d9STURNrdnK3w9A+V4pxaTBfKWWT/IqtiLfg23Vfc3Z+ImNfvRw1/0CtxrkQ==}
 
@@ -5543,6 +5573,9 @@ packages:
     resolution: {integrity: sha512-Gtg9qnZWNqC/OtcgiXfoAUdAKx3/cgKOYvEocAsv+m21MV/eKpV/WUjRXe6/sDCaGBl2/v8S6v29BpUnGMCX5A==}
     engines: {node: '>=18.0.0'}
     hasBin: true
+
+  tweakpane@4.0.3:
+    resolution: {integrity: sha512-BlcWOAe8oe4c+k9pmLBARGdWB6MVZMszayekkixQXTgkxTaYoTUpHpwVEp+3HkoamZkomodpbBf0CkguIHTgLg==}
 
   type-check@0.4.0:
     resolution: {integrity: sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew==}
@@ -6722,6 +6755,8 @@ snapshots:
 
   '@tsconfig/node18@18.2.4': {}
 
+  '@tweakpane/core@2.0.3': {}
+
   '@tweenjs/tween.js@23.1.2': {}
 
   '@types/aframe@1.2.6':
@@ -7338,11 +7373,15 @@ snapshots:
 
   acorn@8.11.3: {}
 
+  aframe-atlas-uvs-component@3.0.0: {}
+
   aframe-blink-controls@0.4.3: {}
 
   aframe-environment-component@1.3.7: {}
 
   aframe-look-at-component@1.0.0: {}
+
+  aframe-orbit-controls@1.3.2: {}
 
   aframe-troika-text@0.11.0(aframe@1.6.0)(three@0.149.0):
     dependencies:
@@ -11244,6 +11283,10 @@ snapshots:
       nice-color-palettes: 3.0.0
       quad-indices: 2.0.1
 
+  three-mesh-ui@6.5.4(three@0.149.0):
+    dependencies:
+      three: 0.149.0
+
   three@0.149.0: {}
 
   timers-ext@0.1.7:
@@ -11432,6 +11475,8 @@ snapshots:
       get-tsconfig: 4.7.5
     optionalDependencies:
       fsevents: 2.3.3
+
+  tweakpane@4.0.3: {}
 
   type-check@0.4.0:
     dependencies:

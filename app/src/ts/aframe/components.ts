@@ -15,7 +15,13 @@ import panoPortal from './pano-portal';
 import outerGlow from './outer-glow';
 import lootkAt from './lootk-at';
 import meshUI from './mesh-ui';
-
+import makeGltfSwappable from './make-gltf-swappable';
+import 'aframe';
+import modelColor from './model-color';
+import raycasterUpdate from './raycaster-update';
+import boxHelper from './box-helper';
+import laserPointer from './laser-pointer';
+import canvasMaterial from './canvas-material';
 
 let componentsAreRegistered = false;
 
@@ -40,9 +46,18 @@ const registerComponents = () => {
   outerGlow();
   lootkAt();
   meshUI();
+  modelColor();
+  makeGltfSwappable();
+  raycasterUpdate();
+  boxHelper();
+  laserPointer();
+  canvasMaterial();
 
   // @ts-ignore
   import('aframe-troika-text');
+  // import('aframe-atlas-uvs-component');
+  // import('aframe-orbit-controls');
+  // import('aframe-look-at-component');
 
   // @ts-ignore
   // import('aframe-environment-component');
