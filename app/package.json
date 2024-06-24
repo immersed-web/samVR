@@ -13,9 +13,11 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
   },
   "dependencies": {
+    "@cyhnkckali/vue3-color-picker": "^2.0.2",
     "@formkit/auto-animate": "1.0.0-beta.6",
     "@headlessui/vue": "^1.7.22",
     "@types/lodash-es": "^4.17.12",
+    "@vueuse/components": "^10.11.0",
     "@vueuse/core": "^10.10.0",
     "aframe": "^1.6.0",
     "aframe-blink-controls": "^0.4.3",

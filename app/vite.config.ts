@@ -13,6 +13,14 @@ export default defineConfig({
         compilerOptions: {
           isCustomElement: (tag) => tag.startsWith('a-') || tag.startsWith('tc-'),
         },
+        transformAssetUrls: {
+          video: ['src', 'poster'],
+          source: ['src'],
+          img: ['src'],
+          image: ['xlink:href', 'href'],
+          use: ['xlink:href', 'href'],
+          'a-asset-item': ['src'],
+        },
       },
     }),
     VueDevtools(),
@@ -21,6 +29,9 @@ export default defineConfig({
 
     }, { useWindow: true })
   ],
+  build: {
+    target: 'es2022'
+  },
   envDir: '../',
   resolve: {
     alias: {
