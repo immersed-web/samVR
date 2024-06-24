@@ -3,7 +3,7 @@ import { pgTable, pgEnum, varchar, timestamp, text, integer, uniqueIndex, uuid, 
 import { sql } from "drizzle-orm"
 import { relations } from "drizzle-orm/relations";
 
-import type { StreamId, UserId, VrSpaceId, AssetId, CameraId, PlacementId, SenderId } from 'schemas';
+import type { StreamId, UserId, VrSpaceId, AssetId, CameraId, PlacedObjectId, SenderId } from 'schemas';
 
 export const CameraTypeEnum = pgEnum("CameraType", ['panoramic360', 'normal'])
 // export const AssetFileFormat = pgEnum("AssetFileFormat", ['glb', 'png', 'jpg', 'jpeg', 'pdf',])
@@ -312,7 +312,7 @@ export const vrSpacesRelations = relations(vrSpaces, ({ one, many }) => ({
 
 
 export const placedObjects = pgTable("PlacedObjects", {
-	placementId: uuid("placementId").defaultRandom().primaryKey().notNull().$type<PlacementId>(),
+	placedObjectId: uuid("placedObjectId").defaultRandom().primaryKey().notNull().$type<PlacedObjectId>(),
 	vrSpaceId: uuid("vrSpaceId").notNull().references(() => vrSpaces.vrSpaceId, { onDelete: "cascade", onUpdate: "cascade" }).$type<VrSpaceId>(),
 	// assetId: uuid("assetId").references(() => Asset.assetId, { onDelete: "cascade", onUpdate: "cascade" }),
 	// vrPortalId: uuid("vrPortalId").references(() => VrPortal.portalId, { onDelete: "cascade", onUpdate: "cascade" }),
@@ -323,7 +323,7 @@ export const placedObjects = pgTable("PlacedObjects", {
 	objectSettings: jsonb("objectSettings"),
 	position: real("position").array(),
 	orientation: real("orientation").array(),
-	scale: real("scale").array(),
+	scale: real("scale").array(),//.default([1, 1, 1]),
 	...createdAndUpdatedAt,
 });
 

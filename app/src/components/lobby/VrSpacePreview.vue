@@ -5,7 +5,14 @@
         <span class="label-text mr-1 font-bold">visa navmesh</span>
         <input type="checkbox" class="toggle toggle-xs" v-model="showNavMesh">
       </label>
-      <!-- <button class="btn btn-xs btn-primary" @click="screenShot">screenshot</button> -->
+      <div>
+        <button class="btn btn-xs btn-primary" @click="attachOrbitControls">attach orbitctls</button>
+        <button class="btn btn-xs btn-primary" @click="removeOrbitControls">remove orbitctls</button>
+      </div>
+      <div>
+        <button class="btn btn-xs btn-primary" @click="attachFirstPersonComponents">attach fps comps</button>
+        <button class="btn btn-xs btn-primary" @click="removeFirstPersonComponents">remove fps comps</button>
+      </div>
     </div>
     <a-scene embedded ref="sceneTag" id="ascene" xr-mode-ui="enabled: false">
       <a-assets timeout="20000">
@@ -25,6 +32,9 @@
         :direction="entranceRotation"
         message="Till kameror"
       /> -->
+      <a-entity camera ref="cameraTag">
+      </a-entity>
+      <a-sky :color="skyColor" />
       <slot />
       <!-- <a-entity ref="spawnPosTag" v-if="spawnPosString" :position="spawnPosString">
         <a-circle color="yellow" transparent="true" opacity="0.5" rotation="-90 0 0" position="0 0.05 0"
@@ -35,8 +45,6 @@
       </a-entity> -->
 
       <!-- for some super weird reason orbit controls doesnt work with the a-camera primitive  -->
-      <a-entity camera ref="cameraTag" />
-      <a-sky :color="skyColor" />
 
       <!-- The model -->
       <a-entity>
@@ -98,11 +106,6 @@ const navMeshOpacity = computed(() => {
   return showNavMesh.value ? 0.7 : 0.0;
 });
 
-const orbitControlsEnabled = ref(true);
-watch(orbitControlsEnabled, (enabled) => {
-  if (!cameraTag.value) console.error('cameraTag undefined');
-  cameraTag.value!.setAttribute('orbit-controls', 'enabled', enabled);
-})
 let stopAutoRotateTimeout: ReturnType<typeof useTimeoutFn>['stop'] | undefined = undefined;
 
 watch(() => props.autoRotate, (rotate) => {
@@ -149,14 +152,15 @@ async function enterFirstPersonView(point: THREE.Vector3Tuple) {
   // orbitControlsEnabled.value = false;
   // await nextTick();
   // console.log(camTag.object3DMap);
-  camTag.setAttribute('look-controls', 'enabled', true);
-  camTag.setAttribute('wasd-controls', { fly: true });
   camTag.removeAttribute('orbit-controls');
+  camTag.setAttribute('look-controls', 'enabled', true);
+  camTag.setAttribute('wasd-controls', { fly: false });
   point[1] += 1.7;
   camTag.object3D.position.set(...point);
+  camTag.setAttribute('simple-navmesh-constraint', `navmesh:#${navmeshId.value}; fall:0.5; height:1.65;`);
 }
 
-function exitFirstPersonView() {
+async function exitFirstPersonView() {
   const camTag = cameraTag.value
   if (!camTag) {
     console.error('no cameratag provided');
@@ -164,33 +168,40 @@ function exitFirstPersonView() {
   }
   camTag.removeAttribute('look-controls');
   camTag.removeAttribute('wasd-controls');
+  camTag.removeAttribute('simple-navmesh-constraint');
+  await nextTick();
   attachOrbitControls();
-
-  // orbitControlsEnabled.value = true;
 }
 
 async function getPanoScreenshotFromPoint(point: THREE.Vector3Tuple) {
-  if (!sceneTag.value || !point) {
-    console.error('no scene or point provided');
+  const camTag = cameraTag.value;
+  if (!camTag || !point) {
+    console.error('no cameraEntity or point provided');
     return;
   }
   const navMeshVisibleRestoreState = navmeshTag.value?.getAttribute('visible');
   navmeshTag.value?.setAttribute('visible', 'false');
   const spawnPosVec3 = new THREE.Vector3(...point);
   spawnPosVec3.y += 1.7;
-  const savedPos = sceneTag.value.camera.position.clone();
-  const savedRot = sceneTag.value.camera.rotation.clone();
-  sceneTag.value.camera.position.copy(spawnPosVec3)
-  sceneTag.value.camera.rotation.set(0, 0, 0);
-  const screenshotComponent = sceneTag.value.components.screenshot;
+  // we save all the camera pos and rot stuff so we can restore it afterwards
+  const savedEntityPos = camTag.object3D.position.clone();
+  const savedEntityRot = camTag.object3D.rotation.clone();
+  const savedCameraPos = camTag.getObject3D('camera').position.clone();
+  const savedCameraRot = camTag.getObject3D('camera').rotation.clone();
+  camTag.object3D.position.copy(spawnPosVec3)
+  camTag.object3D.rotation.set(0, THREE.MathUtils.degToRad(180), 0);
+  camTag.getObject3D('camera').position.set(0, 0, 0);
+  camTag.getObject3D('camera').rotation.set(0, 0, 0);
+  const screenshotComponent = camTag.sceneEl?.components.screenshot;
   await nextTick();
   // @ts-ignore
   const canvasScreenshot: HTMLCanvasElement = screenshotComponent.getCanvas();
-  sceneTag.value.camera.position.copy(savedPos);
-  sceneTag.value.camera.rotation.copy(savedRot);
+  camTag.object3D.position.copy(savedEntityPos);
+  camTag.object3D.rotation.copy(savedEntityRot);
+  camTag.getObject3D('camera').position.copy(savedCameraPos);
+  camTag.getObject3D('camera').rotation.copy(savedCameraRot);
   navmeshTag.value?.setAttribute('visible', navMeshVisibleRestoreState);
   return canvasScreenshot
-  // emit('screenshot', canvasScreenshot);
 }
 
 // const entrancePosString = computed(() => {
@@ -204,6 +215,10 @@ async function getPanoScreenshotFromPoint(point: THREE.Vector3Tuple) {
 //   if (!streamStore.currentStream?.vrSpace?.virtualSpace3DModel?.entranceRotation) return 0;
 //   return streamStore.currentStream.vrSpace.virtualSpace3DModel.entranceRotation;
 // });
+
+const navmeshId = computed(() => {
+  return vrSpaceStore.currentVrSpace?.dbData.navMeshAssetId !== undefined ? 'navmesh' : 'model';
+});
 
 onMounted(() => {
 })
@@ -281,11 +296,33 @@ function onModelLoaded(){
   }
 }
 
+function attachFirstPersonComponents() {
+  if (!cameraTag.value) return;
+  cameraTag.value.setAttribute('look-controls', 'enabled', true);
+  cameraTag.value.setAttribute('wasd-controls', { fly: true });
+}
+
+function removeFirstPersonComponents() {
+  if (!cameraTag.value) return;
+  cameraTag.value.removeAttribute('look-controls');
+  cameraTag.value.removeAttribute('wasd-controls');
+}
+
 function attachOrbitControls() {
   if (!cameraTag.value) return;
+  cameraTag.value.setAttribute('position', '0 0 0')
   let orbitControlSettings = `autoRotate: true; rotateSpeed: 1; initialPosition: ${modelCenter.x} ${modelCenter.y + 2} ${modelCenter.z + 5};`;
   orbitControlSettings += `target:${modelCenter.x} ${modelCenter.y} ${modelCenter.z};`;
   cameraTag.value.setAttribute('orbit-controls', orbitControlSettings);
+}
+
+function removeOrbitControls() {
+  if (!cameraTag.value) return;
+  cameraTag.value.removeAttribute('orbit-controls');
+  const cameraEntityPos = cameraTag.value.object3D.position;
+  const cameraObj3DPos = cameraTag.value.getObject3D('camera').position;
+  console.log('camera entity pos:', cameraEntityPos);
+  console.log('camera obj3d pos:', cameraObj3DPos);
 }
 
 function onNavMeshLoaded() {
