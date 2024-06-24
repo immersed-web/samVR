@@ -1,6 +1,7 @@
 <template>
   <div>
     <div class="min-h-screen z-0">
+      <h2>VrSpace main scene</h2>
       <!-- <VrAFrame v-if="streamStore.modelUrl" :model-url="streamStore.modelUrl" :navmesh-url="streamStore.navmeshUrl"
         :model-scale="streamStore.currentStream?.vrSpace?.virtualSpace3DModel?.scale" /> -->
     </div>

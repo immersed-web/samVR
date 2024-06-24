@@ -66,6 +66,11 @@ const router = createRouter({
               component: () => import('@/views/public/VrListView.vue'),
             },
             {
+              path: 'avatar',
+              name: 'avatarDesigner',
+              component: () => import('@/views/user/AvatarDesigner.vue')
+            },
+            {
               path: ':vrSpaceId/edit',
               name: 'vrSpaceSettings',
               props: true,
@@ -82,19 +87,6 @@ const router = createRouter({
           ]
         },
       ],
-    },
-    {
-      path: '/avatar',
-      name: 'avatarDesigner',
-      component: () => import('@/views/user/AvatarDesigner.vue')          
-      // component: () => import('@/components/AFrameScene.vue'),
-      // children: [
-      //   {
-      //     path: '',
-      //     name: 'avatarDesigner',
-      //     component: () => import('@/views/user/AvatarDesigner.vue')
-      //   },
-      // ]
     },
     // guest/user routes
     {
