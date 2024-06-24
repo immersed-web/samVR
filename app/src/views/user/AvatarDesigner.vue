@@ -20,8 +20,11 @@ import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue'
 import { Vue3ColorPicker } from '@cyhnkckali/vue3-color-picker';
 import "@cyhnkckali/vue3-color-picker/dist/style.css"
 
-onBeforeMount(() => {
+onBeforeMount(async () => {
   // loadAvatarFromStorage();
+  await import('aframe');
+  const { default: c } = await import('@/ts/aframe/components');
+  c.registerAframeComponents();
 })
 
 const avatarAssets = {
