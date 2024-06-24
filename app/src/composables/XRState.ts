@@ -9,7 +9,7 @@ const isImmersed = ref(false);
 // const navigatedWhileImmersed = ref(false);
 // const timeoutControl = ref<ReturnType<typeof useTimeoutFn>>();
 let timeoutId: number | undefined = undefined;
-export function useXRState(sceneEl: Ref<Scene | undefined>){
+export function useXRState(sceneEl: Ref<Scene | undefined>) {
   if(sceneEl.value){
     isImmersed.value = sceneEl.value.is('vr-mode');
   }
