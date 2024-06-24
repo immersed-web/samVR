@@ -56,21 +56,10 @@ const registerComponents = () => {
   // @ts-ignore
   import('aframe-troika-text');
   // import('aframe-atlas-uvs-component');
-  // import('aframe-orbit-controls');
-  // import('aframe-look-at-component');
-
-  // @ts-ignore
-  // import('aframe-environment-component');
-
-  // @ts-ignore
-  // import('aframe-extras');
 
   // TODO: Find out why rig and camera seems to be a few decimeter of in horizontal position. Only in real VR though. Not in browser as it seems at least.
   // @ts-ignore
   import('aframe-blink-controls');
-
-  // @ts-ignore
-  // import('aframe-look-at-component');
 
   // // @ts-ignore
   // import('aframe-orbit-controls');
