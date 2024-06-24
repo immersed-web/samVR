@@ -3,8 +3,9 @@
     <div class="min-h-screen z-0">
       <h2>VrSpace main scene</h2>
       <div class="pointer-events-none *:pointer-events-auto" ref="domOutlet" id="aframe-dom-outlet" />
-      <a-scene @loaded="onWrapperSceneLoaded" ref="sceneTag">
-        <VrAFrame v-if="sceneReady && vrSpaceStore.worldModelUrl" :show-nav-mesh="false" />
+      <h2 v-if="!aframeLoaded">laddar...</h2>
+      <a-scene v-else @loaded="onWrapperSceneLoaded" ref="sceneTag">
+        <VrAFrame v-if="sceneReady && vrSpaceStore.worldModelUrl" :show-nav-mesh="true" />
       </a-scene>
     </div>
   </div>
@@ -33,10 +34,12 @@ function onWrapperSceneLoaded() {
   sceneReady.value = true;
 }
 
+const aframeLoaded = ref(false);
 onBeforeMount(async () => {
   await import('aframe');
   const { default: c } = await import('@/ts/aframe/components');
   c.registerAframeComponents();
+  aframeLoaded.value = true;
 })
 
 onBeforeMount(async () => {
