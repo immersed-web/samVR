@@ -63,18 +63,18 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
   
   eventReceiver.vrSpace.clientTransforms.subscribe((data) => {
     console.log(`clientTransforms updated:`, data);
-    if (!currentVrSpace.value) return;
+    if (!writableVrSpaceState.value) return;
     for (const [cId, tsfm] of Object.entries(data)) {
       const cIdTyped = cId as ConnectionId;
       if (clientStore.clientState?.connectionId === cId) {
         // console.log('skipping because is own transform. cId:', cId);
         continue;
       }
-      if (!currentVrSpace.value.clients[cIdTyped]) {
+      if (!writableVrSpaceState.value.clients[cIdTyped]) {
         console.warn('received a clientTransform for a client that isnt listed in vrSpaceState');
         return;
       }
-      currentVrSpace.value.clients[cId as ConnectionId].transform = tsfm;
+      ignoreUpdates(() => writableVrSpaceState.value!.clients[cId as ConnectionId].transform = tsfm);
     }
   });
 
