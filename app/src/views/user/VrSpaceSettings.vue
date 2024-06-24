@@ -4,13 +4,12 @@
   <div v-else class="grid grid-cols-2 gap-2">
     <div>
       <VrAFramePreview class="border rounded-md overflow-hidden" ref="vrComponentTag"
-        :model-url="getAssetUrl(vrSpaceStore.currentVrSpace.dbData.worldModelAsset.generatedName)"
-        :navmesh-url="getAssetUrl(vrSpaceStore.currentVrSpace.dbData.navMeshAsset?.generatedName)"
+        :model-url="vrSpaceStore.worldModelUrl" :navmesh-url="vrSpaceStore.navMeshUrl"
         :raycast="currentRaycastReason !== undefined" :auto-rotate="currentRaycastReason === undefined"
         @raycast-click="onRaycastClick" @raycast-hover="onRaycastHover">
 
         <a-entity id="vr-portals">
-          <template v-for="placedObject in vrSpaceStore.currentVrSpace.dbData.placedObjects"
+          <template v-for="placedObject in vrSpaceStore.currentVrSpace?.dbData.placedObjects"
             :key="placedObject.placedObjectId">
             <a-entity v-if="placedObject.type === 'vrPortal'" :position="placedObject.position?.join(' ')">
               <a-troika-text look-at-camera :value="placedObject.vrPortal?.name" position="0 2.5 0" />
@@ -29,16 +28,15 @@
         <a-entity ref="spawnPosTag" v-if="spawnPosString" :position="spawnPosString">
           <a-circle color="yellow" transparent="true" opacity="0.5" rotation="-90 0 0" position="0 0.05 0"
             :radius="vrSpaceStore.currentVrSpace?.dbData.spawnRadius" />
-          <a-icosahedron v-if="vrSpaceStore.currentVrSpace?.dbData.panoramicPreview" detail="5" scale="-0.5 -0.5 -0.5"
-            position="0 1.1 0"
-            :material="`shader: pano-portal; warpParams: 3 0.9; src: ${getAssetUrl(vrSpaceStore.currentVrSpace.dbData.panoramicPreview?.generatedName)}`">
+          <a-icosahedron v-if="vrSpaceStore.panoramicPreviewUrl" detail="5" scale="-0.5 -0.5 -0.5" position="0 1.1 0"
+            :material="`shader: pano-portal; warpParams: 3 0.9; src: ${vrSpaceStore.panoramicPreviewUrl}`">
           </a-icosahedron>
         </a-entity>
         <a-entity :position="hoverPosString" :visible="hoverPosString !== undefined">
           <a-ring color="yellow" radius-inner="0.1" radius-outer="0.2" material="shader: flat;" rotation="-90 0 0" />
         </a-entity>
       </VrAFramePreview>
-      <div v-if="vrSpaceStore.currentVrSpace.dbData.worldModelAsset" class="grid gap-2">
+      <div v-if="vrSpaceStore.currentVrSpace?.dbData.worldModelAsset" class="grid gap-2">
         <div class="flex gap-2">
           <input type="radio" :value="undefined" class="hidden" v-model="currentRaycastReason">
           <input type="radio" value="spawnPosition" aria-label="Placera startplats" class="btn btn-sm btn-primary"
