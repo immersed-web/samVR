@@ -37,7 +37,6 @@
 <script setup lang="ts">
 import { type Scene, type Entity, type DetailEvent, THREE } from 'aframe';
 import { ref, watch, computed, onMounted, nextTick } from 'vue';
-import { getAssetUrl } from '@/modules/utils';
 import { useTimeoutFn } from '@vueuse/core';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import c from '@/ts/aframe/components';
