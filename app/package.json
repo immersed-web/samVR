@@ -15,7 +15,9 @@
   "dependencies": {
     "@formkit/auto-animate": "1.0.0-beta.6",
     "@headlessui/vue": "^1.7.22",
+    "@tweakpane/core": "^2.0.3",
     "@types/lodash-es": "^4.17.12",
+    "@vueuse/components": "^10.11.0",
     "@vueuse/core": "^10.10.0",
     "aframe": "^1.6.0",
     "aframe-blink-controls": "^0.4.3",
@@ -37,8 +39,10 @@
     "pinia-plugin-persistedstate": "^3.2.1",
     "schemas": "workspace:^",
     "superjson": "^1.13.3",
+    "three-mesh-ui": "^6.5.4",
     "toolcool-range-slider": "^4.0.28",
     "ts-event-bridge": "^0.0.3",
+    "tweakpane": "^4.0.3",
     "vue": "^3.4.27",
     "vue-router": "^4.3.2"
   },

@@ -71,15 +71,15 @@ const router = createRouter({
               props: true,
               meta: { requiredRole: 'user' },
               component: () => import('@/views/user/VrSpaceSettings.vue'),
-            }
-          ]
+            },
+          ],
         },
       ],
     },
     {
       path: '/avatar',
       name: 'avatarDesigner',
-      component: () => import('@/views/user/AvatarDesigner.vue')          
+      component: () => import('@/views/user/AvatarDesigner.vue'),
       // component: () => import('@/components/AFrameScene.vue'),
       // children: [
       //   {
@@ -145,6 +145,11 @@ const router = createRouter({
               path: 'basic-2',
               name: 'basicVR2',
               component: () => import('@/components/lobby/BasicAFrameScene2.vue'),
+            },
+            {
+              path: 'main',
+              name: 'mainVR',
+              component: () => import('@/views/user/lobby/VRScene.vue'),
             },
           ],
         },
