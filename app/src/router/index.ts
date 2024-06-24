@@ -66,11 +66,18 @@ const router = createRouter({
               component: () => import('@/views/public/VrListView.vue'),
             },
             {
-              path: ':vrSpaceId',
+              path: ':vrSpaceId/edit',
               name: 'vrSpaceSettings',
               props: true,
               meta: { requiredRole: 'user' },
-              component: () => import('@/views/user/VrSpaceSettings.vue'),
+              component: () => import('@/views/user/VrSpaceSettingsView.vue'),
+            },
+            {
+              path: ':vrSpaceId',
+              name: 'vrSpace',
+              props: true,
+              meta: { requiredRole: 'guest' },
+              component: () => import('@/views/user/VrSpaceSceneView.vue'),
             }
           ]
         },
