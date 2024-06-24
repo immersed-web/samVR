@@ -10,32 +10,31 @@ import { procedure as p, clientInVenueP, router, userClientP, atLeastModeratorP,
 import { UserClient, SenderClient } from 'classes/InternalClasses.js';
 
 export const soupRouter = router({
-  getRouterRTPCapabilities: clientInVenueP.query(({ctx}) => {
-
-    const caps = ctx.stream.router.rtpCapabilities;
+  getRouterRTPCapabilities: p.query(({ ctx }) => {
+    const caps = ctx.client.currentRouter?.rtpCapabilities;
+    if (!caps) throw new TRPCError({ code: 'NOT_FOUND', message: 'no (current)router found' });
     return caps;
-    // return 'Not implemented yet' as const;
   }),
-  restartICEforSendTransport: clientInVenueP.query(async ({ctx}) => {
+  restartICEforSendTransport: p.query(async ({ ctx }) => {
     if(!ctx.client.sendTransport) throw new TRPCError({code: 'BAD_REQUEST', message: 'There is no sendtransport. Cant restart ICE'});
     return await ctx.client.sendTransport.restartIce();
   }),
-  restartICEforReceiveTransport: clientInVenueP.query(async ({ctx}) => {
+  restartICEforReceiveTransport: p.query(async ({ ctx }) => {
     if(!ctx.client.receiveTransport) throw new TRPCError({code: 'BAD_REQUEST', message: 'There is no receiveTransport. Cant restart ICE'});
     return await ctx.client.receiveTransport.restartIce();
   }),
-  setRTPCapabilities: clientInVenueP.input(z.object({rtpCapabilities: RtpCapabilitiesSchema})).mutation(({input, ctx}) => {
+  setRTPCapabilities: p.input(z.object({ rtpCapabilities: RtpCapabilitiesSchema })).mutation(({ input, ctx }) => {
     ctx.client.rtpCapabilities = input.rtpCapabilities;
     log.debug(`clint ${ctx.username} (${ctx.connectionId}) changed rtpCapabilities to: `, input.rtpCapabilities);
     // return 'Not implemented yet' as const;
   }),
-  createSendTransport: clientInVenueP.mutation(async ({ctx}) => {
+  createSendTransport: p.mutation(async ({ ctx }) => {
     return await ctx.client.createWebRtcTransport('send');
   }),
-  createReceiveTransport: clientInVenueP.mutation(async ({ctx}) => {
+  createReceiveTransport: p.mutation(async ({ ctx }) => {
     return await ctx.client.createWebRtcTransport('receive');
   }),
-  connectTransport: clientInVenueP.input(ConnectTransportPayloadSchema).mutation(async ({ctx, input}) => {
+  connectTransport: p.input(ConnectTransportPayloadSchema).mutation(async ({ ctx, input }) => {
     const client = ctx.client;
     const transportId = input.transportId;
     const dtlsParameters = input.dtlsParameters;
@@ -50,7 +49,7 @@ export const soupRouter = router({
     }
     await chosenTransport.connect({dtlsParameters});
   }),
-  createProducer: clientInVenueP.input(CreateProducerPayloadSchema).mutation(async ({ctx, input}) => {
+  createProducer: p.input(CreateProducerPayloadSchema).mutation(async ({ ctx, input }) => {
     log.info('received createProducer request!');
     const client: UserClient | SenderClient = ctx.client;
 
@@ -60,27 +59,28 @@ export const soupRouter = router({
       throw new TRPCError({code: 'BAD_REQUEST', message:'the provided transporId didnt match the id of the sendTransport'});
     }
     const producerId = await client.createProducer(input);
-    ctx.stream._notifyAdminOnlyState('producer added');
+    // TODO: Make this work for both vrspace and stream
+    // ctx.stream._notifyAdminOnlyState('producer added');
     return producerId;
   }),
-  closeVideoProducer: clientInVenueP.mutation(({ctx}) =>{
+  closeVideoProducer: p.mutation(({ ctx }) => {
     if(!ctx.client.videoProducer.value){
       throw new TRPCError({code: 'NOT_FOUND', message: 'no videoProducer exists. can\t close'});
     }
     ctx.client.videoProducer.value.close();
     ctx.client.videoProducer.value = undefined;
   }),
-  closeAudioProducer: clientInVenueP.mutation(({ctx}) =>{
+  closeAudioProducer: p.mutation(({ ctx }) => {
     if(!ctx.client.audioProducer.value){
       throw new TRPCError({code: 'NOT_FOUND', message: 'no audioProducer exists. can\t close'});
     }
     ctx.client.audioProducer.value.close();
     ctx.client.audioProducer.value = undefined;
   }),
-  closeProducer: clientInVenueP.input(z.object({producerId: ProducerIdSchema})).mutation(({input, ctx}) => {
+  closeProducer: p.input(z.object({ producerId: ProducerIdSchema })).mutation(({ input, ctx }) => {
     return 'Not implemented yet' as const;
   }),
-  createConsumer: clientInVenueP.input(CreateConsumerPayloadSchema).mutation(async ({ctx, input}) => {
+  createConsumer: p.input(CreateConsumerPayloadSchema).mutation(async ({ ctx, input }) => {
     log.info(`received createConsumer request from ${ctx.username} (${ctx.connectionId}) for producer:`, input.producerId);
     const client = ctx.client;
     if(!client.receiveTransport){
@@ -93,7 +93,7 @@ export const soupRouter = router({
     const producerId = input.producerId;
     return await ctx.client.createConsumer({producerId});
   }),
-  closeConsumer: clientInVenueP.input(CreateConsumerPayloadSchema).mutation( async ({ctx, input}) => {
+  closeConsumer: p.input(CreateConsumerPayloadSchema).mutation(async ({ ctx, input }) => {
 
     // log.info(`received closeConsumer request from ${ctx.username} (${ctx.connectionId}) for producer:`, input.producerId);
     ctx.client.closeConsumer(input.producerId, 'client closed its own consumer');

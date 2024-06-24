@@ -27,11 +27,6 @@ export type UserClientEventMap = EventMapAdditions & BaseClientEventMap
  * This class represents the backend state of a user client connection.
  */
 export class UserClient extends BaseClient {
-  get currentRouter() {
-    if (this.vrSpace) return this.vrSpace.router;
-    if (this.stream) return this.stream.router;
-    return undefined;
-  }
   constructor(...args: ConstructorParameters<typeof BaseClient>){
     super(...args);
     log.info(`Creating user client ${this.username} (${this.connectionId})`);
@@ -57,6 +52,12 @@ export class UserClient extends BaseClient {
     super.unload();
     this.leaveCurrentStream();
     this.leaveCurrentVrSpace();
+  }
+
+  get currentRouter() {
+    if (this.vrSpace) return this.vrSpace.router;
+    if (this.stream) return this.stream.router;
+    return undefined;
   }
 
   private currentCameraId?: CameraId;
