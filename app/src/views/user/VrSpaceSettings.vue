@@ -1,145 +1,149 @@
 <template>
   <UserBanner></UserBanner>
   <div v-if="!vrSpaceStore.writableVrSpaceState">loading...</div>
-  <div v-else>
-    <div class="flex mb-4">
-      <h2 class="flex-1">
-        VR-lobby
-        <input class="input input-bordered" v-model="vrSpaceStore.writableVrSpaceState.dbData.name">
-      </h2>
-      <input type="checkbox" class="toggle toggle-success" true-value="public" false-value="private"
-        v-model="vrSpaceStore.writableVrSpaceState.dbData.visibility">
-    </div>
+  <div v-else class="grid grid-cols-2 gap-2">
     <div>
-      <div>{{ selectedUser?.username }}</div>
-      <Combobox v-model="selectedUser">
-        <div class="w-72 relative">
+      <VrAFramePreview class="border rounded-md overflow-hidden" ref="vrComponentTag"
+        :model-url="getAssetUrl(vrSpaceStore.currentVrSpace.dbData.worldModelAsset.generatedName)"
+        :navmesh-url="getAssetUrl(vrSpaceStore.currentVrSpace.dbData.navMeshAsset?.generatedName)"
+        :raycast="currentRaycastReason !== undefined" :auto-rotate="currentRaycastReason === undefined"
+        @raycast-click="onRaycastClick" @raycast-hover="onRaycastHover">
 
-          <div class="join input input-bordered">
-            <ComboboxInput class="join-item" :display-value="(user) => user.username"
-              @change="query = $event.target.value" />
-            <ComboboxButton class="join-item"><span class="material-icons">unfold_more</span></ComboboxButton>
-          </div>
-          <ComboboxOptions v-auto-animate class="absolute w-full menu bg-neutral-100 rounded-md">
-            <div v-if="filteredUsers?.length === 0 && query !== ''"
-              class="relative cursor-default select-none px-4 py-2 text-gray-700">
-              Inga användare hittade
-            </div>
-            <ComboboxOption v-for="user in filteredUsers" :key="user.userId" :value="user"
-              v-slot="{ active, selected }">
-              <a :class="[selected ? 'active' : '']">{{ user.username }}</a>
-            </ComboboxOption>
-          </ComboboxOptions>
+        <a-entity id="vr-portals">
+          <template v-for="placedObject in vrSpaceStore.currentVrSpace.dbData.placedObjects"
+            :key="placedObject.placedObjectId">
+            <a-entity v-if="placedObject.type === 'vrPortal'" :position="placedObject.position?.join(' ')">
+              <a-troika-text look-at-camera :value="placedObject.vrPortal?.name" position="0 2.5 0" />
+              <a-sphere transparent="true" scale="0.5 0.5 0.5"
+                material="shader: outer-glow; start: 0.3; color: 0.5 0 1;" position="0 1.5 0">
+                <a-icosahedron v-if="placedObject.vrPortal?.panoramicPreview" detail="5" scale="-0.98 -0.98 -0.98"
+                  transparent="true" opacity="0.5"
+                  :material="`shader: pano-portal; warpParams: 3 0.9; opacity: 0.8; src: ${getAssetUrl(placedObject.vrPortal?.panoramicPreview?.generatedName)}; side:double;`">
+                </a-icosahedron>
+                <a-sphere v-else color="black" transparent="true" opacity="0.8" scale="0.98 0.98 0.98" />
+              </a-sphere>
+            </a-entity>
+          </template>
+        </a-entity>
+
+        <a-entity ref="spawnPosTag" v-if="spawnPosString" :position="spawnPosString">
+          <a-circle color="yellow" transparent="true" opacity="0.5" rotation="-90 0 0" position="0 0.05 0"
+            :radius="vrSpaceStore.currentVrSpace?.dbData.spawnRadius" />
+          <a-icosahedron v-if="vrSpaceStore.currentVrSpace?.dbData.panoramicPreview" detail="5" scale="-0.5 -0.5 -0.5"
+            position="0 1.1 0"
+            :material="`shader: pano-portal; warpParams: 3 0.9; src: ${getAssetUrl(vrSpaceStore.currentVrSpace.dbData.panoramicPreview?.generatedName)}`">
+          </a-icosahedron>
+        </a-entity>
+        <a-entity :position="hoverPosString" :visible="hoverPosString !== undefined">
+          <a-ring color="yellow" radius-inner="0.1" radius-outer="0.2" material="shader: flat;" rotation="-90 0 0" />
+        </a-entity>
+      </VrAFramePreview>
+      <div v-if="vrSpaceStore.currentVrSpace.dbData.worldModelAsset" class="grid gap-2">
+        <div class="flex gap-2">
+          <input type="radio" :value="undefined" class="hidden" v-model="currentRaycastReason">
+          <input type="radio" value="spawnPosition" aria-label="Placera startplats" class="btn btn-sm btn-primary"
+            v-model="currentRaycastReason">
+          <input type="radio" value="selfPlacement" aria-label="Hoppa in världen" class="btn btn-sm btn-primary"
+            v-model="currentRaycastReason">
+          <button class="btn btn-sm btn-primary" @click="vrComponentTag?.exitFirstPersonView">hoppa ur
+            världen</button>
+          <select class="select select-sm select-bordered" v-model="portalTargetVrSpace"
+            @change="currentRaycastReason = 'vrSpacePortal'">
+            <option v-for="vrSpace in allowedVrSpaces" :key="vrSpace.vrSpaceId" :value="vrSpace.vrSpaceId">{{
+              vrSpace.name }}</option>
+          </select>
+          <button v-if="currentRaycastReason" class="btn btn-sm btn-circle" @click="cancelRaycasting">
+            <span class="material-icons">close</span>
+          </button>
         </div>
-      </Combobox>
-      <select v-model="selectedPermission" class="select select-bordered">
-        <option :value="permissionLevel" v-for="permissionLevel in insertablePermissionHierarchy"
-          :key="permissionLevel">{{ permissionLevel }}</option>
-      </select>
-      <button @click="addEditPermission" class="btn btn-primary">Lägg till som ägare</button>
-      <div>
-        <h3>Tillagda användare</h3>
-        <div v-for="userPermission in vrSpaceStore.currentVrSpace?.dbData.allowedUsers"
-          :key="userPermission.user.userId">{{ userPermission.user.username }}: {{ userPermission.permissionLevel }}
-        </div>
+        <label class="label gap-2">
+          <span class="label-text font-semibold whitespace-nowrap">
+            Startplats storlek
+          </span>
+          <input type="range" min="0.5" max="8" step="0.1"
+            v-model.number="vrSpaceStore.writableVrSpaceState.dbData.spawnRadius" class="range">
+        </label>
       </div>
     </div>
-    <div>
-      <div v-if="vrSpaceStore.currentVrSpace" class="flex flex-col gap-4">
-        <div class="flex items-center justify-start gap-2 -mb-2">
-          <h3>
-            3D-modell
-          </h3>
-          <div
-            class="tooltip cursor-help select-none before:text-left before:whitespace-pre-line flex flex-col max-h-fit justify-center"
-            data-tip="Använd musen för att interagera med modellen.
+    <!-- COLUMN 2 -->
+    <div class="">
+      <h2 class="">
+        <input class="input input-bordered" v-model="vrSpaceStore.writableVrSpaceState.dbData.name">
+      </h2>
+      <label class="max-w-sm label cursor-pointer gap-2 font-bold">
+        <span class="label-text">
+
+          Öppet för alla:
+        </span>
+        <input type="checkbox" class="toggle toggle-success" true-value="public" false-value="private"
+          v-model="vrSpaceStore.writableVrSpaceState.dbData.visibility">
+      </label>
+      <div>
+        <div>{{ selectedUser?.username }}</div>
+        <Combobox v-model="selectedUser">
+          <div class="w-72 relative">
+
+            <div class="join input input-bordered">
+              <ComboboxInput class="join-item" :display-value="(user) => user.username"
+                @change="query = $event.target.value" />
+              <ComboboxButton class="join-item"><span class="material-icons">unfold_more</span></ComboboxButton>
+            </div>
+            <ComboboxOptions v-auto-animate class="absolute w-full menu bg-neutral-100 rounded-md">
+              <div v-if="filteredUsers?.length === 0 && query !== ''"
+                class="relative cursor-default select-none px-4 py-2 text-gray-700">
+                Inga användare hittade
+              </div>
+              <ComboboxOption v-for="user in filteredUsers" :key="user.userId" :value="user"
+                v-slot="{ active, selected }">
+                <a :class="[selected ? 'active' : '']">{{ user.username }}</a>
+              </ComboboxOption>
+            </ComboboxOptions>
+          </div>
+        </Combobox>
+        <select v-model="selectedPermission" class="select select-bordered">
+          <option :value="permissionLevel" v-for="permissionLevel in insertablePermissionHierarchy"
+            :key="permissionLevel">{{ permissionLevel }}</option>
+        </select>
+        <button @click="addEditPermission" class="btn btn-primary">Lägg till som ägare</button>
+        <div>
+          <h3>Tillagda användare</h3>
+          <div v-for="userPermission in vrSpaceStore.currentVrSpace?.dbData.allowedUsers"
+            :key="userPermission.user.userId">{{ userPermission.user.username }}: {{ userPermission.permissionLevel }}
+          </div>
+        </div>
+      </div>
+      <div>
+        <div v-if="vrSpaceStore.currentVrSpace" class="flex flex-col gap-4">
+          <div class="flex items-center justify-start gap-2 -mb-2">
+            <h3>
+              3D-modell
+            </h3>
+            <div
+              class="tooltip cursor-help select-none before:text-left before:whitespace-pre-line flex flex-col max-h-fit justify-center"
+              data-tip="Använd musen för att interagera med modellen.
                       Klicka och dra: Rotera bilden
                       Högermus och dra: Panorera längs golvytan
                       Scrolla: Zooma">
-            <span class="material-icons">help</span>
+              <span class="material-icons">help</span>
+            </div>
           </div>
-        </div>
-        <div v-if="vrSpaceStore.currentVrSpace.dbData.worldModelAsset" class="grid gap-2">
-          <VrAFramePreview class="flex-1 border" ref="vrComponentTag"
-            :model-url="getAssetUrl(vrSpaceStore.currentVrSpace.dbData.worldModelAsset.generatedName)"
-            :navmesh-url="getAssetUrl(vrSpaceStore.currentVrSpace.dbData.navMeshAsset?.generatedName)"
-            :raycast="currentRaycastReason !== undefined" :auto-rotate="currentRaycastReason === undefined"
-            @raycast-click="onRaycastClick" @raycast-hover="onRaycastHover">
-
-            <a-entity id="vr-portals">
-              <template v-for="placedObject in vrSpaceStore.currentVrSpace.dbData.placedObjects"
-                :key="placedObject.placedObjectId">
-                <a-entity v-if="placedObject.type === 'vrPortal'" :position="placedObject.position?.join(' ')">
-                  <a-troika-text look-at-camera :value="placedObject.vrPortal?.name" position="0 2.5 0" />
-                  <a-sphere transparent="true" scale="0.5 0.5 0.5"
-                    material="shader: outer-glow; start: 0.3; color: 0.5 0 1;" position="0 1.5 0">
-                    <a-icosahedron v-if="placedObject.vrPortal?.panoramicPreview" detail="5" scale="-0.98 -0.98 -0.98"
-                      transparent="true" opacity="0.5"
-                      :material="`shader: pano-portal; warpParams: 3 0.9; opacity: 0.8; src: ${getAssetUrl(placedObject.vrPortal?.panoramicPreview?.generatedName)}`">
-                    </a-icosahedron>
-                    <a-sphere v-else color="black" transparent="true" opacity="0.8" scale="0.98 0.98 0.98" />
-                  </a-sphere>
-                </a-entity>
-              </template>
-            </a-entity>
-
-            <a-entity ref="spawnPosTag" v-if="spawnPosString" :position="spawnPosString">
-              <a-circle color="yellow" transparent="true" opacity="0.5" rotation="-90 0 0" position="0 0.05 0"
-                :radius="vrSpaceStore.currentVrSpace?.dbData.spawnRadius" />
-              <a-icosahedron v-if="vrSpaceStore.currentVrSpace?.dbData.panoramicPreview" detail="5"
-                scale="-0.5 -0.5 -0.5" position="0 1.1 0"
-                :material="`shader: pano-portal; warpParams: 3 0.9; src: ${getAssetUrl(vrSpaceStore.currentVrSpace.dbData.panoramicPreview?.generatedName)}`">
-              </a-icosahedron>
-            </a-entity>
-            <a-entity :position="hoverPosString" :visible="hoverPosString !== undefined">
-              <a-ring color="yellow" radius-inner="0.1" radius-outer="0.2" material="shader: flat;"
-                rotation="-90 0 0" />
-            </a-entity>
-          </VrAFramePreview>
-          <div class="flex gap-2">
-            <input type="radio" :value="undefined" class="hidden" v-model="currentRaycastReason">
-            <input type="radio" value="spawnPosition" aria-label="Placera startplats" class="btn btn-sm btn-primary"
-              v-model="currentRaycastReason">
-            <input type="radio" value="selfPlacement" aria-label="Hoppa in världen" class="btn btn-sm btn-primary"
-              v-model="currentRaycastReason">
-            <button class="btn btn-sm btn-primary" @click="vrComponentTag?.exitFirstPersonView">hoppa ur
-              världen</button>
-            <select class="select select-sm select-bordered" v-model="portalTargetVrSpace"
-              @change="currentRaycastReason = 'vrSpacePortal'">
-              <option v-for="vrSpace in allowedVrSpaces" :key="vrSpace.vrSpaceId" :value="vrSpace.vrSpaceId">{{
-                vrSpace.name }}</option>
-            </select>
-            <button v-if="currentRaycastReason" class="btn btn-sm btn-circle" @click="cancelRaycasting">
-              <span class="material-icons">close</span>
-            </button>
-          </div>
-          <label class="label gap-2">
-            <span class="label-text font-semibold whitespace-nowrap">
-              Startplats storlek
-            </span>
-            <input type="range" min="0.5" max="8" step="0.1"
-              v-model.number="vrSpaceStore.writableVrSpaceState.dbData.spawnRadius" class="range">
-          </label>
-          <div id="canvas-container" class="*:w-4/5">
-
-          </div>
-        </div>
-        <div>
           <div>
-            <h4>3D-modell för miljön</h4>
-            <pre>{{ vrSpaceStore.currentVrSpace.dbData.worldModelAsset?.originalFileName }}</pre>
-            <UploadModelForm @uploaded="onModelUploaded" :acceptedAssetTypes="['model']" name="miljömodell" />
+            <div>
+              <h4>3D-modell för miljön</h4>
+              <pre>{{ vrSpaceStore.currentVrSpace.dbData.worldModelAsset?.originalFileName }}</pre>
+              <UploadModelForm @uploaded="onModelUploaded" :acceptedAssetTypes="['model']" name="miljömodell" />
+            </div>
+            <div v-if="vrSpaceStore.currentVrSpace?.dbData.worldModelAsset">
+              <h4>3D-modell för gåbara ytor (navmesh)</h4>
+              <pre>{{ vrSpaceStore.currentVrSpace.dbData.navMeshAsset?.originalFileName }}</pre>
+              <UploadModelForm @uploaded="onNavmeshUploaded" acceptedAssetTypes="navmesh" name="navmesh" />
+            </div>
           </div>
-          <div v-if="vrSpaceStore.currentVrSpace?.dbData.worldModelAsset">
-            <h4>3D-modell för gåbara ytor (navmesh)</h4>
-            <pre>{{ vrSpaceStore.currentVrSpace.dbData.navMeshAsset?.originalFileName }}</pre>
-            <UploadModelForm @uploaded="onNavmeshUploaded" acceptedAssetTypes="navmesh" name="navmesh" />
+          <div class="flex gap-4">
+            <h4>Färg på himmelen</h4>
+            <input class="rounded-md border-black border-2" type="color"
+              v-model="vrSpaceStore.writableVrSpaceState.dbData.skyColor">
           </div>
-        </div>
-        <div class="flex gap-4">
-          <h4>Färg på himmelen</h4>
-          <input class="rounded-md border-black border-2" type="color"
-            v-model="vrSpaceStore.writableVrSpaceState.dbData.skyColor">
         </div>
       </div>
     </div>
