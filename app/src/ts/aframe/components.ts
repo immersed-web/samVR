@@ -55,8 +55,8 @@ const registerComponents = async () => {
 
   // @ts-ignore
   await import('aframe-atlas-uvs-component');
-  await import('aframe-look-at-component');
-  await import('aframe-troika-text');
+  import('aframe-look-at-component');
+  import('aframe-troika-text');
   // import('aframe-orbit-controls');
 
   // @ts-ignore
