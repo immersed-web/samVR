@@ -96,6 +96,9 @@ importers:
       buffered-interpolation:
         specifier: workspace:*
         version: link:../packages/buffered-interpolation
+      camera-controls:
+        specifier: ^2.8.5
+        version: 2.8.5(three@0.149.0)
       database:
         specifier: workspace:^
         version: link:../backend/database
@@ -2586,6 +2589,11 @@ packages:
   camelcase@6.3.0:
     resolution: {integrity: sha512-Gmy6FhYlCY7uOElZUSbxo2UCDH8owEk996gkbrpsgGtrJLM3J7jGxl9Ic7Qwwj4ivOE5AWZWRMecDdF7hqGjFA==}
     engines: {node: '>=10'}
+
+  camera-controls@2.8.5:
+    resolution: {integrity: sha512-7VTwRk7Nu1nRKsY7bEt9HVBfKt8DETvzyYhLN4OW26OByBayMDB5fUaNcPI+z++vG23RH5yqn6ZRhZcgLQy2rA==}
+    peerDependencies:
+      three: '>=0.126.1'
 
   caniuse-lite@1.0.30001618:
     resolution: {integrity: sha512-p407+D1tIkDvsEAPS22lJxLQQaG8OTBEqo0KhzfABGk0TU4juBNDSfH0hyAp/HRyx+M8L17z/ltyhxh27FTfQg==}
@@ -8259,6 +8267,10 @@ snapshots:
   camelcase-css@2.0.1: {}
 
   camelcase@6.3.0: {}
+
+  camera-controls@2.8.5(three@0.149.0):
+    dependencies:
+      three: 0.149.0
 
   caniuse-lite@1.0.30001618: {}
 

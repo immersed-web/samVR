@@ -29,6 +29,7 @@
     "aframe-troika-text": "^0.11.0",
     "axios": "^1.7.2",
     "buffered-interpolation": "workspace:*",
+    "camera-controls": "^2.8.5",
     "database": "workspace:^",
     "date-fns": "^2.30.0",
     "devalue": "^4.3.3",

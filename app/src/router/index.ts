@@ -132,6 +132,10 @@ const router = createRouter({
           // component:  () => import('@/views/user/UserHomeView.vue'),
         },
         {
+          path: 'vr-test',
+          component: () => import('@/views/user/lobby/VRScene.vue'),
+        },
+        {
           path: 'vr',
           component:  () => import('@/components/AFrameScene.vue'),
           children: [
