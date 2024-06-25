@@ -1,4 +1,4 @@
-import 'aframe';
+// import 'aframe';
 
 import emitMove from './emit-move';
 import rotationControl from './rotation-control';
@@ -16,7 +16,7 @@ import outerGlow from './outer-glow';
 import lootkAt from './lootk-at';
 import meshUI from './mesh-ui';
 import makeGltfSwappable from './make-gltf-swappable';
-import 'aframe';
+// import 'aframe';
 import modelColor from './model-color';
 import raycasterUpdate from './raycaster-update';
 import boxHelper from './box-helper';
@@ -25,7 +25,7 @@ import canvasMaterial from './canvas-material';
 
 let componentsAreRegistered = false;
 
-const registerComponents = () => {
+const registerComponents = async () => {
   if(componentsAreRegistered) {
     console.info('aframe components are already registered. skipping');
     return;
@@ -54,10 +54,10 @@ const registerComponents = () => {
   canvasMaterial();
 
   // @ts-ignore
-  import('aframe-troika-text');
-  // import('aframe-atlas-uvs-component');
+  await import('aframe-atlas-uvs-component');
+  await import('aframe-look-at-component');
+  await import('aframe-troika-text');
   // import('aframe-orbit-controls');
-  // import('aframe-look-at-component');
 
   // @ts-ignore
   // import('aframe-environment-component');
@@ -77,6 +77,7 @@ const registerComponents = () => {
   // We had to tweak the orbit controls to avoid grab cursor leaking outside canvas element. Pull request is submitted to superframe.
   import('./orbit-controls/orbit-controls');
   componentsAreRegistered = true;
+  console.log('A-frame components are registered');
 };
 
 export default {

@@ -145,12 +145,12 @@ const router = createRouter({
               name: 'basicVR2',
               component: () => import('@/components/lobby/BasicAFrameScene2.vue'),
             },
-            {
-              path: 'main',
-              name: 'mainVR',
-              component: () => import('@/views/user/lobby/VRScene.vue'),
-            },
           ],
+        },
+        {
+          path: 'vrmain',
+          name: 'mainVR',
+          component: () => import('@/views/user/lobby/VRScene.vue'),
         },
       ],
     },
