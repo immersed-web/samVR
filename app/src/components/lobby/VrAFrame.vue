@@ -21,8 +21,10 @@
     <a-entity id="vr-portals">
       <template v-for="placedObject in vrSpaceStore.currentVrSpace?.dbData.placedObjects"
         :key="placedObject.placedObjectId">
-        <VrSpacePortal v-if="placedObject.type === 'vrPortal'" :position="placedObject.position?.join(' ')"
-          class="clickable" :label="placedObject.vrPortal?.name"
+        <VrSpacePortal
+          @click="router.push({ name: 'vrSpace', params: { vrSpaceId: placedObject.vrPortal?.vrSpaceId } })"
+          v-if="placedObject.type === 'vrPortal'" :position="placedObject.position?.join(' ')" class="clickable"
+          :label="placedObject.vrPortal?.name"
           :panoramic-preview-url="getAssetUrl(placedObject.vrPortal?.panoramicPreview?.generatedName)" />
       </template>
     </a-entity>
