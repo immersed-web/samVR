@@ -16,7 +16,6 @@ import outerGlow from './outer-glow';
 import lootkAt from './lootk-at';
 import meshUI from './mesh-ui';
 import makeGltfSwappable from './make-gltf-swappable';
-import 'aframe';
 import modelColor from './model-color';
 import raycasterUpdate from './raycaster-update';
 import boxHelper from './box-helper';
@@ -25,7 +24,7 @@ import canvasMaterial from './canvas-material';
 
 let componentsAreRegistered = false;
 
-const registerComponents = () => {
+export default async function () {
   if(componentsAreRegistered) {
     console.info('aframe components are already registered. skipping');
     return;
@@ -53,22 +52,18 @@ const registerComponents = () => {
   laserPointer();
   canvasMaterial();
 
-  // @ts-ignore
-  import('aframe-troika-text');
-  // import('aframe-atlas-uvs-component');
+  await import('aframe-atlas-uvs-component');
+
+
+  await import('aframe-troika-text');
 
   // TODO: Find out why rig and camera seems to be a few decimeter of in horizontal position. Only in real VR though. Not in browser as it seems at least.
-  // @ts-ignore
-  import('aframe-blink-controls');
+  await import('aframe-blink-controls');
 
   // // @ts-ignore
   // import('aframe-orbit-controls');
   // We had to tweak the orbit controls to avoid grab cursor leaking outside canvas element. Pull request is submitted to superframe.
-  import('./orbit-controls/orbit-controls');
+  await import('./orbit-controls/orbit-controls');
   componentsAreRegistered = true;
-};
-
-export default {
-  registerAframeComponents: registerComponents,
 };
 
