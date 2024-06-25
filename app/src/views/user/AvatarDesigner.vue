@@ -140,9 +140,9 @@ function openPopupParts(evt: Event, part: string, cIdx: number) {
   <WaitForAframe>
     <UIOverlay class="p-10 overflow-y-auto">
       <template v-slot:left>
-        <div class="grid justify-center grid-cols-[auto_auto_auto_auto_auto] items-center gap-3 ">
-          <div class="col-span-3 col-start-1 text-center">
-            <div class="label col-span-3 ">
+        <div class="grid justify-center grid-cols-[auto_auto_auto] items-center gap-2 ">
+          <div class="col-start-1 text-center">
+            <div class="label">
               <span class="label-text text-capitalize">skin color</span>
             </div>
           </div>
@@ -172,11 +172,9 @@ function openPopupParts(evt: Event, part: string, cIdx: number) {
           </div>
           <template v-for="(partsList, key) in avatarAssets" :key="key">
             <template v-if="avatarAssets[key].length > 1">
-              <div class="grid col-span-3 grid-cols-subgrid flex-col">
-                <div class="label col-span-3 ">
-                  <span class="label-text text-capitalize">{{ key }}</span>
-                </div>
-                <div class="items-center bg-white join">
+              <div class="flex flex-col col-start-1">
+                <span class="label-text text-capitalize">{{ key }}</span>
+                <div class="items-center mt-1 bg-white join">
                   <button @click="changeClothingIdx(key, -1)"
                     class="text-slate-700 pl-2 pr-2  hover:bg-slate-200 m-0 h-full join-item">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
