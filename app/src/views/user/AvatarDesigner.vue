@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, type Ref, reactive, onBeforeMount, watch } from 'vue';
+import { ref, type Ref, reactive, onBeforeMount, watch, onMounted } from 'vue';
 import { type Entity } from 'aframe';
 
 import UIOverlay from '@/components/UIOverlay.vue';
@@ -19,8 +19,8 @@ import { Vue3ColorPicker } from '@cyhnkckali/vue3-color-picker';
 import "@cyhnkckali/vue3-color-picker/dist/style.css"
 import WaitForAframe from '@/components/WaitForAframe.vue';
 
-onBeforeMount(() => {
-  // loadAvatarFromStorage();
+onMounted(() => {
+  loadAvatarFromStorage();
 })
 
 const avatarAssets = {
@@ -42,6 +42,7 @@ const skinParts = ['hands', 'heads', 'torsos'];
 
 const currentAvatarSettings = reactive({ skinColor: '', parts: Object.fromEntries(Object.entries(avatarAssets).map(([k, p]) => [k as keyof typeof avatarAssets, { model: p[0], colors: [] }])) })
 
+watch(() => currentAvatarSettings, () => saveAvatarSettingsToStorage(), { deep: true });
 function saveAvatarSettingsToStorage() {
   window.localStorage.setItem('avatarSettings', JSON.stringify(currentAvatarSettings));
 }
@@ -268,10 +269,10 @@ function openPopupParts(evt: Event, part: string, cIdx: number) {
           </PopUp>
         </div>
 
-        <div class="flex gap-4 mt-6">
+        <!-- <div class="flex gap-4 mt-2">
           <button class="p-3 text-white rounded-xl bg-slate-800" @click="saveAvatarSettingsToStorage">save</button>
           <button class="p-3 text-white rounded-xl bg-slate-800" @click="loadAvatarFromStorage">load</button>
-        </div>
+        </div> -->
       </template>
     </UIOverlay>
 
