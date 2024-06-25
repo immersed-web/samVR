@@ -11,17 +11,9 @@
         <a-entity id="vr-portals">
           <template v-for="placedObject in vrSpaceStore.currentVrSpace?.dbData.placedObjects"
             :key="placedObject.placedObjectId">
-            <a-entity v-if="placedObject.type === 'vrPortal'" :position="placedObject.position?.join(' ')">
-              <a-troika-text look-at-camera :value="placedObject.vrPortal?.name" position="0 2.5 0" />
-              <a-sphere transparent="true" scale="0.5 0.5 0.5"
-                material="shader: outer-glow; start: 0.3; color: 0.5 0 1;" position="0 1.5 0">
-                <a-icosahedron v-if="placedObject.vrPortal?.panoramicPreview" detail="5" scale="-0.98 -0.98 -0.98"
-                  transparent="true" opacity="0.5"
-                  :material="`shader: pano-portal; warpParams: 3 0.9; opacity: 0.8; src: ${getAssetUrl(placedObject.vrPortal?.panoramicPreview?.generatedName)}; side:double;`">
-                </a-icosahedron>
-                <a-sphere v-else color="black" transparent="true" opacity="0.8" scale="0.98 0.98 0.98" />
-              </a-sphere>
-            </a-entity>
+            <VrSpacePortal v-if="placedObject.type === 'vrPortal'" :position="placedObject.position?.join(' ')"
+              :label="placedObject.vrPortal?.name"
+              :panoramic-preview-url="getAssetUrl(placedObject.vrPortal?.panoramicPreview?.generatedName)" />
           </template>
         </a-entity>
 
@@ -149,7 +141,6 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
 import UploadModelForm, { type EmitTypes } from './UploadModelForm.vue';
 import VrAFramePreview from '@/components/lobby/VrSpacePreview.vue';
 import { ref, watch, onMounted, computed, type ComponentInstance, nextTick } from 'vue';
@@ -162,6 +153,7 @@ import { useAuthStore } from '@/stores/authStore';
 import type { RouterOutputs } from '@/modules/trpcClient';
 import UserBanner from '@/components/UserBanner.vue';
 import { getAssetUrl, uploadFileData } from '@/modules/utils';
+import VrSpacePortal from '@/components/entities/VrSpacePortal.vue';
 
 // TODO: refine/find alternative way to get these types so we get intellisense for the emit key
 type ExtractEmitData<T extends string, emitUnion extends (...args: any[]) => void> = T extends Parameters<emitUnion>[0] ? Parameters<emitUnion>[1] : never

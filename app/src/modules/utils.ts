@@ -1,10 +1,10 @@
 import axios, { type AxiosProgressEvent } from "axios";
 import type { UploadResponse } from "fileserver";
 
-export function getAssetUrl(generatedName?: string) {
+export function getAssetUrl<T extends string>(generatedName?: T) {
   console.log('getFileUrl called', generatedName);
   if (generatedName === undefined) {
-    return undefined
+    return generatedName
   }
 
   return `https://${import.meta.env.EXPOSED_SERVER_URL}${import.meta.env.EXPOSED_FILESERVER_PATH}/file/${generatedName}`;

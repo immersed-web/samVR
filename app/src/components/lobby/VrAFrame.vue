@@ -18,6 +18,14 @@
         @loaded="avatarModelFileLoaded = true"
       />
     </a-assets> -->
+    <a-entity id="vr-portals">
+      <template v-for="placedObject in vrSpaceStore.currentVrSpace?.dbData.placedObjects"
+        :key="placedObject.placedObjectId">
+        <VrSpacePortal v-if="placedObject.type === 'vrPortal'" :position="placedObject.position?.join(' ')"
+          class="clickable" :label="placedObject.vrPortal?.name"
+          :panoramic-preview-url="getAssetUrl(placedObject.vrPortal?.panoramicPreview?.generatedName)" />
+      </template>
+    </a-entity>
 
     <a-sky :color="skyColor" />
     <!-- The model -->
@@ -57,13 +65,6 @@
       <a-camera @loaded="onCameraLoaded" id="camera" ref="playerTag"
         look-controls="reverseMouseDrag: true; reverseTouchDrag: true;" wasd-controls="acceleration:65;"
         emit-move="interval: 20" position="0 1.65 0">
-        <!-- <a-box
-          position="0 -0.1 -0.2"
-          scale="0.1 0.1 0.1"
-        /> -->
-        <a-entity v-if="
-            displayMessage.length" :text="'value: ' + displayMessage" position="0 0 -1"
-          animation="property: object3D.position.y; to: 0.1; dir: alternate; dur: 500; loop: true" />
       </a-camera>
       <a-entity ref="leftHandTag" id="left-hand" @controllerconnected="leftControllerConnected = true"
         @controllerdisconnected="leftControllerConnected = false" laser-controls="hand:left"
@@ -107,6 +108,8 @@ import { throttle } from 'lodash-es';
 import { useSoupStore } from '@/stores/soupStore';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import { aFrameSceneProvideKey } from '@/modules/injectionKeys';
+import { getAssetUrl } from '@/modules/utils';
+import VrSpacePortal from '../entities/VrSpacePortal.vue';
 
 const router = useRouter();
 // Stores
@@ -189,6 +192,8 @@ onMounted(async () => {
 function onCameraLoaded() {
   console.log('camera loaded. attaching scene attributes');
   sceneTag.value!.setAttribute('cursor', { rayOrigin: 'mouse', fuse: false });
+  // the  raycaster seem to keep a reference to the intersected object which leads to us missing "new" intersection after reattaching raycaster-listen.
+  // This is a hacky work-around to "reset" the raycasting logic
   sceneTag.value!.setAttribute('raycaster', { objects: '.clickable' });
   playerTag.value!.setAttribute('simple-navmesh-constraint', `navmesh:#${navmeshId.value}; fall:0.5; height:1.65;`);
 }
@@ -318,38 +323,5 @@ const throttledTransformMutation = throttle(async () => {
   }
   await vrSpaceStore.updateTransform(currentTransform);
   // Unset hands after theyre sent
-}, 100, {trailing: true});
-
-// Display message
-const displayMessage = ref('');
-
-// function navmeshClicked(e: DetailEvent<{intersection?: THREE.Intersection}>) {
-//   if(!e.detail.intersection?.point) return;
-//   console.log(e.detail.intersection.point);
-//   teleportTo(e.detail.intersection.point);
-// }
-// function navmeshHovered(e: DetailEvent<{intersection?: THREE.Intersection}>) {
-//   // console.log('navmesh rayCasted:', e);
-//   if(!e.detail.intersection?.point) return;
-//   previewTeleport(e.detail.intersection.point);
-// }
-
-// function navmeshNotHovered() {
-//   const teleportRing = document.querySelector('#teleportPreview');
-//   teleportRing.setAttribute('visible', false);
-// }
-
-// function teleportTo (point: THREE.Vector3){
-//   console.log(point);
-//   playerOriginTag.value?.setAttribute('position', aframeUtils.coordinates.stringify(point));
-//   playerTag.value?.object3D.position.setX(0);
-//   playerTag.value?.object3D.position.setZ(0);
-// }
-
-// function previewTeleport (point: THREE.Vector3){
-//   const teleportRing = document.querySelector('#teleportPreview');
-//   teleportRing.setAttribute('position', point);
-//   teleportRing.setAttribute('visible', true);
-// }
-
+}, 100, { trailing: true });
 </script>
