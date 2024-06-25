@@ -275,10 +275,10 @@ function openPopupParts(evt: Event, part: string, cIdx: number) {
       </template>
     </UIOverlay>
 
-    <div class="absolute top-0 right-0 z-50 h-screen p-10 overflow-y-scroll">
+    <!-- <div class="absolute top-0 right-0 z-50 h-screen p-10 overflow-y-scroll">
       <pre class="text-xs">{{ currentColorSettings }}</pre>
       <pre class="text-xs">{{ currentAvatarSettings }}</pre>
-    </div>
+    </div> -->
 
     <a-scene ref="sceneTag" style="width: 100vw; height: 100vh;" cursor="fuse:false; rayOrigin:mouse;"
       raycaster="objects: .clickable" xr-mode-ui="enabled: false;">
