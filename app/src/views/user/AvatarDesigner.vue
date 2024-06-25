@@ -288,8 +288,7 @@ function openPopupParts(evt: Event, part: string, cIdx: number) {
             :src="`/avatar/${prop}/${fileName}.glb`" />
         </template>
       </a-assets>
-      <a-entity camera look-controls="enabled: false"
-        orbit-controls="minDistance: 0.7; maxDistance: 4; initialPosition: 0 0.4 1; rotateSpeed: 0.5; zoomSpeed: 1.6; autoRotate: false; enablePan: false;"></a-entity>
+      <a-entity camera look-controls="enabled: false" camera-controls></a-entity>
       <a-sky color="skyblue"></a-sky>
       <a-entity laser-controls="hand: left" raycaster="objects: .clickable"></a-entity>
       <a-entity laser-controls="hand: right" raycaster="objects: .clickable"></a-entity>

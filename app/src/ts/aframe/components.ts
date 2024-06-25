@@ -21,6 +21,7 @@ import raycasterUpdate from './raycaster-update';
 import boxHelper from './box-helper';
 import laserPointer from './laser-pointer';
 import canvasMaterial from './canvas-material';
+import cameraControls from './camera-controls';
 
 let componentsAreRegistered = false;
 
@@ -60,6 +61,7 @@ export default async function () {
   // TODO: Find out why rig and camera seems to be a few decimeter of in horizontal position. Only in real VR though. Not in browser as it seems at least.
   await import('aframe-blink-controls');
 
+  cameraControls();
   // // @ts-ignore
   // import('aframe-orbit-controls');
   // We had to tweak the orbit controls to avoid grab cursor leaking outside canvas element. Pull request is submitted to superframe.
