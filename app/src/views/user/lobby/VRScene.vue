@@ -1,20 +1,22 @@
 <script setup lang="ts">
-import { type Ref, ref, onMounted, onUnmounted } from 'vue';
+import { type Ref, ref, onMounted, onUnmounted, onBeforeMount } from 'vue';
 import { useEventBus } from '@vueuse/core';
 
 import { type DetailEvent, THREE, type Entity, type Scene } from 'aframe';
 import sponzaUrl from '@/assets/models/sponza.glb?url';
 import { isVR, oculusButtons, oculusHandSimulator, simulateOculus, type RayIntersectionData, rayIntersectionData, clickKey } from '@/composables/lobbyUtils';
-import WaitForAframe from '@/components/WaitForAframe.vue';
+
 import UIOverlay from '@/components/lobby/UIOverlay.vue';
 import EmojiTeleport from '@/views/user/lobby/teleports/EmojiTeleport.vue';
 import PlacablesTeleport from '@/views/user/lobby/teleports/PlacablesTeleport.vue';
 import LaserTeleport from '@/views/user/lobby/teleports/LaserTeleport.vue';
 // import EmojiPicker from '@/components/EmojiPicker.vue';
 import EmojiOther from '@/components/lobby/EmojiOther.vue';
+
 // import EmojiSelf from '@/components/EmojiSelf.vue';
 
 import emojiSheetUrl from '@/assets/sprite-128.png';
+import WaitForAframe from '@/components/WaitForAframe.vue';
 
 type Tuple = [number, number]
 
@@ -99,10 +101,10 @@ simulateOculus();
 </script>
 
 <template>
+  <UIOverlay />
   <WaitForAframe>
     <!-- Components (prefereably in @/assets/views/teleports/) can render to here using the Teleport component -->
     <!-- Example: <Teleport to="tp-ui">...</Teleport> -->
-    <UIOverlay />
 
     <!-- Components (prefereably in @/assets/views/teleports/) can render to here using the Teleport component -->
     <a-scene id="tp-aframe-scene" ref="sceneTag" style="width: 100vw; height: 100vh;"
@@ -124,8 +126,6 @@ simulateOculus();
       <!-- Components (prefereably in @/assets/views/teleports/) can render to here using the Teleport component -->
       <a-entity id="tp-aframe-camera" camera="active: true" look-controls wasd-controls position="9 1.6 0"
         rotation="90 190 90">
-        <a-box scale="0.5 0.5 0.1" position="0 0 -1" />
-
         <!-- Simulate hands, for dev purposes when no headset is available -->
         <template v-if="oculusHandSimulator.simulate">
           <template v-if="oculusHandSimulator['hands-active']">
@@ -179,11 +179,13 @@ simulateOculus();
     <!-- #region Teleports -->
     <!-- Components that can render for both screen/UI and VR, keeping all logic within the same component -->
 
-    <EmojiTeleport :sheet-url="emojiSheetUrl" :uvs="[43, 43]"
-      :coords="[[[35, 8], [36, 37], [36, 38], [15, 8], [36, 27]], [[34, 8], [2, 8], [36, 24], [36, 25], [21, 8],], [[28, 26], [28, 20], [28, 38], [3, 16], [2, 1]]]"
-      @change="setEmojiSelf" :is-v-r="false" :columns="5" />
-    <PlacablesTeleport />
-    <LaserTeleport />
+    <template>
+      <EmojiTeleport :sheet-url="emojiSheetUrl" :uvs="[43, 43]"
+        :coords="[[[35, 8], [36, 37], [36, 38], [15, 8], [36, 27]], [[34, 8], [2, 8], [36, 24], [36, 25], [21, 8],], [[28, 26], [28, 20], [28, 38], [3, 16], [2, 1]]]"
+        @change="setEmojiSelf" :is-v-r="false" :columns="5" />
+      <PlacablesTeleport />
+      <LaserTeleport />
+    </template>
 
     <!-- #endregion -->
   </WaitForAframe>
