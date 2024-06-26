@@ -18,10 +18,12 @@ import { aFrameSceneProvideKey } from '@/modules/injectionKeys';
 import VrAFrame from '../../components/lobby/VrAFrame.vue';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import type { VrSpaceId } from 'schemas';
-import { onBeforeMount, provide, ref } from 'vue';
+import { onBeforeMount, provide, ref, watch, getCurrentInstance } from 'vue';
 import type { Scene } from 'aframe';
 import WaitForAframe from '@/components/WaitForAframe.vue';
+import { useRouter } from 'vue-router';
 
+const router = useRouter();
 const vrSpaceStore = useVrSpaceStore();
 
 const props = defineProps<{
@@ -31,6 +33,12 @@ const sceneTag = ref<Scene>();
 const domOutlet = ref<HTMLDivElement>();
 provide(aFrameSceneProvideKey, { sceneTag, domOutlet });
 
+watch(() => props.vrSpaceId, () => {
+  console.log('vrSpaceId updated:', props.vrSpaceId);
+  const url = router.resolve({ name: 'vrSpace', params: { vrSpaceId: props.vrSpaceId } }).href;
+  window.location.href = url;
+  // getCurrentInstance()!.proxy?.$forceUpdate();
+});
 // const sceneReady = ref(false);
 // function onWrapperSceneLoaded() {
 //   sceneReady.value = true;
