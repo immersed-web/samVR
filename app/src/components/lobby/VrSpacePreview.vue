@@ -5,14 +5,14 @@
         <span class="label-text mr-1 font-bold">visa navmesh</span>
         <input type="checkbox" class="toggle toggle-xs" v-model="showNavMesh">
       </label>
-      <div>
+      <!-- <div>
         <button class="btn btn-xs btn-primary" @click="attachOrbitControls">attach orbitctls</button>
         <button class="btn btn-xs btn-primary" @click="removeOrbitControls">remove orbitctls</button>
       </div>
       <div>
         <button class="btn btn-xs btn-primary" @click="attachFirstPersonComponents">attach fps comps</button>
         <button class="btn btn-xs btn-primary" @click="removeFirstPersonComponents">remove fps comps</button>
-      </div>
+      </div> -->
     </div>
     <a-scene embedded class=" min-h-96" ref="sceneTag" id="ascene" xr-mode-ui="enabled: false">
       <a-assets timeout="20000">
