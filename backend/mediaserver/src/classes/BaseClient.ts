@@ -56,7 +56,8 @@ export async function loadUserDBData(userId: UserId) {
       password: false,
     },
     with: {
-      streams: true,
+      ownedStreams: true,
+      ownedVrSpaces: true,
       assets: true,
     }
   })
@@ -126,11 +127,11 @@ export class BaseClient {
   //   }
   //   return [...this.prismaData.value.allowedVenues as StreamListInfo[], ...this.prismaData.value.ownedVenues as StreamListInfo[]];
   // });
-  ownedVenues = computed(() => {
-    if (!this.dbData.value) {
-      return [];
-    }
-    return this.dbData.value.streams;
+  ownedStreams = computed(() => {
+    // if (!this.dbData.value) {
+    //   return [];
+    // }
+    return this.dbData.value?.ownedStreams ?? [];
   });
 
   jwtUserData: JwtUserData;
@@ -188,10 +189,9 @@ export class BaseClient {
     }
     return pProducers;
   });
-  
 
   getPublicState(){
-    const ownedStreams = this.ownedVenues.value.reduce<Record<StreamId, StreamListInfo>>((acc, stream) => {
+    const ownedStreams = this.ownedStreams.value.reduce<Record<StreamId, StreamListInfo>>((acc, stream) => {
       const { streamId } = stream;
       acc[streamId as StreamId] = stream;
       return acc;

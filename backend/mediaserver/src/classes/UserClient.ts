@@ -17,7 +17,7 @@ type EventMapAdditions = {
   },
   user: {
     someClientStateUpdated: Payload<DataAndReason<ReturnType<UserClient['getPublicState']>>>,
-    myStateUpdated: Payload<DataAndReason<ReturnType<UserClient['getPublicState']>>>,
+    myStateUpdated: Payload<DataAndReason<ReturnType<UserClient['getPrivateState']>>>,
   }
 }
 export type UserClientEventMap = EventMapAdditions & BaseClientEventMap
@@ -96,6 +96,15 @@ export class UserClient extends BaseClient {
     }
   }
 
+  getPrivateState() {
+    const publicState = this.getPublicState();
+    const privateState = {
+      ...publicState,
+      assets: this.dbData.value?.assets ?? []
+    }
+    return privateState;
+  }
+
   getPublicState(){
     return {
       ...super.getPublicState(),
@@ -119,7 +128,7 @@ export class UserClient extends BaseClient {
     }
     log.info(`notyfying myStateUpdated for ${this.username} (${this.connectionId}) to itself`);
     // we emit the new clientstate to the client itself.
-    this.eventSender.user.myStateUpdated({ data: this.getPublicState(), reason });
+    this.eventSender.user.myStateUpdated({ data: this.getPrivateState(), reason });
   }
 
   async joinStream(streamId: StreamId) {

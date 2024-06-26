@@ -33,7 +33,7 @@ export const adminRouter = router({
     }
     if(
       !hasAtLeastSecurityRole(ctx.role, 'admin')
-      && -1 === ctx.client.ownedVenues.value.findIndex(v => v.streamId === streamId)) {
+      && -1 === ctx.client.ownedStreams.value.findIndex(v => v.streamId === streamId)) {
       throw new TRPCError({code: 'PRECONDITION_FAILED', message: 'You are not owner or dont have high enough permission. Now Cry!'});
     }
 
@@ -52,7 +52,7 @@ export const adminRouter = router({
     return { publicStreamState: vState, adminOnlyStramState: adminOnlyState };
   }),
   listMyStreams: atLeastModeratorP.query(async ({ ctx }) => {
-    return ctx.client.ownedVenues.value.map(({ streamId, name }) => ({ streamId, name }));
+    return ctx.client.ownedStreams.value.map(({ streamId, name }) => ({ streamId, name }));
   }),
   createCamera: currentVenueAdminP.input(z.object({
     name: z.string(),

@@ -54,6 +54,10 @@
             v-model.number="vrSpaceStore.writableVrSpaceState.dbData.spawnRadius" class="range">
         </label>
       </div>
+      <div>
+        <AssetUpload @uploaded="onAssetUploaded" :acceptedAssetTypes="['document', 'image', 'video']" name="object"
+          :showInUserLibrary="true" />
+      </div>
     </div>
     <!-- COLUMN 2 -->
     <div class="">
@@ -121,12 +125,14 @@
             <div>
               <h4>3D-modell för miljön</h4>
               <pre>{{ vrSpaceStore.currentVrSpace.dbData.worldModelAsset?.originalFileName }}</pre>
-              <UploadModelForm @uploaded="onModelUploaded" :acceptedAssetTypes="['model']" name="miljömodell" />
+              <AssetUpload @uploaded="onModelUploaded" :acceptedAssetTypes="['model']" name="miljömodell"
+                :showInUserLibrary="false" />
             </div>
             <div v-if="vrSpaceStore.currentVrSpace?.dbData.worldModelAsset">
               <h4>3D-modell för gåbara ytor (navmesh)</h4>
               <pre>{{ vrSpaceStore.currentVrSpace.dbData.navMeshAsset?.originalFileName }}</pre>
-              <UploadModelForm @uploaded="onNavmeshUploaded" acceptedAssetTypes="navmesh" name="navmesh" />
+              <AssetUpload @uploaded="onNavmeshUploaded" acceptedAssetTypes="navmesh" name="navmesh"
+                :showInUserLibrary="false" />
             </div>
           </div>
           <div class="flex gap-4">
@@ -141,7 +147,7 @@
 </template>
 
 <script setup lang="ts">
-import UploadModelForm, { type EmitTypes } from './UploadModelForm.vue';
+import AssetUpload, { type EmitTypes } from './AssetUpload.vue';
 import VrAFramePreview from '@/components/lobby/VrSpacePreview.vue';
 import { ref, watch, onMounted, computed, type ComponentInstance, nextTick } from 'vue';
 // import { throttle } from 'lodash-es';
@@ -171,6 +177,10 @@ const vrComponentTag = ref<ComponentInstance<typeof VrAFramePreview>>();
 const props = defineProps<{
   vrSpaceId: VrSpaceId
 }>();
+
+function onAssetUploaded(uploadDetails: UploadEventPayload) {
+  console.log(uploadDetails);
+}
 
 function onModelUploaded(uploadDetails: UploadEventPayload) {
   console.log(uploadDetails);
