@@ -4,7 +4,7 @@ import { useEventBus } from '@vueuse/core';
 
 import { type DetailEvent, THREE, type Entity, type Scene } from 'aframe';
 import sponzaUrl from '@/assets/models/sponza.glb?url';
-import { isVR, oculusButtons, oculusHandSimulator, simulateOculus, type RayIntersectionData, rayIntersectionData, clickKey } from '@/composables/lobbyUtils';
+import { isVR, oculusButtons, oculusHandSimulator, simulateOculus, type RayIntersectionData, rayIntersectionData, clickKey } from '@/composables/vrSpaceUtils';
 import { intersectionToTransform } from '@/modules/3DUtils';
 
 import UIOverlay from '@/components/lobby/UIOverlay.vue';

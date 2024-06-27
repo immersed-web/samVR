@@ -4,7 +4,7 @@ import { Pane } from 'tweakpane';
 
 import { computed, ref, onMounted, reactive, shallowRef } from 'vue';
 import { useEventBus } from '@vueuse/core';
-import { clickKey } from '@/composables/lobbyUtils';
+import { clickKey } from '@/composables/vrSpaceUtils';
 
 import { type DetailEvent, THREE, type Entity } from 'aframe';
 import PdfEntity from '@/components/lobby/PdfEntity.vue';
