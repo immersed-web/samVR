@@ -90,8 +90,12 @@
     <a-entity>
       <!-- The avatars -->
       <template v-for="(clientInfo, id) in clients" :key="id">
-        <RemoteAvatar v-if="clientInfo.connectionId !== clientStore.clientState?.connectionId && clientInfo.transform"
-          :id="'avatar-'+id" :client-info="clientInfo" />
+        <a-sphere v-if="clientInfo.transform?.head?.active" :position="clientInfo.transform?.head.position?.join(' ')"
+          color="red">
+
+        </a-sphere>
+        <!-- <RemoteAvatar v-if="clientInfo.connectionId !== clientStore.clientState?.connectionId && clientInfo.transform"
+          :id="'avatar-'+id" :client-info="clientInfo" /> -->
       </template>
     </a-entity>
   </template>
