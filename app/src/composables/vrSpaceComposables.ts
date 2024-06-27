@@ -1,13 +1,13 @@
-import { readonly, ref, shallowRef, watch } from 'vue';
+import { ref, shallowReadonly, shallowRef, watch } from 'vue';
 import { THREE } from 'aframe';
 import { type EventBusKey } from '@vueuse/core';
 import type { RayIntersectionData } from '@/modules/3DUtils';
 
 // #region Raycast & intersection
 const writableIntersection = shallowRef<RayIntersectionData>();
-const rayIntersectionData = readonly(writableIntersection);
+const rayIntersectionData = shallowReadonly(writableIntersection);
 function updateCursor(intersectionData: RayIntersectionData) {
-  // console.log('cursor updated:', data);
+  // console.log('cursor updated:', intersectionData);
   writableIntersection.value = intersectionData;
 }
 // watch(rayIntersectionData, (n, o) => console.log('cursor watcher triggered:', n, ' old:', o));

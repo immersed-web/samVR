@@ -10,14 +10,14 @@ const { currentCursor } = useCurrentCursorIntersection();
 import LaserPointerSelf from '@/components/lobby/LaserPointerSelf.vue';
 import LaserPointerOther from '@/components/lobby/LaserPointerOther.vue';
 
-const laserActive = ref(false);
+// const laserActive = ref(false);
 const otherPosition: Ref<THREE.Vector3 | undefined> = ref(undefined);
 
-window.addEventListener('keydown', (event) => {
-  if (event.isComposing || event.key === 'l') {
-    laserActive.value = !laserActive.value;
-  }
-});
+// window.addEventListener('keydown', (event) => {
+//   if (event.isComposing || event.key === 'l') {
+//     laserActive.value = !laserActive.value;
+//   }
+// });
 
 function laserUpdate(active: boolean, position?: THREE.Vector3) {
   // console.log("Laser update", active, position)
@@ -30,7 +30,7 @@ function laserUpdate(active: boolean, position?: THREE.Vector3) {
   <!-- Raycast and emit intersection points for own cursor / hand control -->
   <!-- Render as a white (inactive) or green (active) cube -->
   <Teleport to="#tp-aframe-cursor">
-    <LaserPointerSelf :active="laserActive" :intersection="currentCursor?.intersection.point" @update="laserUpdate" />
+    <LaserPointerSelf :intersection="currentCursor" @update="laserUpdate" />
   </Teleport>
 
   <Teleport to="#tp-aframe-scene">

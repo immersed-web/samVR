@@ -1,43 +1,36 @@
 <script setup lang="ts">
-import { toValue, watch } from 'vue';
-import { THREE } from 'aframe';
-// import { rayIntersectionData } from '@/composables/oculusSimulator';
+import { ref, watch } from 'vue';
+import { useEventListener } from '@vueuse/core';
+import { useVrSpaceStore } from '@/stores/vrSpaceStore';
+import { useCurrentCursorIntersection } from '@/composables/vrSpaceComposables';
 
-const props = defineProps<{
-  intersection?: THREE.Vector3
-  active: boolean
-}>();
+const vrSpaceStore = useVrSpaceStore()
+const { currentCursor } = useCurrentCursorIntersection();
 
-const emit = defineEmits<{
-  update: [active: boolean, position?: THREE.Vector3]
-}>();
+const laserActive = ref(false);
 
-// watch(() => props.intersection, (value) => {
-//   if(!value) { return }
-//   if(!props.active) { return }
-//   emitUpdate()
-// });
-// watch(() => rayIntersectionData.value?.intersection, (value) => {
-//   if (!value) { return; }
-//   if (!props.active) { return; }
-//   emitUpdate();
-// });
+useEventListener(window, 'keydown', (event) => {
+  if (event.isComposing || event.key === 'l') {
+    laserActive.value = !laserActive.value;
+  }
+})
 
-watch([() => props.active, () => props.intersection], () => {
-  emitUpdate();
+watch([laserActive, currentCursor], ([newActive, newIntersection], [oldActive, oldIntersection]) => {
+  if (newActive) {
+    if (!newIntersection) {
+      console.error('laser intersection was undefined while marked as active');
+      return;
+    }
+    vrSpaceStore.ownClientTransform.laserPointer = { active: newActive, position: newIntersection.intersection.point.toArray() };
+  } else if (!newActive && oldActive !== newActive) {
+    vrSpaceStore.ownClientTransform.laserPointer = { active: newActive };
+  }
 });
-
-function emitUpdate() {
-  // emit('update', props.active, rayIntersectionData.value?.intersection.point);
-  emit('update', props.active, toValue(props.intersection));
-}
 
 </script>
 
 <template>
-  <!-- <a-entity :position="$props.intersection"> -->
   <a-entity>
-    <!-- TODO: Should a-frame entities perhaps not be updated like below, using dynamic values? -->
-    <a-box id="laserPoint" scale=".075 .075 .075" :color="$props.active ? 'green' : 'white'" />
+    <a-box id="laserPoint" scale=".075 .075 .075" :color="laserActive ? 'green' : 'white'" />
   </a-entity>
 </template>

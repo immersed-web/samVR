@@ -421,9 +421,6 @@ export const PlacedObjectInsertSchema = createInsertSchema(schema.placedObjects,
 export type PlacedObjectInsert = z.TypeOf<typeof PlacedObjectInsertSchema>;
 
 
-
-
-
 export const JwtUserDataSchema = z.object({
   userId: UserIdSchema,
   username: z.string(),
@@ -434,16 +431,38 @@ export type JwtUserData = z.TypeOf<typeof JwtUserDataSchema>;
 export const JwtPayloadSchema = jwtDefaultPayload.merge(JwtUserDataSchema)
 export type JwtPayload = z.TypeOf<typeof JwtPayloadSchema>;
 
-const TransformSchema = z.object({
-    position: z.tuple([z.number(), z.number(), z.number()]),
-    orientation: z.tuple([z.number(), z.number(), z.number(), z.number()])
-  });
+const Vector3TupleSchema = z.tuple([z.number(), z.number(), z.number()]);
+const Vector4TupleSchema = z.tuple([z.number(), z.number(), z.number(), z.number()]);
+
+const TransformSchema = z.discriminatedUnion('active', [
+  z.object({
+    active: z.literal(true),
+    position: Vector3TupleSchema,
+    rotation: Vector4TupleSchema,
+  }),
+  z.object({
+    active: z.literal(false),
+  }),
+]);
 export type Transform = z.TypeOf<typeof TransformSchema>;
+
+const LaserPointerSchema = z.discriminatedUnion('active', [
+  z.object({
+    active: z.literal(false),
+  }),
+  z.object({
+    active: z.literal(true),
+    position: Vector3TupleSchema,
+    // startPosition: Vector3TupleSchema,
+    // endPosition: Vector3TupleSchema
+  }),
+])
 
 export const ClientTransformSchema = z.object({
   head: TransformSchema,
   leftHand: TransformSchema.optional(),
   rightHand: TransformSchema.optional(),
+  laserPointer: LaserPointerSchema.optional(),
 })
 export type ClientTransform = z.TypeOf<typeof ClientTransformSchema>;
 export type ClientTransforms = Record<ConnectionId, ClientTransform>;

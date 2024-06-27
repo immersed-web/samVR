@@ -1,13 +1,14 @@
 import { defineStore } from 'pinia';
 
 import { hasAtLeastPermissionLevel, type ClientTransform, type ClientTransforms, type ConnectionId, type VrSpaceId, type VrSpaceUpdate } from 'schemas';
-import { computed, readonly, ref } from 'vue';
+import { computed, readonly, ref, watch } from 'vue';
 import { useConnectionStore } from './connectionStore';
 import { eventReceiver, type ExtractPayload, type RouterOutputs, type SubscriptionValue } from '@/modules/trpcClient';
 import { useClientStore } from './clientStore';
 import { watchIgnorable, pausableWatch } from '@vueuse/core';
-import { debounce } from 'lodash-es'
+import { debounce, throttle } from 'lodash-es'
 import { getAssetUrl } from '@/modules/utils';
+import { reactive } from 'vue';
 
 type _ReceivedVrSpaceState = ExtractPayload<typeof eventReceiver.vrSpace.vrSpaceStateUpdated.subscribe>['data'];
 
@@ -108,9 +109,31 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     await connection.client.vr.updateVrSpace.mutate({ ...currentVrSpace.value.dbData, reason });
   }, 700);
 
-  async function updateTransform(transform: ClientTransform){
+  const ownClientTransform = reactive<ClientTransform>({
+    head: {
+      active: false,
+    }
+  })
+  watch(() => ownClientTransform, (newT, oldT) => {
+    if (!newT) return;
+    throttledTransformMutation(newT);
+  }, { deep: true });
+
+  const throttledTransformMutation = throttle(async (transform: ClientTransform) => {
+    // if(!sceneTag.value?.is('vr-mode')) {
+    //   delete currentTransform.leftHand;
+    //   delete currentTransform.rightHand;
+    // }
+    console.timeEnd('transformSend');
+    console.time('transformSend');
+  // console.log('gonna update transform', transform);
     await connection.client.vr.transform.updateTransform.mutate(transform);
-  }
+    // Unset hands after theyre sent
+  }, 100, { trailing: true });
+
+  // async function updateTransform(transform: ClientTransform){
+  //   await connection.client.vr.transform.updateTransform.mutate(transform);
+  // }
   
   return {
     currentVrSpace,
@@ -122,6 +145,7 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     enterVrSpace,
     leaveVrSpace,
     updateVrSpace,
-    updateTransform,
+    // updateTransform,
+    ownClientTransform,
   };
 });

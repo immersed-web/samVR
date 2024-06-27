@@ -58,7 +58,7 @@ export default () => {
         // console.log('emit-move component: transform updated', newPosition, newOrientation);
         const position = worldPos.toArray();
         const rotation = worldRot.toArray() as [number, number, number, number];
-        const transform = { position, rotation };
+        const transform = { active: true, position, rotation };
         this.throttledEmitMovement(transform);
       } 
       this.position = newPosition;

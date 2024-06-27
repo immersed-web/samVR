@@ -33,8 +33,10 @@
     <!-- The model -->
     <a-entity>
       <a-gltf-model @model-loaded="onModelLoaded" id="model" ref="modelTag" :src="vrSpaceStore.worldModelUrl" />
-      <a-gltf-model v-if="vrSpaceStore.navMeshUrl" id="navmesh" :src="vrSpaceStore.navMeshUrl" :visible="showNavMesh" />
+      <a-gltf-model v-if="vrSpaceStore.navMeshUrl" id="navmesh" :src="vrSpaceStore.navMeshUrl" :visible="showNavMesh"
+        class="clickable" />
     </a-entity>
+    <slot />
 
     <!-- <a-sphere
       id="teleportPreview"
@@ -221,16 +223,9 @@ async function onModelLoaded() {
     playerOriginTag.value.object3D.position.set(startPos.x, startPos.y, startPos.z);
     const worldPos = playerTag.value!.object3D.getWorldPosition(new THREE.Vector3());
     const worldRot = playerTag.value!.object3D.getWorldQuaternion(new THREE.Quaternion());
-    const trsfm: ClientTransform = {
-      head: {
-        position: worldPos.toArray(),
-        orientation: worldRot.toArray() as [number, number, number, number],
-      },
-    };
-    currentTransform.head = trsfm.head;
     await new Promise((res) => setTimeout(res, 200));
 
-    vrSpaceStore.updateTransform(trsfm);
+    // vrSpaceStore.updateTransform(trsfm);
     // placeRandomSpheres();
 
     // @ts-ignore
@@ -292,38 +287,39 @@ function getRandomSpawnPosition() {
 //     },
 //   });
 // }
-              
-const currentTransform: ClientTransform = {
-  head: {
-    position: [0,0,0],
-    orientation: [0,0,0,0],
-  },
-};
+
+// const currentTransform: ClientTransform = {
+//   head: {
+//     position: [0,0,0],
+//     rotation: [0, 0, 0, 0],
+//   },
+// };
 function onHeadMove(e: DetailEvent<ClientTransform['head']>) {
+  vrSpaceStore.ownClientTransform.head = e.detail;
   // console.log('head moved');
   // console.log(e.detail.position);
-  currentTransform.head = e.detail;
-  throttledTransformMutation();
+  // currentTransform.head = e.detail;
+  // throttledTransformMutation();
 }
 function onLeftHandMove(e: DetailEvent<ClientTransform['leftHand']>) {
   // console.log('left hand moved');
-  currentTransform.leftHand = e.detail;
-  throttledTransformMutation();
+  // currentTransform.leftHand = e.detail;
+  // throttledTransformMutation();
 }
 function onRightHandMove(e: DetailEvent<ClientTransform['rightHand']>) {
   // console.log('right hand moved');
   // console.log(e.detail?.orientation);
   // console.log(e.detail?.position);
-  currentTransform.rightHand = e.detail;
-  throttledTransformMutation();
+  // currentTransform.rightHand = e.detail;
+  // throttledTransformMutation();
 }
 
-const throttledTransformMutation = throttle(async () => {
-  if(!sceneTag.value?.is('vr-mode')) {
-    delete currentTransform.leftHand;
-    delete currentTransform.rightHand;
-  }
-  await vrSpaceStore.updateTransform(currentTransform);
-  // Unset hands after theyre sent
-}, 100, { trailing: true });
+// const throttledTransformMutation = throttle(async () => {
+//   if(!sceneTag.value?.is('vr-mode')) {
+//     delete currentTransform.leftHand;
+//     delete currentTransform.rightHand;
+//   }
+//   await vrSpaceStore.updateTransform(currentTransform);
+//   // Unset hands after theyre sent
+// }, 100, { trailing: true });
 </script>
