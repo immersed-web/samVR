@@ -5,7 +5,7 @@
       <div class="pointer-events-none *:pointer-events-auto" ref="domOutlet" id="aframe-dom-outlet" />
       <WaitForAframe>
         <a-scene ref="sceneTag">
-          <VrAFrame v-if="vrSpaceStore.worldModelUrl" :show-nav-mesh="true" />
+          <VrAFrame v-if="vrSpaceStore.worldModelUrl" :show-nav-mesh="false" />
         </a-scene>
       </WaitForAframe>
     </div>
