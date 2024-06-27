@@ -1,6 +1,5 @@
 
 import { useScriptTag } from '@vueuse/core';
-import type { Entity } from 'aframe';
 import { ref } from 'vue';
 
 const pdfjsLoaded = ref(false);

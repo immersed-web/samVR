@@ -1,12 +1,12 @@
 import { ref } from 'vue';
 import { THREE } from 'aframe';
 import { type EventBusKey } from '@vueuse/core';
+import type { RayIntersectionData } from '@/modules/3DUtils';
 
 export const isVR = ref(false);
 
 // #region Raycast & intersection
 
-export type RayIntersectionData = { intersection: THREE.Intersection, rayDirection: THREE.Vector3 };
 export const rayIntersectionData = ref<RayIntersectionData | undefined>();
 export const clickKey: EventBusKey<{ model: string, cursorObject: THREE.Object3D | undefined }> = Symbol('symbol-key');
 

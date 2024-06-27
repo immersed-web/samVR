@@ -15,7 +15,7 @@ export function useXRState(sceneEl: Ref<Scene | undefined>) {
   }
   // TODO: Find a way to track when listeners get deattached so we can flip the attached flag back to false.
   if(!eventListenersAttached){
-    useEventListener(sceneEl, 'enter-vr', () => {
+    const d = useEventListener(sceneEl, 'enter-vr', () => {
       console.log('entered VR event');
       isImmersed.value = true;
     });

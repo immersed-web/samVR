@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { type Ref, ref } from 'vue';
 import { type DetailEvent, THREE, type Scene } from 'aframe';
-import { isVR } from '@/composables/vrSpaceUtils';
+import { isVR } from '@/composables/oculusSimulator';
 
 import LaserPointerSelf from '@/components/lobby/LaserPointerSelf.vue';
 import LaserPointerOther from '@/components/lobby/LaserPointerOther.vue';
