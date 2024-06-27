@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { watch } from 'vue';
+import { toValue, watch } from 'vue';
 import { THREE } from 'aframe';
-import { rayIntersectionData } from '@/composables/lobbyUtils';
+// import { rayIntersectionData } from '@/composables/oculusSimulator';
 
 const props = defineProps<{
   intersection?: THREE.Vector3
@@ -17,18 +17,19 @@ const emit = defineEmits<{
 //   if(!props.active) { return }
 //   emitUpdate()
 // });
-watch(() => rayIntersectionData.value?.intersection, (value) => {
-  if (!value) { return; }
-  if (!props.active) { return; }
-  emitUpdate();
-});
+// watch(() => rayIntersectionData.value?.intersection, (value) => {
+//   if (!value) { return; }
+//   if (!props.active) { return; }
+//   emitUpdate();
+// });
 
-watch(() => props.active, () => {
+watch([() => props.active, () => props.intersection], () => {
   emitUpdate();
 });
 
 function emitUpdate() {
-  emit('update', props.active, rayIntersectionData.value?.intersection.point);
+  // emit('update', props.active, rayIntersectionData.value?.intersection.point);
+  emit('update', props.active, toValue(props.intersection));
 }
 
 </script>
