@@ -31,7 +31,7 @@
     "buffered-interpolation": "workspace:*",
     "camera-controls": "^2.8.5",
     "database": "workspace:^",
-    "date-fns": "^2.30.0",
+    "date-fns": "^3.0.0",
     "devalue": "^4.3.3",
     "fileserver": "workspace:^",
     "i": "^0.3.7",
