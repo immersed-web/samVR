@@ -1,97 +1,52 @@
 <template>
-  <a-entity
-    @loaded="onAvatarEntityLoaded"
-    ref="avatarRootTag"
-  >
-    <a-entity
-      :id="`head-${props.clientInfo.connectionId}`"
-      ref="remoteAvatar"
-      remote-avatar="interpolationTime: 350;"
-      mediastream-audio-source
-      @near-range-entered="onNearRangeEntered"
-      @near-range-exited="onNearRangeExited"
-    >
+  <a-entity @loaded="onAvatarEntityLoaded" ref="avatarRootTag">
+    <a-entity :id="`head-${props.clientInfo.connectionId}`" ref="remoteAvatar"
+      interpolated-transform="interpolationTime: 350;" mediastream-audio-source @near-range-entered="onNearRangeEntered"
+      @near-range-exited="onNearRangeExited">
       <a-entity scale="1 1 1">
-        <a-entity
-          :id="`left-hand-${props.clientInfo.connectionId}`"
-          visible="false"
-          remote-avatar="interpolationTime: 350;"
-          ref="leftHandTag"
-        >
-          <a-entity
-            scale="0.05 0.05 0.05"
-            rotation="-20 90 -140"
-            gltf-model="#avatar-hand-1"
-          />
+        <a-entity :id="`left-hand-${props.clientInfo.connectionId}`" visible="false"
+          interpolated-transform="interpolationTime: 350;" ref="leftHandTag">
+          <a-entity scale="0.05 0.05 0.05" rotation="-20 90 -140" gltf-model="#avatar-hand-1" />
           <!-- <a-entity
             gltf-model="url(/models/controllers/oculus-touch-controller-left.gltf)"
           /> -->
         </a-entity>
       </a-entity>
       <a-entity scale="1 1 1">
-        <a-entity
-          :id="`right-hand-${props.clientInfo.connectionId}`"
-          visible="false"
-          remote-avatar="interpolationTime: 350;"
-          ref="rightHandTag"
-        >
-          <a-entity
-            scale="0.05 0.05 -0.05"
-            rotation="20 90 -140"
-            gltf-model="#avatar-hand-1"
-          />
+        <a-entity :id="`right-hand-${props.clientInfo.connectionId}`" visible="false"
+          interpolated-transform="interpolationTime: 350;" ref="rightHandTag">
+          <a-entity scale="0.05 0.05 -0.05" rotation="20 90 -140" gltf-model="#avatar-hand-1" />
           <!-- <a-entity
             gltf-model="url(/models/controllers/oculus-touch-controller-right.gltf)"
           /> -->
         </a-entity>
       </a-entity>
-      
+
       <!-- <a-text
         class="distance-debug"
         value="unset"
         position="1 1 0"
         side="double"
       /> -->
-      <a-entity
-        rotation="0 180 0"
-      >
+      <a-entity rotation="0 180 0">
         <a-entity position="0 0 0">
           <a-entity gltf-model="#avatar-hat-1" />
           <a-entity gltf-model="#avatar-head-1" />
           <!-- <a-entity :gltf-model="`url(/models/avatar/eyes/Eyes${Math.trunc(Math.random()+1.5)}.glb)`" /> -->
           <a-entity gltf-model="#avatar-eyes-5" />
-          <a-entity
-            position="0 -0.05 0"
-            class="audio-level"
-          >
-            <a-entity
-              position="0 0.05 0.002"
-              gltf-model="#avatar-mouth-1"
-            />
+          <a-entity position="0 -0.05 0" class="audio-level">
+            <a-entity position="0 0.05 0.002" gltf-model="#avatar-mouth-1" />
           </a-entity>
         </a-entity>
         <a-entity ref="lowerBodyTag">
-        <!-- <a-entity> -->
+          <!-- <a-entity> -->
           <!-- <a-box position="0 -0.5 0" scale="0.4 0.5 0.3" color="red" /> -->
-          <a-text
-            :value="props.clientInfo.username"
-            align="center"
-            width="2.5"
-            position="0 0.4 0"
-          />
-          <a-entity
-            @loaded="onBodyLoaded"
-            gltf-model="#avatar-body-1"
-          />
+          <a-text :value="props.clientInfo.username" align="center" width="2.5" position="0 0.4 0" />
+          <a-entity @loaded="onBodyLoaded" gltf-model="#avatar-body-1" />
           <!-- <a-entity gltf-model="#avatar-vehicle-1" /> -->
         </a-entity>
       </a-entity>
-      <audio
-        ref="dummyAudioTag"
-        muted
-        autoplay
-        playsinline
-      />
+      <audio ref="dummyAudioTag" muted autoplay playsinline />
     </a-entity>
   </a-entity>
 </template>

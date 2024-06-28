@@ -5,7 +5,7 @@ import type { ClientTransform } from 'schemas';
 type Transform = ClientTransform['head']
 export default () => {
 
-  AFRAME.registerComponent('remote-avatar', {
+  AFRAME.registerComponent('interpolated-transform', {
 
     // Component schema (incoming properties)
     schema: {
@@ -30,17 +30,17 @@ export default () => {
       this.interpolationBuffer?.setPosition(pos);
       const rot = this.el.object3D.quaternion.clone();
       this.interpolationBuffer?.setQuaternion(rot);
-      
+
       // const foundEl = this.el.querySelector('.distance-debug');
       // if(foundEl) {
       //   this.distanceDebugEntity = foundEl as Entity;
       // }
-      
+
       console.log('Remote avatar initialized');
     },
     tick: function (time, timeDelta) {
 
-      if(this.interpolationBuffer){
+      if (this.interpolationBuffer) {
         // update buffer position
         this.interpolationBuffer.update(timeDelta);
         // Interpolate with buffered-interpolation - no workie yet.
@@ -54,7 +54,7 @@ export default () => {
       // }
     },
     events: {
-      setTransform: function(e: DetailEvent<Transform>) {
+      setTransform: function (e: DetailEvent<Transform>) {
         // console.log('remote-avatar event: setTransform', e);
         const trsfm = e.detail;
         const interpolationBuffer = this.interpolationBuffer!;
@@ -88,18 +88,18 @@ export default () => {
     },
     distanceToCamera: function () {
       const camera = this.el.sceneEl?.camera;
-      if(!camera) return;
+      if (!camera) return;
       const camWorldPos = camera.getWorldPosition(new THREE.Vector3());
       const avatarWorldPos = this.el.object3D.getWorldPosition(new THREE.Vector3());
       this.distance = avatarWorldPos.distanceTo(camWorldPos);
       const threshold = this.data.nearRangeThreshold as number;
       const hysteresis = this.data.nearRangeHysteresis as number;
-      if(!this.isNearRange && this.distance <= threshold){
+      if (!this.isNearRange && this.distance <= threshold) {
         this.isNearRange = true;
         // console.log('I am close', this.el);
         this.el.emit('near-range-entered', this.distance, false);
       }
-      else if(this.isNearRange && this.distance > threshold + hysteresis){
+      else if (this.isNearRange && this.distance > threshold + hysteresis) {
         this.isNearRange = false;
         // console.log('No longer close', this.el);
         this.el.emit('near-range-exited', this.distance, false);
