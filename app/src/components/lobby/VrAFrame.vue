@@ -59,7 +59,7 @@
 <script setup lang="ts">
 import { type Entity, type DetailEvent, utils as aframeUtils, THREE } from 'aframe';
 import { ref, onMounted, onBeforeMount, computed, onBeforeUnmount, inject } from 'vue';
-import RemoteAvatar from './RemoteAvatar.vue';
+import RemoteAvatar from './AvatarEntity.vue';
 import type { ClientTransform } from 'schemas';
 // import type { Unsubscribable } from '@trpc/server/observable';
 import { useClientStore } from '@/stores/clientStore';

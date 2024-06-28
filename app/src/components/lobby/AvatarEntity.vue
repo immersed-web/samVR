@@ -41,7 +41,7 @@
         <a-entity ref="lowerBodyTag">
           <!-- <a-entity> -->
           <!-- <a-box position="0 -0.5 0" scale="0.4 0.5 0.3" color="red" /> -->
-          <a-text :value="props.clientInfo.username" align="center" width="2.5" position="0 0.4 0" />
+          <!-- <a-text :value="props.clientInfo.username" align="center" width="2.5" position="0 0.4 0" /> -->
           <a-entity @loaded="onBodyLoaded" gltf-model="#avatar-body-1" />
           <!-- <a-entity gltf-model="#avatar-vehicle-1" /> -->
         </a-entity>
@@ -62,22 +62,22 @@ import { useSoupStore } from '@/stores/soupStore';
 
 // Props & emits
 const props = defineProps<{
-  clientInfo:  NonNullable<ReturnType<typeof useVrSpaceStore>['currentVrSpace']>['clients'][ConnectionId]
+  clientInfo: NonNullable<ReturnType<typeof useVrSpaceStore>['currentVrSpace']>['clients'][ConnectionId]
 }>();
 const soupStore = useSoupStore();
 
 // Distance to client camera callbacks
 const distanceColor = ref('white');
-async function onNearRangeEntered (e: CustomEvent<number>){
+async function onNearRangeEntered(e: CustomEvent<number>) {
   // console.log('onNearRangeEntered called', e.detail);
   distanceColor.value = 'green';
-  if(stream.value) return;
+  if (stream.value) return;
   stream.value = await getStreamFromProducerId(producerId.value);
 }
 
-function onNearRangeExited (e: CustomEvent<number>){
+function onNearRangeExited(e: CustomEvent<number>) {
   distanceColor.value = 'white';
-  if(producerId.value && soupStore.consumers.has(producerId.value)){
+  if (producerId.value && soupStore.consumers.has(producerId.value)) {
     closeConsumer();
   }
   stream.value = undefined;
@@ -85,7 +85,7 @@ function onNearRangeExited (e: CustomEvent<number>){
 }
 onMounted(async () => {
   console.log('remoteAvatar mounted');
-  if(!remoteAvatar.value) {
+  if (!remoteAvatar.value) {
     console.error('remoteAvatar entity ref undefined');
     return;
   }
@@ -93,7 +93,7 @@ onMounted(async () => {
 onBeforeUnmount(async () => {
   console.log('remoteAvatar will unmount');
   const pId = props.clientInfo.producers.audioProducer?.producerId;
-  if(pId && soupStore.consumers.has(pId)){
+  if (pId && soupStore.consumers.has(pId)) {
     console.log('gonna closeConsumer with producerId:', pId);
     await soupStore.closeConsumer(pId);
   }
@@ -109,11 +109,11 @@ watch(() => props.clientInfo, (n, o) => console.log('remoteAvatar prop updated. 
 watch(() => props.clientInfo.transform?.head, (newTransform) => {
   // console.log('head updated: ', newTransform?.position);
   // console.log('remote avatar transform updated!');
-  if(!remoteAvatar.value) {
+  if (!remoteAvatar.value) {
     console.error('couldnt update avatar transform cause entityRef was undefined');
     return;
   }
-  if(!newTransform) {
+  if (!newTransform) {
     console.warn('clientInfo transform was undefined');
     return;
   }
@@ -128,24 +128,24 @@ watch(() => props.clientInfo.transform?.head, (newTransform) => {
 
 function handleReceivedHandTransform(newTransform: Transform | undefined, oldTransform: Transform | undefined, handEntity: Entity) {
   // Hide hand if no transform is received
-  if(!newTransform){
+  if (!newTransform) {
     handEntity.setAttribute('visible', false);
     return;
   }
-    handEntity.setAttribute('visible', true);
+  handEntity.setAttribute('visible', true);
   // show hand and set transform directly if went from undefined to tansformdata
-  if(!oldTransform) { 
+  if (!oldTransform) {
     handEntity.emit('setTransform', newTransform);
     return;
   }
   // tansform was updated. Lets move the hand
-  handEntity.emit('moveTo', {position: newTransform.position}, false);
-  handEntity.emit('rotateTo', {orientation: newTransform.orientation}, false);
+  handEntity.emit('moveTo', { position: newTransform.position }, false);
+  handEntity.emit('rotateTo', { orientation: newTransform.orientation }, false);
 }
 
 watch(() => props.clientInfo.transform?.leftHand, (newTrsfm, oldT) => {
   // console.log(`${props.clientInfo.username}, left hand updated ${newTrsfm?.position}`);
-  if(!leftHandTag.value) {
+  if (!leftHandTag.value) {
     console.error('no hand model tag found');
     return;
   };
@@ -154,7 +154,7 @@ watch(() => props.clientInfo.transform?.leftHand, (newTrsfm, oldT) => {
 
 watch(() => props.clientInfo.transform?.rightHand, (newTrsfm, oldT) => {
   // console.log(`${props.clientInfo.username}, right hand updated ${newTrsfm?.position}`);
-  if(!rightHandTag.value) {
+  if (!rightHandTag.value) {
 
     console.error('no hand model tag found');
     return;
@@ -164,21 +164,21 @@ watch(() => props.clientInfo.transform?.rightHand, (newTrsfm, oldT) => {
 
 let stream = shallowRef<MediaStream>();
 watch(stream, () => {
-  if(!stream.value) {
+  if (!stream.value) {
     // console.error('stream became undefined');
     return;
   }
-  if(!dummyAudioTag.value){
+  if (!dummyAudioTag.value) {
     console.error('audio dummytag was undefined');
     return;
   }
   dummyAudioTag.value.srcObject = stream.value;
-  if(!remoteAvatar.value?.hasLoaded){
+  if (!remoteAvatar.value?.hasLoaded) {
     console.warn('skipping to emit stream because aframe entity (and thus the components) was not yet ready or undefined');
     return;
   }
   console.log('emitting stream for avatar after stream was updated:', stream.value);
-  remoteAvatar.value.emit('setMediaStream', {stream: stream.value});
+  remoteAvatar.value.emit('setMediaStream', { stream: stream.value });
 });
 
 const producerId = computed(() => props.clientInfo.producers.audioProducer?.producerId);
@@ -192,22 +192,22 @@ const producerId = computed(() => props.clientInfo.producers.audioProducer?.prod
 //   stream.value = await getStreamFromProducerId(newAudioProducerId);
 // }, {immediate: false});
 
-async function onAvatarEntityLoaded(e: DetailEvent<any>){
+async function onAvatarEntityLoaded(e: DetailEvent<any>) {
   console.log('avatar a-entity loaded!');
   // NOTE: For some reason the event isnt received by the entity if we dont put it on the event queue.
   // I guess there is something that makes the entity trigger the loaded event before it is _actually_ fully ready.
   await new Promise(res => setTimeout(res, 0));
-  if(!remoteAvatar.value){
+  if (!remoteAvatar.value) {
     console.error('remoteAvatar was undefined');
     return;
   }
   remoteAvatar.value.emit('setTransform', props.clientInfo.transform?.head);
-  if(!stream.value){
+  if (!stream.value) {
     console.log('stream is undefined. Will not emit');
     return;
   }
   console.log('emitting mediastream to entity after avatar entity loaded', stream.value);
-  remoteAvatar.value.emit('setMediaStream', {stream: stream.value});
+  remoteAvatar.value.emit('setMediaStream', { stream: stream.value });
 }
 
 function onBodyLoaded() {
@@ -216,11 +216,11 @@ function onBodyLoaded() {
   lowerBodyTag.value?.setAttribute('lock-rotation-axis', true);
 }
 
-async function getStreamFromProducerId(producerId?: ProducerId){
+async function getStreamFromProducerId(producerId?: ProducerId) {
   // console.log('getStreamFromProducerId called');
-  if(!producerId) return undefined;
+  if (!producerId) return undefined;
   let consumerData = soupStore.consumers.get(producerId);
-  if(!consumerData){
+  if (!consumerData) {
     await soupStore.consume(producerId);
     consumerData = soupStore.consumers.get(producerId)!;
     // return new MediaStream([track]);
@@ -229,13 +229,11 @@ async function getStreamFromProducerId(producerId?: ProducerId){
   return new MediaStream([consumerData.consumer.track]);
 }
 
-async function closeConsumer(){
-  if(!producerId.value) return;
+async function closeConsumer() {
+  if (!producerId.value) return;
   soupStore.closeConsumer(producerId.value);
 }
 
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>
