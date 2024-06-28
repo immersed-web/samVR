@@ -1,23 +1,5 @@
 <template>
   <template v-if="vrSpaceStore.currentVrSpace">
-    <!-- <a-assets
-      timeout="20000"
-    >
-      <a-asset-item
-        id="model-asset"
-        :src="modelUrl"
-      />
-      <a-asset-item
-        v-if="navmeshUrl"
-        id="navmesh-asset"
-        :src="navmeshUrl"
-      />
-      <a-asset-item
-        id="avatar-asset"
-        src="/models/avatar/Character_Base_Mesh_5.glb"
-        @loaded="avatarModelFileLoaded = true"
-      />
-    </a-assets> -->
     <a-entity id="vr-portals">
       <template v-for="placedObject in vrSpaceStore.currentVrSpace?.dbData.placedObjects"
         :key="placedObject.placedObjectId">
@@ -30,42 +12,13 @@
     </a-entity>
 
     <a-sky :color="skyColor" />
-    <!-- The model -->
     <a-entity>
       <a-gltf-model @model-loaded="onModelLoaded" id="model" ref="modelTag" :src="vrSpaceStore.worldModelUrl" />
       <a-gltf-model v-if="vrSpaceStore.navMeshUrl" id="navmesh" :src="vrSpaceStore.navMeshUrl" :visible="showNavMesh"
         class="clickable" />
     </a-entity>
     <slot />
-
-    <!-- <a-sphere
-      id="teleportPreview"
-      color="#6173F4"
-      radius="0.25"
-    /> -->
-
-    <!-- <a-entity
-      visible="false"
-      id="teleportPreview"
-    >
-      <a-ring
-        color="teal"
-        radius-inner="1"
-        radius-outer="2"
-        rotation="-90 0 0"
-        scale="0.2 0.2 0.2"
-        position="0 0.01 0"
-      />
-    </a-entity> -->
-
     <a-entity id="camera-rig" ref="playerOriginTag">
-      <!-- <a-ring
-        color="blue"
-        rotation="-90 0 0"
-        radius-outer="0.3"
-        radius-inner="0.2"
-        material="transparent: true; opacity: 0.4"
-      /> -->
       <a-camera @loaded="onCameraLoaded" id="camera" ref="playerTag"
         look-controls="reverseMouseDrag: true; reverseTouchDrag: true;" wasd-controls="acceleration:65;"
         emit-move="interval: 20" position="0 1.65 0">
@@ -92,7 +45,6 @@
       <template v-for="(clientInfo, id) in clients" :key="id">
         <a-entity
           :interpolated-transform="`interpolationTime: 350; position: ${clientInfo.transform?.head?.position?.join(' ')}; rotation: ${clientInfo.transform?.head?.rotation?.join(' ')};`">
-
           <a-sphere v-if="clientInfo.transform?.head?.active" color="red" scale="0.8 1 0.4 ">
           </a-sphere>
           <a-troika-text look-at-camera :value="clientInfo.username" position="0 1.4 0" />
