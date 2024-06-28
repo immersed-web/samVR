@@ -90,10 +90,13 @@
     <a-entity>
       <!-- The avatars -->
       <template v-for="(clientInfo, id) in clients" :key="id">
-        <a-sphere ref="" v-if="clientInfo.transform?.head?.active" color="red" scale="0.8 1 0.4 "
+        <a-entity
           :interpolated-transform="`interpolationTime: 350; position: ${clientInfo.transform?.head?.position?.join(' ')}; rotation: ${clientInfo.transform?.head?.rotation?.join(' ')};`">
 
-        </a-sphere>
+          <a-sphere v-if="clientInfo.transform?.head?.active" color="red" scale="0.8 1 0.4 ">
+          </a-sphere>
+          <a-troika-text look-at-camera :value="clientInfo.username" position="0 1.4 0" />
+        </a-entity>
         <!-- <RemoteAvatar v-if="clientInfo.connectionId !== clientStore.clientState?.connectionId && clientInfo.transform"
           :id="'avatar-'+id" :client-info="clientInfo" /> -->
       </template>
