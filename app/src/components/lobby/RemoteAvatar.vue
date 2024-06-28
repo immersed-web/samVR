@@ -110,16 +110,20 @@ watch(() => props.clientInfo.transform?.head, (newTransform) => {
   // console.log('head updated: ', newTransform?.position);
   // console.log('remote avatar transform updated!');
   if(!remoteAvatar.value) {
-    console.error('could update avatar transform cause entityRef was undefined');
+    console.error('couldnt update avatar transform cause entityRef was undefined');
     return;
   }
   if(!newTransform) {
     console.warn('clientInfo transform was undefined');
     return;
   }
+  if (!newTransform.active) {
+    console.error('received an inactive transform. bailing out');
+    return;
+  }
   // console.log('emitting received transform to avatar entity');
-  remoteAvatar.value.emit('moveTo', {position: newTransform.position}, false);
-  remoteAvatar.value.emit('rotateTo', {orientation: newTransform.orientation}, false);
+  remoteAvatar.value.emit('moveTo', { position: newTransform.position }, false);
+  remoteAvatar.value.emit('rotateTo', { orientation: newTransform.rotation }, false);
 });
 
 function handleReceivedHandTransform(newTransform: Transform | undefined, oldTransform: Transform | undefined, handEntity: Entity) {

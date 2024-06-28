@@ -1,29 +1,36 @@
-import type { DetailEvent, Entity } from 'aframe';
+import { utils, type Coordinate, type DetailEvent, type Entity } from 'aframe';
 import InterpolationBuffer from 'buffered-interpolation';
-import type { ClientTransform } from 'schemas';
+import type { Transform as MaybeTransform } from 'schemas';
+// import type { Vector3 } from 'three';
 
-type Transform = ClientTransform['head']
+type Coordinate4D = Coordinate & { w: number };
+
+type ActiveTransform = Extract<MaybeTransform, { active: true }>;
 export default () => {
 
   AFRAME.registerComponent('interpolated-transform', {
-
-    // Component schema (incoming properties)
+    // dependencies: ['position', 'orientation'],
     schema: {
       interpolationTime: { type: 'number', default: 500 },
       nearRangeThreshold: { type: 'number', default: 7 },
       nearRangeHysteresis: { type: 'number', default: 4 },
+      position: { type: 'vec3' },
+      rotation: { type: 'vec4' },
     },
-    // dependencies: ['position', 'orientation'],
-
-    // Component variables
     interpolationBuffer: undefined as InterpolationBuffer | undefined,
     cameraPosition: new AFRAME.THREE.Vector3(),
     distance: 1000,
     isNearRange: false,
+    utilQuat: undefined as unknown as THREE.Quaternion,
+    utilVec: undefined as unknown as THREE.Vector3,
+    oldPosStr: undefined as unknown as string,
+    oldRotStr: undefined as unknown as string,
     // distanceDebugEntity: undefined as Entity | undefined,
-
-    // Component a-frame callbacks
     init: function () {
+      this.utilQuat = new AFRAME.THREE.Quaternion();
+      this.utilVec = new AFRAME.THREE.Vector3();
+      this.oldPosStr = '';
+      this.oldRotStr = '';
       // console.log('Remote avatar init', this.data.id);
       this.initInterpolationBuffer();
       const pos = this.el.object3D.position.clone();
@@ -37,6 +44,21 @@ export default () => {
       // }
 
       console.log('Remote avatar initialized');
+    },
+    update() {
+      const position = this.data.position as Coordinate;
+      const newPositionStr = utils.coordinates.stringify(position);
+      const rotation = this.data.rotation as Coordinate4D;
+      const newRotationStr = utils.coordinates.stringify(rotation);
+      if (newPositionStr !== this.oldPosStr || newRotationStr !== this.oldRotStr) {
+        console.warn('setting interpolated transform through html attributes. Possibly less performant than doing by events');
+        this.utilVec.set(position.x, position.y, position.z);
+        this.utilQuat.set(rotation.x, rotation.y, rotation.z, rotation.w);
+        this.interpolationBuffer?.setPosition(this.utilVec);
+        this.interpolationBuffer?.setQuaternion(this.utilQuat);
+      }
+      this.oldPosStr = newPositionStr;
+      this.oldRotStr = newRotationStr;
     },
     tick: function (time, timeDelta) {
 
@@ -54,17 +76,17 @@ export default () => {
       // }
     },
     events: {
-      setTransform: function (e: DetailEvent<Transform>) {
+      setTransform: function (e: DetailEvent<ActiveTransform>) {
         // console.log('remote-avatar event: setTransform', e);
         const trsfm = e.detail;
         const interpolationBuffer = this.interpolationBuffer!;
         interpolationBuffer.setPosition(new AFRAME.THREE.Vector3(...trsfm.position));
-        interpolationBuffer.setQuaternion(new AFRAME.THREE.Quaternion(...trsfm.orientation));
+        interpolationBuffer.setQuaternion(new AFRAME.THREE.Quaternion(...trsfm.rotation));
         interpolationBuffer.jumpToMostRecentFrame();
         e.stopPropagation();
         // console.log(interpolationBuffer.buffer);
       },
-      moveTo: function (e: DetailEvent<Pick<Transform, 'position'>>) {
+      moveTo: function (e: DetailEvent<Pick<ActiveTransform, 'position'>>) {
         // // Interpolate with buffered-interpolation
         // const id = this.el.id;
         // console.log(`${id} moved to`, e.detail.position);
@@ -73,13 +95,20 @@ export default () => {
         e.stopPropagation();
       },
 
-      rotateTo: function (e: DetailEvent<Pick<Transform, 'orientation'>>) {
+      rotateTo: function (e: DetailEvent<Pick<ActiveTransform, 'rotation'>>) {
         // // Interpolate with buffered-interpolation
         // console.log('Rotate to',e.detail.orientation);
-        const rot = e.detail.orientation;
+        const rot = e.detail.rotation;
         this.interpolationBuffer!.setQuaternion(new AFRAME.THREE.Quaternion(rot[0], rot[1], rot[2], rot[3]));
         e.stopPropagation();
       },
+      setTargetTransform: function (e: DetailEvent<ActiveTransform>) {
+        const trsfm = e.detail;
+        const interpolationBuffer = this.interpolationBuffer!;
+        interpolationBuffer.setPosition(new AFRAME.THREE.Vector3(...trsfm.position));
+        interpolationBuffer.setQuaternion(new AFRAME.THREE.Quaternion(...trsfm.rotation));
+        e.stopPropagation();
+      }
     },
 
     // Component functions
