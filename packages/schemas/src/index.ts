@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { ZodLiteral, ZodUnion, z } from 'zod';
 import type { JwtPayload as JwtShapeFromLib } from 'jsonwebtoken'
 // import { Role, Venue, VirtualSpace3DModel, Visibility, Camera, CameraType as PrismaCameraType, Prisma, ModelFileFormat } from "database";
 import * as schema from 'database/schema';
@@ -176,9 +176,9 @@ export const assetTypesToExtensionsMap = {
   model: ['glb'],
   navmesh: ['glb'],
 } as const satisfies Record<AssetType, string[]>
-function concat<T extends unknown[], U extends unknown[]>(t: [...T], u: [...U]): [...T, ...U] {
-  return [...t, ...u];
-}
+// function concat<T extends unknown[], U extends unknown[]>(t: [...T], u: [...U]): [...T, ...U] {
+//   return [...t, ...u];
+// }
 
 // function buildList<T extends AssetType>(t: T[]): [typeof assetTypesToExtensionsMap[T][number]] {
 //   return t.reduce<[typeof assetTypesToExtensionsMap[T][number]]>((acc, curr) => {
@@ -467,6 +467,67 @@ export const ClientTransformSchema = z.object({
 export type ClientTransform = z.TypeOf<typeof ClientTransformSchema>;
 export type ClientTransforms = Record<ConnectionId, ClientTransform>;
 
+// const avatarAssets = {
+//   hands: ['hands_basic_left'],
+//   heads: ['heads_basic'],
+//   torsos: ['torsos_basic_male'],
+//   eyes: ['eyes_huge', 'eyes_relaxed', 'eyes_cool', 'eyes_kind', 'eyes_round', 'eyes_npc'],
+//   eyebrows: ['eyebrows_brookie', 'eyebrows_innocent', 'eyebrows_reynolds', 'eyebrows_tyler', 'eyebrows_npc', undefined],
+//   mouths: ['mouth_polite_smile', 'mouth_prettypolite_smile', 'mouth_npc'],
+//   hair: ['hair_ponytail', 'hair_multicolor', 'hair_thick_buzzcut', 'hair_cool', 'hair_kevin', 'hair_wolf', undefined],
+//   facialhair: [undefined, 'facialhair_almond', 'facialhair_bigboi', 'facialhair_curled', 'facialhair_johnny', 'facialhair_laotzu'],
+//   clothes: ['clothes_poloshirt', 'clothes_button_dress', 'clothes_casual_dress', 'clothes_fancy_dress', 'clothes_tshirt', 'clothes_turtleneck', 'clothes_vneck', undefined],
+//   accessories: [undefined, 'accessories_cateye', 'accessories_round', 'accessories_square'],
+//   jewelry: [undefined, 'jewelry_pearl', 'jewelry_diamond', 'jewelry_diamond2', 'jewelry_diamond3', 'jewelry_sparkling_hoopdrop_gold', 'jewelry_sparkling_hoopdrop_silver', 'jewelry_diamond_tripple', 'jewelry_hoopdroop_gold', 'jewelry_hoopdroop_silver', 'jewelry_pearl_tripple', 'jewelry_star_tripple_gold', 'jewelry_star_tripple_silver'],
+//   layer: [undefined, 'layer_lowrider', 'layer_safari']
+// } as const;
+
+const skinParts = ['hands', 'heads', 'torsos'] as const;
+
+const literalArray = skinParts.map(s => z.literal(s))
+
+export const AvatarDesignSchema = z.object({
+  skinColor: z.string().optional(),
+  parts: z.object({
+    hands: z.literal('hands_basic_left'),
+    heads: z.literal('heads_basic'),
+    torsos: z.literal('torsos_basic_male'),
+    eyes: z.union([z.literal('eyes_huge'), z.literal('eyes_relaxed'), z.literal('eyes_cool'), z.literal('eyes_kind'), z.literal('eyes_round'), z.literal('eyes_npc')]),
+    eyebrows: z.union([z.literal('eyebrows_brookie'), z.literal('eyebrows_innocent'), z.literal('eyebrows_reynolds'), z.literal('eyebrows_tyler'), z.literal('eyebrows_npc'), z.undefined()]),
+    mouths: z.union([z.literal('mouth_polite_smile'), z.literal('mouth_prettypolite_smile'), z.literal('mouth_npc')]),
+    hair: z.union([z.literal('hair_ponytail'), z.literal('hair_multicolor'), z.literal('hair_thick_buzzcut'), z.literal('hair_cool'), z.literal('hair_kevin'), z.literal('hair_wolf'), z.undefined()]),
+    facialhair: z.union([z.undefined(), z.literal('facialhair_almond'), z.literal('facialhair_bigboi'), z.literal('facialhair_curled'), z.literal('facialhair_johnny'), z.literal('facialhair_laotzu')]),
+    clothes: z.union([z.literal('clothes_poloshirt'), z.literal('clothes_button_dress'), z.literal('clothes_casual_dress'), z.literal('clothes_fancy_dress'), z.literal('clothes_tshirt'), z.literal('clothes_turtleneck'), z.literal('clothes_vneck'), z.undefined()]),
+    accessories: z.union([z.undefined(), z.literal('accessories_cateye'), z.literal('accessories_round'), z.literal('accessories_square')]),
+    jewelry: z.union([z.undefined(), z.literal('jewelry_pearl'), z.literal('jewelry_diamond'),]),
+    layer: z.union([z.undefined(), z.literal('layer_lowrider'), z.literal('layer_safari')])
+  })
+});
+const partSchema = AvatarDesignSchema.shape.parts;
+const partKeys = partSchema.keyof().options;
+const ss = partSchema.shape[partKeys[6]];
+let assetsBuildingObj = {};
+for (const partKey of partKeys) {
+  const partTypeSchema = partSchema.shape[partKey];
+  if (partTypeSchema instanceof ZodLiteral) {
+    assetsBuildingObj[partKey] = [partTypeSchema.value];
+  }
+  else if (partTypeSchema instanceof ZodUnion) {
+    assetsBuildingObj[partKey] = [];
+    for (const option of partTypeSchema.options) {
+      assetsBuildingObj[partKey].push(option.value);
+    }
+  }
+  // parts[partKey] = [];
+  // for (const part of partsForKey) {
+  //   parts[partKey].push(partsForKey.options[0].value);
+  // }
+}
+export const avatarAssets = assetsBuildingObj;
+
+console.log(assetsBuildingObj);
+// const hairKey = partKeys[6];
+// const hairParts = partSchema.shape[partKeys[6]].options[0].value
 
 // export const ClientInfoSchema = z.object({
 //   userId: UserIdSchema,
