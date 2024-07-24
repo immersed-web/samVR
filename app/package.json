@@ -32,7 +32,7 @@
     "camera-controls": "^2.8.5",
     "database": "workspace:^",
     "date-fns": "^2.30.0",
-    "devalue": "^4.3.3",
+    "devalue": "^5.0.0",
     "fileserver": "workspace:^",
     "i": "^0.3.7",
     "jwt-decode": "^3.1.2",
