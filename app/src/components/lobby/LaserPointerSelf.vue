@@ -37,6 +37,6 @@ function emitUpdate() {
   <!-- <a-entity :position="$props.intersection"> -->
   <a-entity>
     <!-- TODO: Should a-frame entities perhaps not be updated like below, using dynamic values? -->
-    <a-box id="laserPoint" scale=".075 .075 .075" :color="$props.active ? 'green' : 'white'" />
+    <a-box id="laserPoint" scale=".025 .025 .025" :color="$props.active ? 'green' : 'white'" />
   </a-entity>
 </template>

@@ -26,6 +26,7 @@
       "editor.defaultFormatter": "Prisma.prisma",
       "editor.formatOnSave": true
     },
+    "editor.formatOnSaveMode": "modifications",
   },
   "extensions": {
     "recommendations": [

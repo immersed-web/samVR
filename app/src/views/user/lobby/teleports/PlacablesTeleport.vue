@@ -156,7 +156,7 @@ const assets: Asset[] = [
   },
 ];
 
-const assetPickerIsOpen = ref(true);
+const assetPickerIsOpen = ref(false);
 
 const placedObjectsEntity = ref<Entity>();
 function placeMovedObject(cursorObject: THREE.Object3D) {
