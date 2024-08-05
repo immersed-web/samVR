@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 
-import { oculusButtons } from '@/composables/lobbyUtils';
+import { oculusButtons } from '@/composables/vrSpaceComposables';
 
 import EmojiSelf from '@/components/lobby/EmojiSelf.vue';
 import SpriteRender from '@/components/lobby/SpriteRenderer.vue';

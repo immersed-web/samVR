@@ -18,25 +18,29 @@ import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue'
 import { Vue3ColorPicker } from '@cyhnkckali/vue3-color-picker';
 import "@cyhnkckali/vue3-color-picker/dist/style.css"
 import WaitForAframe from '@/components/WaitForAframe.vue';
+import { avatarAssets } from 'schemas';
 
 onMounted(() => {
   loadAvatarFromStorage();
 })
 
-const avatarAssets = {
-  hands: ['hands_basic_left'],
-  heads: ['heads_basic'],
-  torsos: ['torsos_basic_male'],
-  eyes: ['eyes_huge', 'eyes_relaxed', 'eyes_cool', 'eyes_kind', 'eyes_round', 'eyes_npc'],
-  eyebrows: ['eyebrows_brookie', 'eyebrows_innocent', 'eyebrows_reynolds', 'eyebrows_tyler', 'eyebrows_npc', undefined],
-  mouths: ['mouth_polite_smile', 'mouth_prettypolite_smile', 'mouth_npc'],
-  hair: ['hair_ponytail', 'hair_multicolor', 'hair_thick_buzzcut', 'hair_cool', 'hair_kevin', 'hair_wolf', undefined],
-  facialhair: [undefined, 'facialhair_almond', 'facialhair_bigboi', 'facialhair_curled', 'facialhair_johnny', 'facialhair_laotzu'],
-  clothes: ['clothes_poloshirt', 'clothes_button_dress', 'clothes_casual_dress', 'clothes_fancy_dress', 'clothes_tshirt', 'clothes_turtleneck', 'clothes_vneck', undefined],
-  accessories: [undefined, 'accessories_cateye', 'accessories_round', 'accessories_square'],
-  jewelry: [undefined, 'jewelry_pearl', 'jewelry_diamond', 'jewelry_diamond2', 'jewelry_diamond3', 'jewelry_sparkling_hoopdrop_gold', 'jewelry_sparkling_hoopdrop_silver', 'jewelry_diamond_tripple', 'jewelry_hoopdroop_gold', 'jewelry_hoopdroop_silver', 'jewelry_pearl_tripple', 'jewelry_star_tripple_gold', 'jewelry_star_tripple_silver'],
-  layer: [undefined, 'layer_lowrider', 'layer_safari']
-};
+// const avatarAssets = {
+//   hands: ['hands_basic_left'],
+//   heads: ['heads_basic'],
+//   torsos: ['torsos_basic_male'],
+//   eyes: ['eyes_huge', 'eyes_relaxed', 'eyes_cool', 'eyes_kind', 'eyes_round', 'eyes_npc'],
+//   eyebrows: ['eyebrows_brookie', 'eyebrows_innocent', 'eyebrows_reynolds', 'eyebrows_tyler', 'eyebrows_npc', undefined],
+//   mouths: ['mouth_polite_smile', 'mouth_prettypolite_smile', 'mouth_npc'],
+//   hair: ['hair_ponytail', 'hair_multicolor', 'hair_thick_buzzcut', 'hair_cool', 'hair_kevin', 'hair_wolf', undefined],
+//   facialhair: [undefined, 'facialhair_almond', 'facialhair_bigboi', 'facialhair_curled', 'facialhair_johnny', 'facialhair_laotzu'],
+//   clothes: ['clothes_poloshirt', 'clothes_button_dress', 'clothes_casual_dress', 'clothes_fancy_dress', 'clothes_tshirt', 'clothes_turtleneck', 'clothes_vneck', undefined],
+//   accessories: [undefined, 'accessories_cateye', 'accessories_round', 'accessories_square'],
+//   jewelry: [undefined, 'jewelry_pearl', 'jewelry_diamond', 'jewelry_diamond2', 'jewelry_diamond3', 'jewelry_sparkling_hoopdrop_gold', 'jewelry_sparkling_hoopdrop_silver', 'jewelry_diamond_tripple', 'jewelry_hoopdroop_gold', 'jewelry_hoopdroop_silver', 'jewelry_pearl_tripple', 'jewelry_star_tripple_gold', 'jewelry_star_tripple_silver'],
+//   layer: [undefined, 'layer_lowrider', 'layer_safari']
+// } as const;
+
+// console.log(avatarAssets);
+// console.log(avatarAssetSchemaVersion);
 
 const skinParts = ['hands', 'heads', 'torsos'];
 
@@ -45,6 +49,7 @@ const currentAvatarSettings = reactive({ skinColor: '', parts: Object.fromEntrie
 watch(() => currentAvatarSettings, () => saveAvatarSettingsToStorage(), { deep: true });
 function saveAvatarSettingsToStorage() {
   window.localStorage.setItem('avatarSettings', JSON.stringify(currentAvatarSettings));
+
 }
 
 function loadAvatarFromStorage() {

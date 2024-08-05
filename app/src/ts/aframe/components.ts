@@ -2,7 +2,7 @@ import 'aframe';
 
 import emitMove from './emit-move';
 import rotationControl from './rotation-control';
-import remoteAvatar from './remote-avatar';
+import interpolatedTransform from './interpolated-transform';
 import navmesh from './simple-navmesh-constraint';
 import raycasterListen from './raycaster-listen';
 import hoverHighlight from './hover-highlight';
@@ -32,7 +32,7 @@ export default async function () {
   }
   console.log('Registering a-frame components');
   emitMove();
-  remoteAvatar();
+  interpolatedTransform();
   navmesh();
   raycasterListen();
   rotationControl();

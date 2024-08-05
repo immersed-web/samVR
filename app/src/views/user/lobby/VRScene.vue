@@ -4,7 +4,9 @@ import { useEventBus } from '@vueuse/core';
 
 import { type DetailEvent, THREE, type Entity, type Scene } from 'aframe';
 import sponzaUrl from '@/assets/models/sponza.glb?url';
-import { isVR, oculusButtons, oculusHandSimulator, simulateOculus, type RayIntersectionData, rayIntersectionData, clickKey } from '@/composables/lobbyUtils';
+import { oculusButtons, oculusHandSimulator, simulateOculus, useCurrentCursorIntersection, clickKey } from '@/composables/vrSpaceComposables';
+import { useXRState } from '@/composables/XRState';
+import { intersectionToTransform, type RayIntersectionData } from '@/modules/3DUtils';
 
 import UIOverlay from '@/components/lobby/UIOverlay.vue';
 import EmojiTeleport from '@/views/user/lobby/teleports/EmojiTeleport.vue';
@@ -18,13 +20,17 @@ import EmojiOther from '@/components/lobby/EmojiOther.vue';
 import emojiSheetUrl from '@/assets/sprite-128.png';
 import WaitForAframe from '@/components/WaitForAframe.vue';
 
+const { updateCursor } = useCurrentCursorIntersection()
+
 type Tuple = [number, number]
 
 const sceneTag = ref<Scene>();
+useXRState(sceneTag);
 
 const cursorEntity = ref<Entity>();
 function placeCursor(evt: DetailEvent<RayIntersectionData>) {
-  rayIntersectionData.value = evt.detail;
+  // rayIntersectionData.value = evt.detail;
+  updateCursor(evt.detail);
   const cursor = cursorEntity.value;
   if (!cursor) return;
   const transform = intersectionToTransform(evt.detail);
@@ -34,39 +40,6 @@ function placeCursor(evt: DetailEvent<RayIntersectionData>) {
   cursor.object3D.rotation.setFromQuaternion(quat);
 }
 
-function intersectionToTransform(intersectionData: RayIntersectionData, normalOffset: number = 0.05) {
-  const { intersection, rayDirection } = intersectionData;
-  const position = intersection.point.clone();
-  const rotation = new THREE.Quaternion();
-  const normal = intersection.normal;
-  if (!normal) { console.error('no normal vector in intersection object'); return; }
-
-
-  //Rotation part
-  const fromVector = new THREE.Vector3(0, 0, 1);
-  rotation.setFromUnitVectors(fromVector, normal);
-  const euler = new THREE.Euler().reorder('YXZ').setFromQuaternion(rotation);
-  euler.z = 0;
-  // if flat placement, align with camera direction
-  if (euler.x < (-Math.PI / 2 + 0.01)) {// && euler.x > (-Math.PI / 4 - 0.01)) {
-    // const quat = new THREE.Quaternion();
-    // const cameraRot = sceneTag.value!.camera.getWorldQuaternion(quat);
-    // const eul = new THREE.Euler().reorder('YXZ').setFromQuaternion(cameraRot);
-
-    const quat = new THREE.Quaternion().setFromUnitVectors(fromVector, rayDirection.clone().negate());
-    const eul = new THREE.Euler().reorder('YXZ').setFromQuaternion(quat);
-    euler.y = eul.y;
-  }
-  const quat = new THREE.Quaternion().setFromEuler(euler);
-
-  // Position part
-  position.add(normal.clone().setLength(normalOffset));
-  position.set(...position.toArray());
-  return {
-    position: position.toArray(),
-    rotation: quat.toArray() as THREE.Vector4Tuple,
-  };
-}
 
 const bus = useEventBus(clickKey);
 function onClick(evt: DetailEvent<{ cursorEl: Entity, intersection: THREE.Intersection }>) {
@@ -109,8 +82,7 @@ simulateOculus();
     <!-- Components (prefereably in @/assets/views/teleports/) can render to here using the Teleport component -->
     <a-scene id="tp-aframe-scene" ref="sceneTag" style="width: 100vw; height: 100vh;"
       cursor="fuse:false; rayOrigin:mouse;" raycaster="objects: .clickable" raycaster-update
-      @raycast-update="placeCursor" xr-mode-ui="enabled: true;" @enter-vr="isVR = true" @exit-vr="isVR = false" look
-      renderer="sortTransparentObjects: true">
+      @raycast-update="placeCursor" xr-mode-ui="enabled: true;" look renderer="sortTransparentObjects: true">
       <a-assets>
         <a-asset-item id="sponza" :src="sponzaUrl" />
         <a-asset-item id="hand-control-left-obj"

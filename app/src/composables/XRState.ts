@@ -1,5 +1,5 @@
 import type { Scene } from 'aframe';
-import { ref, type Ref } from 'vue';
+import { computed, ref, toValue, watch, type MaybeRef, type Ref } from 'vue';
 // import { onBeforeRouteLeave } from 'vue-router';
 import { useEventListener, tryOnMounted, whenever } from '@vueuse/core';
 
@@ -8,18 +8,23 @@ let eventListenersAttached = false
 const isImmersed = ref(false);
 // const navigatedWhileImmersed = ref(false);
 // const timeoutControl = ref<ReturnType<typeof useTimeoutFn>>();
-let timeoutId: number | undefined = undefined;
-export function useXRState(sceneEl: Ref<Scene | undefined>) {
-  if(sceneEl.value){
-    isImmersed.value = sceneEl.value.is('vr-mode');
+// let timeoutId: number | undefined = undefined;
+export function useXRState(sceneElRef?: Ref<Scene | undefined>) {
+  if (!sceneElRef) return { isImmersed };
+  const sceneEl = toValue(sceneElRef);
+  if (sceneEl) {
+    isImmersed.value = sceneEl.is('vr-mode');
   }
+  watch(sceneElRef, (newSceneEl) => {
+    isImmersed.value = newSceneEl?.is('vr-mode') ?? false;
+  })
   // TODO: Find a way to track when listeners get deattached so we can flip the attached flag back to false.
   if(!eventListenersAttached){
-    useEventListener(sceneEl, 'enter-vr', () => {
+    const d = useEventListener(sceneElRef, 'enter-vr', () => {
       console.log('entered VR event');
       isImmersed.value = true;
     });
-    useEventListener(sceneEl, 'exit-vr', () => {
+    useEventListener(sceneElRef, 'exit-vr', () => {
       console.log('exited VR event');
       isImmersed.value = false;
     });

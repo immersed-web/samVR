@@ -56,7 +56,7 @@ const props = withDefaults(defineProps<{
   name?: string,
 }>(), {
   name: '',
-  showInUserLibrary: undefined
+  showInUserLibrary: undefined // default to undefined will let the db use it's default value
 });
 
 const emit = defineEmits<{
@@ -133,7 +133,7 @@ async function uploadFile() {
   if (abortController) abortController.abort();
   abortController = new AbortController();
   try {
-    if(pickedFile.value){
+    if (pickedFile.value) {
       const data = new FormData();
       data.append('file', pickedFile.value, pickedFile.value.name);
       data.set('assetType', derivedAssetType.value)
@@ -185,6 +185,7 @@ async function uploadFile() {
     extensionOfPickedFile.value = undefined;
     abortController.abort('failed to send file');
   }
+  fileInput.value!.value = '';
 };
 
 // const update3DModel = async (extension: 'gltf' | 'glb' | null) => {

@@ -1,15 +1,20 @@
-import { ref } from 'vue';
+import { ref, shallowReadonly, shallowRef, watch } from 'vue';
 import { THREE } from 'aframe';
 import { type EventBusKey } from '@vueuse/core';
-
-export const isVR = ref(false);
+import type { RayIntersectionData } from '@/modules/3DUtils';
 
 // #region Raycast & intersection
-
-export type RayIntersectionData = { intersection: THREE.Intersection, rayDirection: THREE.Vector3 };
-export const rayIntersectionData = ref<RayIntersectionData | undefined>();
+const writableIntersection = shallowRef<RayIntersectionData>();
+const rayIntersectionData = shallowReadonly(writableIntersection);
+function updateCursor(intersectionData: RayIntersectionData) {
+  // console.log('cursor updated:', intersectionData);
+  writableIntersection.value = intersectionData;
+}
+// watch(rayIntersectionData, (n, o) => console.log('cursor watcher triggered:', n, ' old:', o));
+export function useCurrentCursorIntersection() {
+  return { currentCursor: rayIntersectionData, updateCursor };
+}
 export const clickKey: EventBusKey<{ model: string, cursorObject: THREE.Object3D | undefined }> = Symbol('symbol-key');
-
 // #endregion
 
 // #region Simulate VR & hand Oculus controls on desktop

@@ -10,9 +10,12 @@ import { PermissionInsertSchema, UuidSchema, hasAtLeastPermissionLevel, isStream
 import { Stream, VrSpace } from 'classes/InternalClasses.js';
 
 export const userRouter = router({
-  getClientState: p.query(({ctx}) => {
-    return ctx.client.getPublicState();
-  }),
+  // getClientState: p.query(({ctx}) => {
+  //   if (ctx.client.clientType === 'client') {
+  //     return ctx.client.getPrivateState();
+  //   }
+  //   return ctx.client.getPublicState();
+  // }),
   getAllUsers: atLeastUserP.use(isUserClientM).query(async ({ ctx }) => {
     const dbResponse = await db.query.users.findMany({
       with: {

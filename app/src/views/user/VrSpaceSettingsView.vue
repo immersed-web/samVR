@@ -54,6 +54,16 @@
             v-model.number="vrSpaceStore.writableVrSpaceState.dbData.spawnRadius" class="range">
         </label>
       </div>
+      <div>
+        <AssetUpload @uploaded="onAssetUploaded" :acceptedAssetTypes="['document', 'image', 'video']" name="object"
+          :showInUserLibrary="true" />
+      </div>
+      <div v-if="clientStore.clientState?.assets" class="grid gap-2 grid-cols-[auto_auto] max-h-64 overflow-y-auto">
+        <template v-for="asset in clientStore.clientState.assets" :key="asset.assetId">
+          <div>{{ asset.originalFileName }}</div>
+          <button class="btn btn-sm btn-secondary">placera</button>
+        </template>
+      </div>
     </div>
     <!-- COLUMN 2 -->
     <div class="">
@@ -121,12 +131,14 @@
             <div>
               <h4>3D-modell för miljön</h4>
               <pre>{{ vrSpaceStore.currentVrSpace.dbData.worldModelAsset?.originalFileName }}</pre>
-              <UploadModelForm @uploaded="onModelUploaded" :acceptedAssetTypes="['model']" name="miljömodell" />
+              <AssetUpload @uploaded="onModelUploaded" :acceptedAssetTypes="['model']" name="miljömodell"
+                :showInUserLibrary="false" />
             </div>
             <div v-if="vrSpaceStore.currentVrSpace?.dbData.worldModelAsset">
               <h4>3D-modell för gåbara ytor (navmesh)</h4>
               <pre>{{ vrSpaceStore.currentVrSpace.dbData.navMeshAsset?.originalFileName }}</pre>
-              <UploadModelForm @uploaded="onNavmeshUploaded" acceptedAssetTypes="navmesh" name="navmesh" />
+              <AssetUpload @uploaded="onNavmeshUploaded" acceptedAssetTypes="navmesh" name="navmesh"
+                :showInUserLibrary="false" />
             </div>
           </div>
           <div class="flex gap-4">
@@ -141,7 +153,7 @@
 </template>
 
 <script setup lang="ts">
-import UploadModelForm, { type EmitTypes } from './UploadModelForm.vue';
+import AssetUpload, { type EmitTypes } from './AssetUpload.vue';
 import VrAFramePreview from '@/components/lobby/VrSpacePreview.vue';
 import { ref, watch, onMounted, computed, type ComponentInstance, nextTick } from 'vue';
 // import { throttle } from 'lodash-es';
@@ -150,6 +162,7 @@ import { insertablePermissionHierarchy, type PlacedObjectId, type VrSpaceId } fr
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import { useConnectionStore } from '@/stores/connectionStore';
 import { useAuthStore } from '@/stores/authStore';
+import { useClientStore } from '@/stores/clientStore';
 import type { RouterOutputs } from '@/modules/trpcClient';
 import UserBanner from '@/components/UserBanner.vue';
 import { getAssetUrl, uploadFileData } from '@/modules/utils';
@@ -165,12 +178,22 @@ type ScreenshotPayload = ExtractEmitData<'screenshot', ComponentInstance<typeof 
 const backendConnection = useConnectionStore();
 const vrSpaceStore = useVrSpaceStore();
 const authStore = useAuthStore();
+const clientStore = useClientStore();
 
 const vrComponentTag = ref<ComponentInstance<typeof VrAFramePreview>>();
 
 const props = defineProps<{
   vrSpaceId: VrSpaceId
 }>();
+
+function onAssetUploaded(uploadDetails: UploadEventPayload) {
+  console.log(uploadDetails);
+  // TODO: We should probalby have the server notify a clientstate update
+  // right now we just do this hack to keep assets in local clientState in sync with db.
+  // This means the server client instance is not updated with the new asset.
+  // @ts-ignore
+  clientStore.clientState?.assets.push(uploadDetails);
+}
 
 function onModelUploaded(uploadDetails: UploadEventPayload) {
   console.log(uploadDetails);

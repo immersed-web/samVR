@@ -1,23 +1,5 @@
 <template>
   <template v-if="vrSpaceStore.currentVrSpace">
-    <!-- <a-assets
-      timeout="20000"
-    >
-      <a-asset-item
-        id="model-asset"
-        :src="modelUrl"
-      />
-      <a-asset-item
-        v-if="navmeshUrl"
-        id="navmesh-asset"
-        :src="navmeshUrl"
-      />
-      <a-asset-item
-        id="avatar-asset"
-        src="/models/avatar/Character_Base_Mesh_5.glb"
-        @loaded="avatarModelFileLoaded = true"
-      />
-    </a-assets> -->
     <a-entity id="vr-portals">
       <template v-for="placedObject in vrSpaceStore.currentVrSpace?.dbData.placedObjects"
         :key="placedObject.placedObjectId">
@@ -30,40 +12,13 @@
     </a-entity>
 
     <a-sky :color="skyColor" />
-    <!-- The model -->
     <a-entity>
       <a-gltf-model @model-loaded="onModelLoaded" id="model" ref="modelTag" :src="vrSpaceStore.worldModelUrl" />
-      <a-gltf-model v-if="vrSpaceStore.navMeshUrl" id="navmesh" :src="vrSpaceStore.navMeshUrl" :visible="showNavMesh" />
+      <a-gltf-model v-if="vrSpaceStore.navMeshUrl" id="navmesh" :src="vrSpaceStore.navMeshUrl" :visible="showNavMesh"
+        class="clickable" />
     </a-entity>
-
-    <!-- <a-sphere
-      id="teleportPreview"
-      color="#6173F4"
-      radius="0.25"
-    /> -->
-
-    <!-- <a-entity
-      visible="false"
-      id="teleportPreview"
-    >
-      <a-ring
-        color="teal"
-        radius-inner="1"
-        radius-outer="2"
-        rotation="-90 0 0"
-        scale="0.2 0.2 0.2"
-        position="0 0.01 0"
-      />
-    </a-entity> -->
-
+    <slot />
     <a-entity id="camera-rig" ref="playerOriginTag">
-      <!-- <a-ring
-        color="blue"
-        rotation="-90 0 0"
-        radius-outer="0.3"
-        radius-inner="0.2"
-        material="transparent: true; opacity: 0.4"
-      /> -->
       <a-camera @loaded="onCameraLoaded" id="camera" ref="playerTag"
         look-controls="reverseMouseDrag: true; reverseTouchDrag: true;" wasd-controls="acceleration:65;"
         emit-move="interval: 20" position="0 1.65 0">
@@ -88,8 +43,14 @@
     <a-entity>
       <!-- The avatars -->
       <template v-for="(clientInfo, id) in clients" :key="id">
-        <RemoteAvatar v-if="clientInfo.connectionId !== clientStore.clientState?.connectionId && clientInfo.transform"
-          :id="'avatar-'+id" :client-info="clientInfo" />
+        <a-entity
+          :interpolated-transform="`interpolationTime: 350; position: ${clientInfo.transform?.head?.position?.join(' ')}; rotation: ${clientInfo.transform?.head?.rotation?.join(' ')};`">
+          <a-sphere v-if="clientInfo.transform?.head?.active" color="red" scale="0.8 1 0.4 ">
+          </a-sphere>
+          <a-troika-text look-at-camera :value="clientInfo.username" position="0 1.4 0" />
+        </a-entity>
+        <!-- <RemoteAvatar v-if="clientInfo.connectionId !== clientStore.clientState?.connectionId && clientInfo.transform"
+          :id="'avatar-'+id" :client-info="clientInfo" /> -->
       </template>
     </a-entity>
   </template>
@@ -98,7 +59,7 @@
 <script setup lang="ts">
 import { type Entity, type DetailEvent, utils as aframeUtils, THREE } from 'aframe';
 import { ref, onMounted, onBeforeMount, computed, onBeforeUnmount, inject } from 'vue';
-import RemoteAvatar from './RemoteAvatar.vue';
+import RemoteAvatar from './AvatarEntity.vue';
 import type { ClientTransform } from 'schemas';
 // import type { Unsubscribable } from '@trpc/server/observable';
 import { useClientStore } from '@/stores/clientStore';
@@ -221,16 +182,9 @@ async function onModelLoaded() {
     playerOriginTag.value.object3D.position.set(startPos.x, startPos.y, startPos.z);
     const worldPos = playerTag.value!.object3D.getWorldPosition(new THREE.Vector3());
     const worldRot = playerTag.value!.object3D.getWorldQuaternion(new THREE.Quaternion());
-    const trsfm: ClientTransform = {
-      head: {
-        position: worldPos.toArray(),
-        orientation: worldRot.toArray() as [number, number, number, number],
-      },
-    };
-    currentTransform.head = trsfm.head;
     await new Promise((res) => setTimeout(res, 200));
 
-    vrSpaceStore.updateTransform(trsfm);
+    // vrSpaceStore.updateTransform(trsfm);
     // placeRandomSpheres();
 
     // @ts-ignore
@@ -292,38 +246,39 @@ function getRandomSpawnPosition() {
 //     },
 //   });
 // }
-              
-const currentTransform: ClientTransform = {
-  head: {
-    position: [0,0,0],
-    orientation: [0,0,0,0],
-  },
-};
+
+// const currentTransform: ClientTransform = {
+//   head: {
+//     position: [0,0,0],
+//     rotation: [0, 0, 0, 0],
+//   },
+// };
 function onHeadMove(e: DetailEvent<ClientTransform['head']>) {
+  vrSpaceStore.ownClientTransform.head = e.detail;
   // console.log('head moved');
   // console.log(e.detail.position);
-  currentTransform.head = e.detail;
-  throttledTransformMutation();
+  // currentTransform.head = e.detail;
+  // throttledTransformMutation();
 }
 function onLeftHandMove(e: DetailEvent<ClientTransform['leftHand']>) {
   // console.log('left hand moved');
-  currentTransform.leftHand = e.detail;
-  throttledTransformMutation();
+  // currentTransform.leftHand = e.detail;
+  // throttledTransformMutation();
 }
 function onRightHandMove(e: DetailEvent<ClientTransform['rightHand']>) {
   // console.log('right hand moved');
   // console.log(e.detail?.orientation);
   // console.log(e.detail?.position);
-  currentTransform.rightHand = e.detail;
-  throttledTransformMutation();
+  // currentTransform.rightHand = e.detail;
+  // throttledTransformMutation();
 }
 
-const throttledTransformMutation = throttle(async () => {
-  if(!sceneTag.value?.is('vr-mode')) {
-    delete currentTransform.leftHand;
-    delete currentTransform.rightHand;
-  }
-  await vrSpaceStore.updateTransform(currentTransform);
-  // Unset hands after theyre sent
-}, 100, { trailing: true });
+// const throttledTransformMutation = throttle(async () => {
+//   if(!sceneTag.value?.is('vr-mode')) {
+//     delete currentTransform.leftHand;
+//     delete currentTransform.rightHand;
+//   }
+//   await vrSpaceStore.updateTransform(currentTransform);
+//   // Unset hands after theyre sent
+// }, 100, { trailing: true });
 </script>
