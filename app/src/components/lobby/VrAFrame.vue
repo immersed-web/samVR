@@ -18,19 +18,22 @@
         class="clickable" />
     </a-entity>
     <slot />
+
     <a-entity id="camera-rig" ref="playerOriginTag">
       <a-camera @loaded="onCameraLoaded" id="camera" ref="playerTag"
         look-controls="reverseMouseDrag: true; reverseTouchDrag: true;" wasd-controls="acceleration:65;"
         emit-move="interval: 20" position="0 1.65 0">
+        <a-entity id="tp-aframe-camera" />
       </a-camera>
+
       <a-entity ref="leftHandTag" id="left-hand" @controllerconnected="leftControllerConnected = true"
         @controllerdisconnected="leftControllerConnected = false" laser-controls="hand:left"
         raycaster="objects: .clickable" emit-move="interval: 20; relativeToCamera: true">
         <a-entity :visible="leftControllerConnected" scale="0.05 0.05 0.05" rotation="20 90 -140"
           gltf-model="#avatar-hand-1" />
       </a-entity>
-      <a-entity ref="rightHandTag" id="right-hand" @controllerconnected="rightControllerConnected= true"
-        @controllerdisconnected="rightControllerConnected= false" oculus-touch-controls="hand:right"
+      <a-entity ref="rightHandTag" id="right-hand" @controllerconnected="rightControllerConnected = true"
+        @controllerdisconnected="rightControllerConnected = false" oculus-touch-controls="hand:right"
         blink-controls="cameraRig: #camera-rig; teleportOrigin: #camera; collisionEntities: #navmesh;"
         emit-move="interval: 20; relativeToCamera: true">
         <a-entity :visible="rightControllerConnected" scale="0.05 0.05 -0.05" rotation="20 90 -140"
@@ -45,8 +48,7 @@
       <template v-for="(clientInfo, id) in clients" :key="id">
         <a-entity
           :interpolated-transform="`interpolationTime: 350; position: ${clientInfo.transform?.head?.position?.join(' ')}; rotation: ${clientInfo.transform?.head?.rotation?.join(' ')};`">
-          <a-sphere v-if="clientInfo.transform?.head?.active" color="red" scale="0.8 1 0.4 ">
-          </a-sphere>
+          <a-sphere v-if="clientInfo.transform?.head?.active" color="red" scale="0.8 1 0.4 " />
           <a-troika-text look-at-camera :value="clientInfo.username" position="0 1.4 0" />
         </a-entity>
         <!-- <RemoteAvatar v-if="clientInfo.connectionId !== clientStore.clientState?.connectionId && clientInfo.transform"
@@ -73,6 +75,7 @@ import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import { aFrameSceneProvideKey } from '@/modules/injectionKeys';
 import { getAssetUrl } from '@/modules/utils';
 import VrSpacePortal from '../entities/VrSpacePortal.vue';
+import EmojiOther from './EmojiOther.vue';
 
 const router = useRouter();
 // Stores
@@ -84,7 +87,7 @@ const soupStore = useSoupStore();
 const props = defineProps({
   // modelUrl: {type: String, required: true},
   // navmeshUrl: {type: String, default: ''},
-  showNavMesh: {type: Boolean, default: false},
+  showNavMesh: { type: Boolean, default: false },
   // modelScale: {type: Number, default: 1},
 });
 
@@ -121,7 +124,7 @@ const clients = computed(() => vrSpaceStore.currentVrSpace?.clients);
 
 const skyColor = computed(() => {
   return vrSpaceStore.currentVrSpace?.dbData.skyColor ?? 'lightskyblue';
-})
+});
 
 onBeforeMount(async () => {
   // console.log('onBeforeMount');
@@ -153,7 +156,7 @@ onMounted(async () => {
 });
 
 function onCameraLoaded() {
-  console.log('camera loaded. attaching scene attributes');
+  console.log('camera loaded. attaching scene attributes', navmeshId.value);
   sceneTag.value!.setAttribute('cursor', { rayOrigin: 'mouse', fuse: false });
   // the  raycaster seem to keep a reference to the intersected object which leads to us missing "new" intersection after reattaching raycaster-listen.
   // This is a hacky work-around to "reset" the raycasting logic
@@ -179,6 +182,7 @@ async function onModelLoaded() {
       startPos = new THREE.Vector3();
       bbox.getCenter(startPos);
     }
+    console.log('Start position', startPos);
     playerOriginTag.value.object3D.position.set(startPos.x, startPos.y, startPos.z);
     const worldPos = playerTag.value!.object3D.getWorldPosition(new THREE.Vector3());
     const worldRot = playerTag.value!.object3D.getWorldQuaternion(new THREE.Quaternion());
@@ -215,7 +219,7 @@ function placeRandomSpheres() {
 
 function getRandomSpawnPosition() {
   const spawnPosition = vrSpaceStore.currentVrSpace?.dbData.spawnPosition as Point | undefined;
-  const spawnRadius = vrSpaceStore.currentVrSpace?.dbData.spawnRadius;
+  const spawnRadius = vrSpaceStore.currentVrSpace?.dbData.spawnRadius || 1;
   if (!spawnPosition || !spawnRadius) return;
   const randomRadianAngle = 2 * Math.PI * Math.random(); // radian angle
   // Why sqrt? Check here: https://programming.guide/random-point-within-circle.html

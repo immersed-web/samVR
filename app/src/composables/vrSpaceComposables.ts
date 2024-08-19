@@ -3,6 +3,8 @@ import { THREE } from 'aframe';
 import { type EventBusKey } from '@vueuse/core';
 import type { RayIntersectionData } from '@/modules/3DUtils';
 
+export type Tuple = [number, number]
+
 // #region Raycast & intersection
 const writableIntersection = shallowRef<RayIntersectionData>();
 const rayIntersectionData = shallowReadonly(writableIntersection);
