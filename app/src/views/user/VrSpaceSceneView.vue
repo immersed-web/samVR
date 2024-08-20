@@ -11,8 +11,8 @@
             <a-entity id="teleport-target-aframe-scene" />
             <a-entity id="teleport-target-aframe-cursor"
               :position="currentCursor?.intersection.point.toArray().join(' ')" :visible="true">
-              <a-ring color="yellow" radius-inner="0.1" radius-outer="0.2" material="shader: flat;"
-                rotation="-90 0 0" />
+              <a-ring :color="isCursorOnNavmesh ? 'yellow' : 'red'" :opacity="isCursorOnNavmesh ? 1 : 0.5"
+                radius-inner="0.1" radius-outer="0.2" material="shader: flat;" rotation="-90 0 0" />
               <!-- <LaserPointerSelf @update="onLaserPointerUpdate" /> -->
             </a-entity>
           </VrAFrame>
@@ -44,7 +44,7 @@ import { onBeforeMount, provide, ref, watch, getCurrentInstance } from 'vue';
 import type { Scene } from 'aframe';
 import WaitForAframe from '@/components/WaitForAframe.vue';
 import { useRouter } from 'vue-router';
-import { useCurrentCursorIntersection, type Tuple } from '@/composables/vrSpaceComposables';
+import { useCurrentCursorIntersection, type Tuple, isCursorOnNavmesh } from '@/composables/vrSpaceComposables';
 // import LaserPointerSelf from '@/components/lobby/LaserPointerSelf.vue';
 import type { RayIntersectionData } from '@/modules/3DUtils';
 import UIOverlay from '@/components/UIOverlay.vue';

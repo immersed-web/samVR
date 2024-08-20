@@ -1,4 +1,4 @@
-import { ref, shallowReadonly, shallowRef, watch } from 'vue';
+import { computed, ref, shallowReadonly, shallowRef } from 'vue';
 import { THREE } from 'aframe';
 import { type EventBusKey } from '@vueuse/core';
 import type { RayIntersectionData } from '@/modules/3DUtils';
@@ -9,13 +9,19 @@ export type Tuple = [number, number]
 const writableIntersection = shallowRef<RayIntersectionData>();
 const rayIntersectionData = shallowReadonly(writableIntersection);
 function updateCursor(intersectionData: RayIntersectionData) {
-  // console.log('cursor updated:', intersectionData);
   writableIntersection.value = intersectionData;
 }
+
 // watch(rayIntersectionData, (n, o) => console.log('cursor watcher triggered:', n, ' old:', o));
 export function useCurrentCursorIntersection() {
   return { currentCursor: rayIntersectionData, updateCursor };
 }
+
+export const isCursorOnNavmesh = computed((): boolean => {
+  if (!rayIntersectionData.value) { return false; }
+  return rayIntersectionData.value.intersection.object.el.classList.contains('navmesh');
+});
+
 export const clickKey: EventBusKey<{ model: string, cursorObject: THREE.Object3D | undefined }> = Symbol('symbol-key');
 // #endregion
 

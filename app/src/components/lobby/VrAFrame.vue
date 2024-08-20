@@ -13,10 +13,12 @@
 
     <a-sky :color="skyColor" />
     <a-entity>
-      <a-gltf-model @model-loaded="onModelLoaded" id="model" ref="modelTag" :src="vrSpaceStore.worldModelUrl" />
+      <a-gltf-model @model-loaded="onModelLoaded" id="model" ref="modelTag" :src="vrSpaceStore.worldModelUrl"
+        class="clickable" :class="{ 'navmesh': !vrSpaceStore.navMeshUrl }" />
       <a-gltf-model v-if="vrSpaceStore.navMeshUrl" id="navmesh" :src="vrSpaceStore.navMeshUrl" :visible="showNavMesh"
-        class="clickable" />
+        class="clickable navmesh" />
     </a-entity>
+
     <slot />
 
     <a-entity id="camera-rig" ref="playerOriginTag">
