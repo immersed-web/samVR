@@ -16,17 +16,16 @@
       <a-gltf-model @model-loaded="onModelLoaded" id="model" ref="modelTag" :src="vrSpaceStore.worldModelUrl"
         class="clickable" :class="{ 'navmesh': !vrSpaceStore.navMeshUrl }" />
       <a-gltf-model v-if="vrSpaceStore.navMeshUrl" id="navmesh" :src="vrSpaceStore.navMeshUrl" :visible="showNavMesh"
-        class="clickable navmesh" />
+        class="clickable navmesh" @mousedown="teleportMouseDown" @click="teleportSelf" />
     </a-entity>
 
     <slot />
 
-    <a-entity id="camera-rig" ref="playerOriginTag">
-      <a-camera @loaded="onCameraLoaded" id="camera" ref="playerTag"
-        look-controls="reverseMouseDrag: true; reverseTouchDrag: true;" wasd-controls="acceleration:65;"
-        emit-move="interval: 20" position="0 1.65 0">
-        <a-entity id="teleport-target-aframe-camera" />
-      </a-camera>
+    <!-- <a-entity id="camera-rig" ref="playerOriginTag"> -->
+    <a-camera @loaded="onCameraLoaded" id="camera" ref="headTag"
+      look-controls="reverseMouseDrag: true; reverseTouchDrag: true;" wasd-controls="acceleration:65;"
+      emit-move="interval: 20" position="0 1.65 0">
+      <a-entity id="teleport-target-aframe-camera" />
 
       <a-entity ref="leftHandTag" id="left-hand" @controllerconnected="leftControllerConnected = true"
         @controllerdisconnected="leftControllerConnected = false" laser-controls="hand:left"
@@ -41,7 +40,8 @@
         <a-entity :visible="rightControllerConnected" scale="0.05 0.05 -0.05" rotation="20 90 -140"
           gltf-model="#avatar-hand-1" />
       </a-entity>
-    </a-entity>
+    </a-camera>
+    <!-- </a-entity> -->
 
 
     <!-- Avatars wrapper element -->
@@ -85,6 +85,8 @@ import { getAssetUrl } from '@/modules/utils';
 import VrSpacePortal from '../entities/VrSpacePortal.vue';
 import EmojiOther from './EmojiOther.vue';
 import LaserPointerOther from './LaserPointerOther.vue';
+import { useCurrentCursorIntersection, isCursorOnNavmesh } from '@/composables/vrSpaceComposables';
+const { currentCursor } = useCurrentCursorIntersection();
 
 const router = useRouter();
 // Stores
@@ -111,8 +113,8 @@ const rightControllerConnected = ref(false);
 const leftControllerConnected = ref(false);
 
 const modelTag = ref<Entity>();
-const playerTag = ref<Entity>();
-const playerOriginTag = ref<Entity>();
+const headTag = ref<Entity>();
+// const playerOriginTag = ref<Entity>();
 const leftHandTag = ref<Entity>();
 const rightHandTag = ref<Entity>();
 
@@ -170,7 +172,7 @@ function onCameraLoaded() {
   // the  raycaster seem to keep a reference to the intersected object which leads to us missing "new" intersection after reattaching raycaster-listen.
   // This is a hacky work-around to "reset" the raycasting logic
   sceneTag.value!.setAttribute('raycaster', { objects: '.clickable' });
-  playerTag.value!.setAttribute('simple-navmesh-constraint', `navmesh:#${navmeshId.value}; fall:0.5; height:1.65;`);
+  headTag.value!.setAttribute('simple-navmesh-constraint', `navmesh:#${navmeshId.value}; fall:0.5; height:1.65;`);
 }
 
 onBeforeUnmount(async () => {
@@ -181,7 +183,8 @@ onBeforeUnmount(async () => {
 });
 
 async function onModelLoaded() {
-  if (modelTag.value && playerOriginTag.value) {
+  // if (modelTag.value && playerOriginTag.value) {
+  if (modelTag.value && headTag.value) {
     // console.log(obj3D);
     let startPos = getRandomSpawnPosition();
     if (!startPos) {
@@ -192,16 +195,17 @@ async function onModelLoaded() {
       bbox.getCenter(startPos);
     }
     console.log('Start position', startPos);
-    playerOriginTag.value.object3D.position.set(startPos.x, startPos.y, startPos.z);
-    const worldPos = playerTag.value!.object3D.getWorldPosition(new THREE.Vector3());
-    const worldRot = playerTag.value!.object3D.getWorldQuaternion(new THREE.Quaternion());
+    // playerOriginTag.value.object3D.position.set(startPos.x, startPos.y, startPos.z);
+    headTag.value.object3D.position.set(startPos.x, startPos.y + 1.65, startPos.z);
+    const worldPos = headTag.value!.object3D.getWorldPosition(new THREE.Vector3());
+    const worldRot = headTag.value!.object3D.getWorldQuaternion(new THREE.Quaternion());
     await new Promise((res) => setTimeout(res, 200));
 
     // vrSpaceStore.updateTransform(trsfm);
     // placeRandomSpheres();
 
     // @ts-ignore
-    playerTag.value?.addEventListener('move', onHeadMove);
+    headTag.value?.addEventListener('move', onHeadMove);
     // @ts-ignore
     leftHandTag.value?.addEventListener('move', onLeftHandMove);
     // @ts-ignore
@@ -284,6 +288,22 @@ function onRightHandMove(e: DetailEvent<ClientTransform['rightHand']>) {
   // console.log(e.detail?.position);
   // currentTransform.rightHand = e.detail;
   // throttledTransformMutation();
+}
+
+const timeMouseDown = ref(0);
+function teleportMouseDown(e: Event) {
+  timeMouseDown.value = e.timeStamp;
+}
+
+function teleportSelf(e: Event) {
+  // if (!playerTag.value || !e.target?.classList.contains('navmesh')) { return; }
+  if (!headTag.value) { return; }
+  if (e.timeStamp - timeMouseDown.value > 500) { return; }
+  const posArray = currentCursor.value?.intersection.point.toArray();
+  console.log('Click model', e, 'cursor', currentCursor.value, 'position array', posArray);
+  headTag.value.object3D.position.set(posArray[0], 1.65, posArray[2]);
+
+  // vrSpaceStore.ownClientTransform.head = { active: true, position: currentCursor.value?.intersection.point.toArray(), rotation: [0, 0, 0, 0] };
 }
 
 // const throttledTransformMutation = throttle(async () => {
