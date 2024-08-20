@@ -218,7 +218,7 @@ export function assetTypeListToExtensionList<T extends AssetType>(assetTypes: T 
  * Will try to match an assetType for the provided extension (without the dot)
  * @param extension file extension without the dot (examples: pdf, glb or png)
  * @param acceptedAssetTypes optional assetType or list of accepted assetTypes. If not provied, extension will be matched against all assetTypes
- * 
+ *
  */
 export function getAssetTypeFromExtension(extension: string, acceptedAssetTypes?: AssetType | AssetType[]) {
   if (acceptedAssetTypes === undefined) {
@@ -309,7 +309,7 @@ export const StreamInsertSchema = createInsertSchema(schema.streams, {
   .merge(optionalReason);
 export type StreamInsert = z.TypeOf<typeof StreamInsertSchema>;
 
-// TODO: Refactor so we always use insert schemas instead of special schema for update vs create 
+// TODO: Refactor so we always use insert schemas instead of special schema for update vs create
 export const StreamUpdateSchema = StreamInsertSchema.omit({ streamId: true }).partial();
 export type StreamUpdate = z.TypeOf<typeof StreamUpdateSchema>;
 
@@ -431,6 +431,7 @@ export type JwtUserData = z.TypeOf<typeof JwtUserDataSchema>;
 export const JwtPayloadSchema = jwtDefaultPayload.merge(JwtUserDataSchema)
 export type JwtPayload = z.TypeOf<typeof JwtPayloadSchema>;
 
+const Vector2TupleSchema = z.tuple([z.number(), z.number()]);
 const Vector3TupleSchema = z.tuple([z.number(), z.number(), z.number()]);
 const Vector4TupleSchema = z.tuple([z.number(), z.number(), z.number(), z.number()]);
 
@@ -458,11 +459,22 @@ const LaserPointerSchema = z.discriminatedUnion('active', [
   }),
 ])
 
+const EmojiSchema = z.discriminatedUnion('active', [
+  z.object({
+    active: z.literal(false),
+  }),
+  z.object({
+    active: z.literal(true),
+    coords: Vector2TupleSchema,
+  }),
+])
+
 export const ClientTransformSchema = z.object({
   head: TransformSchema,
   leftHand: TransformSchema.optional(),
   rightHand: TransformSchema.optional(),
   laserPointer: LaserPointerSchema.optional(),
+  emoji: EmojiSchema.optional(),
 })
 export type ClientTransform = z.TypeOf<typeof ClientTransformSchema>;
 export type ClientTransforms = Record<ConnectionId, ClientTransform>;

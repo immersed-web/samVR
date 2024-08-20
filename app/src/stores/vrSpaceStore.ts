@@ -6,18 +6,18 @@ import { useConnectionStore } from './connectionStore';
 import { eventReceiver, type ExtractPayload, type RouterOutputs, type SubscriptionValue } from '@/modules/trpcClient';
 import { useClientStore } from './clientStore';
 import { watchIgnorable, pausableWatch } from '@vueuse/core';
-import { debounce, throttle } from 'lodash-es'
+import { debounce, throttle } from 'lodash-es';
 import { getAssetUrl } from '@/modules/utils';
 import { reactive } from 'vue';
 
 type _ReceivedVrSpaceState = ExtractPayload<typeof eventReceiver.vrSpace.vrSpaceStateUpdated.subscribe>['data'];
 
 export const useVrSpaceStore = defineStore('vrSpace', () => {
-  
+
   const connection = useConnectionStore();
   const clientStore = useClientStore();
 
-  const writableVrSpaceState = ref<_ReceivedVrSpaceState>()
+  const writableVrSpaceState = ref<_ReceivedVrSpaceState>();
   const currentVrSpace = readonly(writableVrSpaceState);
 
   const worldModelUrl = computed(() => {
@@ -45,8 +45,8 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     console.log('currentVrSpace watcher triggered', oldVal, newVal);
     if (newVal?.dbData.ownerUserId === clientStore.clientState?.userId
       || newVal?.dbData.allowedUsers.some(p => {
-        const permissionMatched = p.user.userId === clientStore.clientState?.userId
-        const isAtLeastEditor = hasAtLeastPermissionLevel(p.permissionLevel, 'edit')
+        const permissionMatched = p.user.userId === clientStore.clientState?.userId;
+        const isAtLeastEditor = hasAtLeastPermissionLevel(p.permissionLevel, 'edit');
         // console.log(permissionMatched, isAtLeastEditor);
         return permissionMatched && isAtLeastEditor;
       })) {
@@ -61,9 +61,9 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     ignoreUpdates(() => writableVrSpaceState.value = data);
     console.log('finished setting ignored state update');
   });
-  
+
   eventReceiver.vrSpace.clientTransforms.subscribe((data) => {
-    console.log(`clientTransforms updated:`, data);
+    // console.log(`clientTransforms updated:`, data);
     if (!writableVrSpaceState.value) return;
     for (const [cId, tsfm] of Object.entries(data)) {
       const cIdTyped = cId as ConnectionId;
@@ -81,21 +81,21 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
 
   async function createVrSpace(name: string) {
     const vrSpaceId = await connection.client.vr.createVrSpace.mutate({ name });
-    return vrSpaceId
+    return vrSpaceId;
   }
-  
+
   async function enterVrSpace(vrSpaceId: VrSpaceId) {
     console.log('gonna enter VrSpace', vrSpaceId);
     const response = await connection.client.vr.enterVrSpace.mutate({ vrSpaceId });
 
     ignoreUpdates(() => {
       console.log('setting ignored enter response');
-      writableVrSpaceState.value = response
-    })
+      writableVrSpaceState.value = response;
+    });
   }
   async function leaveVrSpace() {
     await connection.client.vr.leaveVrSpace.mutate();
-    ignoreUpdates(() => writableVrSpaceState.value = undefined)
+    ignoreUpdates(() => writableVrSpaceState.value = undefined);
   }
 
   /**
@@ -112,8 +112,8 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
   const ownClientTransform = reactive<ClientTransform>({
     head: {
       active: false,
-    }
-  })
+    },
+  });
   watch(() => ownClientTransform, (newT, oldT) => {
     if (!newT) return;
     throttledTransformMutation(newT);
@@ -124,8 +124,8 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     //   delete currentTransform.leftHand;
     //   delete currentTransform.rightHand;
     // }
-    console.timeEnd('transformSend');
-    console.time('transformSend');
+    // console.timeEnd('transformSend');
+    // console.time('transformSend');
   // console.log('gonna update transform', transform);
     await connection.client.vr.transform.updateTransform.mutate(transform);
     // Unset hands after theyre sent
@@ -134,7 +134,7 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
   // async function updateTransform(transform: ClientTransform){
   //   await connection.client.vr.transform.updateTransform.mutate(transform);
   // }
-  
+
   return {
     currentVrSpace,
     writableVrSpaceState,

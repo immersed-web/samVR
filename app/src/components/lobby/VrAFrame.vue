@@ -23,7 +23,7 @@
       <a-camera @loaded="onCameraLoaded" id="camera" ref="playerTag"
         look-controls="reverseMouseDrag: true; reverseTouchDrag: true;" wasd-controls="acceleration:65;"
         emit-move="interval: 20" position="0 1.65 0">
-        <a-entity id="tp-aframe-camera" />
+        <a-entity id="teleport-target-aframe-camera" />
       </a-camera>
 
       <a-entity ref="leftHandTag" id="left-hand" @controllerconnected="leftControllerConnected = true"
@@ -50,7 +50,13 @@
           :interpolated-transform="`interpolationTime: 350; position: ${clientInfo.transform?.head?.position?.join(' ')}; rotation: ${clientInfo.transform?.head?.rotation?.join(' ')};`">
           <a-sphere v-if="clientInfo.transform?.head?.active" color="red" scale="0.8 1 0.4 " />
           <a-troika-text look-at-camera :value="clientInfo.username" position="0 1.4 0" />
+          <EmojiOther :active="clientInfo.transform?.emoji?.active"
+            :coords="clientInfo.transform?.emoji?.active ? clientInfo.transform?.emoji?.coords : undefined" />
         </a-entity>
+        <LaserPointerOther v-if="clientInfo.transform?.head?.active && clientInfo.transform?.laserPointer?.active"
+          :position="clientInfo.transform.laserPointer.position"
+          :position-source="clientInfo.transform?.head?.position" />
+
         <!-- <RemoteAvatar v-if="clientInfo.connectionId !== clientStore.clientState?.connectionId && clientInfo.transform"
           :id="'avatar-'+id" :client-info="clientInfo" /> -->
       </template>
@@ -76,6 +82,7 @@ import { aFrameSceneProvideKey } from '@/modules/injectionKeys';
 import { getAssetUrl } from '@/modules/utils';
 import VrSpacePortal from '../entities/VrSpacePortal.vue';
 import EmojiOther from './EmojiOther.vue';
+import LaserPointerOther from './LaserPointerOther.vue';
 
 const router = useRouter();
 // Stores

@@ -9,7 +9,7 @@ import { useXRState } from '@/composables/XRState';
 import { intersectionToTransform, type RayIntersectionData } from '@/modules/3DUtils';
 
 import UIOverlay from '@/components/lobby/UIOverlay.vue';
-import EmojiTeleport from '@/views/user/lobby/teleports/EmojiTeleport.vue';
+import EmojiTeleport from '@/components/lobby/EmojiTeleport.vue';
 import PlacablesTeleport from '@/views/user/lobby/teleports/PlacablesTeleport.vue';
 import LaserTeleport from '@/views/user/lobby/teleports/LaserTeleport.vue';
 // import EmojiPicker from '@/components/EmojiPicker.vue';
@@ -20,7 +20,7 @@ import EmojiOther from '@/components/lobby/EmojiOther.vue';
 import emojiSheetUrl from '@/assets/sprite-128.png';
 import WaitForAframe from '@/components/WaitForAframe.vue';
 
-const { updateCursor } = useCurrentCursorIntersection()
+const { updateCursor } = useCurrentCursorIntersection();
 
 type Tuple = [number, number]
 

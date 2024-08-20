@@ -3,8 +3,12 @@ import { ref, computed, onMounted } from 'vue';
 
 import { oculusButtons } from '@/composables/vrSpaceComposables';
 
+import { useVrSpaceStore } from '@/stores/vrSpaceStore';
+
 import EmojiSelf from '@/components/lobby/EmojiSelf.vue';
 import SpriteRender from '@/components/lobby/SpriteRenderer.vue';
+
+import emojiSheet from '@/assets/sprite-128.png';
 
 import {
   Listbox,
@@ -13,24 +17,25 @@ import {
   ListboxOption,
 } from '@headlessui/vue';
 
-type Tuple = [number, number]
+const vrSpaceStore = useVrSpaceStore();
+
+type Coords2D = [number, number]
 
 const props = defineProps<{
-  sheetUrl: string,
-  uvs: Tuple,
-  coords: Array<Array<Tuple>>,
+  uvs: Coords2D,
+  coords: Array<Array<[number, number]>>,
   columns: number
 }>();
 
 const emit = defineEmits<{
-  change: [coords: Tuple, active: boolean]
+  change: [coords: Coords2D, active: boolean]
 }>();
 
 const coordsFlat = computed(() => {
   return props.coords.flat(1);
 });
 
-const selectedCoords = ref<Tuple>(coordsFlat.value[0]);
+const selectedCoords = ref<Coords2D>(coordsFlat.value[0]);
 const active = ref(false);
 
 const timeout = ref(-1);
@@ -44,19 +49,26 @@ function onEmojiSelected() {
   }, 10000);
 }
 
-function selectEmoji(coords: Tuple) {
+function selectEmojiVR(coords: Coords2D) {
   console.log('Select emoji VR', coords);
   selectedCoords.value = coords;
   onEmojiSelected();
 }
 
 function emitChange() {
-  emit('change', selectedCoords.value, active.value);
+  if (active.value) {
+    vrSpaceStore.ownClientTransform.emoji = { active: true, coords: selectedCoords.value };
+  }
+  else {
+    vrSpaceStore.ownClientTransform.emoji = { active: false };
+
+  }
+  // emit('change', selectedCoords.value, active.value);
 }
 
 const leftHand = ref<HTMLElement | null>(null);
 onMounted(() => {
-  leftHand.value = document.getElementById('tp-aframe-hand-left');
+  leftHand.value = document.getElementById('teleport-target-aframe-hand-left');
   console.log(leftHand.value);
 });
 
@@ -66,13 +78,13 @@ onMounted(() => {
   <div>
     <!-- #region Emoji picker for monitor -->
     <!-- HeadlessUI Listbox -->
-    <Teleport to="#tp-ui-left">
+    <Teleport to="#teleport-target-ui-left">
       <div>
         <Listbox v-model="selectedCoords" @update:model-value="onEmojiSelected">
           <div class="relative mt-1">
             <ListboxButton
               class="relative rounded-lg bg-white py-2 pl-4 pr-4 text-left shadow-md focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-orange-300 sm:text-sm">
-              <SpriteRender v-if="selectedCoords" class="sprite" :sheet-url="sheetUrl" :uvs="uvs"
+              <SpriteRender v-if="selectedCoords" class="sprite" :sheet-url="emojiSheet" :uvs="uvs"
                 :coords="selectedCoords" :class="{ 'opacity-75': !active, 'transition': !active }" />
             </ListboxButton>
 
@@ -83,7 +95,7 @@ onMounted(() => {
                 <li :class="[
                   coords.toString() === selectedCoords.toString() ? 'bg-slate-300' : 'bg-white',
                   'relative cursor-pointer select-none py-2 pl-4 pr-4']">
-                  <SpriteRender class="sprite" :sheet-url="sheetUrl" :uvs="uvs" :coords="coords" />
+                  <SpriteRender class="sprite" :sheet-url="emojiSheet" :uvs="uvs" :coords="coords" />
                 </li>
               </ListboxOption>
             </ListboxOptions>
@@ -94,18 +106,18 @@ onMounted(() => {
     <!-- #endregion -->
 
     <!-- #region Emoji picker for VR/hand controls -->
-    <Teleport v-if="oculusButtons.x" to="#tp-aframe-hand-left">
+    <Teleport v-if="oculusButtons.x" to="#teleport-target-aframe-hand-left">
       <a-entity position="0 0.1 0" mesh-ui-block="backgroundOpacity: 0.2; contentDirection: column; fontSize: 0.03;"
         class="">
         <a-entity v-for="(coordsGroup, iCg) in coords" :key="iCg"
           mesh-ui-block="backgroundOpacity: 0; contentDirection: row; textAlign: left;">
           <template v-for="(coords, iC) in coordsGroup" :key="iC">
             <a-entity mesh-ui-block="backgroundOpacity: 0; width: 0.05; height: 0.05; margin: 0.01;" class="clickable"
-              @click="selectEmoji(coords)">
+              @click="selectEmojiVR(coords)">
               <a-entity ref="emoji" position="0 0 0.01">
                 <a-entity
                   :atlas-uvs="'totalRows: 43; totalColumns: 43; column: ' + coords[0] + '; row: ' + coords[1] + ';'"
-                  :material="`src: ${sheetUrl}; transparent: true; shader: flat;`"
+                  :material="`src: ${emojiSheet}; transparent: true; shader: flat;`"
                   geometry="primitive: plane; width: 0.05; height: 0.05; buffer: true; skipCache: true" />
               </a-entity>
             </a-entity>
@@ -115,8 +127,8 @@ onMounted(() => {
     </Teleport>
     <!-- #endregion -->
 
-    <Teleport to="#tp-aframe-camera">
-      <EmojiSelf :sheet-url="sheetUrl" :coords="selectedCoords" :active="active" />
+    <Teleport to="#teleport-target-aframe-camera">
+      <EmojiSelf :sheet-url="emojiSheet" :coords="selectedCoords" :active="active" />
     </Teleport>
   </div>
 </template>

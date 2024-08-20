@@ -3,14 +3,14 @@
 
 <template>
   <div id="ui" class="absolute top-0 left-0 z-10 flex justify-between p-2 pointer-events-none w-svw h-svh">
-    <div id="tp-ui-left" class="flex flex-col gap-1 pointer-events-auto">
+    <div id="teleport-target-ui-left" class="flex flex-col gap-1 pointer-events-auto">
       <slot name="left" />
     </div>
-    <div id="tp-ui-center" class="">
+    <div id="teleport-target-ui-center" class="">
       <slot name="center" />
     </div>
-    <div id="tp-ui-right" class="flex flex-col gap-1">
-      <div id="tp-tweakpane"></div>
+    <div id="teleport-target-ui-right" class="flex flex-col gap-1">
+      <div id="tp-tweakpane" />
       <slot name="right" />
     </div>
   </div>
