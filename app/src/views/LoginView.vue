@@ -26,6 +26,7 @@
       </div>
 
       <!-- Login -->
+      <!-- TODO: Background image is licenced and we're not allowed to use it. Replace with another image. -->
       <div class="flex-1 hero"
         style="background-image: url(https://plus.unsplash.com/premium_photo-1663091704223-cc051e0f0c47?q=80&w=2073&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D);">
         <div class="hero-content max-w-md">
