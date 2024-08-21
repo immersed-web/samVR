@@ -1,7 +1,7 @@
 <template>
   <div>
     <h1 class="text-5xl font-bold">
-      Välkommen {{ clientStore.clientState?.username }}
+      Välkommen {{ authStore.username }}!
     </h1>
     <div>
       <h2 class="text-3xl font-bold">
@@ -13,8 +13,10 @@
 
 <script setup lang="ts">
 import { useClientStore } from '@/stores/clientStore';
+import { useAuthStore } from '@/stores/authStore';
 
 const clientStore = useClientStore();
+const authStore = useAuthStore();
 
 </script>
 

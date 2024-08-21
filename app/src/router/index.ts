@@ -41,7 +41,8 @@ const router = createRouter({
     // simpleLayout routes
     {
       path: '/',
-      component: () => import('@/layouts/SimpleLayout.vue'),
+      // component: () => import('@/layouts/SimpleLayout.vue'),
+      component: () => import('@/layouts/HeaderLayout.vue'),
       children: [
         {
           path: '',
@@ -92,7 +93,8 @@ const router = createRouter({
     {
       path: '/',
       meta: { requiredRole: 'guest', requiredConnectionType: 'client' },
-      component:  () => import('@/layouts/EmptyLayout.vue'),
+      // component:  () => import('@/layouts/EmptyLayout.vue'),
+      component: () => import('@/layouts/HeaderLayout.vue'),
       children: [
         {
           path: 'stream/:streamId',
@@ -128,8 +130,8 @@ const router = createRouter({
         {
           path: '',
           name: 'userHome',
-          redirect: { name: 'streamList' },
-          // component:  () => import('@/views/user/UserHomeView.vue'),
+          // redirect: { name: 'streamList' },
+          component: () => import('@/views/user/UserHomeView.vue'),
         },
         {
           path: 'vr-test',

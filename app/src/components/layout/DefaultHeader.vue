@@ -1,45 +1,45 @@
 <template>
-  <div class="text-white navbar bg-primary">
-    <div class="flex-1">
-      <RouterLink
-        :to="{name: authStore.routePrefix + 'Home'}"
-        class="text-xl normal-case btn btn-ghost"
-      >
-        OrigoShift
-      </RouterLink>
+  <div class="navbar bg-base-200">
+    <div class="navbar-start">
+      <a class="btn btn-ghost text-xl" @click="goHome">SamVR</a>
     </div>
-    <div class="flex-none">
-      <div
-        v-if="authStore.isNotGuest"
-        class="text-black dropdown dropdown-end"
-      >
-        <label
-          tabindex="0"
-          class="btn btn-ghost btn-circle avatar"
-        >
-          <div class="avatar placeholder">
-            <div class="w-10 rounded-full bg-neutral-focus text-neutral-content">
-              <span>{{ clientStore.initials }}</span>
-            </div>
-          </div>
-        </label>
-        <ul
-          tabindex="0"
-          class="p-2 mt-3 shadow menu menu-compact dropdown-content bg-base-100 rounded-box w-52"
-        >
-          <li>
-            <RouterLink :to="{name: authStore.routePrefix + 'Home'}">
-              @{{ clientStore.clientState?.username }}
-            </RouterLink>
-          </li>
-          <div class="m-0 divider" />
+    <div class="navbar-center hidden lg:flex">
+      <RouterLink :to="{ name: 'vrList' }">
+        <button class="btn btn-ghost">
+          VR-miljöer
+        </button>
+      </RouterLink>
 
-          <li><a>Mina event</a></li>
+      <RouterLink :to="{ name: 'streamList' }">
+        <button class="btn btn-ghost">
+          Strömmar
+        </button>
+      </RouterLink>
+
+      <!-- <div class="divider divider-horizontal" /> -->
+
+      <div v-if="hasAtLeastSecurityRole(authStore.role, 'admin')">
+        <RouterLink :to="{ name: 'adminHome' }">
+          <button class="btn btn-neutral btn-sm ml-4">
+            Admin
+          </button>
+        </RouterLink>
+      </div>
+    </div>
+    <div class="navbar-end">
+      <div class="dropdown dropdown-end">
+        <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
+          <div class="w-10 rounded-full">
+            <img alt="Tailwind CSS Navbar component"
+              src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp">
+          </div>
+        </div>
+        <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow">
           <li>
-            <a
-              class="hover:bg-error"
-              @click="logout"
-            >Logga ut</a>
+            <a>Min profil</a>
+          </li>
+          <li>
+            <a class="bg-error" @click="logout">Logga ut</a>
           </li>
         </ul>
       </div>
@@ -56,14 +56,25 @@ import { useClientStore } from '@/stores/clientStore';
 const router = useRouter();
 const authStore = useAuthStore();
 const clientStore = useClientStore();
+import { hasAtLeastSecurityRole } from 'schemas';
+
 
 // Components stuff
 
 const logout = async () => {
   await authStore.logout();
   console.log('was logged out');
-  router.push({path: '/', force: true});
+  router.push({ path: '/login', force: true });
 };
+
+function goHome() {
+  if (authStore.role && hasAtLeastSecurityRole(authStore.role, 'admin')) {
+    router.push({ name: 'adminHome' });
+  }
+  else {
+    router.push({ name: 'userHome' });
+  }
+}
 
 </script>
 
