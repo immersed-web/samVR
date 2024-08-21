@@ -27,6 +27,7 @@
           </div>
         </div>
       </div> -->
+      <pre class="text-xs">{{ props.stream }}</pre>
     </div>
   </div>
 </template>

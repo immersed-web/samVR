@@ -1,6 +1,6 @@
 <template>
+  <h3>Strömmar</h3>
   <div class="flex flex-col gap-4 mb-12 items-start">
-    <UserBanner>Hej&nbsp; </UserBanner>
     <div v-if="streamsOngoing.length" class="space-y-2">
       <h3 class="text-base-content/90">
         Pågående event

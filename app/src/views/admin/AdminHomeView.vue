@@ -4,6 +4,24 @@
       Välkommen {{ authStore.username }}!
     </h1>
     <div>
+      <p>Det här är din administratörssida på SamVR.</p>
+      <p class="space-x-1">
+        Jag vet inte riktigt vad som ska finnas här, eller hur hierarkin <RouterLink :to="{ name: 'streamList' }"
+          class="btn btn-sm">
+          Event/Strömmar
+        </RouterLink>
+        <RouterLink :to="{ name: 'vrList' }" class="btn btn-sm">
+          VR-spaces
+        </RouterLink>
+        <RouterLink :to="{ name: 'adminCameras' }" class="btn btn-sm">
+          kameror
+        </RouterLink> osv. ser ut.
+      </p>
+      <p>
+        I takt med att förståelsen för användarflödet breddas så kommer denna startsida att bli riktigt, riktigt bra.
+      </p>
+    </div>
+    <div>
       <h2 class="mb-2 text-3xl font-bold">
         Mina event
       </h2>

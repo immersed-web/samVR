@@ -1,21 +1,41 @@
 <template>
-  <UserBanner>Hej&nbsp; </UserBanner>
   <h3>Vr miljöer</h3>
   <div>
-    <div class="flex gap-2 items-center" v-for="space in availableVrSpaces">
+    <div
+      class="flex gap-2 items-center"
+      v-for="space in availableVrSpaces"
+    >
       <p>{{ space.name }}</p>
       <pre>{{ space }}</pre>
-      <RouterLink :to="{ name: 'vrSpace', params: { vrSpaceId: space.vrSpaceId } }"><button
-          class="btn btn-primary btn-xs">Besök</button></RouterLink>
-      <button v-if="space.permissionLevel && hasAtLeastPermissionLevel(space.permissionLevel, 'edit')"
-        @click="goToVrSpaceSettings(space.vrSpaceId)" class="btn btn-xs">
+      <RouterLink :to="{ name: 'vrSpace', params: { vrSpaceId: space.vrSpaceId } }">
+        <button
+          class="btn btn-primary btn-xs"
+        >
+          Besök
+        </button>
+      </RouterLink>
+      <button
+        v-if="space.permissionLevel && hasAtLeastPermissionLevel(space.permissionLevel, 'edit')"
+        @click="goToVrSpaceSettings(space.vrSpaceId)"
+        class="btn btn-xs"
+      >
         redigera
       </button>
     </div>
   </div>
-  <div class="space-x-2" v-if="canCreateVrSpace">
-    <input class="input input-primary" v-model="spaceName">
-    <button class="btn btn-primary" :disabled="!spaceName" @click="createVrSpace">
+  <div
+    class="space-x-2"
+    v-if="canCreateVrSpace"
+  >
+    <input
+      class="input input-primary"
+      v-model="spaceName"
+    >
+    <button
+      class="btn btn-primary"
+      :disabled="!spaceName"
+      @click="createVrSpace"
+    >
       Skapa
       Vr-miljö
     </button>
