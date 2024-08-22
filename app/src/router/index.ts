@@ -53,17 +53,18 @@ const router = createRouter({
         {
           path: 'streams',
           name: 'streamList',
-          meta: { requiredRole: 'guest', requiredConnectionType: 'client' },
+          meta: { requiredRole: 'guest', requiredConnectionType: 'client', breadcrumb: 'Strömmar' },
           component: () => import('@/views/public/StreamListView.vue'),
         },
         {
           path: 'vrSpace',
           name: '',
-          meta: { requiredRole: 'guest', requiredConnectionType: 'client' },
+          meta: { requiredRole: 'guest', requiredConnectionType: 'client', breadcrumb: 'VR-miljöer' },
           children: [
             {
               path: '',
               name: 'vrList',
+              meta: { breadcrumbIgnore: true },
               component: () => import('@/views/public/VrListView.vue'),
             },
             {
@@ -162,13 +163,20 @@ const router = createRouter({
     },
     {
       path: '/admin/',
-      meta: { requiredRole: 'admin', loginNeededRedirect: 'login', requiredConnectionType: 'client' },
+      meta: { requiredRole: 'admin', loginNeededRedirect: 'login', requiredConnectionType: 'client', breadcrumb: 'Admin' },
       component:  () => import('@/layouts/HeaderLayout.vue'),
       children: [
         {
           path: '',
           name: 'adminHome',
+          meta: { breadcrumbIgnore: true },
           component:  () => import('@/views/admin/AdminHomeView.vue'),
+        },
+        {
+          path: 'usermanager',
+          name: 'adminUserManager',
+          meta: { breadcrumb: 'Hantera användare' },
+          component: () => import('@/views/admin/AdminUserManagerView.vue'),
         },
         {
           path: '',

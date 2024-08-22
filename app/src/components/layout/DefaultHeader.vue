@@ -1,7 +1,8 @@
 <template>
   <div class="navbar bg-base-200">
     <div class="navbar-start">
-      <a class="btn btn-ghost text-xl" @click="goHome">SamVR</a>
+      <a class="btn btn-ghost text-xl w-28 m-1" @click="goHome">SamVR</a>
+      <Breadcrumbs />
     </div>
     <div class="navbar-center hidden lg:flex">
       <RouterLink :to="{ name: 'vrList' }">
@@ -51,12 +52,13 @@
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/authStore';
 import { useClientStore } from '@/stores/clientStore';
+import { hasAtLeastSecurityRole } from 'schemas';
+import Breadcrumbs from '@/components/Breadcrumbs.vue';
 
 // Use imports
 const router = useRouter();
 const authStore = useAuthStore();
 const clientStore = useClientStore();
-import { hasAtLeastSecurityRole } from 'schemas';
 
 
 // Components stuff
