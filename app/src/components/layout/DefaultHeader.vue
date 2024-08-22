@@ -7,7 +7,7 @@
     <div class="navbar-center hidden lg:flex">
       <RouterLink :to="{ name: 'vrList' }">
         <button class="btn btn-ghost">
-          VR-miljöer
+          VR-scener
         </button>
       </RouterLink>
 

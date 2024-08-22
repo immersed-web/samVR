@@ -1,25 +1,37 @@
 <template>
-  <h3>Strömmar</h3>
+  <h2>Strömmar</h2>
   <div class="flex flex-col gap-4 mb-12 items-start">
-    <div v-if="streamsOngoing.length" class="space-y-2">
+    <div
+      v-if="streamsOngoing.length"
+      class="space-y-2"
+    >
       <h3 class="text-base-content/90">
         Pågående event
       </h3>
-      <StreamList :streams="streamsOngoing" @stream-picked="(stream) => goToStream(stream.streamId)" />
+      <StreamList
+        :streams="streamsOngoing"
+        @stream-picked="(stream) => goToStream(stream.streamId)"
+      />
     </div>
 
     <div v-if="streamsUpcoming.length">
       <h3 class="text-base-content/90">
         Kommande event
       </h3>
-      <StreamList :streams="streamsUpcoming" @stream-picked="(stream) => goToStream(stream.streamId)" />
+      <StreamList
+        :streams="streamsUpcoming"
+        @stream-picked="(stream) => goToStream(stream.streamId)"
+      />
     </div>
 
     <div v-if="streamsUnscheduled.length">
       <h3 class="text-base-content/90">
         Event utan datum
       </h3>
-      <StreamList :streams="streamsUnscheduled" @stream-picked="(stream) => goToStream(stream.streamId)" />
+      <StreamList
+        :streams="streamsUnscheduled"
+        @stream-picked="(stream) => goToStream(stream.streamId)"
+      />
     </div>
   </div>
 </template>

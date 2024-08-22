@@ -1,6 +1,6 @@
 <template>
-  <div class="flex flex-wrap gap-2">
-    <div v-for="stream in props.streams" :key="stream.streamId">
+  <div class="grid-cols-6 grid gap-4 ">
+    <div v-for="stream in props.streams" :key="stream.streamId" class="">
       <StreamThumb :stream="stream" @click="emit('streamPicked', stream)" />
     </div>
   </div>

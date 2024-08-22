@@ -59,7 +59,7 @@ const router = createRouter({
         {
           path: 'vrSpace',
           name: '',
-          meta: { requiredRole: 'guest', requiredConnectionType: 'client', breadcrumb: 'VR-miljöer' },
+          meta: { requiredRole: 'guest', requiredConnectionType: 'client', breadcrumb: 'VR-scener' },
           children: [
             {
               path: '',
@@ -76,7 +76,7 @@ const router = createRouter({
               path: ':vrSpaceId/edit',
               name: 'vrSpaceSettings',
               props: true,
-              meta: { requiredRole: 'user' },
+              meta: { requiredRole: 'user', breadcrumb: 'Redigera' },
               component: () => import('@/views/user/VrSpaceSettingsView.vue'),
             },
             {

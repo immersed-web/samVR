@@ -1,12 +1,20 @@
 import axios, { type AxiosResponse } from 'axios';
 
 import type {JwtPayload, JwtUserData } from 'schemas';
-import type { User, } from 'database/schema';
+import type { User, RoleEnum } from 'database/schema';
 import decodeJwt from 'jwt-decode';
 
 const completeAuthUrl = `https://${import.meta.env.EXPOSED_SERVER_URL}${import.meta.env.EXPOSED_AUTH_PATH}`;
 console.log('authUrl: ', completeAuthUrl);
 const authEndpoint = axios.create({ baseURL: completeAuthUrl, withCredentials: true });
+
+export function createUser(username: string, password: string, role: typeof RoleEnum) {
+  return handleResponse(() => authEndpoint.post('/user/create', {
+    role: role.toString(),
+    username,
+    password,
+  }));
+}
 
 export function createAdmin(username: string, password: string) {
   return handleResponse(() => authEndpoint.post('/user/create', {

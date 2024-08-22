@@ -80,7 +80,8 @@ onMounted(() => {
     <!-- HeadlessUI Listbox -->
     <Teleport to="#teleport-target-ui-left">
       <div>
-        <Listbox v-model="selectedCoords" @update:model-value="onEmojiSelected">
+        <Listbox v-model="selectedCoords" @update:model-value="onEmojiSelected" class="tooltip tooltip-right"
+          data-tip="Pick an emoji to display for other users">
           <div class="relative mt-1">
             <ListboxButton
               class="relative rounded-lg bg-white py-2 pl-4 pr-4 text-left shadow-md focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-orange-300 sm:text-sm">

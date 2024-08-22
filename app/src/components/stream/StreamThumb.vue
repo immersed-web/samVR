@@ -1,12 +1,12 @@
 <template>
-  <div class="w-128 transition-all border-2 shadow-xl card bg-base-200 hover:cursor-pointer hover:-translate-y-1">
+  <div class="transition-all border-2 shadow-xl card bg-base-200 hover:cursor-pointer hover:-translate-y-1">
     <!-- TODO: Show an optional picture here related to the event -->
-    <figure class="bg-gradient-to-br from-primary/35 to-primary h-24">
-      <h1 class="text-primary-content card-title drop-shadow-sm">
+    <!-- <figure class="bg-gradient-to-br from-primary/35 to-primary h-24"> -->
+    <div class="card-body">
+      <h1 class="card-title drop-shadow-sm">
         {{ props.stream.name }}
       </h1>
-    </figure>
-    <div class="card-body">
+      <!-- </figure> -->
       <div>
         <div class="flex items-center">
           <span class="material-icons mr-3">curtains</span>
@@ -27,7 +27,7 @@
           </div>
         </div>
       </div> -->
-      <pre class="text-xs">{{ props.stream }}</pre>
+      <!-- <pre class="text-xs">{{ props.stream }}</pre> -->
     </div>
   </div>
 </template>
