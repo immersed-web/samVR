@@ -115,6 +115,13 @@
                     <span class="label-text">Klicka sedan i 3D-scenen för att placera startplatsen </span>
                   </label> -->
                 </div>
+                <label class="label gap-2">
+                  <span class="label-text font-semibold whitespace-nowrap">
+                    Startplats storlek
+                  </span>
+                  <input type="range" min="0.5" max="8" step="0.1"
+                    v-model.number="vrSpaceStore.writableVrSpaceState.dbData.spawnRadius" class="range">
+                </label>
               </template>
             </template>
           </div>
@@ -181,13 +188,6 @@
               <span class="material-icons">close</span>
             </button>
           </div>
-          <label class="label gap-2">
-            <span class="label-text font-semibold whitespace-nowrap">
-              Startplats storlek
-            </span>
-            <input type="range" min="0.5" max="8" step="0.1"
-              v-model.number="vrSpaceStore.writableVrSpaceState.dbData.spawnRadius" class="range">
-          </label>
         </div>
         <div>
           <AssetUpload @uploaded="onAssetUploaded" :accepted-asset-types="['document', 'image', 'video']" name="object"
