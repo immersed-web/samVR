@@ -70,7 +70,7 @@
 import { type Entity, type DetailEvent, utils as aframeUtils, THREE } from 'aframe';
 import { ref, onMounted, onBeforeMount, computed, onBeforeUnmount, inject } from 'vue';
 import RemoteAvatar from './AvatarEntity.vue';
-import type { ClientTransform } from 'schemas';
+import type { ClientRealtimeData } from 'schemas';
 // import type { Unsubscribable } from '@trpc/server/observable';
 import { useClientStore } from '@/stores/clientStore';
 import { useRouter } from 'vue-router';
@@ -270,20 +270,20 @@ function getRandomSpawnPosition() {
 //     rotation: [0, 0, 0, 0],
 //   },
 // };
-function onHeadMove(e: DetailEvent<ClientTransform['head']>) {
+function onHeadMove(e: DetailEvent<ClientRealtimeData['head']>) {
   vrSpaceStore.ownClientTransform.head = e.detail;
   // console.log('head moved');
   // console.log(e.detail.position);
   // currentTransform.head = e.detail;
   // throttledTransformMutation();
 }
-function onLeftHandMove(e: DetailEvent<ClientTransform['leftHand']>) {
+function onLeftHandMove(e: DetailEvent<ClientRealtimeData['leftHand']>) {
   vrSpaceStore.ownClientTransform.leftHand = e.detail;
   // console.log('left hand moved');
   // currentTransform.leftHand = e.detail;
   // throttledTransformMutation();
 }
-function onRightHandMove(e: DetailEvent<ClientTransform['rightHand']>) {
+function onRightHandMove(e: DetailEvent<ClientRealtimeData['rightHand']>) {
   vrSpaceStore.ownClientTransform.rightHand = e.detail;
   // console.log('right hand moved');
   // console.log(e.detail?.orientation);

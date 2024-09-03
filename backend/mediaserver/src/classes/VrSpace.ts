@@ -1,4 +1,4 @@
-import { ClientTransforms, ConnectionId, UserId, VrSpaceId, VrSpaceUpdate } from 'schemas';
+import { ClientsRealtimeData, ConnectionId, UserId, VrSpaceId, VrSpaceUpdate } from 'schemas';
 import { types as soupTypes } from 'mediasoup';
 import { throttle, pick } from 'lodash-es';
 import type { UserClient, Stream } from './InternalClasses.js';
@@ -22,7 +22,7 @@ export class VrSpace {
 
   router: soupTypes.Router;
 
-  pendingTransforms: ClientTransforms = {};
+  pendingTransforms: ClientsRealtimeData = {};
   constructor(vrSpace: VrSpaceWithIncludes, router: soupTypes.Router) {
     this.router = router;
     this.dbData = vrSpace;

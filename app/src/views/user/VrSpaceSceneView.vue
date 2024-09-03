@@ -13,7 +13,6 @@
               :position="currentCursor?.intersection.point.toArray().join(' ')" :visible="true">
               <a-ring :color="isCursorOnNavmesh ? 'yellow' : 'red'" :opacity="isCursorOnNavmesh ? 1 : 0.5"
                 radius-inner="0.1" radius-outer="0.2" material="shader: flat;" rotation="-90 0 0" />
-              <!-- <LaserPointerSelf @update="onLaserPointerUpdate" /> -->
             </a-entity>
           </VrAFrame>
         </a-scene>
@@ -26,8 +25,6 @@
           <EmojiTeleport :uvs="[43, 43]"
             :coords="[[[35, 8], [36, 37], [36, 38], [15, 8], [36, 27]], [[34, 8], [2, 8], [36, 24], [36, 25], [21, 8],], [[28, 26], [28, 20], [28, 38], [3, 16], [2, 1]]]"
             @change="setEmojiSelf" :is-v-r="false" :columns="5" />
-          <!-- <PlacablesTeleport />
-          <LaserTeleport /> -->
         </template>
       </WaitForAframe>
     </div>
