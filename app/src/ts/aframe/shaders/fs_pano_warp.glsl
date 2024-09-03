@@ -19,5 +19,5 @@ void main() {
   vec3 ndir = normalize(worldViewDir);
   vec3 sampleDir = (warpAlpha)*ndir + (1.0 - warpAlpha)*nn;
   gl_FragColor.rgb = panoMap(sampleDir);
-  gl_FragColor.a = opacity;
+  gl_FragColor.a = opacity* clamp(warpAlpha, 0.5, 1.0);
 }
