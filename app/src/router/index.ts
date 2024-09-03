@@ -17,6 +17,8 @@ declare module 'vue-router' {
     loginNeededRedirect?: 'cameraLogin' | 'login'
     mustBeInStream?: boolean
     pickStreamRouteName?: string
+    breadcrumbIgnore?: boolean
+    breadcrumb?: string
   }
 }
 
