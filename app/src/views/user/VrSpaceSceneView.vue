@@ -1,8 +1,8 @@
 <template>
   <div>
     <div class="min-h-screen z-0">
-      <h2>VrSpace main scene</h2>
-      <div class="pointer-events-none *:pointer-events-auto" ref="domOutlet" id="aframe-dom-outlet" />
+      <div class="pointer-events-none *:pointer-events-auto absolute z-50" ref="domOutlet" id="aframe-dom-outlet">
+      </div>
       <UIOverlay />
       <WaitForAframe>
         <a-scene ref="sceneTag" cursor="fuse:false; rayOrigin:mouse;" raycaster="objects: .clickable" raycaster-update
