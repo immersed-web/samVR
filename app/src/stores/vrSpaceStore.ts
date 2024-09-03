@@ -12,6 +12,18 @@ import { reactive } from 'vue';
 
 type _ReceivedVrSpaceState = ExtractPayload<typeof eventReceiver.vrSpace.vrSpaceStateUpdated.subscribe>['data'];
 
+
+/**
+ * The Vr space store
+ * There are two versions of the vrSpaceState. CurrentVrSpace and WritableVrSpaceState. 
+ * The currentVrSpace should be the one you use in components for reading and showing values.
+ * The writableVrSpaceState should be the one you use in components for writing values.
+ * There is an ignorable watcher on writableVrSpaceState that will send any updates to the server.
+ * Its very important that you wrap any received updates from the server in an ignorable watcher.
+ * Otherwise there will be an infinite loop of updates triggering a new update.
+ * In other words, only local changes to the writableVrSpaceState should trigger the watcher.
+ */
+
 export const useVrSpaceStore = defineStore('vrSpace', () => {
 
   const connection = useConnectionStore();
@@ -21,22 +33,22 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
   const currentVrSpace = readonly(writableVrSpaceState);
 
   const worldModelUrl = computed(() => {
-    if (!writableVrSpaceState.value) return undefined;
-    const fileName = writableVrSpaceState.value.dbData.worldModelAsset?.generatedName;
+    if (!currentVrSpace.value) return undefined;
+    const fileName = currentVrSpace.value.dbData.worldModelAsset?.generatedName;
     if (!fileName) return undefined;
     return getAssetUrl(fileName);
   });
 
   const navMeshUrl = computed(() => {
-    if (!writableVrSpaceState.value) return undefined;
-    const fileName = writableVrSpaceState.value.dbData.navMeshAsset?.generatedName;
+    if (!currentVrSpace.value) return undefined;
+    const fileName = currentVrSpace.value.dbData.navMeshAsset?.generatedName;
     if (!fileName) return undefined;
     return getAssetUrl(fileName);
   });
 
   const panoramicPreviewUrl = computed(() => {
-    if (!writableVrSpaceState.value) return undefined;
-    const fileName = writableVrSpaceState.value.dbData.panoramicPreview?.generatedName;
+    if (!currentVrSpace.value) return undefined;
+    const fileName = currentVrSpace.value.dbData.panoramicPreview?.generatedName;
     if (!fileName) return undefined;
     return getAssetUrl(fileName);
   });
@@ -75,7 +87,7 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
         console.warn('received a clientTransform for a client that isnt listed in vrSpaceState');
         return;
       }
-      ignoreUpdates(() => writableVrSpaceState.value!.clients[cId as ConnectionId].transform = tsfm);
+      ignoreUpdates(() => writableVrSpaceState.value!.clients[cIdTyped].transform = tsfm);
     }
   });
 
@@ -126,7 +138,9 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     // }
     // console.timeEnd('transformSend');
     // console.time('transformSend');
-  // console.log('gonna update transform', transform);
+    // if (transform.head.active) {
+    //   console.log('gonna update transform', transform.head.position);
+    // }
     await connection.client.vr.transform.updateTransform.mutate(transform);
     // Unset hands after theyre sent
   }, 100, { trailing: true });
