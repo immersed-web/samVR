@@ -22,15 +22,17 @@ export const vrRouter = router({
     const dbResponse = await db.select({
       vrSpaceId: schema.vrSpaces.vrSpaceId,
       name: schema.vrSpaces.name,
+      image: schema.assets.generatedName,
       visibility: schema.vrSpaces.visibility,
       ownerUserId: schema.vrSpaces.ownerUserId,
       // permisions: schema.permissions.permissionLevel
-      permissionLevel: sql<PermLev>`case 
+      permissionLevel: sql<PermLev>`case
           when ${schema.vrSpaces.ownerUserId} = ${ctx.userId} then 'owner'
           else ${schema.permissions.permissionLevel}::TEXT
           end`.as('permissionLevelsss'),
       // when ${schema.permissions.permissionLevel} is NULL then 'unauthorized'
     }).from(schema.vrSpaces)
+      .leftJoin(schema.assets, eq(schema.vrSpaces.panoramicPreviewAssetId, schema.assets.assetId))
       .leftJoin(schema.permissions, and(
         eq(schema.permissions.targetType, 'vrSpace'),
         and(
