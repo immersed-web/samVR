@@ -3,7 +3,7 @@ const log = new Log('UserClient');
 process.env.DEBUG = 'UserClient*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
-import { ClientTransform, ClientTransforms, StreamId, CameraId, ClientType, VrSpaceId } from 'schemas';
+import { ClientRealtimeData, ClientsRealtimeData, StreamId, CameraId, ClientType, VrSpaceId } from 'schemas';
 import { loadUserDBData, SenderClient, Stream, VrSpace, BaseClient, DataAndReason, BaseClientEventMap } from './InternalClasses.js';
 import { effect } from '@vue/reactivity';
 import { EventSender, Payload } from 'ts-event-bridge/sender';
@@ -12,7 +12,7 @@ import { MyWebsocketType } from 'index.js';
 type EventMapAdditions = {
   vrSpace: {
     vrSpaceStateUpdated: Payload<DataAndReason<ReturnType<VrSpace['getPublicState']>>>,
-    clientTransforms: Payload<ClientTransforms>
+    clientTransforms: Payload<ClientsRealtimeData>
     vrSpaceWasUnloaded: Payload<{ vrSpaceId: VrSpaceId }>,
   },
   user: {
@@ -42,7 +42,7 @@ export class UserClient extends BaseClient {
 
   vrSpaceId?: VrSpaceId;
 
-  transform: ClientTransform | undefined;
+  transform: ClientRealtimeData | undefined;
 
   // sneaky hack so we can share the instance between base, user and senderclient but different intellisense.
   declare eventSender: EventSender<MyWebsocketType, UserClientEventMap>;

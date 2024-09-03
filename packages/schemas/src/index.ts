@@ -3,8 +3,6 @@ import type { JwtPayload as JwtShapeFromLib } from 'jsonwebtoken'
 // import { Role, Venue, VirtualSpace3DModel, Visibility, Camera, CameraType as PrismaCameraType, Prisma, ModelFileFormat } from "database";
 import * as schema from 'database/schema';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { is } from 'drizzle-orm';
-import { PgUUID } from 'drizzle-orm/pg-core';
 
 // const PlacedObjectInsertSchema = createInsertSchema(schema.placedObjects)
 
@@ -469,15 +467,15 @@ const EmojiSchema = z.discriminatedUnion('active', [
   }),
 ])
 
-export const ClientTransformSchema = z.object({
+export const ClientRealtimeDataSchema = z.object({
   head: TransformSchema,
   leftHand: TransformSchema.optional(),
   rightHand: TransformSchema.optional(),
   laserPointer: LaserPointerSchema.optional(),
   emoji: EmojiSchema.optional(),
 })
-export type ClientTransform = z.TypeOf<typeof ClientTransformSchema>;
-export type ClientTransforms = Record<ConnectionId, ClientTransform>;
+export type ClientRealtimeData = z.TypeOf<typeof ClientRealtimeDataSchema>;
+export type ClientsRealtimeData = Record<ConnectionId, ClientRealtimeData>;
 
 // const avatarAssets = {
 //   hands: ['hands_basic_left'],

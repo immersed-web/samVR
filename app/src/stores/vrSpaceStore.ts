@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 
-import { hasAtLeastPermissionLevel, type ClientTransform, type ClientTransforms, type ConnectionId, type VrSpaceId, type VrSpaceUpdate } from 'schemas';
+import { hasAtLeastPermissionLevel, type ClientRealtimeData, type ClientsRealtimeData, type ConnectionId, type VrSpaceId, type VrSpaceUpdate } from 'schemas';
 import { computed, readonly, ref, watch } from 'vue';
 import { useConnectionStore } from './connectionStore';
 import { eventReceiver, type ExtractPayload, type RouterOutputs, type SubscriptionValue } from '@/modules/trpcClient';
@@ -121,7 +121,7 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     await connection.client.vr.updateVrSpace.mutate({ ...currentVrSpace.value.dbData, reason });
   }, 700);
 
-  const ownClientTransform = reactive<ClientTransform>({
+  const ownClientTransform = reactive<ClientRealtimeData>({
     head: {
       active: false,
     },
@@ -131,7 +131,7 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     throttledTransformMutation(newT);
   }, { deep: true });
 
-  const throttledTransformMutation = throttle(async (transform: ClientTransform) => {
+  const throttledTransformMutation = throttle(async (transform: ClientRealtimeData) => {
     // if(!sceneTag.value?.is('vr-mode')) {
     //   delete currentTransform.leftHand;
     //   delete currentTransform.rightHand;

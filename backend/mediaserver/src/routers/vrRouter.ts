@@ -3,7 +3,7 @@ const log = new Log('Router:VR');
 process.env.DEBUG = 'Router:VR*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
-import { ClientTransformSchema, PlacedObjectInsertSchema, VrSpaceIdSchema, vrSpaceUpdateSchema } from 'schemas';
+import { ClientRealtimeDataSchema, PlacedObjectInsertSchema, VrSpaceIdSchema, vrSpaceUpdateSchema } from 'schemas';
 import { procedure as p, router, isUserClientM, userClientP, atLeastUserP, userInVrSpaceP } from '../trpc/trpc.js';
 import { VrSpace } from 'classes/VrSpace.js';
 import { z } from 'zod';
@@ -108,7 +108,7 @@ export const vrRouter = router({
   // }),
   // setSkyColor: currentVenueAdminP.use(isVenueOwnerM).use(currentVenueHasVrSpaceM).input({})
   transform: router({
-    updateTransform: userInVrSpaceP.input(ClientTransformSchema).mutation(({ input, ctx }) => {
+    updateTransform: userInVrSpaceP.input(ClientRealtimeDataSchema).mutation(({ input, ctx }) => {
       log.debug(`transform received from ${ctx.username} (${ctx.connectionId})`);
       // log.debug(input);
       ctx.client.transform = input;
