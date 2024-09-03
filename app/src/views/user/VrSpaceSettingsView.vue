@@ -91,7 +91,7 @@
                 <input class="rounded-md border-black border-2" type="color"
                   v-model="vrSpaceStore.writableVrSpaceState.dbData.skyColor">
               </div>
-              <div class="grid grid-cols-2">
+              <div class="grid grid-cols-2 w-full">
                 <div>
                   <h4>3D-modell för miljön</h4>
                   <pre>{{ vrSpaceStore.currentVrSpace.dbData.worldModelAsset?.originalFileName }}</pre>
@@ -106,22 +106,60 @@
                 </div>
               </div>
               <template v-if="vrSpaceStore.currentVrSpace.dbData.worldModelAsset">
-                <div class="tooltip tooltip-right"
-                  data-tip="Klicka sedan i 3D-scenen för att välja var besökarna startar">
-                  <input type="radio" value="spawnPosition" aria-label="Placera startplats"
-                    class="btn btn-sm btn-primary" :class="{ activeRaycast: currentRaycastReason == 'spawnPosition' }"
+                <!-- Hoppa in i världen -->
+                <div>
+                  <h4>Gå runt i VR-scenen</h4>
+                  <!-- <input type="radio" :value="undefined" class="hidden" v-model="currentRaycastReason"> -->
+                  <input v-if="!(vrComponentTag?.firstPersonViewActive || currentRaycastReason === 'selfPlacement')"
+                    type="radio" value="selfPlacement" aria-label="Hoppa in i scenen" class="btn btn-sm btn-primary"
                     v-model="currentRaycastReason">
-                  <!-- <label class="flex items-center gap-2">
-                    <span class="label-text">Klicka sedan i 3D-scenen för att placera startplatsen </span>
-                  </label> -->
+                  <input v-else type="radio" value="undefined" aria-label="Hoppa ut ur scenen"
+                    class="btn btn-sm btn-primary" v-model="currentRaycastReason"
+                    @click="vrComponentTag?.exitFirstPersonView">
                 </div>
-                <label class="label gap-2">
-                  <span class="label-text font-semibold whitespace-nowrap">
-                    Startplats storlek
-                  </span>
-                  <input type="range" min="0.5" max="8" step="0.1"
-                    v-model.number="vrSpaceStore.writableVrSpaceState.dbData.spawnRadius" class="range">
-                </label>
+
+                <!-- Startplats -->
+                <div class="w-full">
+                  <h4>Startplats för besökare</h4>
+                  <div class="grid grid-cols-2 w-full">
+                    <div class="tooltip tooltip-right flex"
+                      data-tip="Klicka sedan i 3D-scenen för att välja var besökarna startar">
+                      <input type="radio" value="spawnPosition" aria-label="Placera startplats"
+                        class="btn btn-sm btn-primary"
+                        :class="{ activeRaycast: currentRaycastReason == 'spawnPosition' }"
+                        v-model="currentRaycastReason">
+                    </div>
+                    <div>
+                      <label class="label gap-2">
+                        <span class="label-text font-semibold whitespace-nowrap">
+                          Startplats storlek
+                        </span>
+                        <input type="range" min="0.5" max="8" step="0.1"
+                          v-model.number="vrSpaceStore.writableVrSpaceState.dbData.spawnRadius" class="range">
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Portaler -->
+                <div>
+                  <h4>Portaler till andra VR-scener</h4>
+                  <div>
+                    <label class="flex items-center gap-2">
+                      <span class="label-text">Skapa ny portal</span>
+                    </label>
+                    <select class="select select-sm select-bordered" v-model="portalTargetVrSpace"
+                      @change="currentRaycastReason = 'vrSpacePortal'">
+                      <option v-for="vrSpace in allowedVrSpaces" :key="vrSpace.vrSpaceId" :value="vrSpace.vrSpaceId">
+                        {{
+                          vrSpace.name }}
+                      </option>
+                    </select>
+                    <button v-if="currentRaycastReason" class="btn btn-sm btn-circle" @click="cancelRaycasting">
+                      <span class="material-icons">close</span>
+                    </button>
+                  </div>
+                </div>
               </template>
             </template>
           </div>
@@ -168,25 +206,6 @@
                 <li>Scrolla: Zooma</li>
               </ul>
             </div>
-          </div>
-          <div class="flex gap-2">
-            <input type="radio" :value="undefined" class="hidden" v-model="currentRaycastReason">
-            <input type="radio" value="selfPlacement" aria-label="Hoppa in världen" class="btn btn-sm btn-primary"
-              v-model="currentRaycastReason">
-            <button class="btn btn-sm btn-primary" @click="vrComponentTag?.exitFirstPersonView">
-              hoppa ur
-              världen
-            </button>
-            <select class="select select-sm select-bordered" v-model="portalTargetVrSpace"
-              @change="currentRaycastReason = 'vrSpacePortal'">
-              <option v-for="vrSpace in allowedVrSpaces" :key="vrSpace.vrSpaceId" :value="vrSpace.vrSpaceId">
-                {{
-                  vrSpace.name }}
-              </option>
-            </select>
-            <button v-if="currentRaycastReason" class="btn btn-sm btn-circle" @click="cancelRaycasting">
-              <span class="material-icons">close</span>
-            </button>
           </div>
         </div>
         <div>
