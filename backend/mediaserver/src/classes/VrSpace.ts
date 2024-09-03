@@ -73,7 +73,7 @@ export class VrSpace {
   }, 100, {
     trailing: true
   });
-  
+
   _notifyStateUpdated(reason?: string){
     const data = this.getPublicState();
     this.clients.forEach(c => {
@@ -97,7 +97,7 @@ export class VrSpace {
     this.router.close();
     VrSpace.vrSpaces.delete(this.vrSpaceId);
   }
-  
+
   /**
    * Manually assigns new dbData. You can use this if you are only performing a shallow update that wont affect relational data.
    * If you change relational data (like foreign keys or such) use the {@link reloadDbData} function instead, so that nested data
@@ -149,7 +149,8 @@ export class VrSpace {
     try {
       const [response] = await db.insert(schema.vrSpaces).values({
         name,
-        ownerUserId
+        ownerUserId,
+        visibility: 'private'
       }).returning()
       return response.vrSpaceId;
     } catch (e) {
