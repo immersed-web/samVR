@@ -298,7 +298,7 @@ function teleportMouseDown(e: Event) {
 function teleportSelf(e: Event) {
   // if (!playerTag.value || !e.target?.classList.contains('navmesh')) { return; }
   if (!headTag.value) { return; }
-  if (e.timeStamp - timeMouseDown.value > 500) { return; }
+  if (e.timeStamp - timeMouseDown.value > 150) { return; }
   const posArray = currentCursor.value?.intersection.point.toArray();
   console.log('Click model', e, 'cursor', currentCursor.value, 'position array', posArray);
   headTag.value.object3D.position.set(posArray[0], 1.65, posArray[2]);
