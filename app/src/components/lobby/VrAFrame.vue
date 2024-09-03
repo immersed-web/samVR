@@ -278,11 +278,13 @@ function onHeadMove(e: DetailEvent<ClientTransform['head']>) {
   // throttledTransformMutation();
 }
 function onLeftHandMove(e: DetailEvent<ClientTransform['leftHand']>) {
+  vrSpaceStore.ownClientTransform.leftHand = e.detail;
   // console.log('left hand moved');
   // currentTransform.leftHand = e.detail;
   // throttledTransformMutation();
 }
 function onRightHandMove(e: DetailEvent<ClientTransform['rightHand']>) {
+  vrSpaceStore.ownClientTransform.rightHand = e.detail;
   // console.log('right hand moved');
   // console.log(e.detail?.orientation);
   // console.log(e.detail?.position);
