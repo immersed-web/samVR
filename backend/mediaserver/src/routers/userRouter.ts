@@ -6,7 +6,7 @@ log.enable(process.env.DEBUG);
 import { db, getPermissionLevelForTarget, groupUserPermissions, queryUserWithIncludes, schema } from 'database';
 import { procedure as p, router, atLeastUserP, isUserClientM } from '../trpc/trpc.js';
 import { z } from 'zod';
-import { PermissionInsertSchema, UuidSchema, hasAtLeastPermissionLevel, isStreamPermission, isVrSpacePermission } from 'schemas';
+import { AvatarDesignSchema, LocalClientInitDataSchema, PermissionInsertSchema, UuidSchema, hasAtLeastPermissionLevel, isStreamPermission, isVrSpacePermission } from 'schemas';
 import { Stream, VrSpace } from 'classes/InternalClasses.js';
 
 export const userRouter = router({
@@ -16,6 +16,13 @@ export const userRouter = router({
   //   }
   //   return ctx.client.getPublicState();
   // }),
+  updateAvatarDesign: p.use(isUserClientM).input(AvatarDesignSchema).mutation(async ({ ctx, input }) => {
+    ctx.client.avatarDesign = input;
+  }),
+  initLocalClientData: p.use(isUserClientM).input(LocalClientInitDataSchema).mutation(async ({ ctx, input }) => {
+    log.debug('initLocalClientData', input);
+    ctx.client.avatarDesign = input.avatarDesign;
+  }),
   getAllUsers: atLeastUserP.use(isUserClientM).query(async ({ ctx }) => {
     const dbResponse = await db.query.users.findMany({
       with: {

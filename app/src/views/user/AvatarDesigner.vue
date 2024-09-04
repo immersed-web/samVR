@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, type Ref, reactive, onBeforeMount, watch, onMounted } from 'vue';
 import { type Entity } from 'aframe';
+import { stringify, parse } from 'devalue';
 
 import UIOverlay from '@/components/UIOverlay.vue';
 import PopUp from '@/components/PopUp.vue';
@@ -18,7 +19,11 @@ import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue'
 import { Vue3ColorPicker } from '@cyhnkckali/vue3-color-picker';
 import "@cyhnkckali/vue3-color-picker/dist/style.css"
 import WaitForAframe from '@/components/WaitForAframe.vue';
-import { avatarAssets } from 'schemas';
+import { avatarAssets, type AvatarDesign, defaultAvatarDesign } from 'schemas';
+
+import { useConnectionStore } from '@/stores/connectionStore';
+
+const connectionStore = useConnectionStore();
 
 onMounted(() => {
   loadAvatarFromStorage();
@@ -44,12 +49,16 @@ onMounted(() => {
 
 const skinParts = ['hands', 'heads', 'torsos'];
 
-const currentAvatarSettings = reactive({ skinColor: '', parts: Object.fromEntries(Object.entries(avatarAssets).map(([k, p]) => [k as keyof typeof avatarAssets, { model: p[0], colors: [] }])) })
+
+// const currentAvatarSettings = reactive<AvatarDesign>({ skinColor: '', parts: Object.fromEntries(Object.entries(avatarAssets).map(([k, p]) => [k as keyof typeof avatarAssets, { model: p[0], colors: [] }])) })
+const currentAvatarSettings = reactive<AvatarDesign>(defaultAvatarDesign)
 
 watch(() => currentAvatarSettings, () => saveAvatarSettingsToStorage(), { deep: true });
 function saveAvatarSettingsToStorage() {
-  window.localStorage.setItem('avatarSettings', JSON.stringify(currentAvatarSettings));
-
+  console.log('avatarSettings before save:', currentAvatarSettings);
+  // window.localStorage.setItem('avatarSettings', JSON.stringify(currentAvatarSettings));
+  window.localStorage.setItem('avatarSettings', stringify(currentAvatarSettings));
+  connectionStore.client.user.updateAvatarDesign.mutate(currentAvatarSettings);
 }
 
 function loadAvatarFromStorage() {
@@ -58,7 +67,7 @@ function loadAvatarFromStorage() {
     console.error('failed to load from localstorage');
     return;
   }
-  const parsedAvatarSettings = JSON.parse(loadedString);
+  const parsedAvatarSettings = parse(loadedString);
   currentAvatarSettings.parts = parsedAvatarSettings.parts;
   currentAvatarSettings.skinColor = parsedAvatarSettings.skinColor;
 }
