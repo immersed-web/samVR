@@ -9,6 +9,9 @@
         <a-entity :gltf-model="`url(/avatar/hair/${avatarDesign.parts.hair.model}.glb)`" />
         <a-entity :gltf-model="`url(/avatar/heads/${avatarDesign.parts.heads.model}.glb)`" />
         <a-entity :gltf-model="`url(/avatar/eyes/${avatarDesign.parts.eyes.model}.glb)`" />
+        <a-entity :gltf-model="`url(/avatar/eyebrows/${avatarDesign.parts.eyebrows.model}.glb)`" />
+        <a-entity :gltf-model="`url(/avatar/accessories/${avatarDesign.parts.accessories.model}.glb)`" />
+        <a-entity :gltf-model="`url(/avatar/facialhair/${avatarDesign.parts.facialhair.model}.glb)`" />
         <!-- <a-entity position="0 -0.05 0" class="audio-level">
           <a-entity position="0 0.05 0.002" gltf-model="#avatar-mouth-1" />
         </a-entity> -->
