@@ -91,14 +91,18 @@ export default () => {
         // const id = this.el.id;
         // console.log(`${id} moved to`, e.detail.position);
         const pos = e.detail.position;
-        this.interpolationBuffer!.setPosition(new AFRAME.THREE.Vector3(pos[0], pos[1], pos[2]));
+        this.utilVec.set(pos[0], pos[1], pos[2]);
+        this.interpolationBuffer!.setPosition(this.utilVec);
+        // this.interpolationBuffer!.setPosition(new AFRAME.THREE.Vector3(pos[0], pos[1], pos[2]));
         e.stopPropagation();
       },
 
       rotateTo: function (e: DetailEvent<Pick<ActiveTransform, 'rotation'>>) {
         // // Interpolate with buffered-interpolation
         const rot = e.detail.rotation;
-        this.interpolationBuffer!.setQuaternion(new AFRAME.THREE.Quaternion(rot[0], rot[1], rot[2], rot[3]));
+        this.utilQuat.set(rot[0], rot[1], rot[2], rot[3]);
+        this.interpolationBuffer!.setQuaternion(this.utilQuat);
+        // this.interpolationBuffer!.setQuaternion(new AFRAME.THREE.Quaternion(rot[0], rot[1], rot[2], rot[3]));
         e.stopPropagation();
       },
       setTargetTransform: function (e: DetailEvent<ActiveTransform>) {
