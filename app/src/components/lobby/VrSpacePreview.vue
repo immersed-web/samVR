@@ -15,10 +15,8 @@
       </div> -->
     </div>
     <a-scene embedded class=" min-h-96" ref="sceneTag" id="ascene" xr-mode-ui="enabled: false">
-      <a-assets timeout="20000">
-      </a-assets>
-      <a-entity camera ref="cameraTag">
-      </a-entity>
+      <a-assets timeout="20000" />
+      <a-entity camera ref="cameraTag" />
       <a-sky :color="skyColor" />
       <slot />
 
@@ -63,11 +61,14 @@ const emit = defineEmits<{
   'screenshot': [canvas: HTMLCanvasElement]
 }>();
 
+const firstPersonViewActive = ref(false);
+
 defineExpose({
   getPanoScreenshotFromPoint,
   enterFirstPersonView,
   exitFirstPersonView,
-})
+  firstPersonViewActive,
+});
 
 // A-frame
 const sceneTag = ref<Scene>();
@@ -113,11 +114,13 @@ watch(() => props.raycast, (raycast) => {
     sceneTag.value?.removeAttribute('raycaster');
     navmeshTag.value?.removeAttribute('raycaster-listen');
   }
-})
+});
+
 
 async function enterFirstPersonView(point: THREE.Vector3Tuple) {
   console.log('enter first person triggered');
-  const camTag = cameraTag.value
+  firstPersonViewActive.value = true;
+  const camTag = cameraTag.value;
   if (!camTag || !point) {
     console.error('no cameraTag or point provided');
     return;
@@ -131,7 +134,8 @@ async function enterFirstPersonView(point: THREE.Vector3Tuple) {
 }
 
 async function exitFirstPersonView() {
-  const camTag = cameraTag.value
+  firstPersonViewActive.value = false;
+  const camTag = cameraTag.value;
   if (!camTag) {
     console.error('no cameratag provided');
     return;
@@ -158,7 +162,7 @@ async function getPanoScreenshotFromPoint(point: THREE.Vector3Tuple) {
   const savedEntityRot = camTag.object3D.rotation.clone();
   const savedCameraPos = camTag.getObject3D('camera').position.clone();
   const savedCameraRot = camTag.getObject3D('camera').rotation.clone();
-  camTag.object3D.position.copy(spawnPosVec3)
+  camTag.object3D.position.copy(spawnPosVec3);
   camTag.object3D.rotation.set(0, THREE.MathUtils.degToRad(180), 0);
   camTag.getObject3D('camera').position.set(0, 0, 0);
   camTag.getObject3D('camera').rotation.set(0, 0, 0);
@@ -171,7 +175,7 @@ async function getPanoScreenshotFromPoint(point: THREE.Vector3Tuple) {
   camTag.getObject3D('camera').position.copy(savedCameraPos);
   camTag.getObject3D('camera').rotation.copy(savedCameraRot);
   navmeshTag.value?.setAttribute('visible', navMeshVisibleRestoreState);
-  return canvasScreenshot
+  return canvasScreenshot;
 }
 
 const navmeshId = computed(() => {
@@ -179,13 +183,13 @@ const navmeshId = computed(() => {
 });
 
 onMounted(() => {
-})
+});
 
 const skyColor = computed(() => {
-  const storeSkyColor = vrSpaceStore.currentVrSpace?.dbData.skyColor
-  if (!storeSkyColor) return 'lightskyblue'
+  const storeSkyColor = vrSpaceStore.currentVrSpace?.dbData.skyColor;
+  if (!storeSkyColor) return 'lightskyblue';
   return storeSkyColor;
-})
+});
 
 function onIntersection(evt: DetailEvent<any>) {
   // console.log('model hovered', evt);
@@ -211,7 +215,7 @@ function onModelLoaded(){
   if(modelTag.value && cameraTag.value){
     console.log('centering camera on model bbox');
     const obj3D = modelTag.value.getObject3D('mesh');
-    
+
     const bbox = new THREE.Box3().setFromObject(obj3D);
     bbox.getCenter(modelCenter);
     attachOrbitControls();
@@ -232,7 +236,7 @@ function removeFirstPersonComponents() {
 
 function attachOrbitControls() {
   if (!cameraTag.value) return;
-  cameraTag.value.setAttribute('position', '0 0 0')
+  cameraTag.value.setAttribute('position', '0 0 0');
   let orbitControlSettings = `autoRotate: true; rotateSpeed: 1; initialPosition: ${modelCenter.x} ${modelCenter.y + 2} ${modelCenter.z + 5};`;
   orbitControlSettings += `target:${modelCenter.x} ${modelCenter.y} ${modelCenter.z};`;
   cameraTag.value.setAttribute('orbit-controls', orbitControlSettings);
