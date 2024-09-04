@@ -57,9 +57,9 @@ export default () => {
         const position = this.worldPos.toArray();
         const rotation = this.worldRot.toArray() as [number, number, number, number];
         const transform = { active: true, position, rotation };
-        if (this.el.id === 'camera') {
-          console.log(this.el.id, this.worldPos);
-        }
+        // if (this.el.id === 'camera') {
+        //   console.log(this.el.id, this.worldPos);
+        // }
         this.throttledEmitMovement(transform);
       } 
       this.position = newPosition;
