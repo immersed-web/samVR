@@ -95,12 +95,12 @@ const router = createRouter({
     {
       path: '/vrViewer',
       component: () => import('@/layouts/EmptyLayout.vue'),
+      meta: { requiredRole: 'guest', requiredConnectionType: 'client' },
       children: [
         {
           path: ':vrSpaceId',
           name: 'vrSpace',
           props: true,
-          meta: { requiredRole: 'guest' },
           component: () => import('@/views/user/VrSpaceSceneView.vue'),
         },
       ],
