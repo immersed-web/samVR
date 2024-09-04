@@ -1,4 +1,4 @@
-import type { Transform } from "schemas";
+import type { MaybeTransform } from "schemas";
 import { THREE } from "aframe";
 export default () => {
 
@@ -13,14 +13,14 @@ export default () => {
     worldPos: undefined as unknown as THREE.Vector3,
     worldRot: undefined as unknown as THREE.Quaternion,
     relativeMatrix: undefined as unknown as THREE.Matrix4,
-    throttledEmitMovement: undefined as unknown as (moveUpdate: Transform) => void,
+    throttledEmitMovement: undefined as unknown as (moveUpdate: MaybeTransform) => void,
     init: function () {
     // Create reusable instances unique to each component instance
       this.worldPos = new THREE.Vector3();
       this.worldRot = new THREE.Quaternion();
       this.relativeMatrix = new THREE.Matrix4(); 
       // @ts-ignore
-      this.throttledEmitMovement = AFRAME.utils.throttleLeadingAndTrailing((newTransform: Transform) => this.el.emit('move', newTransform, false), this.interval, this);
+      this.throttledEmitMovement = AFRAME.utils.throttleLeadingAndTrailing((newTransform: MaybeTransform) => this.el.emit('move', newTransform, false), this.interval, this);
     },
     update: function () {
 

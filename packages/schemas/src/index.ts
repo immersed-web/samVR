@@ -443,7 +443,8 @@ const TransformSchema = z.discriminatedUnion('active', [
     active: z.literal(false),
   }),
 ]);
-export type Transform = z.TypeOf<typeof TransformSchema>;
+export type MaybeTransform = z.TypeOf<typeof TransformSchema>;
+export type ActiveTransform = Extract<MaybeTransform, { active: true }>;
 
 const LaserPointerSchema = z.discriminatedUnion('active', [
   z.object({

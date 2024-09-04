@@ -123,10 +123,10 @@ watch(() => props.clientInfo.transform?.head, (newTransform) => {
   }
   // console.log('emitting received transform to avatar entity');
   remoteAvatar.value.emit('moveTo', { position: newTransform.position }, false);
-  remoteAvatar.value.emit('rotateTo', { orientation: newTransform.rotation }, false);
+  remoteAvatar.value.emit('rotateTo', { rotation: newTransform.rotation }, false);
 });
 
-function handleReceivedHandTransform(newTransform: Transform | undefined, oldTransform: Transform | undefined, handEntity: Entity) {
+function handleReceivedHandTransform(newTransform: MaybeTransform | undefined, oldTransform: MaybeTransform | undefined, handEntity: Entity) {
   // Hide hand if no transform is received
   if (!newTransform) {
     handEntity.setAttribute('visible', false);
@@ -143,24 +143,24 @@ function handleReceivedHandTransform(newTransform: Transform | undefined, oldTra
   handEntity.emit('rotateTo', { orientation: newTransform.orientation }, false);
 }
 
-watch(() => props.clientInfo.transform?.leftHand, (newTrsfm, oldT) => {
-  // console.log(`${props.clientInfo.username}, left hand updated ${newTrsfm?.position}`);
-  if (!leftHandTag.value) {
-    console.error('no hand model tag found');
-    return;
-  };
-  handleReceivedHandTransform(newTrsfm, oldT, leftHandTag.value);
-});
+// watch(() => props.clientInfo.transform?.leftHand, (newTrsfm, oldT) => {
+//   // console.log(`${props.clientInfo.username}, left hand updated ${newTrsfm?.position}`);
+//   if (!leftHandTag.value) {
+//     console.error('no hand model tag found');
+//     return;
+//   };
+//   handleReceivedHandTransform(newTrsfm, oldT, leftHandTag.value);
+// });
 
-watch(() => props.clientInfo.transform?.rightHand, (newTrsfm, oldT) => {
-  // console.log(`${props.clientInfo.username}, right hand updated ${newTrsfm?.position}`);
-  if (!rightHandTag.value) {
+// watch(() => props.clientInfo.transform?.rightHand, (newTrsfm, oldT) => {
+//   // console.log(`${props.clientInfo.username}, right hand updated ${newTrsfm?.position}`);
+//   if (!rightHandTag.value) {
 
-    console.error('no hand model tag found');
-    return;
-  }
-  handleReceivedHandTransform(newTrsfm, oldT, rightHandTag.value);
-});
+//     console.error('no hand model tag found');
+//     return;
+//   }
+//   handleReceivedHandTransform(newTrsfm, oldT, rightHandTag.value);
+// });
 
 let stream = shallowRef<MediaStream>();
 watch(stream, () => {

@@ -1,6 +1,6 @@
 import { utils, type Coordinate, type DetailEvent, type Entity } from 'aframe';
 import InterpolationBuffer from 'buffered-interpolation';
-import type { Transform as MaybeTransform } from 'schemas';
+import type { MaybeTransform as MaybeTransform } from 'schemas';
 // import type { Vector3 } from 'three';
 
 type Coordinate4D = Coordinate & { w: number };
@@ -97,7 +97,6 @@ export default () => {
 
       rotateTo: function (e: DetailEvent<Pick<ActiveTransform, 'rotation'>>) {
         // // Interpolate with buffered-interpolation
-        // console.log('Rotate to',e.detail.orientation);
         const rot = e.detail.rotation;
         this.interpolationBuffer!.setQuaternion(new AFRAME.THREE.Quaternion(rot[0], rot[1], rot[2], rot[3]));
         e.stopPropagation();

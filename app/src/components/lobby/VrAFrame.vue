@@ -48,19 +48,21 @@
     <a-entity>
       <!-- The avatars -->
       <template v-for="(clientInfo, id) in clients" :key="id">
-        <a-entity
-          :interpolated-transform="`interpolationTime: 350; position: ${clientInfo.transform?.head?.position?.join(' ')}; rotation: ${clientInfo.transform?.head?.rotation?.join(' ')};`">
-          <a-sphere v-if="clientInfo.transform?.head?.active" color="red" scale="0.8 1 0.4 " />
+        <!-- <a-entity
+          interpolated-transform="interpolationTime: 350;" ref="remoteAvatarHead">
+          <a-sphere v-if="clientInfo.transform?.head?.active" color="red" scale="0.2 0.3 0.3 " />
           <a-troika-text look-at-camera :value="clientInfo.username" position="0 1.4 0" />
           <EmojiOther :active="clientInfo.transform?.emoji?.active"
             :coords="clientInfo.transform?.emoji?.active ? clientInfo.transform?.emoji?.coords : undefined" />
-        </a-entity>
-        <LaserPointerOther v-if="clientInfo.transform?.head?.active && clientInfo.transform?.laserPointer?.active"
+        </a-entity> -->
+        <!-- <LaserPointerOther v-if="clientInfo.transform?.head?.active && clientInfo.transform?.laserPointer?.active"
           :position="clientInfo.transform.laserPointer.position"
-          :position-source="clientInfo.transform?.head?.position" />
+          :position-source="clientInfo.transform?.head?.position" /> -->
+        <BasicAvatarEntity :client-info="clientInfo" v-if="clientInfo.transform" :real-time-data="clientInfo.transform"
+          :avatar-design="clientInfo.avatarDesign ? clientInfo.avatarDesign : defaultAvatarDesign" />
 
-        <!-- <RemoteAvatar v-if="clientInfo.connectionId !== clientStore.clientState?.connectionId && clientInfo.transform"
-          :id="'avatar-'+id" :client-info="clientInfo" /> -->
+        <!-- <Avatar v-if="clientInfo.connectionId !== clientStore.clientState?.connectionId && clientInfo.transform"
+          :id="'avatar-' + id" :client-info="clientInfo" /> -->
       </template>
     </a-entity>
   </template>
@@ -69,8 +71,8 @@
 <script setup lang="ts">
 import { type Entity, type DetailEvent, utils as aframeUtils, THREE } from 'aframe';
 import { ref, onMounted, onBeforeMount, computed, onBeforeUnmount, inject } from 'vue';
-import RemoteAvatar from './AvatarEntity.vue';
-import type { ClientRealtimeData } from 'schemas';
+import Avatar from './AvatarEntity.vue';
+import { defaultAvatarDesign, type ClientRealtimeData } from 'schemas';
 // import type { Unsubscribable } from '@trpc/server/observable';
 import { useClientStore } from '@/stores/clientStore';
 import { useRouter } from 'vue-router';
@@ -86,6 +88,7 @@ import VrSpacePortal from '../entities/VrSpacePortal.vue';
 import EmojiOther from './EmojiOther.vue';
 import LaserPointerOther from './LaserPointerOther.vue';
 import { useCurrentCursorIntersection, isCursorOnNavmesh } from '@/composables/vrSpaceComposables';
+import BasicAvatarEntity from './BasicAvatarEntity.vue';
 const { currentCursor } = useCurrentCursorIntersection();
 
 const router = useRouter();
@@ -119,6 +122,7 @@ const leftHandTag = ref<Entity>();
 const rightHandTag = ref<Entity>();
 
 // const avatarModelFileLoaded = ref(false);
+
 
 // const modelUrl = computed(() => {
 //   return props.modelUrl;
