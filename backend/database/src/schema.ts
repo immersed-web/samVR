@@ -270,9 +270,9 @@ export const vrSpaces = pgTable("VrSpaces", {
 	vrSpaceId: uuid("vrSpaceId").defaultRandom().primaryKey().notNull().$type<VrSpaceId>(),
 	name: text("name").notNull(),
 	ownerUserId: uuid("ownerUserId").notNull().$type<UserId>().references(() => users.userId, { onDelete: "cascade", onUpdate: "cascade" }),
-	worldModelAssetId: uuid("worldModelAssetId").references(() => assets.assetId).$type<AssetId>(),
-	navMeshAssetId: uuid("navMeshAssetId").references(() => assets.assetId).$type<AssetId>(),
-	panoramicPreviewAssetId: uuid('panoramicPreview').references(() => assets.assetId).$type<AssetId>(),
+	worldModelAssetId: uuid("worldModelAssetId").references(() => assets.assetId, { onDelete: 'set null' }).$type<AssetId>(),
+	navMeshAssetId: uuid("navMeshAssetId").references(() => assets.assetId, { onDelete: 'set null' }).$type<AssetId>(),
+	panoramicPreviewAssetId: uuid('panoramicPreview').references(() => assets.assetId, { onDelete: 'set null' }).$type<AssetId>(),
 	visibility: VisibilityEnum("visibility").default('public').notNull(),
 	worldModelScale: doublePrecision("worldModelScale").default(1).notNull(),
 	// A bug in drizzle generates invalid SQL migrations for arrays of 

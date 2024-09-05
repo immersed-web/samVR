@@ -96,13 +96,16 @@
                   <h4>3D-modell för miljön</h4>
                   <pre>{{ vrSpaceStore.currentVrSpace.dbData.worldModelAsset?.originalFileName }}</pre>
                   <AssetUpload @uploaded="onModelUploaded" :accepted-asset-types="['model']" name="miljömodell"
-                    :show-in-user-library="false" :remove-button="vrSpaceStore.currentVrSpace.dbData.worldModelAsset" />
+                    :show-in-user-library="false"
+                    :uploadedAssetData="vrSpaceStore.currentVrSpace.dbData.worldModelAsset"
+                    @asset-deleted="vrSpaceStore.reloadVrSpaceFromDB" />
                 </div>
                 <div v-if="vrSpaceStore.currentVrSpace?.dbData.worldModelAsset">
                   <h4>3D-modell för gåbara ytor (navmesh)</h4>
                   <pre>{{ vrSpaceStore.currentVrSpace.dbData.navMeshAsset?.originalFileName }}</pre>
                   <AssetUpload @uploaded="onNavmeshUploaded" accepted-asset-types="navmesh" name="navmesh"
-                    :show-in-user-library="false" :remove-button="vrSpaceStore.currentVrSpace.dbData.navMeshAsset" />
+                    :show-in-user-library="false" :uploadedAssetData="vrSpaceStore.currentVrSpace.dbData.navMeshAsset"
+                    @asset-deleted="vrSpaceStore.reloadVrSpaceFromDB" />
                 </div>
               </div>
               <template v-if="vrSpaceStore.currentVrSpace.dbData.worldModelAsset">
@@ -152,7 +155,7 @@
                       @change="currentRaycastReason = 'vrSpacePortal'">
                       <option v-for="vrSpace in allowedVrSpaces" :key="vrSpace.vrSpaceId" :value="vrSpace.vrSpaceId">
                         {{
-                          vrSpace.name }}
+                        vrSpace.name }}
                       </option>
                     </select>
                     <button v-if="currentRaycastReason" class="btn btn-sm btn-circle" @click="cancelRaycasting">
@@ -226,7 +229,7 @@
 </template>
 
 <script setup lang="ts">
-import AssetUpload, { type EmitTypes } from './AssetUpload.vue';
+import AssetUpload, { type AssetUploadEmitUploadedPayload } from './AssetUpload.vue';
 import VrAFramePreview from '@/components/lobby/VrSpacePreview.vue';
 import { ref, watch, onMounted, computed, type ComponentInstance, nextTick } from 'vue';
 // import { throttle } from 'lodash-es';
@@ -243,7 +246,6 @@ import VrSpacePortal from '@/components/entities/VrSpacePortal.vue';
 
 // TODO: refine/find alternative way to get these types so we get intellisense for the emit key
 type ExtractEmitData<T extends string, emitUnion extends (...args: any[]) => void> = T extends Parameters<emitUnion>[0] ? Parameters<emitUnion>[1] : never
-type UploadEventPayload = ExtractEmitData<'uploaded', EmitTypes>
 type ScreenshotPayload = ExtractEmitData<'screenshot', ComponentInstance<typeof VrAFramePreview>['$emit']>
 
 // Use imports
@@ -259,7 +261,7 @@ const props = defineProps<{
   vrSpaceId: VrSpaceId
 }>();
 
-function onAssetUploaded(uploadDetails: UploadEventPayload) {
+function onAssetUploaded(uploadDetails: AssetUploadEmitUploadedPayload) {
   console.log(uploadDetails);
   // TODO: We should probalby have the server notify a clientstate update
   // right now we just do this hack to keep assets in local clientState in sync with db.
@@ -268,13 +270,13 @@ function onAssetUploaded(uploadDetails: UploadEventPayload) {
   clientStore.clientState?.assets.push(uploadDetails);
 }
 
-function onModelUploaded(uploadDetails: UploadEventPayload) {
+function onModelUploaded(uploadDetails: AssetUploadEmitUploadedPayload) {
   console.log(uploadDetails);
   if (!vrSpaceStore.writableVrSpaceState) return;
   vrSpaceStore.writableVrSpaceState.dbData.worldModelAssetId = uploadDetails.assetId;
 }
 
-function onNavmeshUploaded(uploadDetails: UploadEventPayload) {
+function onNavmeshUploaded(uploadDetails: AssetUploadEmitUploadedPayload) {
   console.log(uploadDetails);
   if (!vrSpaceStore.writableVrSpaceState) return;
   vrSpaceStore.writableVrSpaceState.dbData.navMeshAssetId = uploadDetails.assetId;

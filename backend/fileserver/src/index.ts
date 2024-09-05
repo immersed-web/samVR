@@ -66,16 +66,21 @@ const privateRoutes = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
 //   console.log(c.req.header());
 //   return next();
 // })
-  // TODO: check permission/ownership
+
+  // TODO: More elaborate ownership check where users are allowed to delete assets belonging to something they have edit rights to.
+  // Example is deleting/changing navmesh or world model if you have edit rights to a VrSpace but isnt the owner of the asset itself
   .delete('/delete', zValidator('json', z.object({ assetId: AssetIdSchema })), async (c, next) => {
     const { assetId } = c.req.valid('json');
-    // const user = c.get('jwtPayload');
+    const user = c.get('jwtPayload');
     const result = await db.transaction(async (tx) => {
       const foundAsset = await tx.query.assets.findFirst({
         where: eq(schema.assets.assetId, assetId),
       })
       if (!foundAsset) {
         throw new HTTPException(HttpStatus.NOT_FOUND, { message: 'no asset found in db' });
+      }
+      if (foundAsset.ownerUserId !== user.userId) {
+        throw new HTTPException(HttpStatus.FORBIDDEN, { message: 'not allowed' });
       }
 
       const filePath = `${savePathAbsolute}/${foundAsset.generatedName}`

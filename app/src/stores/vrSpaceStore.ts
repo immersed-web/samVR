@@ -110,6 +110,10 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     ignoreUpdates(() => writableVrSpaceState.value = undefined);
   }
 
+  async function reloadVrSpaceFromDB() {
+    await connection.client.vr.reloadVrSpaceFromDB.query();
+  }
+
   /**
    * Throttled update of the backend VrSpaceState.
    */
@@ -158,6 +162,7 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     createVrSpace,
     enterVrSpace,
     leaveVrSpace,
+    reloadVrSpaceFromDB,
     updateVrSpace,
     // updateTransform,
     ownClientTransform,

@@ -418,6 +418,11 @@ export const PlacedObjectInsertSchema = createInsertSchema(schema.placedObjects,
   .merge(optionalReason);
 export type PlacedObjectInsert = z.TypeOf<typeof PlacedObjectInsertSchema>;
 
+const AssetSelectSchema = createSelectSchema(schema.assets, {
+  assetId: AssetIdSchema,
+  ownerUserId: UserIdSchema,
+})
+export type Asset = z.TypeOf<typeof AssetSelectSchema>;
 
 export const JwtUserDataSchema = z.object({
   userId: UserIdSchema,

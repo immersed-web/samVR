@@ -4,7 +4,7 @@ process.env.DEBUG = 'Router:VR*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
 import { ClientRealtimeDataSchema, PlacedObjectInsertSchema, VrSpaceIdSchema, vrSpaceUpdateSchema } from 'schemas';
-import { procedure as p, router, isUserClientM, userClientP, atLeastUserP, userInVrSpaceP } from '../trpc/trpc.js';
+import { procedure as p, router, isUserClientM, userClientP, atLeastUserP, userInVrSpaceP, userWithEditRightsToVrSpace } from '../trpc/trpc.js';
 import { VrSpace } from 'classes/VrSpace.js';
 import { z } from 'zod';
 import { basicUserSelect, db, schema } from 'database';
@@ -92,9 +92,9 @@ export const vrRouter = router({
     vrSpace.reloadDbData(reason ?? 'placedObject created. Reloading');
     return dbResponse;
   }),
-  // getState: userInVrSpaceP.query(({ ctx }) => {
-  //   ctx.vrSpace.getPublicState();
-  // }),
+  reloadVrSpaceFromDB: userWithEditRightsToVrSpace.query(async ({ ctx }) => {
+    await ctx.vrSpace.reloadDbData();
+  }),
   // create3DModel: currentVenueAdminP.use(isVenueOwnerM).use(currentVenueHasVrSpaceM).input(VirtualSpace3DModelCreateSchema).mutation(({input, ctx}) => {
   //   ctx.venue.Create3DModel(input.modelUrl);
   // }),
