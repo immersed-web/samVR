@@ -91,7 +91,7 @@
                 <input class="rounded-md border-black border-2" type="color"
                   v-model="vrSpaceStore.writableVrSpaceState.dbData.skyColor">
               </div>
-              <div class="grid grid-cols-2 w-full">
+              <div class="">
                 <div>
                   <h4>3D-modell för miljön</h4>
                   <pre>{{ vrSpaceStore.currentVrSpace.dbData.worldModelAsset?.originalFileName }}</pre>
