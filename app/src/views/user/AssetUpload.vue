@@ -23,7 +23,7 @@
       </div>
     </form>
   </div>
-  <div v-if="uploadedAssetData">
+  <div v-else>
     <form @submit.prevent="removeFile">
       <button type="submit" class="btn btn-error btn-sm">
         <span class="material-icons mr-2">delete</span>
