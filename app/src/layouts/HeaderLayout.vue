@@ -1,9 +1,7 @@
 <template>
-  <div class="flex flex-col">
-    <DefaultHeader
-      class="flex-none"
-    />
-    <ColumnCenter class="mt-10">
+  <div class="flex flex-col items-center">
+    <DefaultHeader class="flex-none" />
+    <ColumnCenter>
       <RouterView />
     </ColumnCenter>
   </div>
