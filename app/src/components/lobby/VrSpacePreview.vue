@@ -38,6 +38,7 @@ import { ref, watch, computed, onMounted, nextTick } from 'vue';
 import { useTimeoutFn } from '@vueuse/core';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import registerAframeComponents from '@/ts/aframe/components';
+import { defaultHeightOverGround } from 'schemas';
 registerAframeComponents();
 
 const vrSpaceStore = useVrSpaceStore();
@@ -128,9 +129,9 @@ async function enterFirstPersonView(point: THREE.Vector3Tuple) {
   camTag.removeAttribute('orbit-controls');
   camTag.setAttribute('look-controls', 'enabled', true);
   camTag.setAttribute('wasd-controls', { fly: false });
-  point[1] += 1.7;
+  point[1] += defaultHeightOverGround;
   camTag.object3D.position.set(...point);
-  camTag.setAttribute('simple-navmesh-constraint', `navmesh:#${navmeshId.value}; fall:0.5; height:1.65;`);
+  camTag.setAttribute('simple-navmesh-constraint', `navmesh:#${navmeshId.value}; fall:0.5; height: ${defaultHeightOverGround};`);
 }
 
 async function exitFirstPersonView() {

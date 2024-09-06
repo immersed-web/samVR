@@ -434,6 +434,8 @@ export type JwtUserData = z.TypeOf<typeof JwtUserDataSchema>;
 export const JwtPayloadSchema = jwtDefaultPayload.merge(JwtUserDataSchema)
 export type JwtPayload = z.TypeOf<typeof JwtPayloadSchema>;
 
+export const defaultHeightOverGround = 1.7;
+
 const Vector2TupleSchema = z.tuple([z.number(), z.number()]);
 const Vector3TupleSchema = z.tuple([z.number(), z.number(), z.number()]);
 const Vector4TupleSchema = z.tuple([z.number(), z.number(), z.number(), z.number()]);

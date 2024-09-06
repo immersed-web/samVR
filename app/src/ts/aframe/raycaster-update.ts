@@ -32,7 +32,7 @@ export default function () {
           const intersectionData: RayIntersectionData = { intersection, rayDirection }
           
           if (!this.prev || !intersection.point.equals(this.prev)) {
-            console.log('emitting raycast with data');
+            // console.log('emitting raycast with data');
             this.el.emit('raycast-update', intersectionData);
           }
           this.prev = intersection.point
@@ -40,7 +40,7 @@ export default function () {
       } else {
         // No entity intersected
         if (this.prev) {
-          console.log('emitting raycast with undefined');
+          // console.log('emitting raycast with undefined');
           this.el.emit('raycast-update', undefined);
         }
         this.prev = undefined

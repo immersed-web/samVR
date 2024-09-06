@@ -43,7 +43,7 @@ export default () => {
       //   this.distanceDebugEntity = foundEl as Entity;
       // }
 
-      console.log('Remote avatar initialized');
+      // console.log('interpolated-transform initialized');
     },
     update() {
       const position = this.data.position as Coordinate;
@@ -77,7 +77,7 @@ export default () => {
     },
     events: {
       setTransform: function (e: DetailEvent<ActiveTransform>) {
-        // console.log('remote-avatar event: setTransform', e);
+        // console.log('interpolated-transform: setTransform', e.detail);
         const trsfm = e.detail;
         const interpolationBuffer = this.interpolationBuffer!;
         interpolationBuffer.setPosition(new AFRAME.THREE.Vector3(...trsfm.position));

@@ -21,13 +21,17 @@
 
     <slot />
 
+    <a-sphere :position="vrSpaceStore.currentVrSpace.dbData.spawnPosition?.join(' ')" color="yellow"
+      scale="0.1 0.1 0.1" />
+
     <!-- <a-entity id="camera-rig" ref="playerOriginTag"> -->
     <a-camera @loaded="onCameraLoaded" id="camera" ref="headTag"
       look-controls="reverseMouseDrag: true; reverseTouchDrag: true;" wasd-controls="acceleration:65;"
-      emit-move="interval: 20" position="0 1.65 0">
+      :simple-navmesh-constraint="`navmesh: #navmesh; fall: 1; height: ${defaultHeightOverGround};`"
+      emit-move="interval: 20;" :position="`0 ${defaultHeightOverGround} 0`">
       <a-entity id="teleport-target-aframe-camera" />
 
-      <a-entity ref="leftHandTag" id="left-hand" @controllerconnected="leftControllerConnected = true"
+      <!-- <a-entity ref="leftHandTag" id="left-hand" @controllerconnected="leftControllerConnected = true"
         @controllerdisconnected="leftControllerConnected = false" laser-controls="hand:left"
         raycaster="objects: .clickable" emit-move="interval: 20; relativeToCamera: true">
         <a-entity :visible="leftControllerConnected" scale="0.05 0.05 0.05" rotation="20 90 -140"
@@ -39,27 +43,44 @@
         emit-move="interval: 20; relativeToCamera: true">
         <a-entity :visible="rightControllerConnected" scale="0.05 0.05 -0.05" rotation="20 90 -140"
           gltf-model="#avatar-hand-1" />
-      </a-entity>
+      </a-entity> -->
     </a-camera>
     <!-- </a-entity> -->
+
+
+    <Teleport to="#teleport-target-ui-right">
+      <div class="card bg-base-200 text-base-content p-2">
+        <div>
+          <pre>{{ currentCursor?.intersection.point }}</pre>
+        </div>
+        <p class="label-text font-bold">Personer i rummet:</p>
+        <p>Du: {{ clientStore.clientState?.username }}</p>
+        <p v-for="(clientInfo, id, idx) in otherClients" :key="id">
+          {{ idx }}: {{ clientInfo.username }}, {{ clientInfo.role }}, {{ clientInfo.transform?.head?.position }}
+        </p>
+      </div>
+    </Teleport>
 
 
     <!-- Avatars wrapper element -->
     <a-entity>
       <!-- The avatars -->
-      <template v-for="(clientInfo, id) in clients" :key="id">
+      <template v-for="(clientInfo, id) in otherClients" :key="id">
         <!-- <a-entity
           interpolated-transform="interpolationTime: 350;" ref="remoteAvatarHead">
           <a-sphere v-if="clientInfo.transform?.head?.active" color="red" scale="0.2 0.3 0.3 " />
           <a-troika-text look-at-camera :value="clientInfo.username" position="0 1.4 0" />
+        </a-entity> -->
+        <LaserPointerOther v-if="clientInfo.transform?.head?.active && clientInfo.transform?.laserPointer?.active"
+          :position="clientInfo.transform.laserPointer.position"
+          :position-source="clientInfo.transform?.head?.position" />
+        <BasicAvatarEntity :client-info="clientInfo" v-if="clientInfo.transform?.head?.active"
+          :real-time-data="clientInfo.transform"
+          :avatar-design="clientInfo.avatarDesign ? clientInfo.avatarDesign : defaultAvatarDesign">
+
           <EmojiOther :active="clientInfo.transform?.emoji?.active"
             :coords="clientInfo.transform?.emoji?.active ? clientInfo.transform?.emoji?.coords : undefined" />
-        </a-entity> -->
-        <!-- <LaserPointerOther v-if="clientInfo.transform?.head?.active && clientInfo.transform?.laserPointer?.active"
-          :position="clientInfo.transform.laserPointer.position"
-          :position-source="clientInfo.transform?.head?.position" /> -->
-        <BasicAvatarEntity :client-info="clientInfo" v-if="clientInfo.transform" :real-time-data="clientInfo.transform"
-          :avatar-design="clientInfo.avatarDesign ? clientInfo.avatarDesign : defaultAvatarDesign" />
+        </BasicAvatarEntity>
 
         <!-- <Avatar v-if="clientInfo.connectionId !== clientStore.clientState?.connectionId && clientInfo.transform"
           :id="'avatar-' + id" :client-info="clientInfo" /> -->
@@ -72,13 +93,13 @@
 import { type Entity, type DetailEvent, utils as aframeUtils, THREE } from 'aframe';
 import { ref, onMounted, onBeforeMount, computed, onBeforeUnmount, inject } from 'vue';
 import Avatar from './AvatarEntity.vue';
-import { defaultAvatarDesign, type ClientRealtimeData } from 'schemas';
+import { defaultAvatarDesign, defaultHeightOverGround, type ClientRealtimeData } from 'schemas';
 // import type { Unsubscribable } from '@trpc/server/observable';
 import { useClientStore } from '@/stores/clientStore';
 import { useRouter } from 'vue-router';
 import { useStreamStore } from '@/stores/streamStore';
 import { useXRState } from '@/composables/XRState';
-import { throttle } from 'lodash-es';
+import { throttle, omit } from 'lodash-es';
 // import type { SubscriptionValue, RouterOutputs } from '@/modules/trpcClient';
 import { useSoupStore } from '@/stores/soupStore';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
@@ -105,8 +126,6 @@ const props = defineProps({
   showNavMesh: { type: Boolean, default: false },
   // modelScale: {type: Number, default: 1},
 });
-
-type Point = [number, number, number];
 
 // A-frame
 // const sceneTag = ref<Scene>();
@@ -136,7 +155,17 @@ const navmeshId = computed(() => {
 //   return vrSpaceStore.currentVrSpace?.dbData.navMeshAssetId !== undefined ? 'navmesh' : 'model';
 // });
 
-const clients = computed(() => vrSpaceStore.currentVrSpace?.clients);
+const otherClients = computed(() => {
+  if (!vrSpaceStore.currentVrSpace) {
+    console.warn('no current space, cant derived computed otherClients');
+    return undefined;
+  }
+  if (!clientStore.clientState) {
+    console.warn('no clientState, cant derived computed otherClients');
+    return undefined;
+  }
+  return omit(vrSpaceStore.currentVrSpace.clients, [clientStore.clientState.connectionId]) as typeof vrSpaceStore.currentVrSpace.clients;
+});
 
 const skyColor = computed(() => {
   return vrSpaceStore.currentVrSpace?.dbData.skyColor ?? 'lightskyblue';
@@ -177,7 +206,7 @@ function onCameraLoaded() {
   // the  raycaster seem to keep a reference to the intersected object which leads to us missing "new" intersection after reattaching raycaster-listen.
   // This is a hacky work-around to "reset" the raycasting logic
   sceneTag.value!.setAttribute('raycaster', { objects: '.clickable' });
-  headTag.value!.setAttribute('simple-navmesh-constraint', `navmesh:#${navmeshId.value}; fall:0.5; height:1.65;`);
+  // headTag.value!.setAttribute('simple-navmesh-constraint', `navmesh:#${navmeshId.value}; fall:2; height: ${defaultHeightOverGround};`);
 }
 
 onBeforeUnmount(async () => {
@@ -188,9 +217,7 @@ onBeforeUnmount(async () => {
 });
 
 async function onModelLoaded() {
-  // if (modelTag.value && playerOriginTag.value) {
   if (modelTag.value && headTag.value) {
-    // console.log(obj3D);
     let startPos = getRandomSpawnPosition();
     if (!startPos) {
       console.log('failed to calculate spawnpoint. centering player on model bbox as fallback');
@@ -199,12 +226,18 @@ async function onModelLoaded() {
       startPos = new THREE.Vector3();
       bbox.getCenter(startPos);
     }
+    startPos.y += defaultHeightOverGround + 0.2;
     console.log('Start position', startPos);
-    // playerOriginTag.value.object3D.position.set(startPos.x, startPos.y, startPos.z);
-    headTag.value.object3D.position.set(startPos.x, startPos.y + 1.65, startPos.z);
-    const worldPos = headTag.value!.object3D.getWorldPosition(new THREE.Vector3());
-    const worldRot = headTag.value!.object3D.getWorldQuaternion(new THREE.Quaternion());
-    await new Promise((res) => setTimeout(res, 200));
+    headTag.value.object3D.position.set(startPos.x, startPos.y, startPos.z);
+
+    // const worldPos = headTag.value!.object3D.getWorldPosition(new THREE.Vector3());
+    // const worldRot = headTag.value!.object3D.getWorldQuaternion(new THREE.Quaternion());
+    // await new Promise((res) => setTimeout(res, 200));
+    // vrSpaceStore.ownClientTransform.head = {
+    //   active: true,
+    //   position: startPos.toArray(),
+    //   rotation: worldRot.toArray() as THREE.Vector4Tuple,
+    // }
 
     // vrSpaceStore.updateTransform(trsfm);
     // placeRandomSpheres();
@@ -247,17 +280,6 @@ function getRandomSpawnPosition() {
     spawnRadius = 1;
   }
   return generateSpawnPosition(spawnPosition as THREE.Vector3Tuple, spawnRadius);
-  // if (!spawnPosition || !spawnRadius) return;
-  // const randomRadianAngle = 2 * Math.PI * Math.random(); // radian angle
-  // // Why sqrt? Check here: https://programming.guide/random-point-within-circle.html
-  // const randomDistance = Math.sqrt(Math.random()) * spawnRadius;
-  // const x = randomDistance * Math.cos(randomRadianAngle);
-  // const z = randomDistance * Math.sin(randomRadianAngle);
-  // const randomOffsetVector = new THREE.Vector3(x, 0, z);
-
-  // const spawnPointVector = new THREE.Vector3(...spawnPosition);
-  // spawnPointVector.add(randomOffsetVector);
-  // return spawnPointVector;
 }
 
 // function goToStream() {
@@ -286,16 +308,14 @@ function getRandomSpawnPosition() {
 // };
 function onHeadMove(e: DetailEvent<ClientRealtimeData['head']>) {
   vrSpaceStore.ownClientTransform.head = e.detail;
-  // console.log('head moved');
+  // console.log('head moved', e.detail.position!);
   // console.log(e.detail.position);
   // currentTransform.head = e.detail;
-  // throttledTransformMutation();
 }
 function onLeftHandMove(e: DetailEvent<ClientRealtimeData['leftHand']>) {
   vrSpaceStore.ownClientTransform.leftHand = e.detail;
   // console.log('left hand moved');
   // currentTransform.leftHand = e.detail;
-  // throttledTransformMutation();
 }
 function onRightHandMove(e: DetailEvent<ClientRealtimeData['rightHand']>) {
   vrSpaceStore.ownClientTransform.rightHand = e.detail;
@@ -303,7 +323,6 @@ function onRightHandMove(e: DetailEvent<ClientRealtimeData['rightHand']>) {
   // console.log(e.detail?.orientation);
   // console.log(e.detail?.position);
   // currentTransform.rightHand = e.detail;
-  // throttledTransformMutation();
 }
 
 const timeMouseDown = ref(0);
@@ -312,14 +331,12 @@ function teleportMouseDown(e: Event) {
 }
 
 function teleportSelf(e: Event) {
-  // if (!playerTag.value || !e.target?.classList.contains('navmesh')) { return; }
-  if (!headTag.value) { return; }
+  if (!headTag.value || !currentCursor.value) { return; }
   if (e.timeStamp - timeMouseDown.value > 150) { return; }
-  const posArray = currentCursor.value?.intersection.point.toArray();
+  let posArray = currentCursor.value?.intersection.point.toArray();
+  posArray[1] += defaultHeightOverGround;
   console.log('Click model', e, 'cursor', currentCursor.value, 'position array', posArray);
-  headTag.value.object3D.position.set(posArray[0], 1.65, posArray[2]);
-
-  // vrSpaceStore.ownClientTransform.head = { active: true, position: currentCursor.value?.intersection.point.toArray(), rotation: [0, 0, 0, 0] };
+  headTag.value.object3D.position.set(posArray[0], posArray[1], posArray[2]);
 }
 
 // const throttledTransformMutation = throttle(async () => {

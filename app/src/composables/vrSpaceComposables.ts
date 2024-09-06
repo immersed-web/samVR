@@ -9,7 +9,7 @@ export type Tuple = [number, number]
 const writableIntersection = shallowRef<RayIntersectionData>();
 const rayIntersectionData = shallowReadonly(writableIntersection);
 function updateCursor(intersectionData: RayIntersectionData | undefined) {
-  console.log('currentCUrsor updated:', intersectionData);
+  // console.log('currentCUrsor updated:', intersectionData);
   writableIntersection.value = intersectionData;
 }
 
