@@ -43,8 +43,9 @@ watch([laserActive, currentCursor], ([newActive, newIntersection], [oldActive, o
 
   <!-- UI, clickable badge -->
   <Teleport to="#teleport-target-ui-left">
-    <div class="badge cursor-pointer tooltip tooltip-right" :class="laserActive ? 'badge-success' : ''"
-      @click="toggleLaser" data-tip="Klicka eller tryck L för att slå på och av laserpekaren">
+    <div class="badge cursor-pointer pointer-events-auto tooltip tooltip-right"
+      :class="laserActive ? 'badge-success' : ''" @click="toggleLaser"
+      data-tip="Klicka eller tryck L för att slå på och av laserpekaren">
       Laserpekaren är {{ laserActive ? 'på' : 'av' }}
     </div>
   </Teleport>
