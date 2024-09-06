@@ -56,7 +56,7 @@
         <p class="label-text font-bold">Personer i rummet:</p>
         <p>Du: {{ clientStore.clientState?.username }}</p>
         <p v-for="(clientInfo, id, idx) in otherClients" :key="id">
-          {{ idx }}: {{ clientInfo.username }}, {{ clientInfo.role }}, {{ clientInfo.transform?.head?.position }}
+          {{ idx }}: {{ clientInfo.username }}, {{ clientInfo.role }}
         </p>
       </div>
     </Teleport>
