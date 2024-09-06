@@ -32,7 +32,7 @@ watch(() => props.coords, (newCoords) => {
 </script>
 
 <template>
-  <a-entity ref="emoji" position="0 0.8 0" look-at="[camera]" scale="0 0 0"
+  <a-entity ref="emoji" position="0 0.5 0" look-at-camera scale="0 0 0"
     animation__show="property: scale; to: 1 1 1; dur: 1000; easing: easeOutQuad; startEvents: show"
     animation__hide="property: scale; to: 0 0 0; dur: 1000; easing: easeInQuad; startEvents: hide">
     <a-entity v-if="coordsSaved" rotation="0 0 -5"
