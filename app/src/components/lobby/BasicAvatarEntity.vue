@@ -4,6 +4,7 @@
     <!-- <Teleport to="#teleport-target-ui-right">
       <div>{{ realTimeData }}</div>
     </Teleport> -->
+    <slot />
     <a-entity rotation="0 180 0">
       <a-entity position="0 0 0">
         <a-entity :gltf-model="`url(/avatar/hair/${avatarDesign.parts.hair.model}.glb)`" />
@@ -44,7 +45,7 @@ const remoteAvatarHead = ref<Entity>();
 
 watch(() => props.realTimeData.head, (headTransform) => {
   if (!headTransform.active) return;
-  console.log('updating head');
+  // console.log('updating head', headTransform.position);
   remoteAvatarHead.value?.emit('moveTo', { position: headTransform.position }, false);
   remoteAvatarHead.value?.emit('rotateTo', { rotation: headTransform.rotation }, false);
 })

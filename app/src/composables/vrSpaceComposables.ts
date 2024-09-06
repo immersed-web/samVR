@@ -8,7 +8,8 @@ export type Tuple = [number, number]
 // #region Raycast & intersection
 const writableIntersection = shallowRef<RayIntersectionData>();
 const rayIntersectionData = shallowReadonly(writableIntersection);
-function updateCursor(intersectionData: RayIntersectionData) {
+function updateCursor(intersectionData: RayIntersectionData | undefined) {
+  console.log('currentCUrsor updated:', intersectionData);
   writableIntersection.value = intersectionData;
 }
 

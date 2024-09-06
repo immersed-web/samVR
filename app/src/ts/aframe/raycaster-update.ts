@@ -6,12 +6,13 @@ export default function () {
   AFRAME.registerComponent('raycaster-update', {
     // raycaster: null as null | Entity,
     dependencies: ['raycaster'],
-    fields: {
-      prev: new THREE.Vector3(),
-    },
+    // fields: {
+    // },
+    prev: undefined as THREE.Vector3 | undefined,
     init: function () {
       console.log('INIT raycaster-update');
-      this.tick = AFRAME.utils.throttleTick(this.tick!, 10, this);
+      this.prev = new THREE.Vector3();
+      this.tick = AFRAME.utils.throttleTick(this.tick, 10, this);
     },
     events: {
       // 'raycaster-intersection': function (evt: DetailEvent<{ el: Entity }>) {
@@ -30,11 +31,19 @@ export default function () {
           const rayDirection = threeRaycaster.ray.direction;
           const intersectionData: RayIntersectionData = { intersection, rayDirection }
           
-          if(!intersection.point.equals(this.fields.prev)){
+          if (!this.prev || !intersection.point.equals(this.prev)) {
+            console.log('emitting raycast with data');
             this.el.emit('raycast-update', intersectionData);
           }
-          this.fields.prev = intersection.point
+          this.prev = intersection.point
         }
+      } else {
+        // No entity intersected
+        if (this.prev) {
+          console.log('emitting raycast with undefined');
+          this.el.emit('raycast-update', undefined);
+        }
+        this.prev = undefined
       }
       // if (!this.raycaster) { return; }  // Not intersecting.
 

@@ -11,8 +11,8 @@
             <a-entity id="teleport-target-aframe-scene" />
             <a-entity id="teleport-target-aframe-cursor"
               :position="currentCursor?.intersection.point.toArray().join(' ')" :visible="true">
-              <a-ring :color="isCursorOnNavmesh ? 'yellow' : 'red'" :opacity="isCursorOnNavmesh ? 1 : 0.5"
-                radius-inner="0.1" radius-outer="0.2" material="shader: flat;" rotation="-90 0 0" />
+              <a-ring :visible="isCursorOnNavmesh" radius-inner="0.1" radius-outer="0.2" material="shader: flat;"
+                rotation="-90 0 0" />
             </a-entity>
           </VrAFrame>
         </a-scene>

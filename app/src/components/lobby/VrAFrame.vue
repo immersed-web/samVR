@@ -89,6 +89,7 @@ import EmojiOther from './EmojiOther.vue';
 import LaserPointerOther from './LaserPointerOther.vue';
 import { useCurrentCursorIntersection, isCursorOnNavmesh } from '@/composables/vrSpaceComposables';
 import BasicAvatarEntity from './BasicAvatarEntity.vue';
+import { generateSpawnPosition } from '@/modules/3DUtils';
 const { currentCursor } = useCurrentCursorIntersection();
 
 const router = useRouter();
@@ -235,19 +236,28 @@ function placeRandomSpheres() {
 }
 
 function getRandomSpawnPosition() {
-  const spawnPosition = vrSpaceStore.currentVrSpace?.dbData.spawnPosition as Point | undefined;
-  const spawnRadius = vrSpaceStore.currentVrSpace?.dbData.spawnRadius || 1;
-  if (!spawnPosition || !spawnRadius) return;
-  const randomRadianAngle = 2 * Math.PI * Math.random(); // radian angle
-  // Why sqrt? Check here: https://programming.guide/random-point-within-circle.html
-  const randomDistance = Math.sqrt(Math.random()) * spawnRadius;
-  const x = randomDistance * Math.cos(randomRadianAngle);
-  const z = randomDistance * Math.sin(randomRadianAngle);
-  const randomOffsetVector = new THREE.Vector3(x, 0, z);
+  const spawnPosition = vrSpaceStore.currentVrSpace?.dbData.spawnPosition;
+  if (!spawnPosition) {
+    console.error('spawnPosition in vrSpace is not set. failing to generate random spawn point');
+    return;
+  }
+  let spawnRadius = vrSpaceStore.currentVrSpace?.dbData.spawnRadius;
+  if (!spawnRadius) {
+    console.warn('spawnRadius not set. Using 1 as fallback');
+    spawnRadius = 1;
+  }
+  return generateSpawnPosition(spawnPosition as THREE.Vector3Tuple, spawnRadius);
+  // if (!spawnPosition || !spawnRadius) return;
+  // const randomRadianAngle = 2 * Math.PI * Math.random(); // radian angle
+  // // Why sqrt? Check here: https://programming.guide/random-point-within-circle.html
+  // const randomDistance = Math.sqrt(Math.random()) * spawnRadius;
+  // const x = randomDistance * Math.cos(randomRadianAngle);
+  // const z = randomDistance * Math.sin(randomRadianAngle);
+  // const randomOffsetVector = new THREE.Vector3(x, 0, z);
 
-  const spawnPointVector = new THREE.Vector3(...spawnPosition);
-  spawnPointVector.add(randomOffsetVector);
-  return spawnPointVector;
+  // const spawnPointVector = new THREE.Vector3(...spawnPosition);
+  // spawnPointVector.add(randomOffsetVector);
+  // return spawnPointVector;
 }
 
 // function goToStream() {

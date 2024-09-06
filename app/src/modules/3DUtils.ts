@@ -1,3 +1,4 @@
+import { THREE } from "aframe";
 
 export type RayIntersectionData = { intersection: THREE.Intersection, rayDirection: THREE.Vector3 };
 export function intersectionToTransform(intersectionData: RayIntersectionData, normalOffset: number = 0.05) {
@@ -32,4 +33,21 @@ export function intersectionToTransform(intersectionData: RayIntersectionData, n
     position: position.toArray(),
     rotation: quat.toArray() as THREE.Vector4Tuple,
   };
+}
+
+
+export function generateSpawnPosition(spawnPosition: THREE.Vector3Tuple, spawnRadius: number) {
+  // const spawnPosition = vrSpaceStore.currentVrSpace?.dbData.spawnPosition as Point | undefined;
+  // const spawnRadius = vrSpaceStore.currentVrSpace?.dbData.spawnRadius || 1;
+  if (!spawnPosition || !spawnRadius) return;
+  const randomRadianAngle = 2 * Math.PI * Math.random(); // radian angle
+  // Why sqrt? Check here: https://programming.guide/random-point-within-circle.html
+  const randomDistance = Math.sqrt(Math.random()) * spawnRadius;
+  const x = randomDistance * Math.cos(randomRadianAngle);
+  const z = randomDistance * Math.sin(randomRadianAngle);
+  const randomOffsetVector = new THREE.Vector3(x, 0, z);
+
+  const spawnPointVector = new THREE.Vector3(...spawnPosition);
+  spawnPointVector.add(randomOffsetVector);
+  return spawnPointVector;
 }
