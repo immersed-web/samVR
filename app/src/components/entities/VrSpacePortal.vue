@@ -8,7 +8,7 @@
       scale="0.5 0.5 0.5" material="shader: outer-glow; start: 0.3; color: 0.5 0 1;" position="0 1.5 0">
       <a-icosahedron v-if="props.panoramicPreviewUrl" detail="5" scale="0.98 0.98 0.98" transparent="true"
         opacity="0.95"
-        :material="`shader: pano-portal; warpParams: 3 0.9; src: ${props.panoramicPreviewUrl}; side:back;`">
+        :material="`shader: pano-portal; dynamicOpacity: true; warpParams: 3 0.9; src: ${props.panoramicPreviewUrl}; side:back;`">
       </a-icosahedron>
       <a-sphere v-else color="black" transparent="true" opacity="0.9" scale="0.98 0.98 0.98" />
     </a-sphere>
