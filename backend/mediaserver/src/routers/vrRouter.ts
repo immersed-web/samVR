@@ -112,7 +112,6 @@ export const vrRouter = router({
   transform: router({
     updateTransform: userInVrSpaceP.input(ClientRealtimeDataSchema).mutation(({ input, ctx }) => {
       log.debug(`transform received from ${ctx.username} (${ctx.connectionId})`);
-      // log.debug(input);
       ctx.client.transform = input;
       const vrSpace = ctx.vrSpace;
       vrSpace.pendingTransforms[ctx.connectionId] = input;

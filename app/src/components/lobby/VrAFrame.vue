@@ -52,6 +52,7 @@
       <div class="card bg-base-200 text-base-content p-2">
         <div>
           <pre>{{ currentCursor?.intersection.point }}</pre>
+          <pre>{{ vrSpaceStore.ownClientTransform.laserPointer }}</pre>
         </div>
         <p class="label-text font-bold">Personer i rummet:</p>
         <p>Du: {{ clientStore.clientState?.username }}</p>

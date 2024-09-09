@@ -22,10 +22,13 @@ function toggleLaser() {
 watch([laserActive, currentCursor], ([newActive, newIntersection], [oldActive, oldIntersection]) => {
   if (newActive) {
     if (!newIntersection) {
-      console.error('laser intersection was undefined while marked as active');
+      console.warn('laser intersection was undefined while marked as active');
       return;
     }
-    vrSpaceStore.ownClientTransform.laserPointer = { active: true, position: newIntersection.intersection.point.toArray() };
+    console.log('laser updated', newIntersection);
+    const rayDirection = newIntersection.rayDirection
+    console.log('rayDirection', rayDirection);
+    vrSpaceStore.ownClientTransform.laserPointer = { active: newActive, position: newIntersection.intersection.point.toArray(), directionVector: rayDirection.toArray() };
   } else if (!newActive && oldActive !== newActive) {
     vrSpaceStore.ownClientTransform.laserPointer = { active: false };
   }

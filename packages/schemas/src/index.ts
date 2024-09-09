@@ -460,6 +460,7 @@ const LaserPointerSchema = z.discriminatedUnion('active', [
   z.object({
     active: z.literal(true),
     position: Vector3TupleSchema,
+    directionVector: Vector3TupleSchema,
     // startPosition: Vector3TupleSchema,
     // endPosition: Vector3TupleSchema
   }),

@@ -115,7 +115,7 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
   }
 
   /**
-   * Throttled update of the backend VrSpaceState.
+   * Debounced update of the backend VrSpaceState.
    */
   const updateVrSpace = debounce(async (reason?: string) => {
     if (!currentVrSpace.value) return;
@@ -145,8 +145,8 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     // if (transform.head.active) {
     //   console.log('gonna update transform', transform.head.position);
     // }
+    // console.log('sending transform', transform);
     await connection.client.vr.transform.updateTransform.mutate(transform);
-    // Unset hands after theyre sent
   }, 100, { trailing: true });
 
   // async function updateTransform(transform: ClientTransform){
