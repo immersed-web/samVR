@@ -42,7 +42,6 @@ import type { Scene } from 'aframe';
 import WaitForAframe from '@/components/WaitForAframe.vue';
 import { useRouter } from 'vue-router';
 import { useCurrentCursorIntersection, type Tuple, isCursorOnNavmesh } from '@/composables/vrSpaceComposables';
-// import LaserPointerSelf from '@/components/lobby/LaserPointerSelf.vue';
 import type { RayIntersectionData } from '@/modules/3DUtils';
 import UIOverlay from '@/components/UIOverlay.vue';
 import LaserTeleport from '@/components/lobby/LaserTeleport.vue';
