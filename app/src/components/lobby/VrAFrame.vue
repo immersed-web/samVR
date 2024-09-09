@@ -227,7 +227,7 @@ async function onModelLoaded() {
       startPos = new THREE.Vector3();
       bbox.getCenter(startPos);
     }
-    startPos.y += defaultHeightOverGround + 0.2;
+    startPos.y += defaultHeightOverGround + 0.05;
     console.log('Start position', startPos);
     headTag.value.object3D.position.set(startPos.x, startPos.y, startPos.z);
 
