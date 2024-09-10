@@ -5,8 +5,8 @@
       </div>
       <UIOverlay />
       <WaitForAframe>
-        <a-scene ref="sceneTag" cursor="fuse:false; rayOrigin:mouse;" raycaster="objects: .clickable" raycaster-update
-          @raycast-update="updateCursor($event.detail)">
+        <a-scene renderer="logarithmicDepthBuffer: true" ref="sceneTag" cursor="fuse:false; rayOrigin:mouse;"
+          raycaster="objects: .clickable" raycaster-update @raycast-update="updateCursor($event.detail)">
           <VrAFrame v-if="vrSpaceStore.worldModelUrl" :show-nav-mesh="false">
             <a-entity id="teleport-target-aframe-scene" />
             <a-entity id="teleport-target-aframe-cursor"
