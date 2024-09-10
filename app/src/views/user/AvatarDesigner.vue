@@ -155,7 +155,8 @@ function openPopupParts(evt: Event, part: string, cIdx: number) {
   <WaitForAframe>
     <UIOverlay class="">
       <template v-slot:left>
-        <div class="overflow-y-auto grid justify-center grid-cols-[auto_auto_auto] items-center gap-2 ">
+        <div
+          class="overflow-y-auto grid justify-center grid-cols-[auto_auto_auto] items-center gap-2 pointer-events-auto ">
           <div class="col-start-1 text-center">
             <div class="label">
               <span class="label-text text-capitalize">skin color</span>
