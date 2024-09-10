@@ -501,7 +501,8 @@ export type ClientsRealtimeData = Record<ConnectionId, ClientRealtimeData>;
 //   layer: [undefined, 'layer_lowrider', 'layer_safari']
 // } as const;
 
-const skinParts = ['hands', 'heads', 'torsos'] as const;
+export const skinParts = ['hands', 'heads', 'torsos'] as const;
+export type SkinPart = typeof skinParts[number];
 
 const literalArray = skinParts.map(s => z.literal(s))
 

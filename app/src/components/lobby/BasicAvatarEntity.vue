@@ -7,22 +7,19 @@
     <slot />
     <a-entity rotation="0 180 0">
       <a-entity position="0 0 0">
-        <a-entity :gltf-model="`url(/avatar/hair/${avatarDesign.parts.hair.model}.glb)`" />
-        <a-entity :gltf-model="`url(/avatar/heads/${avatarDesign.parts.heads.model}.glb)`" />
-        <a-entity :gltf-model="`url(/avatar/eyes/${avatarDesign.parts.eyes.model}.glb)`" />
-        <a-entity :gltf-model="`url(/avatar/eyebrows/${avatarDesign.parts.eyebrows.model}.glb)`" />
-        <a-entity :gltf-model="`url(/avatar/accessories/${avatarDesign.parts.accessories.model}.glb)`" />
-        <a-entity :gltf-model="`url(/avatar/facialhair/${avatarDesign.parts.facialhair.model}.glb)`" />
-        <!-- <a-entity position="0 -0.05 0" class="audio-level">
-          <a-entity position="0 0.05 0.002" gltf-model="#avatar-mouth-1" />
-        </a-entity> -->
-        <a-entity :gltf-model="`url(/avatar/mouths/${avatarDesign.parts.mouths.model}.glb)`" />
+        <AvatarPart v-for="(part, key) in headGroupedParts" :key="key" :part-name="key" :part="part" />
+        <AvatarSkinPart skin-part-name="heads" :part="avatarDesign.parts.heads" :skin-color="avatarDesign.skinColor" />
+        <a-entity position="0 0 0" class="audio-level">
+          <AvatarPart part-name="mouths" :part="avatarDesign.parts.mouths" />
+        </a-entity>
+        <!-- <a-entity :gltf-model="`url(/avatar/mouths/${avatarDesign.parts.mouths.model}.glb)`" /> -->
       </a-entity>
       <a-entity ref="lowerBodyTag" lock-rotation-axis>
-        <a-entity :gltf-model="`url(/avatar/torsos/${avatarDesign.parts.torsos.model}.glb)`" />
-        <a-entity :gltf-model="`url(/avatar/clothes/${avatarDesign.parts.clothes.model}.glb)`" />
+        <AvatarSkinPart skin-part-name="torsos" :part="avatarDesign.parts.torsos"
+          :skin-color="avatarDesign.skinColor" />
+        <AvatarPart part-name="clothes" :part="avatarDesign.parts.clothes" />
+        <AvatarPart part-name="layer" :part="avatarDesign.parts.layer" />
       </a-entity>
-      <!-- <a-sphere color="blue" scale="0.2 0.2 0.2" /> -->
     </a-entity>
   </a-entity>
 </template>
@@ -31,8 +28,11 @@
 
 import type { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import type { Entity } from 'aframe';
-import type { ActiveTransform, AvatarDesign, ClientRealtimeData, ConnectionId } from 'schemas'
-import { onBeforeMount, onMounted, ref, watch } from 'vue';
+import { skinParts as skinPartArray, type SkinPart, type ActiveTransform, type AvatarDesign, type ClientRealtimeData, type ConnectionId } from 'schemas'
+import { computed, onBeforeMount, onMounted, ref, watch } from 'vue';
+import AvatarPart from './AvatarPart.vue';
+import AvatarSkinPart from './AvatarSkinPart.vue';
+import { omit, pick } from 'lodash-es';
 
 const props = defineProps<{
   // realTimeData: Readonly<ClientRealtimeData>
@@ -40,6 +40,15 @@ const props = defineProps<{
   // avatarDesign: AvatarDesign
   realTimeData: NonNullable<NonNullable<ReturnType<typeof useVrSpaceStore>['currentVrSpace']>['clients'][ConnectionId]['transform']>
 }>();
+
+// const skinParts = computed(() => {
+//   return pick(props.avatarDesign.parts, skinPartArray)
+// });
+
+const headGroupedParts = computed(() => {
+  const omittedParts = ['layer', 'clothes', 'mouths', ...skinPartArray] as const;
+  return omit(props.avatarDesign.parts, omittedParts);
+})
 
 const avatarEntity = ref<Entity>();
 
