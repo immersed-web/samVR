@@ -72,12 +72,12 @@ async function onAvatarEntityLoaded() {
     console.log('avatarentity: setting head transform', props.realTimeData.head);
     avatarEntity.value.emit('setTransform', props.realTimeData.head);
   }
-  // if (!stream.value) {
-  //   console.log('stream is undefined. Will not emit');
-  //   return;
-  // }
-  // console.log('emitting mediastream to entity after avatar entity loaded', stream.value);
-  // avatarEntity.value.emit('setMediaStream', { stream: stream.value });
+  if (!stream.value) {
+    console.log('stream is undefined. Will not emit');
+    return;
+  }
+  console.log('emitting mediastream to entity after avatar entity loaded', stream.value);
+  avatarEntity.value.emit('setMediaStream', { stream: stream.value });
 }
 
 // Distance to client camera callbacks
@@ -125,9 +125,7 @@ async function getStreamFromProducerId(producerId?: ProducerId) {
   if (!consumerData) {
     await soupStore.consume(producerId);
     consumerData = soupStore.consumers.get(producerId)!;
-    // return new MediaStream([track]);
   }
-  // rtpReceiver = consumerData.consumer.rtpReceiver;
   return new MediaStream([consumerData.consumer.track]);
 }
 

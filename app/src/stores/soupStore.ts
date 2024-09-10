@@ -210,7 +210,7 @@ export const useSoupStore = defineStore('soup', () =>{
     });
   }
 
-  //TODO: implement this. It will be needed if user jumps betweeen events.
+  // TODO: implement this. It will be needed if user jumps betweeen events.
   // Every event has separate medisoup router and each router needs separate client side device (I think)
   async function unloadDevice(){
   }

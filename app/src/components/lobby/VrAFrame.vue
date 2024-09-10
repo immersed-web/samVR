@@ -120,7 +120,7 @@ const router = useRouter();
 // Stores
 const vrSpaceStore = useVrSpaceStore();
 const clientStore = useClientStore();
-const soupStore = useSoupStore();
+// const soupStore = useSoupStore();
 
 // Props & emits
 const props = defineProps({
@@ -176,25 +176,6 @@ const skyColor = computed(() => {
 
 onBeforeMount(async () => {
   // console.log('onBeforeMount');
-  if (!soupStore.deviceLoaded) {
-    await soupStore.loadDevice();
-  }
-  await soupStore.createReceiveTransport();
-  try {
-    await soupStore.createSendTransport();
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: true,
-    });
-    const [track] = stream.getAudioTracks();
-    await soupStore.produce({
-      track,
-      producerInfo: {
-        isPaused: false,
-      },
-    });
-  } catch (e) {
-    console.error('failed to setup the mediasoup stuff');
-  }
   // console.log('onBeforeMount completed');
 });
 
@@ -215,7 +196,6 @@ function onCameraLoaded() {
 onBeforeUnmount(async () => {
   sceneTag.value?.removeAttribute('raycaster');
   sceneTag.value?.removeAttribute('cursor');
-  await soupStore.closeAudioProducer();
   await vrSpaceStore.leaveVrSpace();
 });
 

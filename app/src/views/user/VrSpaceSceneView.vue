@@ -37,7 +37,7 @@ import { aFrameSceneProvideKey } from '@/modules/injectionKeys';
 import VrAFrame from '../../components/lobby/VrAFrame.vue';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import type { VrSpaceId } from 'schemas';
-import { onBeforeMount, provide, ref, watch, getCurrentInstance } from 'vue';
+import { onBeforeMount, provide, ref, watch, getCurrentInstance, onBeforeUnmount } from 'vue';
 import type { Scene } from 'aframe';
 import WaitForAframe from '@/components/WaitForAframe.vue';
 import { useRouter } from 'vue-router';
@@ -46,10 +46,12 @@ import type { RayIntersectionData } from '@/modules/3DUtils';
 import UIOverlay from '@/components/UIOverlay.vue';
 import LaserTeleport from '@/components/lobby/LaserTeleport.vue';
 import EmojiTeleport from '@/components/lobby/EmojiTeleport.vue';
+import { useSoupStore } from '@/stores/soupStore';
 const { updateCursor, currentCursor } = useCurrentCursorIntersection();
 
 const router = useRouter();
 const vrSpaceStore = useVrSpaceStore();
+const soupStore = useSoupStore();
 
 const props = defineProps<{
   vrSpaceId: VrSpaceId
@@ -76,7 +78,32 @@ function setEmojiSelf(coords: Tuple, active: boolean) {
 }
 
 onBeforeMount(async () => {
+
   await vrSpaceStore.enterVrSpace(props.vrSpaceId);
+
+  if (!soupStore.deviceLoaded) {
+    await soupStore.loadDevice();
+  }
+  await soupStore.createReceiveTransport();
+  try {
+    await soupStore.createSendTransport();
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: true,
+    });
+    const [track] = stream.getAudioTracks();
+    await soupStore.produce({
+      track,
+      producerInfo: {
+        isPaused: false,
+      },
+    });
+  } catch (e) {
+    console.error('failed to setup the mediasoup stuff');
+  }
+});
+
+onBeforeUnmount(async () => {
+  await soupStore.closeAudioProducer();
 });
 
 </script>
