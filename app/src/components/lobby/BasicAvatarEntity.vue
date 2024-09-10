@@ -43,13 +43,6 @@ const props = defineProps<{
 
 const avatarEntity = ref<Entity>();
 
-// onBeforeMount(() => {
-//   console.log('BasicAvatatEntity onBeforeMount');
-// })
-// onMounted(() => {
-//   console.log('BasicAvatatEntity onMounted');
-// });
-
 async function onAvatarEntityLoaded() {
   console.log('avatar a-entity loaded!');
   if (!avatarEntity.value) {

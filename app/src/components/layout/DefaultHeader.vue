@@ -5,6 +5,7 @@
       <Breadcrumbs />
     </div>
     <div class="navbar-center hidden lg:flex">
+      <div class="text-xs">{{ authStore.username }}: {{ authStore.userId }}</div>
       <RouterLink :to="{ name: 'vrList' }">
         <button class="btn btn-ghost">
           VR-scener

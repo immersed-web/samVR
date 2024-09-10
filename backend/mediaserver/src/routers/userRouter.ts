@@ -20,7 +20,7 @@ export const userRouter = router({
     ctx.client.avatarDesign = input;
   }),
   initLocalClientData: p.use(isUserClientM).input(LocalClientInitDataSchema).mutation(async ({ ctx, input }) => {
-    log.debug('initLocalClientData', input);
+    // log.debug('initLocalClientData', input);
     ctx.client.avatarDesign = input.avatarDesign;
   }),
   getAllUsers: atLeastUserP.use(isUserClientM).query(async ({ ctx }) => {

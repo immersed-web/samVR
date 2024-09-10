@@ -7,16 +7,18 @@ import { ClientRealtimeDataSchema, PlacedObjectInsertSchema, VrSpaceIdSchema, vr
 import { procedure as p, router, isUserClientM, userClientP, atLeastUserP, userInVrSpaceP, userWithEditRightsToVrSpace } from '../trpc/trpc.js';
 import { VrSpace } from 'classes/VrSpace.js';
 import { z } from 'zod';
-import { basicUserSelect, db, schema } from 'database';
+import { db, schema, } from 'database';
 import { eq, and, or, not, sql } from 'drizzle-orm';
 import { PermissionLevel } from 'database/schema';
-import { update } from 'lodash-es';
 
 type PermLev = typeof PermissionLevel.enumValues[number] | 'owner' | undefined;
 
 export const vrRouter = router({
   listAvailableVrSpaces: userClientP.query(async ({ ctx }) => {
     log.info('vrSpace listing requested')
+    // log.debug('ctx: ', ctx);
+    // const user = await db.query.users.findFirst({ where: eq(schema.users.userId, ctx.userId) });
+    // log.debug('user: ', user);
     try {
 
     const dbResponse = await db.select({
@@ -25,11 +27,11 @@ export const vrRouter = router({
       image: schema.assets.generatedName,
       visibility: schema.vrSpaces.visibility,
       ownerUserId: schema.vrSpaces.ownerUserId,
-      // permisions: schema.permissions.permissionLevel
+      // permisions: schema.permissions,
       permissionLevel: sql<PermLev>`case
           when ${schema.vrSpaces.ownerUserId} = ${ctx.userId} then 'owner'
           else ${schema.permissions.permissionLevel}::TEXT
-          end`.as('permissionLevelsss'),
+          end`.as('permissionLevel'),
       // when ${schema.permissions.permissionLevel} is NULL then 'unauthorized'
     }).from(schema.vrSpaces)
       .leftJoin(schema.assets, eq(schema.vrSpaces.panoramicPreviewAssetId, schema.assets.assetId))
@@ -37,6 +39,7 @@ export const vrRouter = router({
         eq(schema.permissions.targetType, 'vrSpace'),
         and(
           // we dont want duplicates. So join only if not already owner
+          eq(schema.permissions.userId, ctx.userId),
           not(eq(schema.vrSpaces.ownerUserId, ctx.userId)),
           eq(schema.permissions.targetId, schema.vrSpaces.vrSpaceId)
         )
@@ -46,7 +49,7 @@ export const vrRouter = router({
         eq(schema.vrSpaces.visibility, 'public'),
       ));
 
-    log.info(dbResponse)
+      log.info(dbResponse)
     return dbResponse;
     } catch (e) {
       log.error(e);
