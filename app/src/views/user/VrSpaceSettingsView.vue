@@ -188,7 +188,7 @@
             <a-circle color="yellow" transparent="true" opacity="0.5" rotation="-90 0 0" position="0 0.05 0"
               :radius="vrSpaceStore.currentVrSpace?.dbData.spawnRadius" />
             <a-icosahedron v-if="vrSpaceStore.panoramicPreviewUrl" detail="5" scale="-0.5 -0.5 -0.5" position="0 1.1 0"
-              :material="`shader: pano-portal; warpParams: 3 0.9; src: ${vrSpaceStore.panoramicPreviewUrl}`" />
+              :material="`shader: pano-portal; warpParams: 3 0.9; src: ${vrSpaceStore.panoramicPreviewUrl};`" />
           </a-entity>
           <a-entity :position="hoverPosString" :visible="hoverPosString !== undefined">
             <a-ring color="yellow" radius-inner="0.1" radius-outer="0.2" material="shader: flat;" rotation="-90 0 0" />
