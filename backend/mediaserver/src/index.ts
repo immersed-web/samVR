@@ -128,7 +128,7 @@ app.ws<WSUserData>('/*', {
       if(!receivedToken){
         throw Error('no token found in search query');
       }
-      logUws.debug('upgrade request provided this token:', receivedToken);
+      // logUws.debug('upgrade request provided this token:', receivedToken);
       const validJwt = verifyJwtToken(receivedToken);
 
       logUws.debug('decoded jwt:', validJwt);
@@ -159,7 +159,7 @@ app.ws<WSUserData>('/*', {
         try {
           dbResponse = await loadUserDBData(wsUserData.jwtUserData.userId);
           wsUserData.dbData = dbResponse;
-          log.debug('loaded userdata from db: ', dbResponse);
+          // log.debug('loaded userdata from db: ', dbResponse);
         } catch(e) {
           log.error('Failed to fetch userdata from database');
         }

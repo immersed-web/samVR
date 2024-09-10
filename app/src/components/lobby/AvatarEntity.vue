@@ -1,7 +1,7 @@
 <template>
   <a-entity @loaded="onAvatarEntityLoaded" ref="avatarRootTag">
     <Teleport to="#teleport-target-ui-right">
-      <div>{{ clientInfo.transform?.head }}</div>
+      <div>{{ clientInfo.clientRealtimeData?.head }}</div>
     </Teleport>
     <!-- <a-entity :id="`head-${props.clientInfo.connectionId}`" ref="remoteAvatar"
       interpolated-transform="interpolationTime: 350;" mediastream-audio-source @near-range-entered="onNearRangeEntered"
@@ -102,7 +102,7 @@ const leftHandTag = ref<Entity>();
 const rightHandTag = ref<Entity>();
 const dummyAudioTag = ref<HTMLAudioElement>();
 watch(() => props.clientInfo, (n, o) => console.log('remoteAvatar prop updated. new:', n, ' old:', o));
-watch(() => props.clientInfo.transform?.head, (newTransform) => {
+watch(() => props.clientInfo.clientRealtimeData?.head, (newTransform) => {
   console.log('head updated: ', newTransform?.position);
   // console.log('remote avatar transform updated!');
   if (!remoteAvatar.value) {
@@ -197,7 +197,7 @@ async function onAvatarEntityLoaded(e: DetailEvent<any>) {
     console.error('remoteAvatar was undefined');
     return;
   }
-  remoteAvatar.value.emit('setTransform', props.clientInfo.transform?.head);
+  remoteAvatar.value.emit('setTransform', props.clientInfo.clientRealtimeData?.head);
   if (!stream.value) {
     console.log('stream is undefined. Will not emit');
     return;

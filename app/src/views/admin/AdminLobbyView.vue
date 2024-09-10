@@ -21,7 +21,7 @@
           <div>
             Clients:
             <div v-if="vrSpaceStore.currentVrSpace">
-              <div v-for="({ transform }, id) in vrSpaceStore.currentVrSpace.clients" :key="id">
+              <div v-for="({ clientRealtimeData: transform }, id) in vrSpaceStore.currentVrSpace.clients" :key="id">
                 <div v-if="id !== clientStore.clientState?.connectionId" class="collapse">
                   <input type="checkbox" class="min-h-0">
                   <div class="collapse-title min-h-0 p-0">

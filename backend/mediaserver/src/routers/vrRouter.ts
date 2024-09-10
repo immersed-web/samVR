@@ -114,8 +114,8 @@ export const vrRouter = router({
   // setSkyColor: currentVenueAdminP.use(isVenueOwnerM).use(currentVenueHasVrSpaceM).input({})
   transform: router({
     updateTransform: userInVrSpaceP.input(ClientRealtimeDataSchema).mutation(({ input, ctx }) => {
-      log.debug(`transform received from ${ctx.username} (${ctx.connectionId})`);
-      ctx.client.transform = input;
+      // log.debug(`transform received from ${ctx.username} (${ctx.connectionId})`);
+      ctx.client.clientRealtimeData = input;
       const vrSpace = ctx.vrSpace;
       vrSpace.pendingTransforms[ctx.connectionId] = input;
       vrSpace.sendPendingTransforms();

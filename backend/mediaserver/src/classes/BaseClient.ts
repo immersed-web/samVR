@@ -320,6 +320,9 @@ export class BaseClient {
     if(!this.receiveTransport){
       throw Error('A transport is required to create a consumer');
     }
+    if (!this.currentRouter) {
+      throw Error('Client is not connected to a router. Cant create consumer');
+    }
 
     if(!this.rtpCapabilities){
       throw Error('rtpCapabilities of client unknown. Provide them before requesting to consume');
@@ -336,7 +339,7 @@ export class BaseClient {
         rtpParameters: preExistingConsumer.rtpParameters,
       };
     }
-    const canConsume = this.stream?.router.canConsume({ producerId, rtpCapabilities: this.rtpCapabilities });
+    const canConsume = this.currentRouter.canConsume({ producerId, rtpCapabilities: this.rtpCapabilities });
     if( !canConsume){
       throw Error('Client is not capable of consuming the producer according to provided rtpCapabilities');
     }

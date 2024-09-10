@@ -87,7 +87,7 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
         console.warn('received a clientTransform for a client that isnt listed in vrSpaceState');
         return;
       }
-      ignoreUpdates(() => writableVrSpaceState.value!.clients[cIdTyped].transform = tsfm);
+      ignoreUpdates(() => writableVrSpaceState.value!.clients[cIdTyped].clientRealtimeData = tsfm);
     }
   });
 

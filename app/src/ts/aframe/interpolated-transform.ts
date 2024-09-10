@@ -65,7 +65,6 @@ export default () => {
       if (this.interpolationBuffer) {
         // update buffer position
         this.interpolationBuffer.update(timeDelta);
-        // Interpolate with buffered-interpolation - no workie yet.
         this.el.object3D.position.copy(this.interpolationBuffer.getPosition());
         this.el.object3D.quaternion.copy(this.interpolationBuffer.getQuaternion());
 

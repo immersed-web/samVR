@@ -72,15 +72,17 @@
           <a-sphere v-if="clientInfo.transform?.head?.active" color="red" scale="0.2 0.3 0.3 " />
           <a-troika-text look-at-camera :value="clientInfo.username" position="0 1.4 0" />
         </a-entity> -->
-        <LaserPointerOther v-if="clientInfo.transform?.head?.active && clientInfo.transform?.laserPointer?.active"
-          :position="clientInfo.transform.laserPointer.position"
-          :position-source="clientInfo.transform?.head?.position" />
-        <BasicAvatarEntity :client-info="clientInfo" v-if="clientInfo.transform?.head?.active"
-          :real-time-data="clientInfo.transform"
+        <LaserPointerOther
+          v-if="clientInfo.clientRealtimeData?.head?.active && clientInfo.clientRealtimeData?.laserPointer?.active"
+          :position="clientInfo.clientRealtimeData.laserPointer.position"
+          :position-source="clientInfo.clientRealtimeData?.head?.position" />
+        <BasicAvatarEntity :client-info="clientInfo" v-if="clientInfo.clientRealtimeData?.head?.active"
+          :username="clientInfo.username" :producers="clientInfo.producers"
+          :real-time-data="clientInfo.clientRealtimeData"
           :avatar-design="clientInfo.avatarDesign ? clientInfo.avatarDesign : defaultAvatarDesign">
 
-          <EmojiOther :active="clientInfo.transform?.emoji?.active"
-            :coords="clientInfo.transform?.emoji?.active ? clientInfo.transform?.emoji?.coords : undefined" />
+          <EmojiOther :active="clientInfo.clientRealtimeData?.emoji?.active"
+            :coords="clientInfo.clientRealtimeData?.emoji?.active ? clientInfo.clientRealtimeData?.emoji?.coords : undefined" />
         </BasicAvatarEntity>
 
         <!-- <Avatar v-if="clientInfo.connectionId !== clientStore.clientState?.connectionId && clientInfo.transform"

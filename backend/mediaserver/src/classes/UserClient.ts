@@ -30,11 +30,15 @@ export class UserClient extends BaseClient {
   constructor(...args: ConstructorParameters<typeof BaseClient>){
     super(...args);
     log.info(`Creating user client ${this.username} (${this.connectionId})`);
-    log.debug('dbData:', this.dbData.value);
+    // log.debug('dbData:', this.dbData.value);
 
     effect(() => {
-      if(!this.vrSpace) return;
-      this.publicProducers;
+      this.publicProducers.value
+      if (!this.vrSpace) {
+        // log.debug('no vrSpace. skipping publicProducers effect: ', this.publicProducers.value);
+        return
+      };
+      log.debug('publicProducers was updated', this.publicProducers);
       this.vrSpace._notifyStateUpdated('a client updated producers');
     });
   }
@@ -42,7 +46,7 @@ export class UserClient extends BaseClient {
 
   vrSpaceId?: VrSpaceId;
 
-  transform: ClientRealtimeData | undefined;
+  clientRealtimeData: ClientRealtimeData | undefined;
   avatarDesign: AvatarDesign | undefined;
 
   // sneaky hack so we can share the instance between base, user and senderclient but different intellisense.
@@ -110,7 +114,7 @@ export class UserClient extends BaseClient {
     return {
       ...super.getPublicState(),
       clientType: this.clientType,
-      transform: this.transform,
+      clientRealtimeData: this.clientRealtimeData,
       currentCameraId: this.currentCamera?.cameraId,
       isInVrSpace: !!this.vrSpace,
       avatarDesign: this.avatarDesign,
