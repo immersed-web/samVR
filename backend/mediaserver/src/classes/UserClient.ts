@@ -41,6 +41,8 @@ export class UserClient extends BaseClient {
       log.debug('publicProducers was updated', this.publicProducers);
       this.vrSpace._notifyStateUpdated('a client updated producers');
     });
+
+    this._onClientStateUpdated('client instance was created on server')
   }
   readonly clientType = 'client' as const satisfies ClientType;
 
