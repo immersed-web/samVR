@@ -8,14 +8,14 @@
           v-if="placedObject.type === 'vrPortal'" :position="placedObject.position?.join(' ')" class="clickable"
           :label="placedObject.vrPortal?.name"
           :panoramic-preview-url="getAssetUrl(placedObject.vrPortal?.panoramicPreview?.generatedName)" />
-        <PlacedAsset v-if="placedObject.type === 'asset' && placedObject.asset" :asset="placedObject.asset" />
+        <!-- <PlacedAsset v-if="placedObject.type === 'asset' && placedObject.asset" :asset="placedObject.asset" /> -->
       </template>
     </a-entity>
 
     <a-sky :color="skyColor" />
     <a-entity>
-      <a-gltf-model @model-loaded="onModelLoaded" id="model" ref="modelTag" :src="vrSpaceStore.worldModelUrl" class=""
-        :class="{ 'navmesh': !vrSpaceStore.navMeshUrl }" />
+      <a-gltf-model @model-loaded="onModelLoaded" id="model" ref="modelTag" :src="vrSpaceStore.worldModelUrl"
+        class="clickable" :class="{ 'navmesh': !vrSpaceStore.navMeshUrl }" />
       <a-gltf-model v-if="vrSpaceStore.navMeshUrl" id="navmesh" :src="vrSpaceStore.navMeshUrl" :visible="showNavMesh"
         class="clickable navmesh" @mousedown="teleportMouseDown" @click.stop="triggerCursorClick" />
     </a-entity>
@@ -51,12 +51,12 @@
 
     <Teleport to="#teleport-target-ui-right">
       <div class="card bg-base-200 text-base-content p-2 text-xs overflow-y-scroll max-h-60 pointer-events-auto">
-        <div>
+        <!-- <div>
           <pre>{{ currentCursorIntersection?.intersection.normal }}</pre>
           <pre>{{ currentCursorIntersection?.intersection }}</pre>
-          <!-- <pre>{{ vrSpaceStore.ownClientTransform.laserPointer }}</pre> -->
+          <pre>{{ vrSpaceStore.ownClientTransform.laserPointer }}</pre>
           <pre>{{ vrSpaceStore.currentVrSpace.dbData.placedObjects.filter(po => po.type === 'asset') }}</pre>
-        </div>
+        </div> -->
         <p class="label-text font-bold">Personer i rummet:</p>
         <p>Du: {{ clientStore.clientState?.username }}</p>
         <p v-for="(clientInfo, id, idx) in otherClients" :key="id">

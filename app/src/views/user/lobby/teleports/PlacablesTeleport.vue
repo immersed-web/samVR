@@ -280,6 +280,7 @@ function updatePaneSelected() {
 // const bus = useEventBus(clickKey);
 // const unsubscribe = bus.
 onCursorClick((e) => {
+  console.log('cursor clicked', e);
   if (currentlySelectedPlacedObject.value) {
     currentlySelectedPlacedObjectId.value = undefined;
     updatePaneSelected();

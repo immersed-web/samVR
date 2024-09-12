@@ -9,10 +9,8 @@
           raycaster="objects: .clickable" raycaster-update @raycast-update="setCursorIntersection($event.detail)">
           <VrAFrame v-if="vrSpaceStore.worldModelUrl" :show-nav-mesh="false">
             <a-entity id="teleport-target-aframe-scene" />
-            <a-entity id="teleport-target-aframe-cursor"
-              :position="currentCursorIntersection?.intersection.point.toArray().join(' ')" :visible="true">
-              <a-ring :visible="isCursorOnNavmesh" radius-inner="0.1" radius-outer="0.2" material="shader: flat;"
-                rotation="-90 0 0" />
+            <a-entity id="teleport-target-aframe-cursor" ref="cursorEntity" :visible="true">
+              <a-ring :visible="true" radius-inner="0.1" radius-outer="0.2" material="shader: flat;" rotation="0 0 0" />
             </a-entity>
           </VrAFrame>
           <PlacablesTeleport />
@@ -39,17 +37,17 @@ import VrAFrame from '../../components/lobby/VrAFrame.vue';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import type { VrSpaceId } from 'schemas';
 import { onBeforeMount, provide, ref, watch, getCurrentInstance, onBeforeUnmount } from 'vue';
-import type { Scene } from 'aframe';
+import type { Entity, Scene } from 'aframe';
 import WaitForAframe from '@/components/WaitForAframe.vue';
 import { useRouter } from 'vue-router';
 import { useCurrentCursorIntersection, type Tuple } from '@/composables/vrSpaceComposables';
-import type { RayIntersectionData } from '@/modules/3DUtils';
+import { intersectionToTransform, type RayIntersectionData } from '@/modules/3DUtils';
 import UIOverlay from '@/components/UIOverlay.vue';
 import LaserTeleport from '@/components/lobby/LaserTeleport.vue';
 import EmojiTeleport from '@/components/lobby/EmojiTeleport.vue';
 import { useSoupStore } from '@/stores/soupStore';
 import PlacablesTeleport from './lobby/teleports/PlacablesTeleport.vue';
-const { setCursorIntersection, currentCursorIntersection, isCursorOnNavmesh, triggerCursorClick: triggerClick } = useCurrentCursorIntersection();
+const { setCursorIntersection, currentCursorIntersection, isCursorOnNavmesh, triggerCursorClick } = useCurrentCursorIntersection();
 
 const router = useRouter();
 const vrSpaceStore = useVrSpaceStore();
@@ -60,6 +58,7 @@ const props = defineProps<{
 }>();
 const sceneTag = ref<Scene>();
 const domOutlet = ref<HTMLDivElement>();
+const cursorEntity = ref<Entity>();
 provide(aFrameSceneProvideKey, { sceneTag, domOutlet });
 
 watch(() => props.vrSpaceId, () => {
@@ -68,10 +67,23 @@ watch(() => props.vrSpaceId, () => {
   window.location.href = url;
   // getCurrentInstance()!.proxy?.$forceUpdate();
 });
+watch(currentCursorIntersection, () => {
+  // console.log('updating cursorEntity transform');
+  const intersectionData = currentCursorIntersection.value;
+  if (!intersectionData) return;
+  if (!cursorEntity.value) return;
+  const cursor = cursorEntity.value;
+  if (!cursor) return;
+  const transform = intersectionToTransform(intersectionData);
+  if (!transform) return;
+  cursor.object3D.position.set(...transform.position);
+  const quat = new THREE.Quaternion().fromArray(transform.rotation);
+  cursor.object3D.rotation.setFromQuaternion(quat);
+})
 
-function onLaserPointerUpdate(laserInfo: { active: boolean, intersectionData?: RayIntersectionData }) {
-  console.log('event:', laserInfo);
-}
+// function onLaserPointerUpdate(laserInfo: { active: boolean, intersectionData?: RayIntersectionData }) {
+//   console.log('event:', laserInfo);
+// }
 
 // Emoji stuff
 function setEmojiSelf(coords: Tuple, active: boolean) {

@@ -14,9 +14,14 @@ export function intersectionToTransform(intersectionData: RayIntersectionData, n
   const { intersection, rayDirection } = intersectionData;
   const position = intersection.point.clone();
   const rotation = new THREE.Quaternion();
-  const normal = intersection.normal;
-  if (!normal) { console.error('no normal vector in intersection object'); return; }
-
+  let normal = intersection.normal;
+  if (!normal) {
+    normal = intersection.face?.normal.normalize();
+    if (!normal) {
+      console.error('no normal vector found in intersection object'); return;
+      return;
+    }
+  }
 
   //Rotation part
   const fromVector = new THREE.Vector3(0, 0, 1);

@@ -3,6 +3,7 @@ import { computed, ref, shallowReactive, shallowRef, watch } from 'vue';
 import sponzaUrl from '@/assets/models/sponza.glb?url'
 import { type DetailEvent, THREE, type Entity, type Scene } from 'aframe';
 import PdfEntity from '@/components/lobby/PdfEntity.vue';
+import WaitForAframe from '@/components/WaitForAframe.vue';
 
 defineOptions({
   components: { PdfEntity },
@@ -186,35 +187,38 @@ watch([yaw, pitch, roll], ([newYaw, newPitch, newRoll]) => {
     </div>
     <pre class="text-xs bg-white/40">{{ placedObjects }}</pre>
   </div>
-  <a-scene ref="sceneTag" cursor="rayOrigin: mouse;" raycaster="objects: .raycastable" raycaster-update
-    @raycast-update="placeCursor">
-    <a-assets>
-      <a-asset-item id="sponza" :src="sponzaUrl"></a-asset-item>
-    </a-assets>
+  <WaitForAframe>
 
-    <a-entity ref="placedObjectsEntity">
-      <component v-for="placedObject in placedObjects" :key="placedObject.type"
-        @click="selectEntity(placedObject.uuid, $event)" class="selectable raycastable"
-        :box-helper="`enabled: ${currentlySelectedObjectId === placedObject.uuid}; color: #ff00ff;`"
-        :is="placedObject.type" :src="placedObject.src" :position="arrToCoordString(placedObject.position)"
-        :rotation="arrToCoordString(placedObject.rotation)" />
-      <!-- <component v-for="placedObject in placedObjects" :key="placedObject.uuid" class="selectable raycastable"
+    <a-scene ref="sceneTag" cursor="rayOrigin: mouse;" raycaster="objects: .raycastable" raycaster-update
+      @raycast-update="placeCursor">
+      <a-assets>
+        <a-asset-item id="sponza" :src="sponzaUrl"></a-asset-item>
+      </a-assets>
+
+      <a-entity ref="placedObjectsEntity">
+        <component v-for="placedObject in placedObjects" :key="placedObject.type"
+          @click="selectEntity(placedObject.uuid, $event)" class="selectable raycastable"
+          :box-helper="`enabled: ${currentlySelectedObjectId === placedObject.uuid}; color: #ff00ff;`"
+          :is="placedObject.type" :src="placedObject.src" :position="arrToCoordString(placedObject.position)"
+          :rotation="arrToCoordString(placedObject.rotation)" />
+        <!-- <component v-for="placedObject in placedObjects" :key="placedObject.uuid" class="selectable raycastable"
         :is="placedObject.type" :src="placedObject.src" /> -->
-    </a-entity>
-    <a-entity ref="cursorEntity">
-      <a-entity :visible="!currentlyMovedObject" rotation="0 0 0">
-        <a-ring id="cursor-ring" color="teal" radius-outer="0.2" radius-inner="0.1" />
-        <a-box id="cursor-box" color="blue" scale="0.04 0.1 0.01" />
-        <a-cone id="cursor-box" position="0 0.1 0" color="blue" scale="0.1 0.1 0.1" radius-bottom="0.2" />
       </a-entity>
-      <a-entity id="moved-object">
-        <component ref="currentlyMovedEntity" v-if="currentlyMovedObject" :is="currentlyMovedObject.type"
-          :src="currentlyMovedObject.src" />
+      <a-entity ref="cursorEntity">
+        <a-entity :visible="!currentlyMovedObject" rotation="0 0 0">
+          <a-ring id="cursor-ring" color="teal" radius-outer="0.2" radius-inner="0.1" />
+          <a-box id="cursor-box" color="blue" scale="0.04 0.1 0.01" />
+          <a-cone id="cursor-box" position="0 0.1 0" color="blue" scale="0.1 0.1 0.1" radius-bottom="0.2" />
+        </a-entity>
+        <a-entity id="moved-object">
+          <component ref="currentlyMovedEntity" v-if="currentlyMovedObject" :is="currentlyMovedObject.type"
+            :src="currentlyMovedObject.src" />
+        </a-entity>
       </a-entity>
-    </a-entity>
 
-    <a-gltf-model @click="onClick" class="raycastable" src="#sponza" />
-    <a-torus-knot position="0 1.6 -4" color="red" class="raycastable"
-      animation="property: rotation; from: 0 0 0; to: 400 300 500; dir: alternate; dur: 15000; easing: easeInOutQuad; loop: true;"></a-torus-knot>
-  </a-scene>
+      <a-gltf-model @click="onClick" class="raycastable" src="#sponza" />
+      <a-torus-knot position="0 1.6 -4" color="red" class="raycastable"
+        animation="property: rotation; from: 0 0 0; to: 400 300 500; dir: alternate; dur: 15000; easing: easeInOutQuad; loop: true;"></a-torus-knot>
+    </a-scene>
+  </WaitForAframe>
 </template>
