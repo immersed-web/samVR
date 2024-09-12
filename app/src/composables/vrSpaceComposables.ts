@@ -1,27 +1,48 @@
 import { computed, ref, shallowReadonly, shallowRef } from 'vue';
 import { THREE } from 'aframe';
 import { type EventBusKey } from '@vueuse/core';
-import type { RayIntersectionData } from '@/modules/3DUtils';
+import { createEventHook } from '@vueuse/core';
+import type { AframeClickeventData, RayIntersectionData } from '@/modules/3DUtils';
 
 export type Tuple = [number, number]
 
 // #region Raycast & intersection
 const writableIntersection = shallowRef<RayIntersectionData>();
 const rayIntersectionData = shallowReadonly(writableIntersection);
-function updateCursor(intersectionData: RayIntersectionData | undefined) {
+function setCursorIntersection(intersectionData: RayIntersectionData | undefined) {
   // console.log('currentCUrsor updated:', intersectionData);
   writableIntersection.value = intersectionData;
 }
+export type CursorMode = 'placeObject' | 'teleport' | undefined
 
-// watch(rayIntersectionData, (n, o) => console.log('cursor watcher triggered:', n, ' old:', o));
-export function useCurrentCursorIntersection() {
-  return { currentCursor: rayIntersectionData, updateCursor };
+const currentCursorMode = ref<CursorMode>();
+function setCursorMode(mode: CursorMode) {
+  currentCursorMode.value = mode;
 }
 
-export const isCursorOnNavmesh = computed((): boolean => {
+const isCursorOnNavmesh = computed((): boolean => {
   if (!rayIntersectionData.value) { return false; }
   return rayIntersectionData.value.intersection.object.el.classList.contains('navmesh');
 });
+
+const clickHook = createEventHook<CustomEvent<AframeClickeventData>>();
+// clickHook.on((rayIntersection) => {
+//   console.log('cursorClicked target:', rayIntersection.target);
+//   console.log('cursorClicked entity:', rayIntersection.detail.intersection.object.el);
+// })
+
+// watch(rayIntersectionData, (n, o) => console.log('cursor watcher triggered:', n, ' old:', o));
+export function useCurrentCursorIntersection() {
+  return {
+    currentCursorIntersection: rayIntersectionData,
+    setCursorIntersection,
+    setCursorMode,
+    currentCursorMode,
+    isCursorOnNavmesh,
+    onCursorClick: clickHook.on,
+    triggerCursorClick: clickHook.trigger
+  };
+}
 
 export const clickKey: EventBusKey<{ model: string, cursorObject: THREE.Object3D | undefined }> = Symbol('symbol-key');
 // #endregion

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 
-import { hasAtLeastPermissionLevel, type ClientRealtimeData, type ClientsRealtimeData, type ConnectionId, type VrSpaceId, type VrSpaceUpdate } from 'schemas';
+import { hasAtLeastPermissionLevel, type ClientRealtimeData, type ClientsRealtimeData, type ConnectionId, type PlacedObjectInsert, type VrSpaceId, type VrSpaceUpdate } from 'schemas';
 import { computed, readonly, ref, watch } from 'vue';
 import { useConnectionStore } from './connectionStore';
 import { eventReceiver, type ExtractPayload, type RouterOutputs, type SubscriptionValue } from '@/modules/trpcClient';
@@ -9,6 +9,7 @@ import { watchIgnorable, pausableWatch } from '@vueuse/core';
 import { debounce, throttle } from 'lodash-es';
 import { getAssetUrl } from '@/modules/utils';
 import { reactive } from 'vue';
+import type { PlacedObjectWithIncludes } from 'database';
 
 type _ReceivedVrSpaceState = ExtractPayload<typeof eventReceiver.vrSpace.vrSpaceStateUpdated.subscribe>['data'];
 
@@ -110,6 +111,15 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     ignoreUpdates(() => writableVrSpaceState.value = undefined);
   }
 
+  async function upsertPlacedObject(placedObject: Omit<PlacedObjectInsert, 'vrSpaceId' | 'reason'>, reason?: string) {
+    if (!currentVrSpace.value) {
+      console.warn('trying to upsert placedObject but currentVrSpace is undefined');
+      return;
+    }
+    const po: PlacedObjectInsert = { reason, vrSpaceId: currentVrSpace.value?.dbData.vrSpaceId, ...placedObject };
+    return connection.client.vr.upsertPlacedObject.mutate(po);
+  }
+
   async function reloadVrSpaceFromDB() {
     await connection.client.vr.reloadVrSpaceFromDB.query();
   }
@@ -162,6 +172,7 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     createVrSpace,
     enterVrSpace,
     leaveVrSpace,
+    upsertPlacedObject,
     reloadVrSpaceFromDB,
     updateVrSpace,
     // updateTransform,

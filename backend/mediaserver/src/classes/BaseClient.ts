@@ -4,7 +4,7 @@ process.env.DEBUG = 'BaseClient*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
 
-import { ConnectionId, JwtUserData, UserId, UserRole, StreamId, ConnectionIdSchema, StreamListInfo, Prettify } from 'schemas';
+import { ConnectionId, JwtUserData, UserId, UserRole, StreamId, ConnectionIdSchema, StreamListInfo, Prettify, Asset } from 'schemas';
 import { types as soupTypes } from 'mediasoup';
 import type { types as soupClientTypes } from 'mediasoup-client';
 import { ConsumerId, CreateProducerPayload, ProducerId, TransportId  } from 'schemas/mediasoup';
@@ -61,7 +61,9 @@ export async function loadUserDBData(userId: UserId) {
       assets: true,
     }
   })
-  return response;
+  // Below we cast to Asset because asset.assetFileExtension is a string in db schema but is zod enum everywhere else
+  // TODO: Should we keep this cast or should we change the asset db schema to have an enum for file extension?
+  return response as Omit<typeof response, 'assets'> & { assets: Asset[] };
 }
 type UserResponse = NonNullable<Awaited<ReturnType<typeof loadUserDBData>>>
 

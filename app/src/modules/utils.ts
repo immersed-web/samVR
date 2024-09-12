@@ -12,7 +12,8 @@ export function getAssetUrl<T extends string>(generatedName?: T) {
   // return `https://${process.env.EXPOSED_SERVER_URL}${process.env.EXPOSED_FILESERVER_PATH}/files/${generatedName}`;
 }
 
-const fileserverUrl = `https://${import.meta.env.EXPOSED_SERVER_URL}${import.meta.env.EXPOSED_FILESERVER_PATH}`
+const fileserverUrl = `https://${import.meta.env.EXPOSED_SERVER_URL}${import.meta.env.EXPOSED_FILESERVER_PATH}` as const
+export const assetsUrl = `${fileserverUrl}/file/` as const;
 export async function uploadFileData({ data, authToken, onProgress, abortController }: { data: FormData, authToken: string, onProgress?: (progressEvent: AxiosProgressEvent) => void, abortController?: AbortController }) {
   let uploadActive = true;
 

@@ -1,7 +1,16 @@
-import { THREE } from "aframe";
+import { THREE, type Entity } from "aframe";
+import type { Vector3Tuple } from "env";
 
 export type RayIntersectionData = { intersection: THREE.Intersection, rayDirection: THREE.Vector3 };
+export type AframeClickeventData = {
+  // intersectedEl:
+  cursorEl: Entity,
+  mouseEvent?: MouseEvent,
+  touchEvent?: TouchEvent,
+  intersection: THREE.Intersection
+}
 export function intersectionToTransform(intersectionData: RayIntersectionData, normalOffset: number = 0.05) {
+  if (!intersectionData) { return; }
   const { intersection, rayDirection } = intersectionData;
   const position = intersection.point.clone();
   const rotation = new THREE.Quaternion();
@@ -50,4 +59,33 @@ export function generateSpawnPosition(spawnPosition: THREE.Vector3Tuple, spawnRa
   const spawnPointVector = new THREE.Vector3(...spawnPosition);
   spawnPointVector.add(randomOffsetVector);
   return spawnPointVector;
+}
+
+export function arrToCoordString(arr: Array<unknown>) {
+  const constructedString = arr.join(' ');
+  return constructedString;
+}
+
+export function threeRotationToAframeRotation(threeRotation: THREE.Vector3Tuple): THREE.Vector3Tuple {
+  return [
+    THREE.MathUtils.radToDeg(threeRotation[0]),
+    THREE.MathUtils.radToDeg(threeRotation[1]),
+    THREE.MathUtils.radToDeg(threeRotation[2]),
+  ];
+}
+
+export function quaternionToAframeRotation(quaternion: THREE.Quaternion): THREE.Vector3Tuple {
+  const euler = new THREE.Euler().reorder('YXZ').setFromQuaternion(quaternion);
+  const arr = euler.toArray() as THREE.Vector3Tuple;
+  return threeRotationToAframeRotation(arr);
+}
+
+export function quaternionTupleToAframeRotation(quaternionTuple: THREE.Vector4Tuple): THREE.Vector3Tuple {
+  return quaternionToAframeRotation(new THREE.Quaternion(...quaternionTuple));
+}
+
+export function eulerTupleToQuaternionTuple(eulerTuple: Vector3Tuple) {
+  const euler = new THREE.Euler().fromArray(eulerTuple);
+  const quaternion = new THREE.Quaternion().setFromEuler(euler);
+  return quaternion.toArray() as THREE.Vector4Tuple;
 }

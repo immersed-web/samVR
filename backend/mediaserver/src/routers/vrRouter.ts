@@ -87,12 +87,15 @@ export const vrRouter = router({
     if (!vrSpace) return;
     vrSpace.reloadDbData(reason ?? 'dbData updated. Reloading');
   }),
-  createPlacedObject: atLeastUserP.use(isUserClientM).input(PlacedObjectInsertSchema).mutation(async ({ ctx, input }) => {
-    const { placedObjectId, reason, ...data } = input;
-    const [dbResponse] = await db.insert(schema.placedObjects).values(data).returning();
+  upsertPlacedObject: atLeastUserP.use(isUserClientM).input(PlacedObjectInsertSchema).mutation(async ({ ctx, input }) => {
+    const { reason, ...data } = input;
+    const [dbResponse] = await db.insert(schema.placedObjects).values(data).onConflictDoUpdate({
+      target: [schema.placedObjects.placedObjectId],
+      set: data,
+    }).returning();
     const vrSpace = VrSpace.getVrSpace(input.vrSpaceId);
     if (!vrSpace) return;
-    vrSpace.reloadDbData(reason ?? 'placedObject created. Reloading');
+    vrSpace.reloadDbData(reason ?? 'placedObject created/updated. Reloading');
     return dbResponse;
   }),
   reloadVrSpaceFromDB: userWithEditRightsToVrSpace.query(async ({ ctx }) => {

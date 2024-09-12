@@ -5,7 +5,7 @@ import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import { useCurrentCursorIntersection } from '@/composables/vrSpaceComposables';
 
 const vrSpaceStore = useVrSpaceStore();
-const { currentCursor } = useCurrentCursorIntersection();
+const { currentCursorIntersection: currentCursor } = useCurrentCursorIntersection();
 
 const laserActive = ref(false);
 

@@ -1,5 +1,5 @@
 import type { RayIntersectionData } from '@/modules/3DUtils';
-import { THREE, type DetailEvent, type Entity } from 'aframe';
+import { THREE, type Component, type ComponentDefinition, type Entity } from 'aframe';
 
 export default function () {
 
@@ -48,16 +48,21 @@ export default function () {
 
         return;
       }
-      if (this.el.components.raycaster.intersectedEls.length > 0) {
-        const intersectedEl = this.el.components.raycaster.intersectedEls[0] as Entity | undefined;
+      const raycasterComponent = this.el.components.raycaster as ComponentDefinition<{
+        intersectedEls: Entity[];
+        raycaster: THREE.Raycaster;
+        getIntersection: (el: Entity) => THREE.Intersection;
+      }>;
+      if (raycasterComponent.intersectedEls.length > 0) {
+        const intersectedEl = raycasterComponent.intersectedEls[0] as Entity | undefined;
         if (intersectedEl) {
-          const threeRaycaster = this.el.components.raycaster.raycaster as THREE.Raycaster;
-          const intersection = this.el.components.raycaster.getIntersection(intersectedEl) as THREE.Intersection;
+          const threeRaycaster = raycasterComponent.raycaster;
+          const intersection = raycasterComponent.getIntersection(intersectedEl);
           const rayDirection = threeRaycaster.ray.direction;
           const intersectionData: RayIntersectionData = { intersection, rayDirection }
           
           if (!this.prev || !intersection.point.equals(this.prev)) {
-            console.log('emitting raycast with data');
+            console.log('emitting raycast: ', intersectionData);
             this.el.emit('raycast-update', intersectionData);
           }
           this.prev = intersection.point
@@ -65,7 +70,7 @@ export default function () {
       } else {
         // No entity intersected
         if (this.prev) {
-          console.log('emitting raycast with undefined');
+          // console.log('emitting raycast with undefined');
           this.el.emit('raycast-update', undefined);
         }
         this.prev = undefined

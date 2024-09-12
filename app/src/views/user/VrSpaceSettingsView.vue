@@ -215,14 +215,15 @@
           <AssetUpload @uploaded="onAssetUploaded" :accepted-asset-types="['document', 'image', 'video']" name="object"
             :show-in-user-library="true" />
         </div>
-        <div v-if="clientStore.clientState?.assets" class="grid gap-2 grid-cols-[auto_auto] max-h-64 overflow-y-auto">
+        <!-- <div v-if="clientStore.clientState?.assets" class="grid gap-2 grid-cols-[auto_auto] max-h-64 overflow-y-auto">
           <template v-for="asset in clientStore.clientState.assets" :key="asset.assetId">
             <div>{{ asset.originalFileName }}</div>
             <button class="btn btn-sm btn-secondary">
               placera
             </button>
           </template>
-        </div>
+        </div> -->
+        <AssetLibrary :assets="libraryAssets" @asset-picked="onAssetPicked" />
       </div>
     </div>
   </div>
@@ -240,7 +241,8 @@ import { useConnectionStore } from '@/stores/connectionStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useClientStore } from '@/stores/clientStore';
 import type { RouterOutputs } from '@/modules/trpcClient';
-import UserBanner from '@/components/UserBanner.vue';
+// import UserBanner from '@/components/UserBanner.vue';
+import AssetLibrary from '@/components/lobby/AssetLibrary.vue';
 import { getAssetUrl, uploadFileData } from '@/modules/utils';
 import VrSpacePortal from '@/components/entities/VrSpacePortal.vue';
 
@@ -255,6 +257,10 @@ const vrSpaceStore = useVrSpaceStore();
 const authStore = useAuthStore();
 const clientStore = useClientStore();
 
+const libraryAssets = computed(() => {
+  return clientStore.clientState?.assets.filter(a => a.showInUserLibrary) ?? [];
+})
+
 const vrComponentTag = ref<ComponentInstance<typeof VrAFramePreview>>();
 
 const props = defineProps<{
@@ -268,6 +274,10 @@ function onAssetUploaded(uploadDetails: AssetUploadEmitUploadedPayload) {
   // This means the server client instance is not updated with the new asset.
   // @ts-ignore
   clientStore.clientState?.assets.push(uploadDetails);
+}
+
+function onAssetPicked(asset: Asset) {
+  console.log(asset);
 }
 
 function onModelUploaded(uploadDetails: AssetUploadEmitUploadedPayload) {
@@ -371,11 +381,12 @@ async function onRaycastClick(point: Point) {
       break;
     case 'vrSpacePortal':
       if (!vrSpaceStore.writableVrSpaceState || !portalTargetVrSpace.value) return;
-      backendConnection.client.vr.createPlacedObject.mutate({
+      backendConnection.client.vr.upsertPlacedObject.mutate({
         vrSpaceId: vrSpaceStore.writableVrSpaceState.dbData.vrSpaceId,
         type: 'vrPortal',
         objectId: portalTargetVrSpace.value,
         position: point,
+        orientation: new THREE.Quaternion().identity().toArray() as [number, number, number, number],
       });
   }
 }

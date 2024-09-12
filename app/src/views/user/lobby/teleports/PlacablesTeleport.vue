@@ -4,7 +4,7 @@ import { Pane } from 'tweakpane';
 
 import { computed, ref, onMounted, reactive, shallowRef } from 'vue';
 import { useEventBus } from '@vueuse/core';
-import { clickKey } from '@/composables/vrSpaceComposables';
+import { clickKey, useCurrentCursorIntersection } from '@/composables/vrSpaceComposables';
 
 import { type DetailEvent, THREE, type Entity } from 'aframe';
 import PdfEntity from '@/components/lobby/PdfEntity.vue';
@@ -18,161 +18,82 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@headlessui/vue';
+import AssetLibrary from '@/components/lobby/AssetLibrary.vue';
+import { extensionsToAframeTagsMap, type Asset, type AssetAframeTagname, type AssetId, type AssetType, type PlacedObject, type PlacedObjectId, type PlacedObjectInsert, type UserId } from 'schemas';
+import { getAssetUrl } from '@/modules/utils';
+import { quaternionToAframeRotation, arrToCoordString, quaternionTupleToAframeRotation, eulerTupleToQuaternionTuple, intersectionToTransform } from '@/modules/3DUtils';
+import PlacedAsset from '@/components/lobby/PlacedAsset.vue';
+import type { PlacedObjectWithIncludes } from 'database';
+import { useClientStore } from '@/stores/clientStore';
+const clientStore = useClientStore();
+import { useVrSpaceStore } from '@/stores/vrSpaceStore';
+const vrSpaceStore = useVrSpaceStore();
+
+const { currentCursorIntersection, onCursorClick, setCursorMode, currentCursorMode } = useCurrentCursorIntersection();
 
 
 defineOptions({
   components: { PdfEntity },
 });
 
-function arrToCoordString(arr: Array<unknown>) {
-  const constructedString = arr.join(' ');
-  return constructedString;
-}
-
-function threeRotationToAframeRotation(threeRotation: THREE.Vector3Tuple): THREE.Vector3Tuple {
-  return [
-    THREE.MathUtils.radToDeg(threeRotation[0]),
-    THREE.MathUtils.radToDeg(threeRotation[1]),
-    THREE.MathUtils.radToDeg(threeRotation[2]),
-  ];
-}
-
-function quaternionToAframeRotation(quaternion: THREE.Quaternion): THREE.Vector3Tuple {
-  const euler = new THREE.Euler().reorder('YXZ').setFromQuaternion(quaternion);
-  const arr = euler.toArray() as THREE.Vector3Tuple;
-  return threeRotationToAframeRotation(arr);
-}
-
-type UUID = ReturnType<typeof crypto.randomUUID>
-type placeableAssetTypes = `a-${'image' | 'sphere'}` | 'PdfEntity'; // | typeof PdfEntity;
-type PlaceableObject = { uuid: UUID, type: placeableAssetTypes, src: string };
-type PlacedObjectList = Array<PlaceableObject & { scale: number, position: THREE.Vector3, positionLocal: THREE.Vector3, rotation: THREE.Vector3Tuple }>
-
-const currentlyMovedObject = shallowRef<PlaceableObject | undefined>();
-const currentlySelectedObjectId = ref<UUID | undefined>();
+const currentlyMovedObject = shallowRef<Asset | PlacedObjectWithIncludes | undefined>();
+const currentlySelectedPlacedObjectId = ref<PlacedObjectId | undefined>();
 // const currentlySelectedObject = ref<PlacedObjectList[number] | undefined>()
 const currentlyMovedEntity = ref<Entity | null>(null);
 const currentlySelectedEntity = ref<Entity | null>(null);
-const placedObjects = reactive<PlacedObjectList>([
+const placedObjects = reactive<PlacedObjectWithIncludes[]>([
   // { type: 'PdfEntity', src: '/documents/smallpdf_sample.pdf', uuid: crypto.randomUUID(), position: [1, 1.8, -2], rotation: [0, 0, 0] },
   // { type: 'PdfEntity', src: '/documents/compressed.tracemonkey-pldi-09.pdf', uuid: crypto.randomUUID(), position: [-2, 1.8, -2], rotation: [0, 0, 0] },
 ]);
-const currentlySelectedObject = computed(() => {
-  return placedObjects.find(obj => obj.uuid === currentlySelectedObjectId.value);
+const currentlySelectedPlacedObject = computed(() => {
+  return placedObjects.find(obj => obj.placedObjectId === currentlySelectedPlacedObjectId.value);
 });
 
-type Asset = {
-  'assetId': UUID,
-  'assetType': placeableAssetTypes,
-  'originalFileName': string,
-  'generatedName': string,
-  'location': string,
-  'size': number,
-  'mimeType': string,
-  'assetFileExtension': string,
-  'ownerUserId': UUID,
-  'createdAt': string
-  'updatedAt': string
-}
-
-const assets: Asset[] = [
-  {
-    'assetId': '7388c2b6-50e5-4c24-8f46-3d06b58e0d19',
-    'assetType': 'a-image',
-    'originalFileName': 'joey-chacon-edbYu4vxXww-unsplash.jpg',
-    'generatedName': 'joey-chacon-edbYu4vxXww-unsplash.jpg',
-    'location': '/photos/',
-    'size': 349296,
-    'mimeType': 'image/png',
-    'assetFileExtension': 'png',
-    'ownerUserId': '39c64016-6feb-48c9-a83e-0a22f7e6f9f6',
-    'createdAt': '2024-06-13T06:45:03.491Z',
-    'updatedAt': '2024-06-13T06:45:03.476Z',
-  },
-  {
-    'assetId': '7388c2b6-50e5-4c24-8f46-3d06b58e0d09',
-    'assetType': 'PdfEntity',
-    'originalFileName': 'smallpdf_sample.pdf',
-    'generatedName': 'smallpdf_sample.pdf',
-    'location': '/documents/',
-    'size': 349296,
-    'mimeType': 'application/pdf',
-    'assetFileExtension': 'pdf',
-    'ownerUserId': '39c64016-6feb-48c9-a83e-0a22f7e6f9f6',
-    'createdAt': '2024-06-13T06:45:03.491Z',
-    'updatedAt': '2024-06-13T06:45:03.476Z',
-  },
-  {
-    'assetId': '7388c2b6-50e5-4c24-8f46-3d06b58e0d10',
-    'assetType': 'a-image',
-    'originalFileName': 'vr-kids-0.jpeg',
-    'generatedName': 'vr-kids-0.jpeg',
-    'location': '/photos/',
-    'size': 349296,
-    'mimeType': 'image/jpeg',
-    'assetFileExtension': 'jpeg',
-    'ownerUserId': '39c64016-6feb-48c9-a83e-0a22f7e6f9f6',
-    'createdAt': '2024-06-13T06:45:03.491Z',
-    'updatedAt': '2024-06-13T06:45:03.476Z',
-  },
-  {
-    'assetId': '7388c2b6-50e5-4c24-8f46-3d06b58e0d11',
-    'assetType': 'a-image',
-    'originalFileName': 'vr-kids-1.jpeg',
-    'generatedName': 'vr-kids-1.jpeg',
-    'location': '/photos/',
-    'size': 349296,
-    'mimeType': 'image/jpeg',
-    'assetFileExtension': 'jpeg',
-    'ownerUserId': '39c64016-6feb-48c9-a83e-0a22f7e6f9f6',
-    'createdAt': '2024-06-13T06:45:03.491Z',
-    'updatedAt': '2024-06-13T06:45:03.476Z',
-  },
-  {
-    'assetId': '7388c2b6-50e5-4c24-8f46-3d06b58e0d12',
-    'assetType': 'a-image',
-    'originalFileName': 'vr-kids-2.jpeg',
-    'generatedName': 'vr-kids-2.jpeg',
-    'location': '/photos/',
-    'size': 349296,
-    'mimeType': 'image/jpeg',
-    'assetFileExtension': 'jpeg',
-    'ownerUserId': '39c64016-6feb-48c9-a83e-0a22f7e6f9f6',
-    'createdAt': '2024-06-13T06:45:03.491Z',
-    'updatedAt': '2024-06-13T06:45:03.476Z',
-  },
-  {
-    'assetId': '7388c2b6-50e5-4c24-8f46-3d06b58e0d13',
-    'assetType': 'a-image',
-    'originalFileName': 'vr-kids-3.jpeg',
-    'generatedName': 'vr-kids-3.jpeg',
-    'location': '/photos/',
-    'size': 349296,
-    'mimeType': 'image/jpeg',
-    'assetFileExtension': 'jpeg',
-    'ownerUserId': '39c64016-6feb-48c9-a83e-0a22f7e6f9f6',
-    'createdAt': '2024-06-13T06:45:03.491Z',
-    'updatedAt': '2024-06-13T06:45:03.476Z',
-  },
-];
+const assets = computed(() => {
+  return clientStore.clientState?.assets.filter(asset => asset.showInUserLibrary) ?? [];
+})
 
 const assetPickerIsOpen = ref(false);
 
 const placedObjectsEntity = ref<Entity>();
-function placeMovedObject(cursorObject: THREE.Object3D) {
+function isAsset(obj?: Asset | PlacedObjectWithIncludes): obj is Asset {
+  if (!obj) return false;
+  return 'assetId' in obj
+}
+async function placeMovedObject(position: THREE.Vector3Tuple, orientation: THREE.Vector4Tuple) {
+  console.log('placeMovedObject', position, orientation);
   if (!currentlyMovedObject.value) return;
-  const scale = 1;
-  const position = cursorObject.position;
-  const positionLocal = new THREE.Vector3();
-  const rotation = quaternionToAframeRotation(cursorObject.quaternion);
-  placedObjects.push({ ...currentlyMovedObject.value, scale, position, positionLocal, rotation });
-  selectEntity(currentlyMovedObject.value.uuid, undefined);
+  // const position = cursorObject.position.toArray();
+  // const rotation = cursorObject.quaternion.toArray() as THREE.Vector4Tuple;
+  if (isAsset(currentlyMovedObject.value)) {
+    console.log('placed an asset. Need to create a placedObject');
+    await vrSpaceStore.upsertPlacedObject({
+      type: 'asset',
+      objectId: currentlyMovedObject.value.assetId,
+      position,
+      orientation
+    }, 'placing an asset')
+    currentlyMovedObject.value = undefined;
+    return;
+  }
+  console.log('placed an already placedObject, should update the DB');
+  // TODO: create/update placedObject in DB here
+  currentlyMovedObject.value.position = position;
+  currentlyMovedObject.value.orientation = orientation;
+  placedObjects.push(currentlyMovedObject.value);
+  selectEntity(currentlyMovedObject.value.placedObjectId, undefined);
   currentlyMovedObject.value = undefined;
 }
 
-function pickAsset(type: placeableAssetTypes, src: string) {
+function pickAsset(asset: Asset) {
   assetPickerIsOpen.value = false;
-  createPlaceableObject(type, src);
+  const src = getAssetUrl(asset.generatedName);
+  const tag = extensionsToAframeTagsMap[asset.assetFileExtension];
+  if (src) {
+    // createPlaceableObject(extensionsToAframeTagsMap[asset.assetFileExtension], src);
+    currentlyMovedObject.value = asset;
+    setCursorMode('placeObject');
+  }
 }
 
 const { files, open, reset, onChange } = useFileDialog({
@@ -197,47 +118,54 @@ onChange((files) => {
 //   dataTypes: ['image/jpeg', 'image/png', 'model/gltf-binary', 'model/gltf+json', 'application/pdf']
 // })
 
-function createPlaceableObject(type: placeableAssetTypes, src: string) {
-  console.log('Place photo', type, src);
-  const uuid = crypto.randomUUID();
-  const newPlaceableObject: PlaceableObject = {
-    uuid,
-    src,
-    type,
-  };
-  currentlyMovedObject.value = newPlaceableObject;
-}
+// function createPlaceableObject(type: AssetAframeTagname, src: string) {
+//   console.log('Place photo', type, src);
+//   const uuid = crypto.randomUUID();
+//   const newPlaceableObject: PlaceableObject = {
+//     uuid,
+//     src,
+//     type,
+//   };
+//   currentlyMovedObject.value = newPlaceableObject;
+// }
 
 function repositionSelectedObject() {
-  const idx = placedObjects.findIndex(obj => obj.uuid === currentlySelectedObject.value?.uuid);
+  if (isAsset(currentlyMovedObject.value)) return;
+  const idx = placedObjects.findIndex(obj => obj.placedObjectId === currentlySelectedPlacedObject.value?.placedObjectId);
   if (idx < 0) return;
   const [obj] = placedObjects.splice(idx, 1);
   currentlyMovedObject.value = obj;
 }
 
 function removeSelectedObject() {
-  if (!currentlySelectedObject.value) { return; }
-  removeObject(currentlySelectedObject.value.uuid);
-  currentlySelectedObjectId.value = undefined;
+  if (!currentlySelectedPlacedObject.value) { return; }
+  removeObject(currentlySelectedPlacedObject.value.placedObjectId);
+  currentlySelectedPlacedObjectId.value = undefined;
 }
 
-function removeObject(uuid: UUID) {
-  const idx = placedObjects.findIndex(obj => obj.uuid === uuid);
+function removeObject(placedObjectId: PlacedObjectId) {
+  const idx = placedObjects.findIndex(obj => obj.placedObjectId === placedObjectId);
   if (idx < 0) return;
   placedObjects.splice(idx, 1);
+  // TODO: Delete from db
   updatePaneSelected();
 }
 
-function selectEntity(uuid: UUID, evt: DetailEvent<{ cursorEl: Entity, intersection: THREE.Intersection, mouseEvent: MouseEvent }> | undefined) {
+function selectEntity(uuid: PlacedObjectId, evt: DetailEvent<{ cursorEl: Entity, intersection: THREE.Intersection, mouseEvent: MouseEvent }> | undefined) {
   console.log(uuid);
   console.log(evt);
   console.log('Selected entity', currentlySelectedEntity);
-  currentlySelectedObjectId.value = uuid;
+  currentlySelectedPlacedObjectId.value = uuid;
   updatePaneSelected();
 }
 
 const paneContainer = ref(null);
-type PaneParams = { 'scale': number, 'positionGlobal': THREE.Vector3, 'positionLocal': THREE.Vector3, 'rotation': THREE.Vector3 }
+type PaneParams = {
+  'scale': THREE.Vector3Tuple,
+  // 'positionGlobal': THREE.Vector3,
+  'positionLocal': THREE.Vector3Tuple,
+  'rotation': THREE.Vector3Tuple
+}
 const pane = ref<Pane | undefined>();
 const paneParams = ref<PaneParams | undefined>();
 
@@ -264,39 +192,40 @@ function updatePaneSelected() {
   }
 
   if (paneContainer.value) {
-    const obj = currentlySelectedObject.value;
+    const obj = currentlySelectedPlacedObject.value;
     if (obj) {
 
       pane.value = new Pane({ container: paneContainer.value });
-      pane.value.title = 'Selected: ' + obj.src;
+      pane.value.title = 'Selected: ' + obj.placedObjectId;
+      const aframeRotation = quaternionTupleToAframeRotation(obj.orientation);
 
       paneParams.value = {
         'scale': obj.scale,
-        'positionGlobal': obj.position,
-        'positionLocal': obj.positionLocal,
-        'rotation': new THREE.Vector3(obj.rotation[0], obj.rotation[1], obj.rotation[2]),
+        // 'positionGlobal': obj.position,
+        'positionLocal': obj.position,
+        'rotation': aframeRotation,
       };
 
       pane.value.addBinding(paneParams.value, 'scale', { label: 'Scale', step: 0.01 }).on('change', (ev) => {
-        if (!currentlySelectedObject.value) { return; }
-        currentlySelectedObject.value.scale = ev.value;
+        if (!currentlySelectedPlacedObject.value) { return; }
+        currentlySelectedPlacedObject.value.scale = [...ev.value];
       });
 
       pane.value.addBlade({
         view: 'separator',
       });
 
-      pane.value.addBinding(paneParams.value, 'positionGlobal', { label: 'Global position', step: 0.025 }).on('change', (ev) => {
-        if (!currentlySelectedObject.value) { return; }
-        currentlySelectedObject.value.position = ev.value.clone();
-      });
+      // pane.value.addBinding(paneParams.value, 'positionGlobal', { label: 'Global position', step: 0.025 }).on('change', (ev) => {
+      //   if (!currentlySelectedPlacedObject.value) { return; }
+      //   currentlySelectedPlacedObject.value.position = ev.value.clone();
+      // });
 
       pane.value.addBinding(paneParams.value, 'positionLocal', { label: 'Local position (fine tune)', step: 0.01 }).on('change', (ev) => {
-        if (!currentlySelectedObject.value) { return; }
-        currentlySelectedObject.value.positionLocal = ev.value.clone();
-        if (ev.last) {
-          mergeLocalAndWorldPositions();
-        }
+        if (!currentlySelectedPlacedObject.value) { return; }
+        currentlySelectedPlacedObject.value.position = [...ev.value];
+        // if (ev.last) {
+        //   mergeLocalAndWorldPositions();
+        // }
       });
 
       pane.value.addButton({
@@ -311,8 +240,9 @@ function updatePaneSelected() {
       });
 
       pane.value.addBinding(paneParams.value, 'rotation', { label: 'Rotation', step: 1, min: -180, max: 180 }).on('change', (ev) => {
-        if (!currentlySelectedObject.value) { return; }
-        currentlySelectedObject.value.rotation = [ev.value.x, ev.value.y, ev.value.z];
+        if (!currentlySelectedPlacedObject.value) { return; }
+        const quatTuple = eulerTupleToQuaternionTuple(ev.value);
+        currentlySelectedPlacedObject.value.orientation = quatTuple;
       });
 
       pane.value.addBlade({
@@ -322,7 +252,7 @@ function updatePaneSelected() {
         label: 'Remove object from scene',   // optional
         title: 'Remove',
       }).on('click', () => {
-        removeObject(obj.uuid);
+        removeObject(obj.placedObjectId);
       });
 
       pane.value.addBlade({
@@ -333,28 +263,36 @@ function updatePaneSelected() {
   }
 }
 
-function mergeLocalAndWorldPositions() {
-  if (!currentlySelectedObject.value) { return; }
-  if (!currentlySelectedObject.value.positionLocal.equals(new THREE.Vector3())) {
-    const selectedEntity = document.getElementById(currentlySelectedObject.value.uuid) as Entity;
-    currentlySelectedObject.value.position = selectedEntity.object3D.localToWorld(currentlySelectedObject.value.positionLocal.clone());
-    currentlySelectedObject.value.positionLocal = new THREE.Vector3();
-    if (paneParams.value) {
-      paneParams.value['positionGlobal'] = currentlySelectedObject.value.position;
-      paneParams.value['positionLocal'] = currentlySelectedObject.value.positionLocal;
-      pane.value?.refresh();
-    }
-  }
-}
+// function mergeLocalAndWorldPositions() {
+//   if (!currentlySelectedPlacedObject.value) { return; }
+//   if (!currentlySelectedPlacedObject.value.positionLocal.equals(new THREE.Vector3())) {
+//     const selectedEntity = document.getElementById(currentlySelectedPlacedObject.value.uuid) as Entity;
+//     currentlySelectedPlacedObject.value.position = selectedEntity.object3D.localToWorld(currentlySelectedPlacedObject.value.positionLocal.clone());
+//     currentlySelectedPlacedObject.value.positionLocal = new THREE.Vector3();
+//     if (paneParams.value) {
+//       paneParams.value['positionGlobal'] = currentlySelectedPlacedObject.value.position;
+//       paneParams.value['positionLocal'] = currentlySelectedPlacedObject.value.positionLocal;
+//       pane.value?.refresh();
+//     }
+//   }
+// }
 
-const bus = useEventBus(clickKey);
-const unsubscribe = bus.on((e) => {
-  if (currentlySelectedObject.value) {
-    currentlySelectedObjectId.value = undefined;
+// const bus = useEventBus(clickKey);
+// const unsubscribe = bus.
+onCursorClick((e) => {
+  if (currentlySelectedPlacedObject.value) {
+    currentlySelectedPlacedObjectId.value = undefined;
     updatePaneSelected();
   }
-  if (e.cursorObject) {
-    placeMovedObject(e.cursorObject);
+  if (currentCursorMode.value === 'placeObject') {
+    // const position = e.detail.intersection.point.toArray();
+    // const orientation = e.detail.intersection.;
+    if (!currentCursorIntersection.value) return;
+    const transform = intersectionToTransform(currentCursorIntersection.value)
+    if (!transform) return;
+
+    placeMovedObject(transform.position, transform.rotation);
+    setCursorMode(undefined);
   }
 });
 
@@ -376,31 +314,34 @@ onMounted(() => {
     <!-- #endregion -->
 
     <!-- #region Tweakpane UI -->
-    <Teleport to="#tp-ui-right">
-      <div id="paneContainer" ref="paneContainer" class="flex flex-col gap-1">
+    <Teleport to="#teleport-target-ui-right">
+      <div id="paneContainer" ref="paneContainer" class="flex flex-col gap-1 pointer-events-auto">
         <div id="pane1" />
         <div id="pane2" />
       </div>
     </Teleport>
     <!-- #endregion -->
 
-    <Teleport to="#tp-aframe-cursor">
-      <component ref="currentlyMovedEntity" v-if="currentlyMovedObject" :is="currentlyMovedObject.type"
-        :src="currentlyMovedObject.src" />
-    </Teleport>
+    <template v-if="isAsset(currentlyMovedObject)">
+      <Teleport to="#teleport-target-aframe-cursor">
+        <PlacedAsset v-if="currentlyMovedObject" :asset="currentlyMovedObject" />
+      </Teleport>
+    </template>
+    <!-- <component ref="currentlyMovedEntity" v-if="currentlyMovedObject" :is="currentlyMovedObject.type"
+        :src="currentlyMovedObject.src" /> -->
 
-    <Teleport to="#tp-aframe-scene">
-      <a-entity ref="placedObjectsEntity">
-        <a-entity v-for="placedObject in placedObjects" :key="placedObject.uuid"
-          :scale="`${placedObject.scale} ${placedObject.scale} ${placedObject.scale}`" :position="placedObject.position"
-          :rotation="arrToCoordString(placedObject.rotation)" :id="placedObject.uuid"
-          :box-helper="`enabled: ${currentlySelectedObjectId === placedObject.uuid}; color: #ff00ff;`">
-          <component @click="selectEntity(placedObject.uuid, $event)" class="clickable"
-            :box-helper="`enabled: ${currentlySelectedObjectId === placedObject.uuid};`" :is="placedObject.type"
-            :src="placedObject.src" :position="placedObject.positionLocal" />
-        </a-entity>
+    <a-entity ref="placedObjectsEntity">
+      <a-entity v-for="placedObject in placedObjects" :key="placedObject.placedObjectId"
+        :scale="`${placedObject.scale} ${placedObject.scale} ${placedObject.scale}`" :position="placedObject.position"
+        :rotation="quaternionTupleToAframeRotation(placedObject.orientation)" :id="placedObject.placedObjectId"
+        :box-helper="`enabled: ${currentlySelectedPlacedObjectId === placedObject.placedObjectId}; color: #ff00ff;`">
+        <PlacedAsset v-if="placedObject.type === 'asset' && placedObject.asset" :asset="placedObject.asset" />
+        <!-- <component @click="selectEntity(placedObject.placedObjectId, $event)" class="clickable"
+            :box-helper="`enabled: ${currentlySelectedPlacedObjectId === placedObject.placedObjectId};`"
+            :is="placedObject.type"
+            :src="placedObject.asset?.generatedName" /> -->
       </a-entity>
-    </Teleport>
+    </a-entity>
 
     <!-- Asset picker -->
     <Dialog ref="dropZoneRef" :open="assetPickerIsOpen" @close="assetPickerIsOpen = false" class="relative z-50">
@@ -415,9 +356,9 @@ onMounted(() => {
           <div class="h-full overflow-y-auto">
             <DialogTitle>Pick an asset and place it in the scene</DialogTitle>
             <!-- <DialogDescription>Pick it!</DialogDescription> -->
+            <AssetLibrary :assets="assets" @assetPicked="pickAsset" />
 
-            <div class="flex flex-row flex-wrap ">
-              <!-- <div v-for="asset in assets.filter(a => a.assetType === 'image')" :key="asset.assetId" -->
+            <!-- <div class="flex flex-row flex-wrap ">
               <div v-for="asset in assets" :key="asset.assetId" class="basis-1/4 cursor-pointer p-1"
                 @click="pickAsset(asset.assetType, asset.location + asset.generatedName)">
                 <div class="card card-compact bg-base-100 shadow-xl">
@@ -433,13 +374,12 @@ onMounted(() => {
               </div>
               <div class="basis-1/4 cursor-pointer p-1 flex items-center justify-center">
                 <div class="flex flex-col p-4">
-                  <button type="button" class="btn" @click="open">
+                  <button type="button" class="btn" @click="() => open">
                     Upload a new asset
                   </button>
-                  <!-- <span class="label-text">or drag and drop your files</span> -->
                 </div>
               </div>
-            </div>
+            </div> -->
           </div>
         </DialogPanel>
       </div>

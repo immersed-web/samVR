@@ -167,6 +167,11 @@ export type AssetType = z.infer<typeof AssetTypeSchema>;
 export const maxFileSize = 50 * 1024 * 1024;
 export const maxFileSizeSchema = z.number().max(maxFileSize);
 
+const Vector2TupleSchema = z.tuple([z.number(), z.number()]);
+const Vector3TupleSchema = z.tuple([z.number(), z.number(), z.number()]);
+const Vector4TupleSchema = z.tuple([z.number(), z.number(), z.number(), z.number()]);
+
+
 export const assetTypesToExtensionsMap = {
   video: ['mp4', 'mkv', 'mov', 'webm'],
   image: ['png', 'jpg', 'jpeg', 'webp'],
@@ -174,6 +179,34 @@ export const assetTypesToExtensionsMap = {
   model: ['glb'],
   navmesh: ['glb'],
 } as const satisfies Record<AssetType, string[]>
+
+export type AssetAframeTagname = typeof extensionsToAframeTagsMap[AllFileExtensions];
+
+export const extensionsToAframeTagsMap = {
+  // 3d models
+  glb: 'a-gltf-model',
+  // images
+  png: 'a-image',
+  jpg: 'a-image',
+  jpeg: 'a-image',
+  webp: 'a-image',
+  // videos
+  mp4: 'a-video',
+  mkv: 'a-video',
+  mov: 'a-video',
+  webm: 'a-video',
+  // documents
+  pdf: 'PdfEntity', // PascalCase because vue component
+} as const satisfies Partial<Record<AllFileExtensions, string>>
+
+// export const assetTypesToAframeTagsMap = {
+//   document: 'PdfEntity',
+//   image: 'a-image',
+//   model: 'a-entity',
+//   navmesh: 'a-entity',
+//   video: 'a-video'
+// } as const satisfies Record<AssetType, string>;
+
 // function concat<T extends unknown[], U extends unknown[]>(t: [...T], u: [...U]): [...T, ...U] {
 //   return [...t, ...u];
 // }
@@ -190,7 +223,11 @@ export const assetTypesToExtensionsMap = {
 
 // const combList = concat(assetTypesToExtensionsMap['image'], assetTypesToExtensionsMap['video']);
 
-type AcceptedExtensions<T extends AssetType> = [typeof assetTypesToExtensionsMap[T][number]]
+type AcceptedExtensionsArray<T extends AssetType = AssetType> = [typeof assetTypesToExtensionsMap[T][number]]
+// type AllFileExtensions = AcceptedExtensionsArray[number]
+
+export const AllFileExtensionsSchema = createFileExtensionSchema(AssetTypeSchema.options);
+export type AllFileExtensions = z.TypeOf<typeof AllFileExtensionsSchema>;
 // type Test = AcceptedExtensions<'image' | 'video'>
 
 // function test<T extends AssetType[]>(assetType: T) {
@@ -206,7 +243,7 @@ export function assetTypeListToExtensionList<T extends AssetType>(assetTypes: T 
     assetTypes = [assetTypes];
   }
   // @ts-ignore
-  const extensionList: AcceptedExtensions<T> = assetTypes.reduce<AcceptedExtensions<T>>((acc, assetType) => {
+  const extensionList: AcceptedExtensionsArray<T> = assetTypes.reduce<AcceptedExtensionsArray<T>>((acc, assetType) => {
     return [...acc, ...assetTypesToExtensionsMap[assetType]];
   }, []);
   return extensionList;
@@ -235,6 +272,8 @@ export function getAssetTypeFromExtension(extension: string, acceptedAssetTypes?
   console.warn('failed to match extension to a valid asset type');
   return undefined
 }
+
+
 
 export function createFileExtensionSchema<T extends AssetType>(assetTypes: T | T[]) {
   const extensionList = assetTypeListToExtensionList(assetTypes);
@@ -413,12 +452,18 @@ export const PlacedObjectInsertSchema = createInsertSchema(schema.placedObjects,
   placedObjectId: PlacedObjectIdSchema.optional(),
   vrSpaceId: VrSpaceIdSchema,
   objectId: z.union([AssetIdSchema, VrSpaceIdSchema, StreamIdSchema]),
+  position: Vector3TupleSchema,
+  orientation: Vector4TupleSchema,
+  scale: Vector3TupleSchema,
 })
   .omit(timestampKeys)
   .merge(optionalReason);
 export type PlacedObjectInsert = z.TypeOf<typeof PlacedObjectInsertSchema>;
+export type PlacedObject = Omit<PlacedObjectInsert, 'placedObjectId'> & { placedObjectId: PlacedObjectId };
+// type tt = PlacedObject['placedObjectId'];
 
 const AssetSelectSchema = createSelectSchema(schema.assets, {
+  assetFileExtension: AllFileExtensionsSchema,
   assetId: AssetIdSchema,
   ownerUserId: UserIdSchema,
 })
@@ -435,10 +480,6 @@ export const JwtPayloadSchema = jwtDefaultPayload.merge(JwtUserDataSchema)
 export type JwtPayload = z.TypeOf<typeof JwtPayloadSchema>;
 
 export const defaultHeightOverGround = 1.7;
-
-const Vector2TupleSchema = z.tuple([z.number(), z.number()]);
-const Vector3TupleSchema = z.tuple([z.number(), z.number(), z.number()]);
-const Vector4TupleSchema = z.tuple([z.number(), z.number(), z.number(), z.number()]);
 
 const TransformSchema = z.discriminatedUnion('active', [
   z.object({

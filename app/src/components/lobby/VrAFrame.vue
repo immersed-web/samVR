@@ -4,10 +4,11 @@
       <template v-for="placedObject in vrSpaceStore.currentVrSpace?.dbData.placedObjects"
         :key="placedObject.placedObjectId">
         <VrSpacePortal
-          @click="router.push({ name: 'vrSpace', params: { vrSpaceId: placedObject.vrPortal?.vrSpaceId } })"
+          @click.stop="router.push({ name: 'vrSpace', params: { vrSpaceId: placedObject.vrPortal?.vrSpaceId } })"
           v-if="placedObject.type === 'vrPortal'" :position="placedObject.position?.join(' ')" class="clickable"
           :label="placedObject.vrPortal?.name"
           :panoramic-preview-url="getAssetUrl(placedObject.vrPortal?.panoramicPreview?.generatedName)" />
+        <PlacedAsset v-if="placedObject.type === 'asset' && placedObject.asset" :asset="placedObject.asset" />
       </template>
     </a-entity>
 
@@ -16,7 +17,7 @@
       <a-gltf-model @model-loaded="onModelLoaded" id="model" ref="modelTag" :src="vrSpaceStore.worldModelUrl" class=""
         :class="{ 'navmesh': !vrSpaceStore.navMeshUrl }" />
       <a-gltf-model v-if="vrSpaceStore.navMeshUrl" id="navmesh" :src="vrSpaceStore.navMeshUrl" :visible="showNavMesh"
-        class="clickable navmesh" @mousedown="teleportMouseDown" @click="teleportSelf" />
+        class="clickable navmesh" @mousedown="teleportMouseDown" @click.stop="triggerCursorClick" />
     </a-entity>
 
     <slot />
@@ -49,10 +50,12 @@
 
 
     <Teleport to="#teleport-target-ui-right">
-      <div class="card bg-base-200 text-base-content p-2">
+      <div class="card bg-base-200 text-base-content p-2 text-xs overflow-y-scroll max-h-60 pointer-events-auto">
         <div>
-          <pre>{{ currentCursor?.intersection.point }}</pre>
-          <pre>{{ vrSpaceStore.ownClientTransform.laserPointer }}</pre>
+          <pre>{{ currentCursorIntersection?.intersection.normal }}</pre>
+          <pre>{{ currentCursorIntersection?.intersection }}</pre>
+          <!-- <pre>{{ vrSpaceStore.ownClientTransform.laserPointer }}</pre> -->
+          <pre>{{ vrSpaceStore.currentVrSpace.dbData.placedObjects.filter(po => po.type === 'asset') }}</pre>
         </div>
         <p class="label-text font-bold">Personer i rummet:</p>
         <p>Du: {{ clientStore.clientState?.username }}</p>
@@ -111,10 +114,11 @@ import { getAssetUrl } from '@/modules/utils';
 import VrSpacePortal from '../entities/VrSpacePortal.vue';
 import EmojiOther from './EmojiOther.vue';
 import LaserPointerOther from './LaserPointerOther.vue';
-import { useCurrentCursorIntersection, isCursorOnNavmesh } from '@/composables/vrSpaceComposables';
+import { useCurrentCursorIntersection } from '@/composables/vrSpaceComposables';
 import BasicAvatarEntity from './BasicAvatarEntity.vue';
 import { generateSpawnPosition } from '@/modules/3DUtils';
-const { currentCursor } = useCurrentCursorIntersection();
+import PlacedAsset from './PlacedAsset.vue';
+const { currentCursorIntersection, triggerCursorClick, isCursorOnNavmesh } = useCurrentCursorIntersection();
 
 const router = useRouter();
 // Stores
@@ -308,17 +312,23 @@ function onRightHandMove(e: DetailEvent<ClientRealtimeData['rightHand']>) {
   // currentTransform.rightHand = e.detail;
 }
 
+function onNavmeshClicked(e: Event) {
+  // console.log('navmesh clicked', e);
+  // triggerClick(e)
+  // bus.emit({ model: 'navmesh', cursorObject: cursorEntity.value?.object3D });
+}
+
 const timeMouseDown = ref(0);
 function teleportMouseDown(e: Event) {
   timeMouseDown.value = e.timeStamp;
 }
 
 function teleportSelf(e: Event) {
-  if (!headTag.value || !currentCursor.value) { return; }
+  if (!headTag.value || !currentCursorIntersection.value) { return; }
   if (e.timeStamp - timeMouseDown.value > 150) { return; }
-  let posArray = currentCursor.value?.intersection.point.toArray();
+  let posArray = currentCursorIntersection.value?.intersection.point.toArray();
   posArray[1] += defaultHeightOverGround;
-  console.log('Click model', e, 'cursor', currentCursor.value, 'position array', posArray);
+  console.log('Click model', e, 'cursor', currentCursorIntersection.value, 'position array', posArray);
   headTag.value.object3D.position.set(posArray[0], posArray[1], posArray[2]);
 }
 

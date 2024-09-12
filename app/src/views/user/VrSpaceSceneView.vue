@@ -6,15 +6,16 @@
       <UIOverlay />
       <WaitForAframe>
         <a-scene renderer="logarithmicDepthBuffer: false" ref="sceneTag" cursor="fuse:false; rayOrigin:mouse;"
-          raycaster="objects: .clickable" raycaster-update @raycast-update="updateCursor($event.detail)">
+          raycaster="objects: .clickable" raycaster-update @raycast-update="setCursorIntersection($event.detail)">
           <VrAFrame v-if="vrSpaceStore.worldModelUrl" :show-nav-mesh="false">
             <a-entity id="teleport-target-aframe-scene" />
             <a-entity id="teleport-target-aframe-cursor"
-              :position="currentCursor?.intersection.point.toArray().join(' ')" :visible="true">
+              :position="currentCursorIntersection?.intersection.point.toArray().join(' ')" :visible="true">
               <a-ring :visible="isCursorOnNavmesh" radius-inner="0.1" radius-outer="0.2" material="shader: flat;"
                 rotation="-90 0 0" />
             </a-entity>
           </VrAFrame>
+          <PlacablesTeleport />
         </a-scene>
 
         <!-- Components that render to multiple places in the DOM
@@ -41,13 +42,14 @@ import { onBeforeMount, provide, ref, watch, getCurrentInstance, onBeforeUnmount
 import type { Scene } from 'aframe';
 import WaitForAframe from '@/components/WaitForAframe.vue';
 import { useRouter } from 'vue-router';
-import { useCurrentCursorIntersection, type Tuple, isCursorOnNavmesh } from '@/composables/vrSpaceComposables';
+import { useCurrentCursorIntersection, type Tuple } from '@/composables/vrSpaceComposables';
 import type { RayIntersectionData } from '@/modules/3DUtils';
 import UIOverlay from '@/components/UIOverlay.vue';
 import LaserTeleport from '@/components/lobby/LaserTeleport.vue';
 import EmojiTeleport from '@/components/lobby/EmojiTeleport.vue';
 import { useSoupStore } from '@/stores/soupStore';
-const { updateCursor, currentCursor } = useCurrentCursorIntersection();
+import PlacablesTeleport from './lobby/teleports/PlacablesTeleport.vue';
+const { setCursorIntersection, currentCursorIntersection, isCursorOnNavmesh, triggerCursorClick: triggerClick } = useCurrentCursorIntersection();
 
 const router = useRouter();
 const vrSpaceStore = useVrSpaceStore();
