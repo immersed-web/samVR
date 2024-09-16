@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 
-import { hasAtLeastPermissionLevel, type ClientRealtimeData, type ClientsRealtimeData, type ConnectionId, type PlacedObjectInsert, type VrSpaceId, type VrSpaceUpdate } from 'schemas';
+import { hasAtLeastPermissionLevel, type ClientRealtimeData, type ClientsRealtimeData, type ConnectionId, type PlacedObjectId, type PlacedObjectInsert, type VrSpaceId, type VrSpaceUpdate } from 'schemas';
 import { computed, readonly, ref, watch } from 'vue';
 import { useConnectionStore } from './connectionStore';
 import { eventReceiver, type ExtractPayload, type RouterOutputs, type SubscriptionValue } from '@/modules/trpcClient';
@@ -124,6 +124,10 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     await connection.client.vr.reloadVrSpaceFromDB.query();
   }
 
+  async function removePlacedObject(placedObjectId: PlacedObjectId) {
+    await connection.client.vr.removePlacedObject.mutate({ placedObjectId });
+  }
+
   /**
    * Debounced update of the backend VrSpaceState.
    */
@@ -173,6 +177,7 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     enterVrSpace,
     leaveVrSpace,
     upsertPlacedObject,
+    removePlacedObject,
     reloadVrSpaceFromDB,
     updateVrSpace,
     // updateTransform,

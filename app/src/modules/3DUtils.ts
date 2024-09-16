@@ -66,7 +66,7 @@ export function generateSpawnPosition(spawnPosition: THREE.Vector3Tuple, spawnRa
   return spawnPointVector;
 }
 
-export function arrToCoordString(arr: Array<unknown>) {
+export function arrToCoordString(arr: Readonly<Array<unknown>>) {
   const constructedString = arr.join(' ');
   return constructedString;
 }
@@ -85,7 +85,7 @@ export function quaternionToAframeRotation(quaternion: THREE.Quaternion): THREE.
   return threeRotationToAframeRotation(arr);
 }
 
-export function quaternionTupleToAframeRotation(quaternionTuple: THREE.Vector4Tuple): THREE.Vector3Tuple {
+export function quaternionTupleToAframeRotation(quaternionTuple: Readonly<THREE.Vector4Tuple>): THREE.Vector3Tuple {
   return quaternionToAframeRotation(new THREE.Quaternion(...quaternionTuple));
 }
 

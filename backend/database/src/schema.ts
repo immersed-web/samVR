@@ -325,8 +325,8 @@ export const placedObjects = pgTable("PlacedObjects", {
 	objectId: uuid('objectId').$type<AssetId | VrSpaceId | StreamId>(),
 	objectSettings: jsonb("objectSettings"),
 	position: real("position").array().notNull().$type<NumberTuble3>(),
-	orientation: real("orientation").array().notNull().$type<NumberTuble4>(),
-	scale: real("scale").array().notNull().default([1, 1, 1]).$type<NumberTuble3>(),
+	orientation: real("orientation").array().$type<NumberTuble4>(),
+	scale: real("scale").array().$type<NumberTuble3>(),
 	...createdAndUpdatedAt,
 });
 
