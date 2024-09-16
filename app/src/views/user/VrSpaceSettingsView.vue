@@ -267,64 +267,68 @@
 
       <!-- COLUMN -->
       <div>
-        <VrAFramePreview class="border rounded-md overflow-hidden" ref="vrComponentTag"
-          :model-url="vrSpaceStore.worldModelUrl" :navmesh-url="vrSpaceStore.navMeshUrl"
-          :raycast="currentRaycastReason !== undefined" :auto-rotate="currentRaycastReason === undefined"
-          @raycast-click="onRaycastClick" @raycast-hover="onRaycastHover">
-          <a-entity id="vr-portals">
-            <template v-for="placedObject in vrSpaceStore.currentVrSpace?.dbData.placedObjects"
-              :key="placedObject.placedObjectId">
-              <VrSpacePortal v-if="placedObject.type === 'vrPortal'" :position="placedObject.position?.join(' ')"
-                :label="placedObject.vrPortal?.name"
-                :panoramic-preview-url="getAssetUrl(placedObject.vrPortal?.panoramicPreview?.generatedName)" />
-            </template>
-          </a-entity>
+        <div class="sticky top-0">
+          <VrAFramePreview class="border rounded-md overflow-hidden" ref="vrComponentTag"
+            :model-url="vrSpaceStore.worldModelUrl" :navmesh-url="vrSpaceStore.navMeshUrl"
+            :raycast="currentRaycastReason !== undefined" :auto-rotate="currentRaycastReason === undefined"
+            @raycast-click="onRaycastClick" @raycast-hover="onRaycastHover">
+            <a-entity id="vr-portals">
+              <template v-for="placedObject in vrSpaceStore.currentVrSpace?.dbData.placedObjects"
+                :key="placedObject.placedObjectId">
+                <VrSpacePortal v-if="placedObject.type === 'vrPortal'" :position="placedObject.position?.join(' ')"
+                  :label="placedObject.vrPortal?.name"
+                  :panoramic-preview-url="getAssetUrl(placedObject.vrPortal?.panoramicPreview?.generatedName)" />
+              </template>
+            </a-entity>
 
-          <a-entity ref="spawnPosTag" v-if="spawnPosString" :position="spawnPosString">
-            <a-circle color="yellow" transparent="true" opacity="0.5" rotation="-90 0 0" position="0 0.05 0"
-              :radius="vrSpaceStore.currentVrSpace?.dbData.spawnRadius" />
-            <a-icosahedron v-if="vrSpaceStore.panoramicPreviewUrl" detail="5" scale="-0.5 -0.5 -0.5" position="0 1.1 0"
-              :material="`shader: pano-portal; warpParams: 3 0.9; src: ${vrSpaceStore.panoramicPreviewUrl};`" />
-          </a-entity>
-          <a-entity :position="hoverPosString" :visible="hoverPosString !== undefined">
-            <a-ring color="yellow" radius-inner="0.1" radius-outer="0.2" material="shader: flat;" rotation="-90 0 0" />
-          </a-entity>
-        </VrAFramePreview>
-        <template v-if="vrSpaceStore.currentVrSpace?.dbData.worldModelAsset">
-          <h4>Interagera med VR-scenen</h4>
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <!-- Hoppa in i världen -->
+            <a-entity ref="spawnPosTag" v-if="spawnPosString" :position="spawnPosString">
+              <a-circle color="yellow" transparent="true" opacity="0.5" rotation="-90 0 0" position="0 0.05 0"
+                :radius="vrSpaceStore.currentVrSpace?.dbData.spawnRadius" />
+              <a-icosahedron v-if="vrSpaceStore.panoramicPreviewUrl" detail="5" scale="-0.5 -0.5 -0.5"
+                position="0 1.1 0"
+                :material="`shader: pano-portal; warpParams: 3 0.9; src: ${vrSpaceStore.panoramicPreviewUrl};`" />
+            </a-entity>
+            <a-entity :position="hoverPosString" :visible="hoverPosString !== undefined">
+              <a-ring color="yellow" radius-inner="0.1" radius-outer="0.2" material="shader: flat;"
+                rotation="-90 0 0" />
+            </a-entity>
+          </VrAFramePreview>
+          <template v-if="vrSpaceStore.currentVrSpace?.dbData.worldModelAsset">
+            <h4>Interagera med VR-scenen</h4>
+            <div class="grid grid-cols-2 gap-2">
               <div>
-                <!-- <input type="radio" :value="undefined" class="hidden" v-model="currentRaycastReason"> -->
-                <input v-if="!(vrComponentTag?.firstPersonViewActive || currentRaycastReason === 'selfPlacement')"
-                  type="radio" value="selfPlacement" aria-label="Hoppa in i scenen" class="btn btn-sm btn-primary"
-                  v-model="currentRaycastReason">
-                <input v-else type="radio" value="undefined" aria-label="Hoppa ut ur scenen"
-                  class="btn btn-sm btn-primary" v-model="currentRaycastReason"
-                  @click="vrComponentTag?.exitFirstPersonView">
-              </div>
-            </div>
-            <div>
-              <p class="text-bold">
-                Perspektiv: {{ vrComponentTag?.firstPersonViewActive ? 'Förstaperson' : 'Helikopter' }}
-              </p>
-              <div class="text-xs">
+                <!-- Hoppa in i världen -->
                 <div>
-                  <ul v-if="vrComponentTag?.firstPersonViewActive" class="list-disc">
-                    <li>Rör dig runt med tangentbordet: WASD</li>
-                    <li>Klicka och dra: Rotera</li>
-                  </ul>
-                  <ul v-else>
-                    <li>Klicka och dra: Rotera bilden</li>
-                    <li>Högerklick och dra: Panorera längs golvytan</li>
-                    <li>Scrolla: Zooma</li>
-                  </ul>
+                  <!-- <input type="radio" :value="undefined" class="hidden" v-model="currentRaycastReason"> -->
+                  <input v-if="!(vrComponentTag?.firstPersonViewActive || currentRaycastReason === 'selfPlacement')"
+                    type="radio" value="selfPlacement" aria-label="Hoppa in i scenen" class="btn btn-sm btn-primary"
+                    v-model="currentRaycastReason">
+                  <input v-else type="radio" value="undefined" aria-label="Hoppa ut ur scenen"
+                    class="btn btn-sm btn-primary" v-model="currentRaycastReason"
+                    @click="vrComponentTag?.exitFirstPersonView">
+                </div>
+              </div>
+              <div>
+                <p class="text-bold">
+                  Perspektiv: {{ vrComponentTag?.firstPersonViewActive ? 'Förstaperson' : 'Helikopter' }}
+                </p>
+                <div class="text-xs">
+                  <div>
+                    <ul v-if="vrComponentTag?.firstPersonViewActive" class="list-disc">
+                      <li>Rör dig runt med tangentbordet: WASD</li>
+                      <li>Klicka och dra: Rotera</li>
+                    </ul>
+                    <ul v-else>
+                      <li>Klicka och dra: Rotera bilden</li>
+                      <li>Högerklick och dra: Panorera längs golvytan</li>
+                      <li>Scrolla: Zooma</li>
+                    </ul>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </template>
+          </template>
+        </div>
       </div>
     </div>
   </div>
