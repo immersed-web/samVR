@@ -78,8 +78,7 @@ export const vrRouter = router({
     ctx.client.leaveCurrentVrSpace();
     // ctx.vrSpace.removeClient(ctx.client);
   }),
-  // TODO: only allow users with permission
-  updateVrSpace: atLeastUserP.use(isUserClientM).input(vrSpaceUpdateSchema).mutation(async ({ ctx, input }) => {
+  updateVrSpace: userWithEditRightsToVrSpace.input(vrSpaceUpdateSchema).mutation(async ({ ctx, input }) => {
     // log.info('updating vrSpace', input);
     const { vrSpaceId, reason, ...data } = input;
     const [dbResponse] = await db.update(schema.vrSpaces).set(data).where(eq(schema.vrSpaces.vrSpaceId, vrSpaceId)).returning();
@@ -87,7 +86,7 @@ export const vrRouter = router({
     if (!vrSpace) return;
     vrSpace.reloadDbData(reason ?? 'dbData updated. Reloading');
   }),
-  upsertPlacedObject: atLeastUserP.use(isUserClientM).input(PlacedObjectInsertSchema).mutation(async ({ ctx, input }) => {
+  upsertPlacedObject: userWithEditRightsToVrSpace.input(PlacedObjectInsertSchema).mutation(async ({ ctx, input }) => {
     const { reason, ...data } = input;
     const [dbResponse] = await db.insert(schema.placedObjects).values(data).onConflictDoUpdate({
       target: [schema.placedObjects.placedObjectId],
@@ -98,8 +97,7 @@ export const vrRouter = router({
     vrSpace.reloadDbData(reason ?? 'placedObject created/updated. Reloading');
     return dbResponse;
   }),
-  //TODO: Only allow users with permission
-  removePlacedObject: atLeastUserP.use(isUserClientM).input(z.object({ placedObjectId: PlacedObjectIdSchema })).mutation(async ({ ctx, input }) => {
+  removePlacedObject: userWithEditRightsToVrSpace.input(z.object({ placedObjectId: PlacedObjectIdSchema })).mutation(async ({ ctx, input }) => {
     const [dbResponse] = await db.delete(schema.placedObjects).where(eq(schema.placedObjects.placedObjectId, input.placedObjectId)).returning();
   }),
   reloadVrSpaceFromDB: userWithEditRightsToVrSpace.query(async ({ ctx }) => {
