@@ -1,10 +1,6 @@
 <template>
-  <div class="flex">
-    <div class="flex-none w-32" />
-    <div class="flex-1">
-      <slot />
-    </div>
-    <div class="flex-none w-32" />
+  <div class="max-w-7xl mx-4 mt-4">
+    <slot />
   </div>
 </template>
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { type Ref, ref, onMounted, onUnmounted, onBeforeMount } from 'vue';
+import { type Ref, ref, onMounted, onUnmounted, onBeforeMount, watch } from 'vue';
 import { useEventBus } from '@vueuse/core';
 
 import { type DetailEvent, THREE, type Entity, type Scene } from 'aframe';
@@ -11,7 +11,7 @@ import { intersectionToTransform, type RayIntersectionData } from '@/modules/3DU
 import UIOverlay from '@/components/lobby/UIOverlay.vue';
 import EmojiTeleport from '@/components/lobby/EmojiTeleport.vue';
 import PlacablesTeleport from '@/views/user/lobby/teleports/PlacablesTeleport.vue';
-import LaserTeleport from '@/views/user/lobby/teleports/LaserTeleport.vue';
+import LaserTeleport from '@/components/lobby/LaserTeleport.vue';
 // import EmojiPicker from '@/components/EmojiPicker.vue';
 import EmojiOther from '@/components/lobby/EmojiOther.vue';
 
@@ -20,7 +20,7 @@ import EmojiOther from '@/components/lobby/EmojiOther.vue';
 import emojiSheetUrl from '@/assets/sprite-128.png';
 import WaitForAframe from '@/components/WaitForAframe.vue';
 
-const { updateCursor } = useCurrentCursorIntersection();
+const { setCursorIntersection: updateCursor, currentCursorIntersection: currentCursor } = useCurrentCursorIntersection();
 
 type Tuple = [number, number]
 
@@ -28,25 +28,37 @@ const sceneTag = ref<Scene>();
 useXRState(sceneTag);
 
 const cursorEntity = ref<Entity>();
-function placeCursor(evt: DetailEvent<RayIntersectionData>) {
-  // rayIntersectionData.value = evt.detail;
-  updateCursor(evt.detail);
+watch(currentCursor, () => {
+  const intersectionData = currentCursor.value;
+  if (!intersectionData) return;
+  if (!cursorEntity.value) return;
   const cursor = cursorEntity.value;
   if (!cursor) return;
-  const transform = intersectionToTransform(evt.detail);
+  const transform = intersectionToTransform(intersectionData);
   if (!transform) return;
   cursor.object3D.position.set(...transform.position);
   const quat = new THREE.Quaternion().fromArray(transform.rotation);
   cursor.object3D.rotation.setFromQuaternion(quat);
-}
+})
+// function placeCursor(evt: DetailEvent<RayIntersectionData>) {
+//   // rayIntersectionData.value = evt.detail;
+//   updateCursor(evt.detail);
+//   const cursor = cursorEntity.value;
+//   if (!cursor) return;
+//   const transform = intersectionToTransform(evt.detail);
+//   if (!transform) return;
+//   cursor.object3D.position.set(...transform.position);
+//   const quat = new THREE.Quaternion().fromArray(transform.rotation);
+//   cursor.object3D.rotation.setFromQuaternion(quat);
+// }
 
 
-const bus = useEventBus(clickKey);
+// const bus = useEventBus(clickKey);
 function onClick(evt: DetailEvent<{ cursorEl: Entity, intersection: THREE.Intersection }>) {
   // const rayDirection = evt.detail.cursorEl.components.raycaster.raycaster.ray.direction;
   // console.log('click!', evt);
 
-  bus.emit({ model: 'sponza', cursorObject: cursorEntity.value?.object3D });
+  // bus.emit({ model: 'sponza', cursorObject: cursorEntity.value?.object3D });
 
   // placeMovedObject({ intersection: evt.detail.intersection, rayDirection });
   // return;
@@ -82,7 +94,8 @@ simulateOculus();
     <!-- Components (prefereably in @/assets/views/teleports/) can render to here using the Teleport component -->
     <a-scene id="tp-aframe-scene" ref="sceneTag" style="width: 100vw; height: 100vh;"
       cursor="fuse:false; rayOrigin:mouse;" raycaster="objects: .clickable" raycaster-update
-      @raycast-update="placeCursor" xr-mode-ui="enabled: true;" look renderer="sortTransparentObjects: true">
+      @raycast-update="updateCursor($event.detail)" xr-mode-ui="enabled: true;" look
+      renderer="sortTransparentObjects: true">
       <a-assets>
         <a-asset-item id="sponza" :src="sponzaUrl" />
         <a-asset-item id="hand-control-left-obj"
@@ -123,7 +136,7 @@ simulateOculus();
           @bbuttonup="oculusButtons['b'] = false" />
       </template>
 
-      <a-entity ref="cursorEntity" id="tp-aframe-cursor" />
+      <a-entity :visible="currentCursor" ref="cursorEntity" id="tp-aframe-cursor" />
 
       <!-- #region Misc demo stuff -->
 
@@ -152,11 +165,12 @@ simulateOculus();
     <!-- Components that can render for both screen/UI and VR, keeping all logic within the same component -->
 
     <template>
-      <EmojiTeleport :sheet-url="emojiSheetUrl" :uvs="[43, 43]"
-        :coords="[[[35, 8], [36, 37], [36, 38], [15, 8], [36, 27]], [[34, 8], [2, 8], [36, 24], [36, 25], [21, 8],], [[28, 26], [28, 20], [28, 38], [3, 16], [2, 1]]]"
-        @change="setEmojiSelf" :is-v-r="false" :columns="5" />
+      <!-- <EmojiTeleport :sheet-url="emojiSheetUrl" :uvs="[43, 43]"
+      :coords="[[[35, 8], [36, 37], [36, 38], [15, 8], [36, 27]], [[34, 8], [2, 8], [36, 24], [36, 25], [21, 8],], [[28,
+      26], [28, 20], [28, 38], [3, 16], [2, 1]]]"
+      @change="setEmojiSelf" :is-v-r="false" :columns="5" /> -->
       <PlacablesTeleport />
-      <LaserTeleport />
+      <!-- <LaserTeleport /> -->
     </template>
 
     <!-- #endregion -->

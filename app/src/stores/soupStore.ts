@@ -202,7 +202,7 @@ export const useSoupStore = defineStore('soup', () =>{
       throw Error('mediasoup device already loaded!');
     }
     const routerRtpCapabilities = await connectionStore.client.soup.getRouterRTPCapabilities.query();
-    console.log(routerRtpCapabilities);
+    console.log('received routerRtpCapabilities', routerRtpCapabilities);
     await soupDevice.load({ routerRtpCapabilities});
     deviceLoaded.value = soupDevice.loaded;
     connectionStore.client.soup.setRTPCapabilities.mutate({
@@ -210,7 +210,7 @@ export const useSoupStore = defineStore('soup', () =>{
     });
   }
 
-  //TODO: implement this. It will be needed if user jumps betweeen events.
+  // TODO: implement this. It will be needed if user jumps betweeen events.
   // Every event has separate medisoup router and each router needs separate client side device (I think)
   async function unloadDevice(){
   }

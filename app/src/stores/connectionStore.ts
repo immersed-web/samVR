@@ -2,15 +2,32 @@ import { clientOrThrow, trpcClient, createTrpcClient, wsClient, closeClient } fr
 import type { CreateTRPCProxyClient } from '@trpc/client';
 import type { AppRouter } from 'mediaserver';
 import { defineStore } from 'pinia';
-import type { ClientType } from 'schemas';
-import { computed, ref, shallowRef, type ShallowRef } from 'vue';
+import type { AvatarDesign, ClientType } from 'schemas';
+import { computed, ref, shallowRef, watch, type ShallowRef } from 'vue';
 import { useAuthStore } from './authStore';
+import { parse } from 'devalue';
 
 export const useConnectionStore = defineStore('connection', () => {
   console.log('connection store initializing!!');
   const authStore = useAuthStore();
   const connected = ref(false);
   const connectionType = ref<ClientType>();
+
+  watch(connected, async (newConnected) => {
+    console.log('connection state changed');
+    if (newConnected) {
+      const avatarString = localStorage.getItem('avatarSettings');
+      if (typeof avatarString === 'string') {
+        {
+          const parsedAvatarSettings = parse(avatarString) as AvatarDesign;
+          // console.log('gonna init local client data', parsedAvatarSettings);
+          // const response = await client.value.greeting.query();
+          // console.log(response);
+          await client.value.user.initLocalClientData.mutate({ avatarDesign: parsedAvatarSettings });
+        }
+      }
+    }
+  });
 
   // TODO: We cant have this getter throwing. As soon vue devtools loads we get a bunch of Errors.
   // Basically, we cant have the implicit requirement to call init before trying to use the client.

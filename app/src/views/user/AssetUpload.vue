@@ -1,5 +1,5 @@
 <template>
-  <div v-if="!removeButton">
+  <div v-if="!uploadedAssetData">
     <form @submit.prevent="uploadFile">
       <div class="form-control gap-1">
         <div class="flex flex-nowrap items-center gap-2">
@@ -23,7 +23,7 @@
       </div>
     </form>
   </div>
-  <div v-if="removeButton">
+  <div v-else>
     <form @submit.prevent="removeFile">
       <button type="submit" class="btn btn-error btn-sm">
         <span class="material-icons mr-2">delete</span>
@@ -41,24 +41,26 @@ import axios from 'axios';
 import type { ExtractSuccessResponse, UploadRequest, UploadResponse } from 'fileserver';
 import { useConnectionStore } from '@/stores/connectionStore';
 import { useAuthStore } from '@/stores/authStore';
-import { type AssetType, maxFileSizeSchema, maxFileSize, createFileExtensionSchema, assetTypeListToExtensionList, getAssetTypeFromExtension } from 'schemas';
-import { uploadFileData } from '@/modules/utils';
+import { type AssetType, maxFileSizeSchema, maxFileSize, createFileExtensionSchema, assetTypeListToExtensionList, getAssetTypeFromExtension, type Asset } from 'schemas';
+import { deleteAsset, uploadFileData } from '@/modules/utils';
 
 const props = withDefaults(defineProps<{
   acceptedAssetTypes: AssetType | AssetType[],
   showInUserLibrary?: boolean
   name?: string,
-  removeButton?: boolean
+  uploadedAssetData?: Asset
 }>(), {
   name: '',
   showInUserLibrary: undefined, // default to undefined will let the db use it's default value
 });
 
+export type AssetUploadEmitUploadedPayload = ExtractSuccessResponse<UploadResponse>;
 const emit = defineEmits<{
-  uploaded: [uploadDetails: ExtractSuccessResponse<UploadResponse>]
+  uploaded: [uploadDetails: AssetUploadEmitUploadedPayload],
+  assetDeleted: [],
 }>();
 
-export type EmitTypes = typeof emit
+// export type AssetUploadEmitTypes = typeof emit;
 
 const authStore = useAuthStore();
 
@@ -183,39 +185,22 @@ async function uploadFile() {
   fileInput.value!.value = '';
 }
 
-// const update3DModel = async (extension: 'gltf' | 'glb' | null) => {
-//   const modelId = streamStore.currentStream?.vrSpace?.virtualSpace3DModelId;
-//   if(!modelId) return;
-//   await connectionStore.client.vr.update3DModel.mutate({
-//     vr3DModelId: modelId,
-//     data: {
-//       modelFileFormat: props.acceptedAssetTypes === 'model' ? extension : undefined,
-//       navmeshFileFormat: props.acceptedAssetTypes === 'navmesh' ? extension : undefined,
-//     },
-//     reason: props.acceptedAssetTypes === 'model' ? '3D-model updated' : 'navmesh model updated',
-//   });
-
-// };
-
-// Remove 3d model
+// TODO: It's a bit splitted here. The logic for actually deleting the asset is here.
+// But sometimes we'll need to reload DB-data after deletion and thus we emit an event after the deletion so the parent componente can take action if needed.
+// We should probably move out all delete logic and only emit an event from here, making this component more "dumb" and keep less state.
 const removeFile = async () => {
-  try {
+  if (!props.uploadedAssetData) {
+    console.warn('no asset data to remove');
+    return;
+  };
 
-    const body = {
-      fileName: uploadedFileName.value,
-    };
+  const deleteParams = {
+    assetId: props.uploadedAssetData.assetId,
+    authToken: authStore.tokenOrThrow(),
+  };
 
-    console.log(body);
-
-    await axios.post(config.url + '/remove', body, {
-      headers: {
-        'token': authStore.tokenOrThrow(),
-      },
-      timeout: 60000,
-    });
-  } catch (err) {
-    console.log(err);
-  }
+  await deleteAsset(deleteParams)
+  emit('assetDeleted');
 };
 </script>
 

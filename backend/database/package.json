@@ -14,7 +14,7 @@
     "migrate": "dotenv -e ../../.env drizzle-kit migrate",
     "push": "dotenv -e ../../.env drizzle-kit push",
     "studio": "dotenv -e ../../.env drizzle-kit studio",
-    "queryTest": "dotenv -e ../../.env tsx ./src/test.ts",
+    "seed": "dotenv -e ../../.env tsx ./src/seed.ts",
     "clearDB": "dotenv -e ../../.env tsx ./src/drop_all.ts"
   },
   "devDependencies": {

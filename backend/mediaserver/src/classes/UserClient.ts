@@ -3,7 +3,7 @@ const log = new Log('UserClient');
 process.env.DEBUG = 'UserClient*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
-import { ClientRealtimeData, ClientsRealtimeData, StreamId, CameraId, ClientType, VrSpaceId } from 'schemas';
+import { ClientRealtimeData, ClientsRealtimeData, StreamId, CameraId, ClientType, VrSpaceId, AvatarDesign } from 'schemas';
 import { loadUserDBData, SenderClient, Stream, VrSpace, BaseClient, DataAndReason, BaseClientEventMap } from './InternalClasses.js';
 import { effect } from '@vue/reactivity';
 import { EventSender, Payload } from 'ts-event-bridge/sender';
@@ -30,19 +30,26 @@ export class UserClient extends BaseClient {
   constructor(...args: ConstructorParameters<typeof BaseClient>){
     super(...args);
     log.info(`Creating user client ${this.username} (${this.connectionId})`);
-    log.debug('dbData:', this.dbData.value);
+    // log.debug('dbData:', this.dbData.value);
 
     effect(() => {
-      if(!this.vrSpace) return;
-      this.publicProducers;
+      this.publicProducers.value
+      if (!this.vrSpace) {
+        // log.debug('no vrSpace. skipping publicProducers effect: ', this.publicProducers.value);
+        return
+      };
+      log.debug('publicProducers was updated', this.publicProducers);
       this.vrSpace._notifyStateUpdated('a client updated producers');
     });
+
+    this._onClientStateUpdated('client instance was created on server')
   }
   readonly clientType = 'client' as const satisfies ClientType;
 
   vrSpaceId?: VrSpaceId;
 
-  transform: ClientRealtimeData | undefined;
+  clientRealtimeData: ClientRealtimeData | undefined;
+  avatarDesign: AvatarDesign | undefined;
 
   // sneaky hack so we can share the instance between base, user and senderclient but different intellisense.
   declare eventSender: EventSender<MyWebsocketType, UserClientEventMap>;
@@ -109,9 +116,10 @@ export class UserClient extends BaseClient {
     return {
       ...super.getPublicState(),
       clientType: this.clientType,
-      transform: this.transform,
+      clientRealtimeData: this.clientRealtimeData,
       currentCameraId: this.currentCamera?.cameraId,
       isInVrSpace: !!this.vrSpace,
+      avatarDesign: this.avatarDesign,
     };
   }
 

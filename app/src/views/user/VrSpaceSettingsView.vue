@@ -91,18 +91,21 @@
                 <input class="rounded-md border-black border-2" type="color"
                   v-model="vrSpaceStore.writableVrSpaceState.dbData.skyColor">
               </div>
-              <div class="grid grid-cols-2 w-full">
+              <div class="">
                 <div>
                   <h4>3D-modell för miljön</h4>
                   <pre>{{ vrSpaceStore.currentVrSpace.dbData.worldModelAsset?.originalFileName }}</pre>
                   <AssetUpload @uploaded="onModelUploaded" :accepted-asset-types="['model']" name="miljömodell"
-                    :show-in-user-library="false" :remove-button="vrSpaceStore.currentVrSpace.dbData.worldModelAsset" />
+                    :show-in-user-library="false"
+                    :uploadedAssetData="vrSpaceStore.currentVrSpace.dbData.worldModelAsset"
+                    @asset-deleted="vrSpaceStore.reloadVrSpaceFromDB" />
                 </div>
                 <div v-if="vrSpaceStore.currentVrSpace?.dbData.worldModelAsset">
                   <h4>3D-modell för gåbara ytor (navmesh)</h4>
                   <pre>{{ vrSpaceStore.currentVrSpace.dbData.navMeshAsset?.originalFileName }}</pre>
                   <AssetUpload @uploaded="onNavmeshUploaded" accepted-asset-types="navmesh" name="navmesh"
-                    :show-in-user-library="false" :remove-button="vrSpaceStore.currentVrSpace.dbData.navMeshAsset" />
+                    :show-in-user-library="false" :uploadedAssetData="vrSpaceStore.currentVrSpace.dbData.navMeshAsset"
+                    @asset-deleted="vrSpaceStore.reloadVrSpaceFromDB" />
                 </div>
               </div>
               <template v-if="vrSpaceStore.currentVrSpace.dbData.worldModelAsset">
@@ -152,7 +155,7 @@
                       @change="currentRaycastReason = 'vrSpacePortal'">
                       <option v-for="vrSpace in allowedVrSpaces" :key="vrSpace.vrSpaceId" :value="vrSpace.vrSpaceId">
                         {{
-                          vrSpace.name }}
+                        vrSpace.name }}
                       </option>
                     </select>
                     <button v-if="currentRaycastReason" class="btn btn-sm btn-circle" @click="cancelRaycasting">
@@ -185,7 +188,7 @@
             <a-circle color="yellow" transparent="true" opacity="0.5" rotation="-90 0 0" position="0 0.05 0"
               :radius="vrSpaceStore.currentVrSpace?.dbData.spawnRadius" />
             <a-icosahedron v-if="vrSpaceStore.panoramicPreviewUrl" detail="5" scale="-0.5 -0.5 -0.5" position="0 1.1 0"
-              :material="`shader: pano-portal; warpParams: 3 0.9; src: ${vrSpaceStore.panoramicPreviewUrl}`" />
+              :material="`shader: pano-portal; warpParams: 3 0.9; src: ${vrSpaceStore.panoramicPreviewUrl};`" />
           </a-entity>
           <a-entity :position="hoverPosString" :visible="hoverPosString !== undefined">
             <a-ring color="yellow" radius-inner="0.1" radius-outer="0.2" material="shader: flat;" rotation="-90 0 0" />
@@ -230,21 +233,22 @@
           <AssetUpload @uploaded="onAssetUploaded" :accepted-asset-types="['document', 'image', 'video']" name="object"
             :show-in-user-library="true" />
         </div>
-        <div v-if="clientStore.clientState?.assets" class="grid gap-2 grid-cols-[auto_auto] max-h-64 overflow-y-auto">
+        <!-- <div v-if="clientStore.clientState?.assets" class="grid gap-2 grid-cols-[auto_auto] max-h-64 overflow-y-auto">
           <template v-for="asset in clientStore.clientState.assets" :key="asset.assetId">
             <div>{{ asset.originalFileName }}</div>
             <button class="btn btn-sm btn-secondary">
               placera
             </button>
           </template>
-        </div>
+        </div> -->
+        <AssetLibrary :assets="libraryAssets" @asset-picked="onAssetPicked" />
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import AssetUpload, { type EmitTypes } from './AssetUpload.vue';
+import AssetUpload, { type AssetUploadEmitUploadedPayload } from './AssetUpload.vue';
 import VrAFramePreview from '@/components/lobby/VrSpacePreview.vue';
 import { ref, watch, onMounted, computed, type ComponentInstance, nextTick } from 'vue';
 // import { throttle } from 'lodash-es';
@@ -255,13 +259,13 @@ import { useConnectionStore } from '@/stores/connectionStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useClientStore } from '@/stores/clientStore';
 import type { RouterOutputs } from '@/modules/trpcClient';
-import UserBanner from '@/components/UserBanner.vue';
+// import UserBanner from '@/components/UserBanner.vue';
+import AssetLibrary from '@/components/lobby/AssetLibrary.vue';
 import { getAssetUrl, uploadFileData } from '@/modules/utils';
 import VrSpacePortal from '@/components/entities/VrSpacePortal.vue';
 
 // TODO: refine/find alternative way to get these types so we get intellisense for the emit key
 type ExtractEmitData<T extends string, emitUnion extends (...args: any[]) => void> = T extends Parameters<emitUnion>[0] ? Parameters<emitUnion>[1] : never
-type UploadEventPayload = ExtractEmitData<'uploaded', EmitTypes>
 type ScreenshotPayload = ExtractEmitData<'screenshot', ComponentInstance<typeof VrAFramePreview>['$emit']>
 
 // Use imports
@@ -271,13 +275,17 @@ const vrSpaceStore = useVrSpaceStore();
 const authStore = useAuthStore();
 const clientStore = useClientStore();
 
+const libraryAssets = computed(() => {
+  return clientStore.clientState?.assets.filter(a => a.showInUserLibrary) ?? [];
+})
+
 const vrComponentTag = ref<ComponentInstance<typeof VrAFramePreview>>();
 
 const props = defineProps<{
   vrSpaceId: VrSpaceId
 }>();
 
-function onAssetUploaded(uploadDetails: UploadEventPayload) {
+function onAssetUploaded(uploadDetails: AssetUploadEmitUploadedPayload) {
   console.log(uploadDetails);
   // TODO: We should probalby have the server notify a clientstate update
   // right now we just do this hack to keep assets in local clientState in sync with db.
@@ -286,13 +294,17 @@ function onAssetUploaded(uploadDetails: UploadEventPayload) {
   clientStore.clientState?.assets.push(uploadDetails);
 }
 
-function onModelUploaded(uploadDetails: UploadEventPayload) {
+function onAssetPicked(asset: Asset) {
+  console.log(asset);
+}
+
+function onModelUploaded(uploadDetails: AssetUploadEmitUploadedPayload) {
   console.log(uploadDetails);
   if (!vrSpaceStore.writableVrSpaceState) return;
   vrSpaceStore.writableVrSpaceState.dbData.worldModelAssetId = uploadDetails.assetId;
 }
 
-function onNavmeshUploaded(uploadDetails: UploadEventPayload) {
+function onNavmeshUploaded(uploadDetails: AssetUploadEmitUploadedPayload) {
   console.log(uploadDetails);
   if (!vrSpaceStore.writableVrSpaceState) return;
   vrSpaceStore.writableVrSpaceState.dbData.navMeshAssetId = uploadDetails.assetId;
@@ -387,11 +399,12 @@ async function onRaycastClick(point: Point) {
       break;
     case 'vrSpacePortal':
       if (!vrSpaceStore.writableVrSpaceState || !portalTargetVrSpace.value) return;
-      backendConnection.client.vr.createPlacedObject.mutate({
+      backendConnection.client.vr.upsertPlacedObject.mutate({
         vrSpaceId: vrSpaceStore.writableVrSpaceState.dbData.vrSpaceId,
         type: 'vrPortal',
         objectId: portalTargetVrSpace.value,
         position: point,
+        orientation: new THREE.Quaternion().identity().toArray() as [number, number, number, number],
       });
   }
 }

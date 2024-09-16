@@ -1,26 +1,25 @@
 <template>
   <a-entity @loaded="onAvatarEntityLoaded" ref="avatarRootTag">
-    <a-entity :id="`head-${props.clientInfo.connectionId}`" ref="remoteAvatar"
+    <Teleport to="#teleport-target-ui-right">
+      <div>{{ clientInfo.clientRealtimeData?.head }}</div>
+    </Teleport>
+    <!-- <a-entity :id="`head-${props.clientInfo.connectionId}`" ref="remoteAvatar"
       interpolated-transform="interpolationTime: 350;" mediastream-audio-source @near-range-entered="onNearRangeEntered"
-      @near-range-exited="onNearRangeExited">
-      <a-entity scale="1 1 1">
+      @near-range-exited="onNearRangeExited"> -->
+    <a-entity :id="`head-${props.clientInfo.connectionId}`" ref="remoteAvatar"
+      interpolated-transform="interpolationTime: 350;">
+      <!-- <a-entity scale="1 1 1">
         <a-entity :id="`left-hand-${props.clientInfo.connectionId}`" visible="false"
           interpolated-transform="interpolationTime: 350;" ref="leftHandTag">
           <a-entity scale="0.05 0.05 0.05" rotation="-20 90 -140" gltf-model="#avatar-hand-1" />
-          <!-- <a-entity
-            gltf-model="url(/models/controllers/oculus-touch-controller-left.gltf)"
-          /> -->
         </a-entity>
       </a-entity>
       <a-entity scale="1 1 1">
         <a-entity :id="`right-hand-${props.clientInfo.connectionId}`" visible="false"
           interpolated-transform="interpolationTime: 350;" ref="rightHandTag">
           <a-entity scale="0.05 0.05 -0.05" rotation="20 90 -140" gltf-model="#avatar-hand-1" />
-          <!-- <a-entity
-            gltf-model="url(/models/controllers/oculus-touch-controller-right.gltf)"
-          /> -->
         </a-entity>
-      </a-entity>
+      </a-entity> -->
 
       <!-- <a-text
         class="distance-debug"
@@ -30,20 +29,17 @@
       /> -->
       <a-entity rotation="0 180 0">
         <a-entity position="0 0 0">
-          <a-entity gltf-model="#avatar-hat-1" />
-          <a-entity gltf-model="#avatar-head-1" />
+          <a-entity :gltf-model="`url(/avatar/hair/${clientInfo.avatarDesign?.parts.heads.model}.glb)`" />
+          <a-entity :gltf-model="`url(/avatar/heads/${clientInfo.avatarDesign?.parts.heads.model}.glb)`" />
           <!-- <a-entity :gltf-model="`url(/models/avatar/eyes/Eyes${Math.trunc(Math.random()+1.5)}.glb)`" /> -->
-          <a-entity gltf-model="#avatar-eyes-5" />
-          <a-entity position="0 -0.05 0" class="audio-level">
+          <!-- <a-entity gltf-model="#avatar-eyes-5" /> -->
+          <!-- <a-entity position="0 -0.05 0" class="audio-level">
             <a-entity position="0 0.05 0.002" gltf-model="#avatar-mouth-1" />
-          </a-entity>
+          </a-entity> -->
         </a-entity>
         <a-entity ref="lowerBodyTag">
-          <!-- <a-entity> -->
-          <!-- <a-box position="0 -0.5 0" scale="0.4 0.5 0.3" color="red" /> -->
-          <!-- <a-text :value="props.clientInfo.username" align="center" width="2.5" position="0 0.4 0" /> -->
-          <a-entity @loaded="onBodyLoaded" gltf-model="#avatar-body-1" />
-          <!-- <a-entity gltf-model="#avatar-vehicle-1" /> -->
+          <a-entity @loaded="onBodyLoaded"
+            :gltf-model="`url(/avatar/torsos/${clientInfo.avatarDesign?.parts.torsos.model}.glb)`" />
         </a-entity>
       </a-entity>
       <audio ref="dummyAudioTag" muted autoplay playsinline />
@@ -54,7 +50,7 @@
 <script setup lang="ts">
 
 import type { Entity, DetailEvent } from 'aframe';
-import type { ConnectionId, Transform } from 'schemas';
+import type { ConnectionId, MaybeTransform } from 'schemas';
 import { ref, computed, watch, onMounted, onBeforeUnmount, shallowRef } from 'vue';
 import type { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import type { ProducerId } from 'schemas/mediasoup';
@@ -106,8 +102,8 @@ const leftHandTag = ref<Entity>();
 const rightHandTag = ref<Entity>();
 const dummyAudioTag = ref<HTMLAudioElement>();
 watch(() => props.clientInfo, (n, o) => console.log('remoteAvatar prop updated. new:', n, ' old:', o));
-watch(() => props.clientInfo.transform?.head, (newTransform) => {
-  // console.log('head updated: ', newTransform?.position);
+watch(() => props.clientInfo.clientRealtimeData?.head, (newTransform) => {
+  console.log('head updated: ', newTransform?.position);
   // console.log('remote avatar transform updated!');
   if (!remoteAvatar.value) {
     console.error('couldnt update avatar transform cause entityRef was undefined');
@@ -123,10 +119,10 @@ watch(() => props.clientInfo.transform?.head, (newTransform) => {
   }
   // console.log('emitting received transform to avatar entity');
   remoteAvatar.value.emit('moveTo', { position: newTransform.position }, false);
-  remoteAvatar.value.emit('rotateTo', { orientation: newTransform.rotation }, false);
+  remoteAvatar.value.emit('rotateTo', { rotation: newTransform.rotation }, false);
 });
 
-function handleReceivedHandTransform(newTransform: Transform | undefined, oldTransform: Transform | undefined, handEntity: Entity) {
+function handleReceivedHandTransform(newTransform: MaybeTransform | undefined, oldTransform: MaybeTransform | undefined, handEntity: Entity) {
   // Hide hand if no transform is received
   if (!newTransform) {
     handEntity.setAttribute('visible', false);
@@ -143,24 +139,24 @@ function handleReceivedHandTransform(newTransform: Transform | undefined, oldTra
   handEntity.emit('rotateTo', { orientation: newTransform.orientation }, false);
 }
 
-watch(() => props.clientInfo.transform?.leftHand, (newTrsfm, oldT) => {
-  // console.log(`${props.clientInfo.username}, left hand updated ${newTrsfm?.position}`);
-  if (!leftHandTag.value) {
-    console.error('no hand model tag found');
-    return;
-  };
-  handleReceivedHandTransform(newTrsfm, oldT, leftHandTag.value);
-});
+// watch(() => props.clientInfo.transform?.leftHand, (newTrsfm, oldT) => {
+//   // console.log(`${props.clientInfo.username}, left hand updated ${newTrsfm?.position}`);
+//   if (!leftHandTag.value) {
+//     console.error('no hand model tag found');
+//     return;
+//   };
+//   handleReceivedHandTransform(newTrsfm, oldT, leftHandTag.value);
+// });
 
-watch(() => props.clientInfo.transform?.rightHand, (newTrsfm, oldT) => {
-  // console.log(`${props.clientInfo.username}, right hand updated ${newTrsfm?.position}`);
-  if (!rightHandTag.value) {
+// watch(() => props.clientInfo.transform?.rightHand, (newTrsfm, oldT) => {
+//   // console.log(`${props.clientInfo.username}, right hand updated ${newTrsfm?.position}`);
+//   if (!rightHandTag.value) {
 
-    console.error('no hand model tag found');
-    return;
-  }
-  handleReceivedHandTransform(newTrsfm, oldT, rightHandTag.value);
-});
+//     console.error('no hand model tag found');
+//     return;
+//   }
+//   handleReceivedHandTransform(newTrsfm, oldT, rightHandTag.value);
+// });
 
 let stream = shallowRef<MediaStream>();
 watch(stream, () => {
@@ -201,7 +197,7 @@ async function onAvatarEntityLoaded(e: DetailEvent<any>) {
     console.error('remoteAvatar was undefined');
     return;
   }
-  remoteAvatar.value.emit('setTransform', props.clientInfo.transform?.head);
+  remoteAvatar.value.emit('setTransform', props.clientInfo.clientRealtimeData?.head);
   if (!stream.value) {
     console.log('stream is undefined. Will not emit');
     return;

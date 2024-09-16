@@ -1,4 +1,4 @@
-import { ZodLiteral, ZodUnion, z } from 'zod';
+import { ZodLiteral, ZodObject, ZodSchema, ZodUnion, ZodUnionOptions, z } from 'zod';
 import type { JwtPayload as JwtShapeFromLib } from 'jsonwebtoken'
 // import { Role, Venue, VirtualSpace3DModel, Visibility, Camera, CameraType as PrismaCameraType, Prisma, ModelFileFormat } from "database";
 import * as schema from 'database/schema';
@@ -167,6 +167,11 @@ export type AssetType = z.infer<typeof AssetTypeSchema>;
 export const maxFileSize = 50 * 1024 * 1024;
 export const maxFileSizeSchema = z.number().max(maxFileSize);
 
+const Vector2TupleSchema = z.tuple([z.number(), z.number()]);
+const Vector3TupleSchema = z.tuple([z.number(), z.number(), z.number()]);
+const Vector4TupleSchema = z.tuple([z.number(), z.number(), z.number(), z.number()]);
+
+
 export const assetTypesToExtensionsMap = {
   video: ['mp4', 'mkv', 'mov', 'webm'],
   image: ['png', 'jpg', 'jpeg', 'webp'],
@@ -174,6 +179,34 @@ export const assetTypesToExtensionsMap = {
   model: ['glb'],
   navmesh: ['glb'],
 } as const satisfies Record<AssetType, string[]>
+
+export type AssetAframeTagname = typeof extensionsToAframeTagsMap[AllFileExtensions];
+
+export const extensionsToAframeTagsMap = {
+  // 3d models
+  glb: 'a-gltf-model',
+  // images
+  png: 'a-image',
+  jpg: 'a-image',
+  jpeg: 'a-image',
+  webp: 'a-image',
+  // videos
+  mp4: 'a-video',
+  mkv: 'a-video',
+  mov: 'a-video',
+  webm: 'a-video',
+  // documents
+  pdf: 'PdfEntity', // PascalCase because vue component
+} as const satisfies Partial<Record<AllFileExtensions, string>>
+
+// export const assetTypesToAframeTagsMap = {
+//   document: 'PdfEntity',
+//   image: 'a-image',
+//   model: 'a-entity',
+//   navmesh: 'a-entity',
+//   video: 'a-video'
+// } as const satisfies Record<AssetType, string>;
+
 // function concat<T extends unknown[], U extends unknown[]>(t: [...T], u: [...U]): [...T, ...U] {
 //   return [...t, ...u];
 // }
@@ -190,7 +223,11 @@ export const assetTypesToExtensionsMap = {
 
 // const combList = concat(assetTypesToExtensionsMap['image'], assetTypesToExtensionsMap['video']);
 
-type AcceptedExtensions<T extends AssetType> = [typeof assetTypesToExtensionsMap[T][number]]
+type AcceptedExtensionsArray<T extends AssetType = AssetType> = [typeof assetTypesToExtensionsMap[T][number]]
+// type AllFileExtensions = AcceptedExtensionsArray[number]
+
+export const AllFileExtensionsSchema = createFileExtensionSchema(AssetTypeSchema.options);
+export type AllFileExtensions = z.TypeOf<typeof AllFileExtensionsSchema>;
 // type Test = AcceptedExtensions<'image' | 'video'>
 
 // function test<T extends AssetType[]>(assetType: T) {
@@ -206,7 +243,7 @@ export function assetTypeListToExtensionList<T extends AssetType>(assetTypes: T 
     assetTypes = [assetTypes];
   }
   // @ts-ignore
-  const extensionList: AcceptedExtensions<T> = assetTypes.reduce<AcceptedExtensions<T>>((acc, assetType) => {
+  const extensionList: AcceptedExtensionsArray<T> = assetTypes.reduce<AcceptedExtensionsArray<T>>((acc, assetType) => {
     return [...acc, ...assetTypesToExtensionsMap[assetType]];
   }, []);
   return extensionList;
@@ -235,6 +272,8 @@ export function getAssetTypeFromExtension(extension: string, acceptedAssetTypes?
   console.warn('failed to match extension to a valid asset type');
   return undefined
 }
+
+
 
 export function createFileExtensionSchema<T extends AssetType>(assetTypes: T | T[]) {
   const extensionList = assetTypeListToExtensionList(assetTypes);
@@ -413,11 +452,22 @@ export const PlacedObjectInsertSchema = createInsertSchema(schema.placedObjects,
   placedObjectId: PlacedObjectIdSchema.optional(),
   vrSpaceId: VrSpaceIdSchema,
   objectId: z.union([AssetIdSchema, VrSpaceIdSchema, StreamIdSchema]),
+  position: Vector3TupleSchema,
+  orientation: Vector4TupleSchema,
+  scale: Vector3TupleSchema,
 })
   .omit(timestampKeys)
   .merge(optionalReason);
 export type PlacedObjectInsert = z.TypeOf<typeof PlacedObjectInsertSchema>;
+export type PlacedObject = Omit<PlacedObjectInsert, 'placedObjectId'> & { placedObjectId: PlacedObjectId };
+// type tt = PlacedObject['placedObjectId'];
 
+const AssetSelectSchema = createSelectSchema(schema.assets, {
+  assetFileExtension: AllFileExtensionsSchema,
+  assetId: AssetIdSchema,
+  ownerUserId: UserIdSchema,
+})
+export type Asset = z.TypeOf<typeof AssetSelectSchema>;
 
 export const JwtUserDataSchema = z.object({
   userId: UserIdSchema,
@@ -429,9 +479,7 @@ export type JwtUserData = z.TypeOf<typeof JwtUserDataSchema>;
 export const JwtPayloadSchema = jwtDefaultPayload.merge(JwtUserDataSchema)
 export type JwtPayload = z.TypeOf<typeof JwtPayloadSchema>;
 
-const Vector2TupleSchema = z.tuple([z.number(), z.number()]);
-const Vector3TupleSchema = z.tuple([z.number(), z.number(), z.number()]);
-const Vector4TupleSchema = z.tuple([z.number(), z.number(), z.number(), z.number()]);
+export const defaultHeightOverGround = 1.7;
 
 const TransformSchema = z.discriminatedUnion('active', [
   z.object({
@@ -443,7 +491,8 @@ const TransformSchema = z.discriminatedUnion('active', [
     active: z.literal(false),
   }),
 ]);
-export type Transform = z.TypeOf<typeof TransformSchema>;
+export type MaybeTransform = z.TypeOf<typeof TransformSchema>;
+export type ActiveTransform = Extract<MaybeTransform, { active: true }>;
 
 const LaserPointerSchema = z.discriminatedUnion('active', [
   z.object({
@@ -452,6 +501,7 @@ const LaserPointerSchema = z.discriminatedUnion('active', [
   z.object({
     active: z.literal(true),
     position: Vector3TupleSchema,
+    directionVector: Vector3TupleSchema,
     // startPosition: Vector3TupleSchema,
     // endPosition: Vector3TupleSchema
   }),
@@ -492,50 +542,107 @@ export type ClientsRealtimeData = Record<ConnectionId, ClientRealtimeData>;
 //   layer: [undefined, 'layer_lowrider', 'layer_safari']
 // } as const;
 
-const skinParts = ['hands', 'heads', 'torsos'] as const;
+export const skinParts = ['hands', 'heads', 'torsos'] as const;
+export type SkinPart = typeof skinParts[number];
 
 const literalArray = skinParts.map(s => z.literal(s))
+
+function partSchemaCreator<T extends ZodUnion<ZodUnionOptions>>(modelSchema: T) {
+  return z.object({
+    model: modelSchema,
+    colors: z.array(z.string()),
+  })
+}
 
 export const AvatarDesignSchema = z.object({
   skinColor: z.string().optional(),
   parts: z.object({
-    hands: z.literal('hands_basic_left'),
-    heads: z.literal('heads_basic'),
-    torsos: z.literal('torsos_basic_male'),
-    eyes: z.union([z.literal('eyes_huge'), z.literal('eyes_relaxed'), z.literal('eyes_cool'), z.literal('eyes_kind'), z.literal('eyes_round'), z.literal('eyes_npc')]),
-    eyebrows: z.union([z.literal('eyebrows_brookie'), z.literal('eyebrows_innocent'), z.literal('eyebrows_reynolds'), z.literal('eyebrows_tyler'), z.literal('eyebrows_npc'), z.undefined()]),
-    mouths: z.union([z.literal('mouth_polite_smile'), z.literal('mouth_prettypolite_smile'), z.literal('mouth_npc')]),
-    hair: z.union([z.literal('hair_ponytail'), z.literal('hair_multicolor'), z.literal('hair_thick_buzzcut'), z.literal('hair_cool'), z.literal('hair_kevin'), z.literal('hair_wolf'), z.undefined()]),
-    facialhair: z.union([z.undefined(), z.literal('facialhair_almond'), z.literal('facialhair_bigboi'), z.literal('facialhair_curled'), z.literal('facialhair_johnny'), z.literal('facialhair_laotzu')]),
-    clothes: z.union([z.literal('clothes_poloshirt'), z.literal('clothes_button_dress'), z.literal('clothes_casual_dress'), z.literal('clothes_fancy_dress'), z.literal('clothes_tshirt'), z.literal('clothes_turtleneck'), z.literal('clothes_vneck'), z.undefined()]),
-    accessories: z.union([z.undefined(), z.literal('accessories_cateye'), z.literal('accessories_round'), z.literal('accessories_square')]),
-    jewelry: z.union([z.undefined(), z.literal('jewelry_pearl'), z.literal('jewelry_diamond'),]),
-    layer: z.union([z.undefined(), z.literal('layer_lowrider'), z.literal('layer_safari')])
+    hands: z.object({ model: z.literal('hands_basic_left') }),
+    heads: z.object({ model: z.literal('heads_basic') }),
+    torsos: z.object({ model: z.literal('torsos_basic_male') }),
+    eyes: partSchemaCreator(z.union([z.literal('eyes_huge'), z.literal('eyes_relaxed'), z.literal('eyes_cool'), z.literal('eyes_kind'), z.literal('eyes_round'), z.literal('eyes_npc')])),
+    eyebrows: partSchemaCreator(z.union([z.literal('eyebrows_brookie'), z.literal('eyebrows_innocent'), z.literal('eyebrows_reynolds'), z.literal('eyebrows_tyler'), z.literal('eyebrows_npc'), z.undefined()])),
+    mouths: partSchemaCreator(z.union([z.literal('mouth_polite_smile'), z.literal('mouth_prettypolite_smile'), z.literal('mouth_npc')])),
+    hair: partSchemaCreator(z.union([z.literal('hair_ponytail'), z.literal('hair_multicolor'), z.literal('hair_thick_buzzcut'), z.literal('hair_cool'), z.literal('hair_kevin'), z.literal('hair_wolf'), z.undefined()])),
+    facialhair: partSchemaCreator(z.union([z.undefined(), z.literal('facialhair_almond'), z.literal('facialhair_bigboi'), z.literal('facialhair_curled'), z.literal('facialhair_johnny'), z.literal('facialhair_laotzu')])),
+    clothes: partSchemaCreator(z.union([z.literal('clothes_poloshirt'), z.literal('clothes_button_dress'), z.literal('clothes_casual_dress'), z.literal('clothes_fancy_dress'), z.literal('clothes_tshirt'), z.literal('clothes_turtleneck'), z.literal('clothes_vneck'), z.undefined()])),
+    accessories: partSchemaCreator(z.union([z.undefined(), z.literal('accessories_cateye'), z.literal('accessories_round'), z.literal('accessories_square')])),
+    jewelry: partSchemaCreator(z.union([z.undefined(), z.literal('jewelry_pearl'), z.literal('jewelry_diamond'),])),
+    layer: partSchemaCreator(z.union([z.undefined(), z.literal('layer_lowrider'), z.literal('layer_safari')]))
   })
 });
+export type AvatarDesign = z.TypeOf<typeof AvatarDesignSchema>;
+
+export const defaultAvatarDesign: AvatarDesign = {
+  skinColor: undefined,
+  parts: {
+    hands: { model: 'hands_basic_left' },
+    heads: { model: 'heads_basic' },
+    torsos: { model: 'torsos_basic_male' },
+    eyes: {
+      model: 'eyes_huge',
+      colors: [],
+    },
+    eyebrows: {
+      model: 'eyebrows_brookie',
+      colors: [],
+    },
+    mouths: {
+      model: 'mouth_polite_smile',
+      colors: [],
+    },
+    hair: {
+      model: 'hair_ponytail',
+      colors: [],
+    },
+    facialhair: {
+      model: undefined,
+      colors: [],
+    },
+    clothes: {
+      model: 'clothes_poloshirt',
+      colors: [],
+    },
+    accessories: {
+      model: undefined,
+      colors: [],
+    },
+    jewelry: {
+      model: undefined,
+      colors: [],
+    },
+    layer: {
+      model: undefined,
+      colors: [],
+    }
+  }
+}
+
+// TODO: Make the generated avatarAssets object below typed
 const partSchema = AvatarDesignSchema.shape.parts;
 const partKeys = partSchema.keyof().options;
-const ss = partSchema.shape[partKeys[6]];
+// const [heads, hands, torsos, ...nonBodyPartKeys] = partKeys;
+// const key = partKeys[6];
+// const part = partSchema.shape[key];
+// const model = part.shape.model.options[0].value;
 let assetsBuildingObj = {};
 for (const partKey of partKeys) {
   const partTypeSchema = partSchema.shape[partKey];
-  if (partTypeSchema instanceof ZodLiteral) {
-    assetsBuildingObj[partKey] = [partTypeSchema.value];
-  }
-  else if (partTypeSchema instanceof ZodUnion) {
+  if (partTypeSchema instanceof ZodObject) {
     assetsBuildingObj[partKey] = [];
-    for (const option of partTypeSchema.options) {
-      assetsBuildingObj[partKey].push(option.value);
+    const modelSchema = partTypeSchema.shape.model;
+    if (modelSchema instanceof ZodLiteral) {
+      assetsBuildingObj[partKey].push(modelSchema.value);
+    } else if (modelSchema instanceof ZodUnion) {
+      for (const option of partTypeSchema.shape.model.options) {
+        assetsBuildingObj[partKey].push(option.value);
+      }
     }
   }
-  // parts[partKey] = [];
-  // for (const part of partsForKey) {
-  //   parts[partKey].push(partsForKey.options[0].value);
-  // }
 }
 export const avatarAssets = assetsBuildingObj;
 
-console.log(assetsBuildingObj);
+// console.log(assetsBuildingObj);
 // const hairKey = partKeys[6];
 // const hairParts = partSchema.shape[partKeys[6]].options[0].value
 
@@ -548,3 +655,8 @@ console.log(assetsBuildingObj);
 
 export const ClientTypeSchema = z.union([z.literal('client'), z.literal('sender')]);
 export type ClientType = z.TypeOf<typeof ClientTypeSchema>;
+
+export const LocalClientInitDataSchema = z.object({
+  avatarDesign: AvatarDesignSchema,
+
+})

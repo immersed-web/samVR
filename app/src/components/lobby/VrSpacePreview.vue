@@ -38,6 +38,7 @@ import { ref, watch, computed, onMounted, nextTick } from 'vue';
 import { useTimeoutFn } from '@vueuse/core';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import registerAframeComponents from '@/ts/aframe/components';
+import { defaultHeightOverGround } from 'schemas';
 registerAframeComponents();
 
 const vrSpaceStore = useVrSpaceStore();
@@ -128,9 +129,9 @@ async function enterFirstPersonView(point: THREE.Vector3Tuple) {
   camTag.removeAttribute('orbit-controls');
   camTag.setAttribute('look-controls', 'enabled', true);
   camTag.setAttribute('wasd-controls', { fly: false });
-  point[1] += 1.7;
+  point[1] += defaultHeightOverGround;
   camTag.object3D.position.set(...point);
-  camTag.setAttribute('simple-navmesh-constraint', `navmesh:#${navmeshId.value}; fall:0.5; height:1.65;`);
+  camTag.setAttribute('simple-navmesh-constraint', `navmesh:#${navmeshId.value}; fall:0.5; height: ${defaultHeightOverGround};`);
 }
 
 async function exitFirstPersonView() {
@@ -155,14 +156,14 @@ async function getPanoScreenshotFromPoint(point: THREE.Vector3Tuple) {
   }
   const navMeshVisibleRestoreState = navmeshTag.value?.getAttribute('visible');
   navmeshTag.value?.setAttribute('visible', 'false');
-  const spawnPosVec3 = new THREE.Vector3(...point);
-  spawnPosVec3.y += 1.7;
+  const pointAsVector3 = new THREE.Vector3(...point);
+  pointAsVector3.y += defaultHeightOverGround;
   // we save all the camera pos and rot stuff so we can restore it afterwards
   const savedEntityPos = camTag.object3D.position.clone();
   const savedEntityRot = camTag.object3D.rotation.clone();
   const savedCameraPos = camTag.getObject3D('camera').position.clone();
   const savedCameraRot = camTag.getObject3D('camera').rotation.clone();
-  camTag.object3D.position.copy(spawnPosVec3);
+  camTag.object3D.position.copy(pointAsVector3);
   camTag.object3D.rotation.set(0, THREE.MathUtils.degToRad(180), 0);
   camTag.getObject3D('camera').position.set(0, 0, 0);
   camTag.getObject3D('camera').rotation.set(0, 0, 0);

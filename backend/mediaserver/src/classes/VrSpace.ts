@@ -47,7 +47,7 @@ export class VrSpace {
   getPublicState() {
     const returnState = this.dbData;
     const clientsWithProducers = Array.from(this.clients.entries()).map(([cId, client]) => {
-      const cData = pick(client.getPublicState(), ['userId', 'connectionId', 'producers', 'role', 'username', 'transform']);
+      const cData = pick(client.getPublicState(), ['userId', 'connectionId', 'producers', 'role', 'username', 'clientRealtimeData', 'avatarDesign']);
       return [cId, cData] as const;
     });
     const clientsRecord = Object.fromEntries(clientsWithProducers);

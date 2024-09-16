@@ -3,6 +3,7 @@
     <h1 class=" text-3xl font-bold">
       VR-scener
     </h1>
+    <!-- <pre>{{ availableVrSpaces }}</pre> -->
     <div v-if="canCreateVrSpace">
       <button class="btn btn-primary self-start" @click="createVrSpace">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"

@@ -112,7 +112,7 @@ app.ws<WSUserData>('/*', {
     onSocketMessage(ws, asString);
   },
   upgrade: (res, req, context) => {
-    logUws.debug('upgrade request received');
+    // logUws.debug('upgrade request received');
     const upgradeState = {
       aborted: false,
     };
@@ -128,7 +128,7 @@ app.ws<WSUserData>('/*', {
       if(!receivedToken){
         throw Error('no token found in search query');
       }
-      logUws.debug('upgrade request provided this token:', receivedToken);
+      // logUws.debug('upgrade request provided this token:', receivedToken);
       const validJwt = verifyJwtToken(receivedToken);
 
       logUws.debug('decoded jwt:', validJwt);
@@ -159,7 +159,7 @@ app.ws<WSUserData>('/*', {
         try {
           dbResponse = await loadUserDBData(wsUserData.jwtUserData.userId);
           wsUserData.dbData = dbResponse;
-          log.debug('loaded userdata from db: ', dbResponse);
+          // log.debug('loaded userdata from db: ', dbResponse);
         } catch(e) {
           log.error('Failed to fetch userdata from database');
         }
@@ -207,7 +207,7 @@ app.ws<WSUserData>('/*', {
     } else {
       connectedUsers.set(userId, [ws]);
     }
-    logUws.debug('new client:', client.jwtUserData);
+    // logUws.debug('new client:', client.jwtUserData);
 
 
     const context: Context = {...userData.jwtUserData, connectionId: client.connectionId, client, clientType: connectionType};

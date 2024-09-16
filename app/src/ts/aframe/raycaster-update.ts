@@ -1,4 +1,3 @@
-import type { RayIntersectionData } from '@/modules/3DUtils';
 import { THREE, type DetailEvent, type Entity } from 'aframe';
 
 export default function () {
@@ -28,10 +27,10 @@ export default function () {
           const threeRaycaster = this.el.components.raycaster.raycaster as THREE.Raycaster;
           const intersection = this.el.components.raycaster.getIntersection(intersectedEl) as THREE.Intersection;
           const rayDirection = threeRaycaster.ray.direction;
-          const intersectionData: RayIntersectionData = { intersection, rayDirection }
           
-          if(!intersection.point.equals(this.fields.prev)){
-            this.el.emit('raycast-update', intersectionData);
+          if (!intersection.point.equals(this.fields.prev)) {
+            // console.log('raycast-update', intersection, rayDirection);
+            this.el.emit('raycast-update', { intersection, rayDirection });
           }
           this.fields.prev = intersection.point
         }

@@ -3,7 +3,7 @@ import { pgTable, pgEnum, varchar, timestamp, text, integer, uniqueIndex, uuid, 
 import { sql } from "drizzle-orm"
 import { relations } from "drizzle-orm/relations";
 
-import type { StreamId, UserId, VrSpaceId, AssetId, CameraId, PlacedObjectId, SenderId } from 'schemas';
+import type { StreamId, UserId, VrSpaceId, AssetId, CameraId, PlacedObjectId, SenderId, AllFileExtensions } from 'schemas';
 
 export const CameraTypeEnum = pgEnum("CameraType", ['panoramic360', 'normal'])
 // export const AssetFileFormat = pgEnum("AssetFileFormat", ['glb', 'png', 'jpg', 'jpeg', 'pdf',])
@@ -123,6 +123,7 @@ export const permissionsRelations = relations(permissions, ({ one }) => ({
 export const streams = pgTable("Streams", {
 	streamId: uuid("streamId").defaultRandom().primaryKey().notNull().$type<StreamId>(),
 	name: text("name").notNull(),
+	description: text("description"),
 	ownerUserId: uuid("ownerUserId").notNull().$type<UserId>().references(() => users.userId, { onDelete: "cascade", onUpdate: "cascade" }),
 	// doorsOpeningTime: timestamp("doorsOpeningTime", { precision: 3, mode: 'string' }),
 	// doorsAutoOpen: boolean("doorsAutoOpen").default(false).notNull(),
@@ -247,7 +248,7 @@ export const assets = pgTable("Assets", {
 	size: doublePrecision("size"),
 	mimeType: text("mimeType"),
 	showInUserLibrary: boolean("showInUserLibrary").default(true).notNull(),
-	assetFileExtension: text("assetFileExtension").notNull(),
+	assetFileExtension: text("assetFileExtension").notNull().$type<AllFileExtensions>(),
 	ownerUserId: uuid("ownerUserId").notNull().references(() => users.userId, { onDelete: "cascade", onUpdate: "cascade" }).$type<UserId>(),
 	// extraSettings: jsonb("extraSettings"),
 	...createdAndUpdatedAt,
@@ -269,10 +270,11 @@ export const assetsRelations = relations(assets, ({ one, many }) => ({
 export const vrSpaces = pgTable("VrSpaces", {
 	vrSpaceId: uuid("vrSpaceId").defaultRandom().primaryKey().notNull().$type<VrSpaceId>(),
 	name: text("name").notNull(),
+	description: text("description"),
 	ownerUserId: uuid("ownerUserId").notNull().$type<UserId>().references(() => users.userId, { onDelete: "cascade", onUpdate: "cascade" }),
-	worldModelAssetId: uuid("worldModelAssetId").references(() => assets.assetId).$type<AssetId>(),
-	navMeshAssetId: uuid("navMeshAssetId").references(() => assets.assetId).$type<AssetId>(),
-	panoramicPreviewAssetId: uuid('panoramicPreview').references(() => assets.assetId).$type<AssetId>(),
+	worldModelAssetId: uuid("worldModelAssetId").references(() => assets.assetId, { onDelete: 'set null' }).$type<AssetId>(),
+	navMeshAssetId: uuid("navMeshAssetId").references(() => assets.assetId, { onDelete: 'set null' }).$type<AssetId>(),
+	panoramicPreviewAssetId: uuid('panoramicPreview').references(() => assets.assetId, { onDelete: 'set null' }).$type<AssetId>(),
 	visibility: VisibilityEnum("visibility").default('public').notNull(),
 	worldModelScale: doublePrecision("worldModelScale").default(1).notNull(),
 	// A bug in drizzle generates invalid SQL migrations for arrays of 
@@ -310,7 +312,8 @@ export const vrSpacesRelations = relations(vrSpaces, ({ one, many }) => ({
 	allowedUsers: many(permissions)
 }))
 
-
+type NumberTuble3 = [number, number, number];
+type NumberTuble4 = [number, number, number, number];
 export const placedObjects = pgTable("PlacedObjects", {
 	placedObjectId: uuid("placedObjectId").defaultRandom().primaryKey().notNull().$type<PlacedObjectId>(),
 	vrSpaceId: uuid("vrSpaceId").notNull().references(() => vrSpaces.vrSpaceId, { onDelete: "cascade", onUpdate: "cascade" }).$type<VrSpaceId>(),
@@ -321,9 +324,9 @@ export const placedObjects = pgTable("PlacedObjects", {
 	type: PlacedObjectTypeEnum("type").notNull(),
 	objectId: uuid('objectId').$type<AssetId | VrSpaceId | StreamId>(),
 	objectSettings: jsonb("objectSettings"),
-	position: real("position").array(),
-	orientation: real("orientation").array(),
-	scale: real("scale").array(),//.default([1, 1, 1]),
+	position: real("position").array().notNull().$type<NumberTuble3>(),
+	orientation: real("orientation").array().notNull().$type<NumberTuble4>(),
+	scale: real("scale").array().notNull().default([1, 1, 1]).$type<NumberTuble3>(),
 	...createdAndUpdatedAt,
 });
 

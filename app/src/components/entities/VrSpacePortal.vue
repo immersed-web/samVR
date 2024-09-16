@@ -2,14 +2,21 @@
   <a-entity>
     <a-troika-text v-if="props.label" look-at-camera :value="props.label" position="0 2.5 0" />
     <a-sphere
-      animation__hover="property: scale; startEvents: mouseenter; easing: easeInCubic; dur: 150; from: 0.5 0.5 0.5; to: 0.7 0.7 0.7"
-      animation__leave="property: scale; startEvents: mouseleave; easing: easeInCubic; dur: 150; from: 0.7 0.7 0.7; to: 0.5 0.5 0.5"
-      @click="emit('click', $event)" :class="[props.clickable ? 'clickable' : '']" transparent="true"
+      animation__hover="property: scale; startEvents: mouseenter; easing: easeInOutCubic; dur: 150; from: 0.5 0.5 0.5; to: 0.7 0.7 0.7"
+      animation__leave="property: scale; startEvents: mouseleave; easing: easeInOutCubic; dur: 150; from: 0.7 0.7 0.7; to: 0.5 0.5 0.5"
+      @click.stop="emit('click', $event)" :class="[props.clickable ? 'clickable' : '']" transparent="true"
       scale="0.5 0.5 0.5" material="shader: outer-glow; start: 0.3; color: 0.5 0 1;" position="0 1.5 0">
-      <a-icosahedron v-if="props.panoramicPreviewUrl" detail="5" scale="0.98 0.98 0.98" transparent="true"
-        opacity="0.95"
-        :material="`shader: pano-portal; warpParams: 3 0.9; src: ${props.panoramicPreviewUrl}; side:back;`">
+      <a-icosahedron v-if="props.panoramicPreviewUrl" detail="5" scale="0.98 0.98 0.98" transparent="true" opacity="1.0"
+        :material="`shader: pano-portal; dynamicOpacity: true; warpParams: 2.8 0.5; src: ${props.panoramicPreviewUrl}; side:back;`">
       </a-icosahedron>
+      <!-- <a-icosahedron v-if="props.panoramicPreviewUrl" detail="5" position="2 0 0" scale="-0.98 -0.98 -0.98"
+        transparent="true" opacity="0.95"
+        :material="`shader: pano-portal; dynamicOpacity: true; warpParams: 3 0.9; src: ${props.panoramicPreviewUrl};`">
+      </a-icosahedron>
+      <a-icosahedron v-if="props.panoramicPreviewUrl" detail="5" position="5 0 0" scale="0.98 0.98 0.98"
+        transparent="true" opacity="0.95"
+        :material="`shader: pano-portal; dynamicOpacity: true; warpParams: 3 0.9; src: ${props.panoramicPreviewUrl};`">
+      </a-icosahedron> -->
       <a-sphere v-else color="black" transparent="true" opacity="0.9" scale="0.98 0.98 0.98" />
     </a-sphere>
   </a-entity>

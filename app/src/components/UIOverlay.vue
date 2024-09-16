@@ -3,7 +3,7 @@
 
 <template>
   <div id="ui" class="absolute top-0 left-0 z-10 flex justify-between p-2 pointer-events-none w-svw h-svh">
-    <div id="teleport-target-ui-left" class="flex flex-col gap-1 pointer-events-auto">
+    <div id="teleport-target-ui-left" class="flex flex-col gap-1">
       <slot name="left" />
     </div>
     <div id="teleport-target-ui-center" class="">

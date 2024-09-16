@@ -5,7 +5,7 @@ import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import { useCurrentCursorIntersection } from '@/composables/vrSpaceComposables';
 
 const vrSpaceStore = useVrSpaceStore();
-const { currentCursor } = useCurrentCursorIntersection();
+const { currentCursorIntersection: currentCursor } = useCurrentCursorIntersection();
 
 const laserActive = ref(false);
 
@@ -22,10 +22,13 @@ function toggleLaser() {
 watch([laserActive, currentCursor], ([newActive, newIntersection], [oldActive, oldIntersection]) => {
   if (newActive) {
     if (!newIntersection) {
-      console.error('laser intersection was undefined while marked as active');
+      console.warn('laser intersection was undefined while marked as active');
       return;
     }
-    vrSpaceStore.ownClientTransform.laserPointer = { active: true, position: newIntersection.intersection.point.toArray() };
+    console.log('laser updated', newIntersection);
+    const rayDirection = newIntersection.rayDirection
+    console.log('rayDirection', rayDirection);
+    vrSpaceStore.ownClientTransform.laserPointer = { active: newActive, position: newIntersection.intersection.point.toArray(), directionVector: rayDirection.toArray() };
   } else if (!newActive && oldActive !== newActive) {
     vrSpaceStore.ownClientTransform.laserPointer = { active: false };
   }
@@ -43,8 +46,9 @@ watch([laserActive, currentCursor], ([newActive, newIntersection], [oldActive, o
 
   <!-- UI, clickable badge -->
   <Teleport to="#teleport-target-ui-left">
-    <div class="badge cursor-pointer tooltip tooltip-right" :class="laserActive ? 'badge-success' : ''"
-      @click="toggleLaser" data-tip="Klicka eller tryck L för att slå på och av laserpekaren">
+    <div class="badge cursor-pointer pointer-events-auto tooltip tooltip-right"
+      :class="laserActive ? 'badge-success' : ''" @click="toggleLaser"
+      data-tip="Klicka eller tryck L för att slå på och av laserpekaren">
       Laserpekaren är {{ laserActive ? 'på' : 'av' }}
     </div>
   </Teleport>

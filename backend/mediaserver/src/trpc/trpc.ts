@@ -4,7 +4,7 @@ process.env.DEBUG = 'TrpcModule*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 import { initTRPC, TRPCError } from '@trpc/server';
 import { SenderClient, UserClient } from '../classes/InternalClasses.js';
-import { JwtUserData, ConnectionId, hasAtLeastSecurityRole, ClientType } from 'schemas';
+import { JwtUserData, ConnectionId, hasAtLeastSecurityRole, ClientType, hasAtLeastPermissionLevel } from 'schemas';
 // import { z } from 'zod';
 import superjson from 'superjson';
 
@@ -84,7 +84,7 @@ export const isInVenueM = middleware(({ctx, next, path})=> {
 export const isVenueOwnerM = isInVenueM.unstable_pipe(({ctx, next, path}) => {
   // log.info('venueOwner middleware. venueowners:',ctx.venue.owners);
   if (!(ctx.userId === ctx.stream.owner.userId)) {
-    throw new TRPCError({code: 'FORBIDDEN', message: `you are not the owner of this venue. Action not allowed: ${path}`});
+    throw new TRPCError({ code: 'UNAUTHORIZED', message: `you are not the owner of this venue. Action not allowed: ${path}` });
   }
   return next();
 });
@@ -117,3 +117,15 @@ export const userInVrSpaceP = userClientP.use(({ ctx, next, path }) => {
     }
   });
 });
+
+export const userWithEditRightsToVrSpace = userInVrSpaceP.use(({ ctx, next, path }) => {
+  const vrSpaceDbData = ctx.vrSpace.getPublicState().dbData
+  const isOwner = vrSpaceDbData.ownerUserId === ctx.userId;
+  const isAllowed = vrSpaceDbData.allowedUsers.some(user => {
+    return user.user.userId === ctx.userId && hasAtLeastPermissionLevel(user.permissionLevel, 'edit')
+  })
+  if (!isAllowed && !isOwner) {
+    throw new TRPCError({ code: 'UNAUTHORIZED', message: 'du har inte skrivrättigheter till det här vrSpacet' });
+  }
+  return next();
+})

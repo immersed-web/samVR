@@ -1,4 +1,4 @@
-import type { Transform } from "schemas";
+import type { MaybeTransform } from "schemas";
 import { THREE } from "aframe";
 export default () => {
 
@@ -13,24 +13,24 @@ export default () => {
     worldPos: undefined as unknown as THREE.Vector3,
     worldRot: undefined as unknown as THREE.Quaternion,
     relativeMatrix: undefined as unknown as THREE.Matrix4,
-    throttledEmitMovement: undefined as unknown as (moveUpdate: Transform) => void,
+    // throttledEmitMovement: undefined as unknown as (moveUpdate: MaybeTransform) => void,
     init: function () {
     // Create reusable instances unique to each component instance
       this.worldPos = new THREE.Vector3();
       this.worldRot = new THREE.Quaternion();
       this.relativeMatrix = new THREE.Matrix4(); 
-      // @ts-ignore
-      this.throttledEmitMovement = AFRAME.utils.throttleLeadingAndTrailing((newTransform: Transform) => this.el.emit('move', newTransform, false), this.interval, this);
+      this.tick = AFRAME.utils.throttleTick(this.tick, this.interval, this);
+      // this.throttledEmitMovement = AFRAME.utils.throttleLeadingAndTrailing((newTransform: MaybeTransform) => this.el.emit('move', newTransform, false), this.interval, this);
     },
     update: function () {
-
+      // console.log('emit-move:update triggered');
       this.interval = this.data.interval;
       this.el.object3D.getWorldPosition(this.worldPos);
       this.position = AFRAME.utils.coordinates.stringify(this.worldPos);
       this.el.object3D.getWorldQuaternion(this.worldRot);
       this.orientation = AFRAME.utils.coordinates.stringify(this.worldRot);
     },
-    tick: function () {
+    tick: function (t: number, dt: number) {
 
       if(this.data.relativeToCamera){
         const cameraWorldMatrixInverse = this.el.sceneEl?.camera.matrixWorldInverse!;
@@ -52,15 +52,16 @@ export default () => {
       const rotated = newOrientation !== this.orientation;
 
       if(moved || rotated) {
-        // console.log('emit-move component: transform updated', newPosition, newOrientation);
+        // console.log('emit-move: transform updated', newPosition);
         // console.log(this);
         const position = this.worldPos.toArray();
         const rotation = this.worldRot.toArray() as [number, number, number, number];
         const transform = { active: true, position, rotation };
-        if (this.el.id === 'camera') {
-          console.log(this.el.id, this.worldPos);
-        }
-        this.throttledEmitMovement(transform);
+        // if (this.el.id === 'camera') {
+        //   console.log(this.el.id, this.worldPos);
+        // }
+        // this.throttledEmitMovement(transform);
+        this.el.emit('move', transform, false)
       } 
       this.position = newPosition;
       this.orientation = newOrientation;
