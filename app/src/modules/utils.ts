@@ -2,11 +2,11 @@ import axios, { type AxiosProgressEvent } from "axios";
 import type { UploadResponse } from "fileserver";
 import type { AssetId } from "schemas";
 
-export function getAssetUrl<T extends string>(generatedName?: T) {
+export function getAssetUrl<T extends string>(generatedName: T) {
   // console.log('getAssetUrl called', generatedName);
-  if (generatedName === undefined) {
-    return generatedName
-  }
+  // if (generatedName === undefined) {
+  //   return generatedName
+  // }
 
   return `https://${import.meta.env.EXPOSED_SERVER_URL}${import.meta.env.EXPOSED_FILESERVER_PATH}/file/${generatedName}`;
   // return `https://${process.env.EXPOSED_SERVER_URL}${process.env.EXPOSED_FILESERVER_PATH}/files/${generatedName}`;

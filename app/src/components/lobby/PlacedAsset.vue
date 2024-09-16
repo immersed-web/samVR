@@ -1,6 +1,7 @@
 <template>
   <a-entity>
     <a-image @materialtextureloaded="onTextureLoaded" v-if="tagName === 'a-image'" :src="src" />
+    <PdfEntity v-if="tagName === 'PdfEntity'" :src="src" />
     <component v-else :is="tagName" :src="src" />
   </a-entity>
 </template>
@@ -9,6 +10,7 @@ import { getAssetUrl } from '@/modules/utils';
 import type { ComponentDefinition, ComponentDescriptor, DetailEvent, THREE, components } from 'aframe';
 import { extensionsToAframeTagsMap, type Asset } from 'schemas';
 import { computed } from 'vue';
+import PdfEntity from './PdfEntity.vue';
 
 
 function onTextureLoaded(event: DetailEvent<{ src: HTMLImageElement, texture: THREE.Texture }>) {
