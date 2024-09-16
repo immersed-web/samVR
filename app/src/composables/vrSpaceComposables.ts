@@ -10,7 +10,8 @@ export type Tuple = [number, number]
 const writableIntersection = shallowRef<RayIntersectionData>();
 const rayIntersectionData = shallowReadonly(writableIntersection);
 function setCursorIntersection(intersectionData: RayIntersectionData | undefined) {
-  // console.log('currentCUrsor updated:', intersectionData);
+  // intersectionData?.intersection.object.
+  // console.log('currentCursor updated:', intersectionData);
   writableIntersection.value = intersectionData;
 }
 export type CursorMode = 'placeObject' | 'teleport' | undefined

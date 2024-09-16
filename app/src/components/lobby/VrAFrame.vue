@@ -22,15 +22,16 @@
 
     <slot />
 
-    <a-sphere :position="vrSpaceStore.currentVrSpace.dbData.spawnPosition?.join(' ')" color="yellow"
-      scale="0.1 0.1 0.1" />
+    <!-- <a-sphere :position="vrSpaceStore.currentVrSpace.dbData.spawnPosition?.join(' ')" color="yellow"
+      scale="0.1 0.1 0.1" /> -->
 
     <!-- <a-entity id="camera-rig" ref="playerOriginTag"> -->
-    <a-camera @loaded="onCameraLoaded" id="camera" ref="headTag"
+    <a-entity camera @loaded="onCameraLoaded" id="camera" ref="headTag"
       look-controls="reverseMouseDrag: true; reverseTouchDrag: true;" wasd-controls="acceleration:65;"
       :simple-navmesh-constraint="`navmesh: #navmesh; fall: 1; height: ${defaultHeightOverGround};`"
       emit-move="interval: 20;" :position="`0 ${defaultHeightOverGround} 0`">
       <a-entity id="teleport-target-aframe-camera" />
+      <a-cone ref="debugConeTag" color="orange" scale="0.1 0.4 0.1" position="0 0 -2" />
 
       <!-- <a-entity ref="leftHandTag" id="left-hand" @controllerconnected="leftControllerConnected = true"
         @controllerdisconnected="leftControllerConnected = false" laser-controls="hand:left"
@@ -45,7 +46,7 @@
         <a-entity :visible="rightControllerConnected" scale="0.05 0.05 -0.05" rotation="20 90 -140"
           gltf-model="#avatar-hand-1" />
       </a-entity> -->
-    </a-camera>
+    </a-entity>
     <!-- </a-entity> -->
 
 
