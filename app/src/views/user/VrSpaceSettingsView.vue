@@ -191,23 +191,41 @@
             <a-ring color="yellow" radius-inner="0.1" radius-outer="0.2" material="shader: flat;" rotation="-90 0 0" />
           </a-entity>
         </VrAFramePreview>
-        <div v-if="vrSpaceStore.currentVrSpace?.dbData.worldModelAsset" class="grid gap-2">
-          <div class="alert bg-gray-100 text-xs">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-              stroke="currentColor" class="size-6">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
-            </svg>
-            Använd musen för att interagera med modellen.
+        <template v-if="vrSpaceStore.currentVrSpace?.dbData.worldModelAsset">
+          <h4>Interagera med VR-scenen</h4>
+          <div class="grid grid-cols-2 gap-2">
             <div>
-              <ul class="list-disc">
-                <li>Klicka och dra: Rotera bilden</li>
-                <li>Högermus och dra: Panorera längs golvytan</li>
-                <li>Scrolla: Zooma</li>
-              </ul>
+              <!-- Hoppa in i världen -->
+              <div>
+                <!-- <input type="radio" :value="undefined" class="hidden" v-model="currentRaycastReason"> -->
+                <input v-if="!(vrComponentTag?.firstPersonViewActive || currentRaycastReason === 'selfPlacement')"
+                  type="radio" value="selfPlacement" aria-label="Hoppa in i scenen" class="btn btn-sm btn-primary"
+                  v-model="currentRaycastReason">
+                <input v-else type="radio" value="undefined" aria-label="Hoppa ut ur scenen"
+                  class="btn btn-sm btn-primary" v-model="currentRaycastReason"
+                  @click="vrComponentTag?.exitFirstPersonView">
+              </div>
+            </div>
+            <div>
+              <p class="text-bold">
+                Perspektiv: {{ vrComponentTag?.firstPersonViewActive ? 'Förstaperson' : 'Helikopter' }}
+              </p>
+              <div class="text-xs">
+                <div>
+                  <ul v-if="vrComponentTag?.firstPersonViewActive" class="list-disc">
+                    <li>Rör dig runt med tangentbordet: WASD</li>
+                    <li>Klicka och dra: Rotera</li>
+                  </ul>
+                  <ul v-else>
+                    <li>Klicka och dra: Rotera bilden</li>
+                    <li>Högerklick och dra: Panorera längs golvytan</li>
+                    <li>Scrolla: Zooma</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        </template>
         <div>
           <AssetUpload @uploaded="onAssetUploaded" :accepted-asset-types="['document', 'image', 'video']" name="object"
             :show-in-user-library="true" />
