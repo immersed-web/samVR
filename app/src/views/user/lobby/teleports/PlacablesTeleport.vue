@@ -41,12 +41,15 @@ const currentlySelectedPlacedObjectId = ref<PlacedObjectId | undefined>();
 // const currentlySelectedObject = ref<PlacedObjectList[number] | undefined>()
 const currentlyMovedEntity = ref<Entity | null>(null);
 const currentlySelectedEntity = ref<Entity | null>(null);
-const placedObjects = reactive<PlacedObjectWithIncludes[]>([
-  // { type: 'PdfEntity', src: '/documents/smallpdf_sample.pdf', uuid: crypto.randomUUID(), position: [1, 1.8, -2], rotation: [0, 0, 0] },
-  // { type: 'PdfEntity', src: '/documents/compressed.tracemonkey-pldi-09.pdf', uuid: crypto.randomUUID(), position: [-2, 1.8, -2], rotation: [0, 0, 0] },
-]);
+// const placedObjects = reactive<PlacedObjectWithIncludes[]>([
+//   // { type: 'PdfEntity', src: '/documents/smallpdf_sample.pdf', uuid: crypto.randomUUID(), position: [1, 1.8, -2], rotation: [0, 0, 0] },
+//   // { type: 'PdfEntity', src: '/documents/compressed.tracemonkey-pldi-09.pdf', uuid: crypto.randomUUID(), position: [-2, 1.8, -2], rotation: [0, 0, 0] },
+// ]);
+const placedObjects = computed(() => {
+  return vrSpaceStore.currentVrSpace?.dbData.placedObjects ?? [];
+});
 const currentlySelectedPlacedObject = computed(() => {
-  return placedObjects.find(obj => obj.placedObjectId === currentlySelectedPlacedObjectId.value);
+  return placedObjects.value.find(obj => obj.placedObjectId === currentlySelectedPlacedObjectId.value);
 });
 
 const assets = computed(() => {
@@ -75,12 +78,20 @@ async function placeMovedObject(position: THREE.Vector3Tuple, orientation: THREE
     }, 'placing an asset')
     currentlyMovedObject.value = undefined;
     return;
+  } else {
+    console.log('placed an already placedObject, should update the DB');
+    await vrSpaceStore.upsertPlacedObject({
+      placedObjectId: currentlyMovedObject.value.placedObjectId,
+      position,
+      orientation,
+      type: currentlyMovedObject.value.type,
+    })
   }
-  console.log('placed an already placedObject, should update the DB');
+
   // TODO: create/update placedObject in DB here
-  currentlyMovedObject.value.position = position;
-  currentlyMovedObject.value.orientation = orientation;
-  placedObjects.push(currentlyMovedObject.value);
+  // currentlyMovedObject.value.position = position;
+  // currentlyMovedObject.value.orientation = orientation;
+  // placedObjects.push(currentlyMovedObject.value);
   selectEntity(currentlyMovedObject.value.placedObjectId, undefined);
   currentlyMovedObject.value = undefined;
 }
@@ -130,11 +141,12 @@ onChange((files) => {
 // }
 
 function repositionSelectedObject() {
+  //TODO: reposition selected object
   if (isAsset(currentlyMovedObject.value)) return;
-  const idx = placedObjects.findIndex(obj => obj.placedObjectId === currentlySelectedPlacedObject.value?.placedObjectId);
-  if (idx < 0) return;
-  const [obj] = placedObjects.splice(idx, 1);
-  currentlyMovedObject.value = obj;
+  // const idx = placedObjects.findIndex(obj => obj.placedObjectId === currentlySelectedPlacedObject.value?.placedObjectId);
+  // if (idx < 0) return;
+  // const [obj] = placedObjects.splice(idx, 1);
+  // currentlyMovedObject.value = obj;
 }
 
 function removeSelectedObject() {
@@ -143,11 +155,11 @@ function removeSelectedObject() {
   currentlySelectedPlacedObjectId.value = undefined;
 }
 
-function removeObject(placedObjectId: PlacedObjectId) {
-  const idx = placedObjects.findIndex(obj => obj.placedObjectId === placedObjectId);
-  if (idx < 0) return;
-  placedObjects.splice(idx, 1);
-  // TODO: Delete from db
+async function removeObject(placedObjectId: PlacedObjectId) {
+  // const idx = placedObjects.findIndex(obj => obj.placedObjectId === placedObjectId);
+  // if (idx < 0) return;
+  // placedObjects.splice(idx, 1);
+  await vrSpaceStore.removePlacedObject(placedObjectId); 
   updatePaneSelected();
 }
 
@@ -197,18 +209,18 @@ function updatePaneSelected() {
 
       pane.value = new Pane({ container: paneContainer.value });
       pane.value.title = 'Selected: ' + obj.placedObjectId;
-      const aframeRotation = quaternionTupleToAframeRotation(obj.orientation);
+      const aframeRotation = quaternionTupleToAframeRotation(obj.orientation ?? [0, 0, 0, 1]);
 
       paneParams.value = {
-        'scale': obj.scale,
+        'scale': [...obj.scale ?? [1, 1, 1]],
         // 'positionGlobal': obj.position,
-        'positionLocal': obj.position,
+        'positionLocal': [...obj.position],
         'rotation': aframeRotation,
       };
 
       pane.value.addBinding(paneParams.value, 'scale', { label: 'Scale', step: 0.01 }).on('change', (ev) => {
         if (!currentlySelectedPlacedObject.value) { return; }
-        currentlySelectedPlacedObject.value.scale = [...ev.value];
+        // currentlySelectedPlacedObject.value.scale = [...ev.value];
       });
 
       pane.value.addBlade({
@@ -222,7 +234,7 @@ function updatePaneSelected() {
 
       pane.value.addBinding(paneParams.value, 'positionLocal', { label: 'Local position (fine tune)', step: 0.01 }).on('change', (ev) => {
         if (!currentlySelectedPlacedObject.value) { return; }
-        currentlySelectedPlacedObject.value.position = [...ev.value];
+        // currentlySelectedPlacedObject.value.position = [...ev.value];
         // if (ev.last) {
         //   mergeLocalAndWorldPositions();
         // }
@@ -242,7 +254,7 @@ function updatePaneSelected() {
       pane.value.addBinding(paneParams.value, 'rotation', { label: 'Rotation', step: 1, min: -180, max: 180 }).on('change', (ev) => {
         if (!currentlySelectedPlacedObject.value) { return; }
         const quatTuple = eulerTupleToQuaternionTuple(ev.value);
-        currentlySelectedPlacedObject.value.orientation = quatTuple;
+        // currentlySelectedPlacedObject.value.orientation = quatTuple;
       });
 
       pane.value.addBlade({
@@ -304,62 +316,62 @@ onMounted(() => {
 </script>
 
 <template>
-  <div>
-    <!-- #region Place objects -->
-    <!-- <Teleport to="#tp-ui-left">
+  <!-- #region Place objects -->
+  <!-- <Teleport to="#tp-ui-left">
       <button class="p-3 text-white rounded-md cursor-pointer bg-zinc-800"
         @click="createPlaceableObject('a-image', '/photos/joey-chacon-edbYu4vxXww-unsplash.jpg')">place photo</button>
       <button class="p-3 text-white rounded-md cursor-pointer bg-zinc-800"
         @click="createPlaceableObject('PdfEntity', '/documents/smallpdf_sample.pdf')">Place pdf</button>
     </Teleport> -->
-    <!-- #endregion -->
+  <!-- #endregion -->
 
-    <!-- #region Tweakpane UI -->
-    <Teleport to="#teleport-target-ui-right">
-      <div id="paneContainer" ref="paneContainer" class="flex flex-col gap-1 pointer-events-auto">
-        <div id="pane1" />
-        <div id="pane2" />
-      </div>
+  <!-- #region Tweakpane UI -->
+  <Teleport to="#teleport-target-ui-right">
+    <div id="paneContainer" ref="paneContainer" class="flex flex-col gap-1 pointer-events-auto">
+      <div id="pane1" />
+      <div id="pane2" />
+    </div>
+  </Teleport>
+  <!-- #endregion -->
+
+  <template v-if="isAsset(currentlyMovedObject)">
+    <Teleport to="#teleport-target-aframe-cursor">
+      <PlacedAsset v-if="currentlyMovedObject" :asset="currentlyMovedObject" />
     </Teleport>
-    <!-- #endregion -->
-
-    <template v-if="isAsset(currentlyMovedObject)">
-      <Teleport to="#teleport-target-aframe-cursor">
-        <PlacedAsset v-if="currentlyMovedObject" :asset="currentlyMovedObject" />
-      </Teleport>
-    </template>
-    <!-- <component ref="currentlyMovedEntity" v-if="currentlyMovedObject" :is="currentlyMovedObject.type"
+  </template>
+  <!-- <component ref="currentlyMovedEntity" v-if="currentlyMovedObject" :is="currentlyMovedObject.type"
         :src="currentlyMovedObject.src" /> -->
 
-    <a-entity ref="placedObjectsEntity">
-      <a-entity v-for="placedObject in placedObjects" :key="placedObject.placedObjectId"
-        :scale="`${placedObject.scale} ${placedObject.scale} ${placedObject.scale}`" :position="placedObject.position"
-        :rotation="quaternionTupleToAframeRotation(placedObject.orientation)" :id="placedObject.placedObjectId"
-        :box-helper="`enabled: ${currentlySelectedPlacedObjectId === placedObject.placedObjectId}; color: #ff00ff;`">
-        <PlacedAsset v-if="placedObject.type === 'asset' && placedObject.asset" :asset="placedObject.asset" />
-        <!-- <component @click="selectEntity(placedObject.placedObjectId, $event)" class="clickable"
+  <a-entity id="placed-objects" ref="placedObjectsEntity">
+    <a-entity v-for="placedObject in placedObjects" :key="placedObject.placedObjectId"
+      :position="arrToCoordString(placedObject.position)"
+      :rotation="arrToCoordString(quaternionTupleToAframeRotation(placedObject.orientation ?? [0, 0, 0, 1]))"
+      :id="placedObject.placedObjectId">
+      <!-- <a-sphere color="red" position="0 1 0" /> -->
+      <PlacedAsset v-if="placedObject.type === 'asset' && placedObject.asset" :asset="placedObject.asset" />
+      <!-- <component @click="selectEntity(placedObject.placedObjectId, $event)" class="clickable"
             :box-helper="`enabled: ${currentlySelectedPlacedObjectId === placedObject.placedObjectId};`"
             :is="placedObject.type"
             :src="placedObject.asset?.generatedName" /> -->
-      </a-entity>
     </a-entity>
+  </a-entity>
 
-    <!-- Asset picker -->
-    <Dialog ref="dropZoneRef" :open="assetPickerIsOpen" @close="assetPickerIsOpen = false" class="relative z-50">
-      <div class="fixed inset-0 flex w-screen items-center justify-center p-40">
-        <!-- <div v-if="isOverDropZone"
+  <!-- Asset picker -->
+  <Dialog ref="dropZoneRef" :open="assetPickerIsOpen" @close="assetPickerIsOpen = false" class="relative z-50">
+    <div class="fixed inset-0 flex w-screen items-center justify-center p-40">
+      <!-- <div v-if="isOverDropZone"
           class="absolute top-0 left-0 bg-slate-50 opacity-90 w-screen h-screen pointer-events-none z-10 flex items-center justify-center">
           Drop
           your files here</div> -->
 
-        <DialogPanel
-          class="w-full h-full transform rounded-2xl bg-white p-4 text-left align-middle shadow-xl transition-all">
-          <div class="h-full overflow-y-auto">
-            <DialogTitle>Pick an asset and place it in the scene</DialogTitle>
-            <!-- <DialogDescription>Pick it!</DialogDescription> -->
-            <AssetLibrary :assets="assets" @assetPicked="pickAsset" />
+      <DialogPanel
+        class="w-full h-full transform rounded-2xl bg-white p-4 text-left align-middle shadow-xl transition-all">
+        <div class="h-full overflow-y-auto">
+          <DialogTitle>Pick an asset and place it in the scene</DialogTitle>
+          <!-- <DialogDescription>Pick it!</DialogDescription> -->
+          <AssetLibrary :assets="assets" @assetPicked="pickAsset" />
 
-            <!-- <div class="flex flex-row flex-wrap ">
+          <!-- <div class="flex flex-row flex-wrap ">
               <div v-for="asset in assets" :key="asset.assetId" class="basis-1/4 cursor-pointer p-1"
                 @click="pickAsset(asset.assetType, asset.location + asset.generatedName)">
                 <div class="card card-compact bg-base-100 shadow-xl">
@@ -381,11 +393,10 @@ onMounted(() => {
                 </div>
               </div>
             </div> -->
-          </div>
-        </DialogPanel>
-      </div>
-    </Dialog>
-  </div>
+        </div>
+      </DialogPanel>
+    </div>
+  </Dialog>
 </template>
 
 <style scoped>

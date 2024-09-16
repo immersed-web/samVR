@@ -3,7 +3,7 @@ const log = new Log('Router:VR');
 process.env.DEBUG = 'Router:VR*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
-import { ClientRealtimeDataSchema, PlacedObjectInsertSchema, VrSpaceIdSchema, vrSpaceUpdateSchema } from 'schemas';
+import { ClientRealtimeDataSchema, PlacedObjectIdSchema, PlacedObjectInsertSchema, VrSpaceIdSchema, vrSpaceUpdateSchema } from 'schemas';
 import { procedure as p, router, isUserClientM, userClientP, atLeastUserP, userInVrSpaceP, userWithEditRightsToVrSpace } from '../trpc/trpc.js';
 import { VrSpace } from 'classes/VrSpace.js';
 import { z } from 'zod';
@@ -97,6 +97,10 @@ export const vrRouter = router({
     if (!vrSpace) return;
     vrSpace.reloadDbData(reason ?? 'placedObject created/updated. Reloading');
     return dbResponse;
+  }),
+  //TODO: Only allow users with permission
+  removePlacedObject: atLeastUserP.use(isUserClientM).input(z.object({ placedObjectId: PlacedObjectIdSchema })).mutation(async ({ ctx, input }) => {
+    const [dbResponse] = await db.delete(schema.placedObjects).where(eq(schema.placedObjects.placedObjectId, input.placedObjectId)).returning();
   }),
   reloadVrSpaceFromDB: userWithEditRightsToVrSpace.query(async ({ ctx }) => {
     await ctx.vrSpace.reloadDbData();
