@@ -9,7 +9,7 @@ export type AframeClickeventData = {
   touchEvent?: TouchEvent,
   intersection: THREE.Intersection
 }
-export function intersectionToTransform(intersectionData: RayIntersectionData, normalOffset: number = 0.05) {
+export function intersectionToTransform(intersectionData: RayIntersectionData, normalOffset: number = 0.09) {
   if (!intersectionData) { return; }
   const { intersection, rayDirection } = intersectionData;
   const position = intersection.point.clone();
@@ -29,7 +29,7 @@ export function intersectionToTransform(intersectionData: RayIntersectionData, n
   const euler = new THREE.Euler().reorder('YXZ').setFromQuaternion(rotation);
   euler.z = 0;
   // if flat placement, align with camera direction
-  if (euler.x < (-Math.PI / 2 + 0.01)) {// && euler.x > (-Math.PI / 4 - 0.01)) {
+  if (euler.x < (-Math.PI / 2 + 0.1)) {// && euler.x > (-Math.PI / 4 - 0.01)) {
     // const quat = new THREE.Quaternion();
     // const cameraRot = sceneTag.value!.camera.getWorldQuaternion(quat);
     // const eul = new THREE.Euler().reorder('YXZ').setFromQuaternion(cameraRot);
