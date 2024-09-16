@@ -51,12 +51,12 @@
 
     <Teleport to="#teleport-target-ui-right">
       <div class="card bg-base-200 text-base-content p-2 text-xs overflow-y-scroll max-h-60 pointer-events-auto">
-        <!-- <div>
-          <pre>{{ currentCursorIntersection?.intersection.normal }}</pre>
-          <pre>{{ currentCursorIntersection?.intersection }}</pre>
-          <pre>{{ vrSpaceStore.ownClientTransform.laserPointer }}</pre>
-          <pre>{{ vrSpaceStore.currentVrSpace.dbData.placedObjects.filter(po => po.type === 'asset') }}</pre>
-        </div> -->
+        <div>
+          <pre>normal:{{ currentCursorIntersection?.intersection.normal }}</pre>
+          <pre>faceNormal:{{ currentCursorIntersection?.intersection.face?.normal }}</pre>
+          <!-- <pre>{{ vrSpaceStore.ownClientTransform.laserPointer }}</pre> -->
+          <!-- <pre>{{ vrSpaceStore.currentVrSpace.dbData.placedObjects.filter(po => po.type === 'asset') }}</pre> -->
+        </div>
         <p class="label-text font-bold">Personer i rummet:</p>
         <p>Du: {{ clientStore.clientState?.username }}</p>
         <p v-for="(clientInfo, id, idx) in otherClients" :key="id">

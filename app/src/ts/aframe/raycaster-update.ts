@@ -1,39 +1,81 @@
-import { THREE, type DetailEvent, type Entity } from 'aframe';
+import { intersectionToTransform, type RayIntersectionData } from '@/modules/3DUtils';
+import { THREE, type Component, type ComponentDefinition, type Entity } from 'aframe';
 
 export default function () {
 
   AFRAME.registerComponent('raycaster-update', {
     // raycaster: null as null | Entity,
     dependencies: ['raycaster'],
-    fields: {
-      prev: new THREE.Vector3(),
-    },
+    // fields: {
+    // },
+    prev: undefined as THREE.Vector3 | undefined,
+    outsideWindow: false,
     init: function () {
       console.log('INIT raycaster-update');
-      this.tick = AFRAME.utils.throttleTick(this.tick!, 10, this);
+      this.prev = new THREE.Vector3();
+      this.tick = AFRAME.utils.throttleTick(this.tick, 10, this);
+
+      document.documentElement.addEventListener('mouseleave', (e) => {
+        if (e instanceof MouseEvent) {
+          // this.el.components.raycaster.data.enabled = false;
+          // console.log(this.el.components.raycaster);
+          console.log('cursor left the canvas', e);
+          this.outsideWindow = true;
+        }
+      })
+      document.documentElement.addEventListener('mouseenter', (e) => {
+        if (e instanceof MouseEvent) {
+          console.log('cursor entered the canvas', e);
+          this.outsideWindow = false;
+        }
+      })
+
     },
     events: {
-      // 'raycaster-intersection': function (evt: DetailEvent<{ el: Entity }>) {
-      //   console.log('intersect!');
+      // 'raycaster-intersection': function (evt: DetailEvent<{ el: Entity }>) { console.log('intersect!');
       // },
       // 'raycaster-intersection-cleared': function (evt: DetailEvent<any>) {
       //   console.log('intersect cleared!');
       // },
     },
     tick: function (t, dt) {
-      if (this.el.components.raycaster.intersectedEls.length > 0) {
-        const intersectedEl = this.el.components.raycaster.intersectedEls[0] as Entity | undefined;
-        if (intersectedEl) {
-          const threeRaycaster = this.el.components.raycaster.raycaster as THREE.Raycaster;
-          const intersection = this.el.components.raycaster.getIntersection(intersectedEl) as THREE.Intersection;
-          const rayDirection = threeRaycaster.ray.direction;
-          
-          if (!intersection.point.equals(this.fields.prev)) {
-            // console.log('raycast-update', intersection, rayDirection);
-            this.el.emit('raycast-update', { intersection, rayDirection });
-          }
-          this.fields.prev = intersection.point
+      if (this.outsideWindow) {
+        if (this.prev) {
+          console.log('emitting raycast with undefined when exited window');
+          this.el.emit('raycast-update', undefined);
         }
+        this.prev = undefined;
+
+        return;
+      }
+      const raycasterComponent = this.el.components.raycaster as ComponentDefinition<{
+        intersectedEls: Entity[];
+        raycaster: THREE.Raycaster;
+        getIntersection: (el: Entity) => THREE.Intersection;
+      }>;
+      if (raycasterComponent.intersectedEls.length > 0) {
+        const intersectedEl = raycasterComponent.intersectedEls[0] as Entity | undefined;
+        if (intersectedEl) {
+          const threeRaycaster = raycasterComponent.raycaster;
+          const intersection = raycasterComponent.getIntersection(intersectedEl);
+          const rayDirection = threeRaycaster.ray.direction;
+          const intersectionData: RayIntersectionData = { intersection, rayDirection }
+          
+          if (!this.prev || !intersection.point.equals(this.prev)) {
+            // console.log('emitting raycast: ', intersectionData);
+            const transform = intersectionToTransform(intersectionData);
+            console.log('raycast update', transform);
+            this.el.emit('raycast-update', intersectionData);
+          }
+          this.prev = intersection.point
+        }
+      } else {
+        // No entity intersected
+        if (this.prev) {
+          // console.log('emitting raycast with undefined');
+          this.el.emit('raycast-update', undefined);
+        }
+        this.prev = undefined
       }
       // if (!this.raycaster) { return; }  // Not intersecting.
 
