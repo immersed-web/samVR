@@ -38,13 +38,15 @@
 <script setup lang="ts">
 import { type Scene, type Entity, type DetailEvent, THREE } from 'aframe';
 import { ref, watch, computed, onMounted, nextTick } from 'vue';
-import { useTimeoutFn } from '@vueuse/core';
+import { useTimeoutFn, usePointerLock } from '@vueuse/core';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import registerAframeComponents from '@/ts/aframe/components';
 import { defaultHeightOverGround } from 'schemas';
 registerAframeComponents();
 
 const vrSpaceStore = useVrSpaceStore();
+
+const { lock, unlock, element } = usePointerLock();
 
 const props = withDefaults(defineProps<{
   modelUrl?: string,
@@ -121,6 +123,9 @@ watch(() => props.raycast, (raycast) => {
 });
 
 
+function lockCanvas() {
+  lock(sceneTag.value!.canvas);
+}
 async function enterFirstPersonView(point: THREE.Vector3Tuple) {
   console.log('enter first person triggered');
   firstPersonViewActive.value = true;
@@ -130,11 +135,14 @@ async function enterFirstPersonView(point: THREE.Vector3Tuple) {
     return;
   }
   camTag.removeAttribute('orbit-controls');
-  camTag.setAttribute('look-controls', { reverseMouseDrag: true, reverseTouchDrag: true, pointerLockEnabled: false, })
+  camTag.setAttribute('look-controls', { reverseMouseDrag: false, reverseTouchDrag: false, pointerLockEnabled: true, })
   camTag.setAttribute('wasd-controls', { fly: false });
   point[1] += defaultHeightOverGround;
   camTag.object3D.position.set(...point);
   camTag.setAttribute('simple-navmesh-constraint', `navmesh:#${navmeshId.value}; fall:0.5; height: ${defaultHeightOverGround};`);
+  const canvas = sceneTag.value!.canvas
+  canvas.addEventListener('mousedown', lockCanvas);
+  window.addEventListener('mouseup', unlock)
 }
 
 async function exitFirstPersonView() {
@@ -149,6 +157,9 @@ async function exitFirstPersonView() {
   camTag.removeAttribute('simple-navmesh-constraint');
   await nextTick();
   attachOrbitControls();
+  const canvas = sceneTag.value!.canvas
+  canvas.removeEventListener('mousedown', lockCanvas);
+  window.removeEventListener('mouseup', unlock)
 }
 
 async function getPanoScreenshotFromPoint(point: THREE.Vector3Tuple) {
