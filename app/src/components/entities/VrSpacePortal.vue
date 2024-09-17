@@ -14,14 +14,6 @@
         :opacity="allowed ? 1.0 : 0.2"
         :material="`shader: pano-portal; dynamicOpacity: true; warpParams: 2.8 0.5; src: ${panoramicPreviewUrl}; side:back;`">
       </a-icosahedron>
-      <!-- <a-icosahedron v-if="props.panoramicPreviewUrl" detail="5" position="2 0 0" scale="-0.98 -0.98 -0.98"
-        transparent="true" opacity="0.95"
-        :material="`shader: pano-portal; dynamicOpacity: true; warpParams: 3 0.9; src: ${props.panoramicPreviewUrl};`">
-      </a-icosahedron>
-      <a-icosahedron v-if="props.panoramicPreviewUrl" detail="5" position="5 0 0" scale="0.98 0.98 0.98"
-        transparent="true" opacity="0.95"
-        :material="`shader: pano-portal; dynamicOpacity: true; warpParams: 3 0.9; src: ${props.panoramicPreviewUrl};`">
-      </a-icosahedron> -->
       <a-sphere v-else color="black" transparent="true" opacity="0.9" scale="0.98 0.98 0.98" />
     </a-sphere>
   </a-entity>
