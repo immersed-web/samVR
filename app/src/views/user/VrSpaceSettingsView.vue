@@ -228,7 +228,7 @@
                       @change="currentRaycastReason = 'vrSpacePortal'">
                       <option v-for="vrSpace in allowedVrSpaces" :key="vrSpace.vrSpaceId" :value="vrSpace.vrSpaceId">
                         {{
-                          vrSpace.name }}
+                        vrSpace.name }}
                       </option>
                     </select>
                     <button v-if="currentRaycastReason" class="btn btn-sm btn-circle" @click="cancelRaycasting">
@@ -276,8 +276,7 @@
               <template v-for="placedObject in vrSpaceStore.currentVrSpace?.dbData.placedObjects"
                 :key="placedObject.placedObjectId">
                 <VrSpacePortal v-if="placedObject.type === 'vrPortal'" :position="placedObject.position?.join(' ')"
-                  :label="placedObject.vrPortal?.name"
-                  :panoramic-preview-url="getAssetUrl(placedObject.vrPortal?.panoramicPreview?.generatedName)" />
+                  :vr-portal="placedObject.vrPortal" :label="placedObject.vrPortal?.name" />
               </template>
             </a-entity>
 

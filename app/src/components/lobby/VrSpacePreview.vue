@@ -15,7 +15,10 @@
       </div> -->
     </div>
     <a-scene embedded class=" min-h-96" ref="sceneTag" id="ascene" xr-mode-ui="enabled: false">
-      <a-assets timeout="20000" />
+      <a-assets timeout="20000">
+        <a-asset-item id="icon-font"
+          src="https://fonts.gstatic.com/s/materialicons/v70/flUhRq6tzZclQEJ-Vdg-IuiaDsNa.woff" />
+      </a-assets>
       <a-entity camera ref="cameraTag" />
       <a-sky :color="skyColor" />
       <slot />
@@ -127,7 +130,7 @@ async function enterFirstPersonView(point: THREE.Vector3Tuple) {
     return;
   }
   camTag.removeAttribute('orbit-controls');
-  camTag.setAttribute('look-controls', 'enabled', true);
+  camTag.setAttribute('look-controls', { reverseMouseDrag: true, reverseTouchDrag: true, pointerLockEnabled: false, })
   camTag.setAttribute('wasd-controls', { fly: false });
   point[1] += defaultHeightOverGround;
   camTag.object3D.position.set(...point);
