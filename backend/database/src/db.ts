@@ -204,7 +204,18 @@ export const queryVrSpaceWithIncludes = db.query.vrSpaces.findFirst({
             visibility: true,
           },
           with: {
-            panoramicPreview: true
+            panoramicPreview: true,
+            allowedUsers: {
+              columns: {
+                permissionLevel: true,
+                userId: true,
+              }
+            },
+            owner: {
+              columns: {
+                userId: true,
+              }
+            },
           }
         },
         asset: true,

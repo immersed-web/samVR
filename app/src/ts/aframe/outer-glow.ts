@@ -10,7 +10,7 @@ export default () => {
       color: { type: 'vec3', is: 'uniform', default: '1 1 1' },
       start: { type: 'float', is: 'uniform', default: 0.0 },
       end: { type: 'float', is: 'uniform', default: 1.0 },
-      alpha: { type: 'float', is: 'uniform', default: 1.0 },
+      opacity: { type: 'float', is: 'uniform', default: 1.0 },
     },
     vertexShader,
     fragmentShader,

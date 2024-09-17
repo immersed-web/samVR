@@ -7,6 +7,10 @@
       <WaitForAframe>
         <a-scene renderer="logarithmicDepthBuffer: false" ref="sceneTag" cursor="fuse:false; rayOrigin:mouse;"
           raycaster="objects: .clickable" raycaster-update @raycast-update="setCursorIntersection($event.detail)">
+          <a-assets>
+            <a-asset-item id="icon-font"
+              src="https://fonts.gstatic.com/s/materialicons/v70/flUhRq6tzZclQEJ-Vdg-IuiaDsNa.woff" />
+          </a-assets>
           <VrAFrame v-if="vrSpaceStore.worldModelUrl" :show-nav-mesh="false">
             <a-entity id="teleport-target-aframe-scene" />
             <a-entity id="teleport-target-aframe-cursor" ref="cursorEntity" :visible="true">
