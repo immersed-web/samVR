@@ -10,8 +10,8 @@
           <VrAFrame v-if="vrSpaceStore.worldModelUrl" :show-nav-mesh="false">
             <a-entity id="teleport-target-aframe-scene" />
             <a-entity id="teleport-target-aframe-cursor" ref="cursorEntity" :visible="true">
-              <a-ring :visible="isCursorOnNavmesh" radius-inner="0.1" radius-outer="0.2" material="shader: flat;"
-                rotation="0 0 0" />
+              <a-ring :visible="true || isCursorOnNavmesh" radius-inner="0.1" radius-outer="0.2"
+                material="shader: flat;" rotation="0 0 0" />
             </a-entity>
           </VrAFrame>
           <PlacablesTeleport />

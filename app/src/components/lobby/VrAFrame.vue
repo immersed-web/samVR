@@ -31,7 +31,12 @@
       :simple-navmesh-constraint="`navmesh: #navmesh; fall: 1; height: ${defaultHeightOverGround};`"
       emit-move="interval: 20;" :position="`0 ${defaultHeightOverGround} 0`">
       <a-entity id="teleport-target-aframe-camera" />
-      <a-cone ref="debugConeTag" color="orange" scale="0.1 0.4 0.1" position="0 0 -2" />
+      <a-entity ref="debugConeTag" position="0.5 -0.5 -1">
+        <a-cone color="orange" scale="0.1 0.1 0.1" rotation="90 0 0" />
+      </a-entity>
+      <a-entity ref="debugConeTag2" position="0.9 -0.5 -1">
+        <a-cone color="pink" scale="0.1 0.1 0.1" rotation="90 0 0" />
+      </a-entity>
 
       <!-- <a-entity ref="leftHandTag" id="left-hand" @controllerconnected="leftControllerConnected = true"
         @controllerdisconnected="leftControllerConnected = false" laser-controls="hand:left"
@@ -98,7 +103,7 @@
 
 <script setup lang="ts">
 import { type Entity, type DetailEvent, utils as aframeUtils, THREE } from 'aframe';
-import { ref, onMounted, onBeforeMount, computed, onBeforeUnmount, inject } from 'vue';
+import { ref, onMounted, onBeforeMount, computed, onBeforeUnmount, inject, watch } from 'vue';
 import Avatar from './AvatarEntity.vue';
 import { defaultAvatarDesign, defaultHeightOverGround, type ClientRealtimeData } from 'schemas';
 // import type { Unsubscribable } from '@trpc/server/observable';
@@ -120,6 +125,25 @@ import BasicAvatarEntity from './BasicAvatarEntity.vue';
 import { generateSpawnPosition } from '@/modules/3DUtils';
 import PlacedAsset from './PlacedAsset.vue';
 const { currentCursorIntersection, triggerCursorClick, isCursorOnNavmesh } = useCurrentCursorIntersection();
+
+const utilMatrix = new THREE.Matrix4();
+const utilVector = new THREE.Vector3();
+watch(currentCursorIntersection, (intersection) => {
+  if (!intersection || !debugConeTag.value || !debugConeTag2) return;
+  let normal = intersection.intersection.normal;
+  let faceNormal = intersection.intersection.face?.normal
+  if (normal) {
+    normal = utilVector.copy(normal);
+    utilVector.multiplyScalar(2000);
+    debugConeTag.value?.object3D.lookAt(utilVector);
+  }
+  if (faceNormal) {
+    faceNormal = utilVector.copy(faceNormal);
+    utilVector.multiplyScalar(2000);
+    debugConeTag2.value?.object3D.lookAt(utilVector);
+  }
+
+})
 
 const router = useRouter();
 // Stores
@@ -148,6 +172,8 @@ const headTag = ref<Entity>();
 // const playerOriginTag = ref<Entity>();
 const leftHandTag = ref<Entity>();
 const rightHandTag = ref<Entity>();
+const debugConeTag = ref<Entity>();
+const debugConeTag2 = ref<Entity>();
 
 // const avatarModelFileLoaded = ref(false);
 
