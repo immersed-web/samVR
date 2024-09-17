@@ -1,7 +1,7 @@
 <template>
   <a-entity>
     <a-image @materialtextureloaded="onTextureLoaded" v-if="tagName === 'a-image'" :src="src" />
-    <PdfEntity v-if="tagName === 'PdfEntity'" :src="src" />
+    <PdfEntity v-else-if="tagName === 'PdfEntity'" :src="src" />
     <component v-else :is="tagName" :src="src" />
   </a-entity>
 </template>
