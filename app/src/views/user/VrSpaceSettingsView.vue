@@ -61,48 +61,51 @@
               <p class="text-sm mb-2 text-gray-600">
                 Välj de användare som ska ha tillgång till scenen, samt på vilken nivå de ska ha tillgång.
               </p>
-              <label class="flex flex-col gap-1">
-                <span class="label-text font-semibold whitespace-nowrap">
-                  Dela med en ny person
-                </span>
-                <div class="grid grid-cols-3 gap-2">
-                  <!-- <Combobox v-model="selectedUser">
-                  <div class="w-72 relative">
-                    <div class="join input input-bordered input-sm">
-                      <ComboboxInput class="join-item" :display-value="(user) => user.username"
+              <span class="label-text font-semibold whitespace-nowrap">
+                Dela med en ny person
+              </span>
+              <div class="flex gap-2 justify-between items-center z-10">
+                <!--<Combobox v-model="selectedUser">
+                  <div class="grow">
+                    <label class="input input-bordered input-sm flex items-center">
+                      <ComboboxInput class="grow" :display-value="(user) => user.username"
                         @change="query = $event.target.value" />
-                      <ComboboxButton class="join-item">
+                      <ComboboxButton class="flex items-center">
                         <span class="material-icons">unfold_more</span>
                       </ComboboxButton>
-                    </div>
-                    <ComboboxOptions v-auto-animate class="absolute w-full menu bg-neutral-100 rounded-md">
-                      <div v-if="filteredUsers?.length === 0 && query !== ''"
-                        class="relative cursor-default select-none px-4 py-2 text-gray-700">
+                    </label>
+                    <ComboboxOptions v-auto-animate class="w-full menu bg-neutral-100 rounded-md">
+                      <li v-if="filteredUsers?.length === 0 && query !== ''"
+                        class="cursor-default select-none px-4 py-2 text-gray-700">
                         Inga användare hittade
-                      </div>
+                      </li>
                       <ComboboxOption v-for="user in filteredUsers" :key="user.userId" :value="user"
                         v-slot="{ active, selected }">
-                        <a :class="[selected ? 'active' : '']">{{ user.username }}</a>
+                        <li :class="[selected ? 'active' : '']">{{ user.username }}</li>
                       </ComboboxOption>
                     </ComboboxOptions>
                   </div>
                 </Combobox> -->
-                  <select v-model="selectedUser" class="select select-bordered">
+                <!-- <AutoComplete display-key="value" idKey="id" :options="options" /> -->
+                <AutoComplete class="grow" v-model="selectedUser" display-key="username" idKey="userId"
+                  :options="users" />
+                <!-- <select v-model="selectedUser" class="select select-bordered">
                     <option v-for="user in filteredUsers" :key="user.userId" :value="user">
                       {{ user.username }}
                     </option>
-                  </select>
-                  <select v-model="selectedPermission" class="select select-bordered">
-                    <option :value="permissionLevel" v-for="permissionLevel in insertablePermissionHierarchy"
-                      :key="permissionLevel">
-                      {{ permissionLevel }}
-                    </option>
-                  </select>
-                  <button @click="addEditPermission" class="btn btn-primary">
-                    Lägg till {{ selectedUser?.username }}: {{ selectedPermission }}
-                  </button>
-                </div>
-              </label>
+                  </select> -->
+                <select v-model="selectedPermission" class="select select-bordered select-sm">
+                  <option :value="permissionLevel" v-for="permissionLevel in insertablePermissionHierarchy"
+                    :key="permissionLevel">
+                    {{ permissionLevel }}
+                  </option>
+                </select>
+                <button :disabled="!selectedUser" @click="addEditPermission" class="btn btn-primary btn-sm">
+                  Lägg till {{ selectedUser?.username }}: {{ selectedPermission }}
+                </button>
+              </div>
+              <!-- <p>{{ selectedUser }}</p> -->
+              <!-- <p class="overflow-hidden">{{ users }}</p> -->
 
               <div class="flex flex-col gap-1 mt-2">
                 <span class="label-text font-semibold whitespace-nowrap">
@@ -349,6 +352,7 @@ import type { RouterOutputs } from '@/modules/trpcClient';
 import AssetLibrary from '@/components/lobby/AssetLibrary.vue';
 import { getAssetUrl, uploadFileData } from '@/modules/utils';
 import VrSpacePortal from '@/components/entities/VrSpacePortal.vue';
+import AutoComplete from '@/components/AutoComplete.vue';
 
 // TODO: refine/find alternative way to get these types so we get intellisense for the emit key
 type ExtractEmitData<T extends string, emitUnion extends (...args: any[]) => void> = T extends Parameters<emitUnion>[0] ? Parameters<emitUnion>[1] : never
@@ -406,6 +410,20 @@ const spawnPosString = computed(() => {
   const v = new AFRAME.THREE.Vector3(...posArr);
   return AFRAME.utils.coordinates.stringify(v);
 });
+
+
+const options = [
+  { id: 1, value: 'Wade Cooper' },
+  { id: 2, value: 'Arlene Mccoy' },
+  { id: 3, value: 'Devon Webb' },
+  { id: 4, value: 'Tom Cook' },
+  { id: 5, value: 'Tanya Fox' },
+  { id: 6, value: 'Hellen Schmidt' },
+  { id: 7, value: 'Tooom Cook' },
+  { id: 8, value: 'George Busy' },
+  { id: 9, value: 'Ham Cerook' },
+  { id: 10, value: 'Peter Kewl' },
+]
 
 const query = ref('');
 const users = ref<RouterOutputs['user']['getAllUsers']>();

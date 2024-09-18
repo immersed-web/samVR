@@ -26,6 +26,10 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
+      path: '/comboboxtest',
+      component: () => import('@/views/test/ComboboxTest.vue'),
+    },
+    {
       path: '/walltest',
       component: () => import('@/views/test/wallTest.vue'),
     },
