@@ -1,5 +1,5 @@
 import { intersectionToTransform, type RayIntersectionData } from '@/modules/3DUtils';
-import { THREE, type Component, type ComponentDefinition, type Entity } from 'aframe';
+import { THREE, type Component, type ComponentDefinition, type DetailEvent, type Entity } from 'aframe';
 
 export default function () {
 
@@ -9,6 +9,7 @@ export default function () {
     // fields: {
     // },
     prev: undefined as THREE.Vector3 | undefined,
+    stashedCursorStyle: undefined as string | undefined,
     outsideWindow: false,
     init: function () {
       console.log('INIT raycaster-update');
@@ -32,11 +33,23 @@ export default function () {
 
     },
     events: {
-      // 'raycaster-intersection': function (evt: DetailEvent<{ el: Entity }>) { console.log('intersect!');
-      // },
-      // 'raycaster-intersection-cleared': function (evt: DetailEvent<any>) {
-      //   console.log('intersect cleared!');
-      // },
+      'raycaster-intersection': function (evt: DetailEvent<unknown>) {
+        console.log('intersection');
+        const canvas = this.el.sceneEl!.canvas;
+        const canvasCursor = canvas.style.cursor;
+        if (canvasCursor !== '') {
+          console.log('stashing canvasCursor:', canvasCursor);
+          this.stashedCursorStyle = canvasCursor;
+          canvas.style.cursor = 'pointer';
+        }
+      },
+      'raycaster-intersection-cleared': function (evt: DetailEvent<any>) {
+        console.log('intersection cleared!');
+        const canvas = this.el.sceneEl!.canvas;
+        if (this.stashedCursorStyle) {
+          canvas.style.cursor = this.stashedCursorStyle;
+        }
+      },
     },
     tick: function (t, dt) {
       if (this.outsideWindow) {

@@ -14,7 +14,8 @@
         <button class="btn btn-xs btn-primary" @click="removeFirstPersonComponents">remove fps comps</button>
       </div> -->
     </div>
-    <a-scene embedded class=" min-h-96" ref="sceneTag" id="ascene" xr-mode-ui="enabled: false">
+    <a-scene embedded class="min-h-96" ref="sceneTag" id="ascene" xr-mode-ui="enabled: false"
+      @raycast-update="setCursorIntersection($event.detail)">
       <a-assets timeout="20000">
         <a-asset-item id="icon-font"
           src="https://fonts.gstatic.com/s/materialicons/v70/flUhRq6tzZclQEJ-Vdg-IuiaDsNa.woff" />
@@ -25,11 +26,12 @@
 
       <!-- The model -->
       <a-entity>
-        <a-gltf-model v-if="props.modelUrl" @model-loaded="onModelLoaded" id="model" ref="modelTag"
-          :src="props.modelUrl" />
-        <a-gltf-model id="navmesh" ref="navmeshTag" @model-loaded="onNavMeshLoaded" :visible="showNavMesh"
-          :model-opacity="`opacity: ${navMeshOpacity}`" :src="props.navmeshUrl ? props.navmeshUrl : props.modelUrl"
-          @raycast-change="onIntersection" @raycast-out="onNoIntersection" @click="on3DClick" />
+        <a-gltf-model class="raycastable" v-if="props.modelUrl" @model-loaded="onModelLoaded" id="model" ref="modelTag"
+          :src="props.modelUrl" @click.stop="triggerCursorClick" />
+        <a-gltf-model id="navmesh" class="raycastable" ref="navmeshTag" @model-loaded="onNavMeshLoaded"
+          :visible="showNavMesh" :model-opacity="`opacity: ${navMeshOpacity}`"
+          :src="props.navmeshUrl ? props.navmeshUrl : props.modelUrl" @raycast-change="onIntersection"
+          @raycast-out="onNoIntersection" @click.stop="triggerCursorClick" />
       </a-entity>
     </a-scene>
   </div>
@@ -42,9 +44,12 @@ import { useTimeoutFn, usePointerLock } from '@vueuse/core';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import registerAframeComponents from '@/ts/aframe/components';
 import { defaultHeightOverGround } from 'schemas';
+import { useCurrentCursorIntersection } from '@/composables/vrSpaceComposables';
 registerAframeComponents();
 
 const vrSpaceStore = useVrSpaceStore();
+
+const { setCursorIntersection, isCursorOnNavmesh, triggerCursorClick } = useCurrentCursorIntersection();
 
 const { lock, unlock, element } = usePointerLock();
 
@@ -110,15 +115,21 @@ watch(() => props.autoRotate, (rotate) => {
 
 watch(() => props.raycast, (raycast) => {
   if (raycast) {
+    // console.log('attaching raycaster to scene');
+    // console.log('scene:', sceneTag.value);
     // the  raycaster seem to keep a reference to the intersected object which leads to us missing "new" intersection after reattaching raycaster-listen.
     // This is a hacky work-around to "reset" the raycasting logic
-    sceneTag.value?.setAttribute('raycaster', 'objects', '#navmesh');
-    sceneTag.value?.setAttribute('cursor', { fuse: false, rayOrigin: 'mouse' });
-    navmeshTag.value?.setAttribute('raycaster-listen', true);
+    sceneTag.value?.setAttribute('raycaster', 'objects', '.raycastable');
+    sceneTag.value?.setAttribute('cursor', { fuse: false, rayOrigin: 'mouse', mouseCursorStylesEnabled: true });
+    sceneTag.value?.setAttribute('raycaster-update', true);
+
+    // navmeshTag.value?.setAttribute('raycaster-listen', true);
   } else {
     sceneTag.value?.removeAttribute('cursor');
     sceneTag.value?.removeAttribute('raycaster');
-    navmeshTag.value?.removeAttribute('raycaster-listen');
+    sceneTag.value?.removeAttribute('raycaster-update');
+
+    // navmeshTag.value?.removeAttribute('raycaster-listen');
   }
 });
 

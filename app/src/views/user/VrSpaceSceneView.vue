@@ -52,7 +52,7 @@ import LaserTeleport from '@/components/lobby/LaserTeleport.vue';
 import EmojiTeleport from '@/components/lobby/EmojiTeleport.vue';
 import { useSoupStore } from '@/stores/soupStore';
 import PlacablesTeleport from './lobby/teleports/PlacablesTeleport.vue';
-const { setCursorIntersection, currentCursorIntersection, isCursorOnNavmesh, triggerCursorClick } = useCurrentCursorIntersection();
+const { setCursorIntersection, isCursorOnNavmesh, setCursorEntityRef } = useCurrentCursorIntersection();
 
 const router = useRouter();
 const vrSpaceStore = useVrSpaceStore();
@@ -64,31 +64,14 @@ const props = defineProps<{
 const sceneTag = ref<Scene>();
 const domOutlet = ref<HTMLDivElement>();
 const cursorEntity = ref<Entity>();
+setCursorEntityRef(cursorEntity);
 provide(aFrameSceneProvideKey, { sceneTag, domOutlet });
 
 watch(() => props.vrSpaceId, () => {
   console.log('vrSpaceId updated:', props.vrSpaceId);
   const url = router.resolve({ name: 'vrSpace', params: { vrSpaceId: props.vrSpaceId } }).href;
   window.location.href = url;
-  // getCurrentInstance()!.proxy?.$forceUpdate();
 });
-watch(currentCursorIntersection, () => {
-  // console.log('updating cursorEntity transform');
-  const intersectionData = currentCursorIntersection.value;
-  if (!intersectionData) return;
-  if (!cursorEntity.value) return;
-  const cursor = cursorEntity.value;
-  if (!cursor) return;
-  const transform = intersectionToTransform(intersectionData);
-  if (!transform) return;
-  cursor.object3D.position.set(...transform.position);
-  const quat = new THREE.Quaternion().fromArray(transform.rotation);
-  cursor.object3D.rotation.setFromQuaternion(quat);
-})
-
-// function onLaserPointerUpdate(laserInfo: { active: boolean, intersectionData?: RayIntersectionData }) {
-//   console.log('event:', laserInfo);
-// }
 
 // Emoji stuff
 function setEmojiSelf(coords: Tuple, active: boolean) {

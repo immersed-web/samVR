@@ -1,22 +1,18 @@
 <template>
-  <div>
+  <div v-if="options?.length">
 
-    <Combobox v-model="selected">
-      <!-- <pre>{{ selected }}</pre> -->
+    <Combobox v-model="selected" nullable>
       <div ref="comboBoxInputTag" class="input input-bordered input-sm flex gap-2 items-center">
-        <ComboboxInput class="grow" :displayValue="option => option[displayKey]"
-          @change="searchString = $event.target.value" />
-        <ComboboxButton popovertarget="options-list" class="material-icons">
+        <ComboboxInput class="grow" :displayValue="option => option ? option[displayKey] : undefined"
+          @change="searchString = $event.target.value; updateDropdownPos()" />
+        <button v-if="searchString !== '' || selected" @click="selected = null; searchString = '';"
+          class="material-icons">close</button>
+        <ComboboxButton @click="updateDropdownPos" popovertarget="options-list" class="material-icons">
           unfold_more
         </ComboboxButton>
       </div>
       <ComboboxOptions popover id="options-list" :style="{ left: left + 'px', top: bottom + 'px', width: width + 'px' }"
         class="menu z-50 rounded-box flex-nowrap max-h-32 bg-base-200">
-        <!-- <div v-if="filteredPeople.length === 0 && query !== ''"
-            class="cursor-default select-none px-4 py-2 text-gray-700">
-            Nothing found.
-          </div> -->
-
         <ComboboxOption v-for="option in filteredOptions" as="template" :key="option[idKey]" :value="option"
           v-slot="{ selected, active }">
           <li class="select-none flex gap-2" :class="{
@@ -32,11 +28,14 @@
         </ComboboxOption>
       </ComboboxOptions>
     </Combobox>
+    <!-- <pre>{{ searchString }}</pre> -->
+    <!-- <pre>{{ selected }}</pre> -->
+    <!-- <pre>{{ bottom }}</pre> -->
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import {
   Combobox,
   ComboboxInput,
@@ -46,8 +45,16 @@ import {
 } from '@headlessui/vue'
 import { useElementBounding } from '@vueuse/core';
 
-const comboBoxInputTag = ref(null);
-const { bottom, left, width } = useElementBounding(comboBoxInputTag);
+const comboBoxInputTag = ref<HTMLInputElement>();
+const { bottom, left, width, update: updateElementBounding } = useElementBounding(comboBoxInputTag, {
+});
+
+function updateDropdownPos() {
+  // console.log('updating dropdown pos');
+  updateElementBounding();
+}
+
+// watch(bottom, newBottom => console.log(newBottom));
 
 const selected = defineModel()
 

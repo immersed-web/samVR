@@ -35,7 +35,7 @@
 
 <script setup lang="ts">
 
-import { ref, computed, shallowRef } from 'vue';
+import { ref, computed, shallowRef, type DeepReadonly } from 'vue';
 import { autoResetRef, useTransition } from '@vueuse/core';
 import axios from 'axios';
 import type { ExtractSuccessResponse, UploadRequest, UploadResponse } from 'fileserver';
@@ -48,7 +48,7 @@ const props = withDefaults(defineProps<{
   acceptedAssetTypes: AssetType | AssetType[],
   showInUserLibrary?: boolean
   name?: string,
-  uploadedAssetData?: Asset
+  uploadedAssetData?: DeepReadonly<Asset> | null
 }>(), {
   name: '',
   showInUserLibrary: undefined, // default to undefined will let the db use it's default value
