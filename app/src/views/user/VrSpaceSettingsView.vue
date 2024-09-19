@@ -194,13 +194,13 @@
                     <!-- <p>{{ portalTargetVrSpace }}</p> -->
                     <AutoComplete v-if="allowedVrSpaces?.length" v-model="portalTargetVrSpace"
                       :options="allowedVrSpaces" display-key="name" id-key="vrSpaceId" />
-                    <select class="select select-sm select-bordered" v-model="portalTargetVrSpace"
+                    <!-- <select class="select select-sm select-bordered" v-model="portalTargetVrSpace"
                       @change="isRaycastingActive = true">
                       <option v-for="vrSpace in allowedVrSpaces" :key="vrSpace.vrSpaceId" :value="vrSpace.vrSpaceId">
                         {{
                         vrSpace.name }}
                       </option>
-                    </select>
+                    </select> -->
                   </div>
                 </div>
 
@@ -236,8 +236,8 @@
       <div>
         <div class="sticky top-0">
           <VrSpacePreview class="border rounded-md overflow-hidden" ref="vrComponentTag"
-            :model-url="vrSpaceStore.worldModelUrl" :navmesh-url="vrSpaceStore.navMeshUrl" :raycast="isRaycastingActive"
-            :auto-rotate="!isRaycastingActive">
+            :model-url="vrSpaceStore.worldModelUrl" :navmesh-url="vrSpaceStore.navMeshUrl"
+            :raycast="currentCursorMode !== undefined" :auto-rotate="currentCursorMode === undefined">
             <a-entity id="vr-portals">
               <template v-for="placedObject in vrSpaceStore.currentVrSpace?.dbData.placedObjects"
                 :key="placedObject.placedObjectId">
@@ -254,7 +254,7 @@
                 :material="`shader: pano-portal; warpParams: 3 0.9; src: ${vrSpaceStore.panoramicPreviewUrl};`" />
             </a-entity>
             <a-entity id="teleport-target-aframe-cursor" ref="cursorEntity">
-              <a-ring :visible="isRaycastingActive" color="yellow" radius-inner="0.1" radius-outer="0.2"
+              <a-ring :visible="currentCursorMode !== undefined" color="yellow" radius-inner="0.1" radius-outer="0.2"
                 material="shader: flat; side: double;" rotation="0 0 0" />
             </a-entity>
             <!-- <a-entity :position="hoverPosString" :visible="hoverPosString !== undefined">
@@ -330,14 +330,19 @@ import { getAssetUrl, uploadFileData } from '@/modules/utils';
 import VrSpacePortal from '@/components/entities/VrSpacePortal.vue';
 import AutoComplete from '@/components/AutoComplete.vue';
 import { useCurrentCursorIntersection } from '@/composables/vrSpaceComposables';
-import type { Entity } from 'aframe';
+import type { Entity, THREE } from 'aframe';
 import { arrToCoordString } from '@/modules/3DUtils';
 
 // TODO: refine/find alternative way to get these types so we get intellisense for the emit key
 type ExtractEmitData<T extends string, emitUnion extends (...args: any[]) => void> = T extends Parameters<emitUnion>[0] ? Parameters<emitUnion>[1] : never
 type ScreenshotPayload = ExtractEmitData<'screenshot', ComponentInstance<typeof VrSpacePreview>['$emit']>
 
-const { setCursorMode, currentCursorMode, setCursorEntityRef, onCursorClick } = useCurrentCursorIntersection();
+const { setCursorMode, currentCursorMode, setCursorEntityRef, onCursorClick, currentCursorIntersection } = useCurrentCursorIntersection();
+watch(currentCursorIntersection, (intersection) => {
+  if (currentCursorMode.value === 'place-spawnpoint') {
+    uncommitedSpawnPosition.value = intersection?.intersection.point?.toArray() ?? [0, 0, 0];
+  }
+});
 
 // Use imports
 // const router = useRouter();
@@ -418,11 +423,11 @@ function onNavmeshUploaded(uploadDetails: AssetUploadEmitUploadedPayload) {
 }
 
 const hideGizmos = ref(false);
-const uncommitedSpawnPosition = ref<Point>();
+const uncommitedSpawnPosition = ref<THREE.Vector3Tuple>();
 const spawnPosString = computed(() => {
   if (hideGizmos.value) return undefined;
-  const posArr = vrSpaceStore.currentVrSpace?.dbData.spawnPosition;
-  // const posArr = uncommitedSpawnPosition.value;
+  // const posArr = vrSpaceStore.currentVrSpace?.dbData.spawnPosition;
+  const posArr = uncommitedSpawnPosition.value;
   if (!posArr) return undefined;
   return arrToCoordString(posArr);
   // const v = new AFRAME.THREE.Vector3(...posArr);
@@ -459,29 +464,13 @@ onMounted(async () => {
 
   const usersResponse = await backendConnection.client.user.getAllUsers.query();
   users.value = usersResponse.filter(u => u.userId !== clientStore.clientState?.userId);
-  const sp = vrSpaceStore.currentVrSpace?.dbData.spawnPosition;
-  if (sp) uncommitedSpawnPosition.value = sp as Point;
+  const sp = vrSpaceStore.currentVrSpace?.dbData.spawnPosition as THREE.Vector3Tuple;
+  if (sp) uncommitedSpawnPosition.value = sp;
 
   allowedVrSpaces.value = await backendConnection.client.vr.listAvailableVrSpaces.query();
 });
 
 const skyColor = ref();
-
-const isRaycastingActive = ref(false);
-
-// type RaycastReason = 'spawnPosition' | 'selfPlacement' | 'vrSpacePortal' | undefined;
-// const currentRaycastReason = ref<RaycastReason>();
-// const hoverPosition = ref<Point>();
-// const hoverPosString = computed(() => {
-//   const raycastReason = currentRaycastReason.value;
-//   if (hideGizmos.value || !raycastReason) return undefined;
-//   const posArr = hoverPosition.value;
-//   if (!posArr || raycastReason === 'spawnPosition') return undefined;
-//   const v = new AFRAME.THREE.Vector3(...posArr);
-//   return AFRAME.utils.coordinates.stringify(v);
-// });
-
-type Point = [number, number, number];
 
 // async function onRaycastHover(point: Point) {
 //   hoverPosition.value = point;
@@ -496,7 +485,8 @@ type Point = [number, number, number];
 // }
 
 function cancelRaycasting() {
-  isRaycastingActive.value = false;
+  // isRaycastingActive.value = false;
+  setCursorMode(undefined);
   portalTargetVrSpace.value = undefined;
 }
 
