@@ -247,10 +247,11 @@
             </a-entity>
 
             <a-entity ref="spawnPosTag" v-if="spawnPosString" :position="spawnPosString">
-              <a-circle color="yellow" transparent="true" opacity="0.5" rotation="-90 0 0" position="0 0.05 0"
+              <a-circle color="yellow" transparent="true" rotation="-90 0 0" position="0 0.05 0"
+                :opacity="currentCursorMode === 'place-spawnpoint' ? 0.2 : 0.5"
                 :radius="vrSpaceStore.currentVrSpace?.dbData.spawnRadius" />
               <a-icosahedron v-if="vrSpaceStore.panoramicPreviewUrl" detail="5" scale="-0.5 -0.5 -0.5"
-                position="0 1.1 0"
+                position="0 1.1 0" :opacity="currentCursorMode === 'place-spawnpoint' ? 0.5 : 1.0"
                 :material="`shader: pano-portal; warpParams: 3 0.9; src: ${vrSpaceStore.panoramicPreviewUrl};`" />
             </a-entity>
             <a-entity id="teleport-target-aframe-cursor" ref="cursorEntity">
