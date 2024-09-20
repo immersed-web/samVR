@@ -337,7 +337,7 @@ import AssetLibrary from '@/components/lobby/AssetLibrary.vue';
 import { getAssetUrl, uploadFileData } from '@/modules/utils';
 import VrSpacePortal from '@/components/entities/VrSpacePortal.vue';
 import AutoComplete from '@/components/AutoComplete.vue';
-import { useCurrentCursorIntersection, useSelectedObject } from '@/composables/vrSpaceComposables';
+import { useCurrentCursorIntersection, useSelectedEntity } from '@/composables/vrSpaceComposables';
 import { THREE, type Entity } from 'aframe';
 import { arrToCoordString, isEntity } from '@/modules/3DUtils';
 
@@ -346,7 +346,7 @@ type ExtractEmitData<T extends string, emitUnion extends (...args: any[]) => voi
 type ScreenshotPayload = ExtractEmitData<'screenshot', ComponentInstance<typeof VrSpacePreview>['$emit']>
 
 const selectedEntity = ref<Entity>();
-const { position: selectedPosition } = useSelectedObject(selectedEntity);
+const { position: selectedPosition } = useSelectedEntity(selectedEntity);
 
 const { setCursorMode, currentCursorMode, setCursorEntityRef, onCursorClick, currentCursorIntersection, triggerCursorClick } = useCurrentCursorIntersection();
 watch(currentCursorIntersection, (intersection) => {

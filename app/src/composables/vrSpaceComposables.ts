@@ -110,7 +110,7 @@ function setSelectedEntityRef(entity: typeof selectedEntity) {
   });
 }
 
-export function useSelectedObject(entity: typeof selectedEntity | undefined) {
+export function useSelectedEntity(entity: typeof selectedEntity | undefined) {
   if (entity) {
     setSelectedEntityRef(entity);
   }
