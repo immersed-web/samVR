@@ -6,7 +6,7 @@
 
         <a-entity v-if="placedObject.type === 'vrPortal'" :position="placedObject.position?.join(' ')">
           <VrSpacePortal :vr-portal="placedObject.vrPortal"
-            @click.stop="router.push({ name: 'vrSpace', params: { vrSpaceId: placedObject.vrPortal?.vrSpaceId } })"
+            @click.stop="router.replace({ name: 'vrSpace', params: { vrSpaceId: placedObject.vrPortal?.vrSpaceId } })"
             class="clickable" :label="placedObject.vrPortal?.name" />
         </a-entity>
         <!-- <PlacedAsset v-if="placedObject.type === 'asset' && placedObject.asset" :asset="placedObject.asset" /> -->
