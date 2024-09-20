@@ -5,7 +5,6 @@
         <span class="label-text mr-1 font-bold">visa navmesh</span>
         <input type="checkbox" class="toggle toggle-xs" v-model="showNavMesh">
       </label>
-      <pre>{{ raycastSelector }}</pre>
     </div>
     <a-scene embedded class="min-h-96" ref="sceneTag" id="ascene" xr-mode-ui="enabled: false"
       @raycast-update="setCursorIntersection($event.detail)">
