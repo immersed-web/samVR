@@ -88,7 +88,7 @@ app.ws<WSUserData>('/*', {
   maxBackpressure: 1024,
   maxLifetime: 0,
   sendPingsAutomatically: true,
-  // maxPayloadLength: 512,
+  maxPayloadLength: 64 * 1024,
   compression: DEDICATED_COMPRESSOR_3KB,
   // ping(ws, message) {
   //   const connection = clientConnections.get(ws);
@@ -108,6 +108,7 @@ app.ws<WSUserData>('/*', {
   // },
 
   message: (ws, message) => {
+    logUws.info('received message size:', message.byteLength)
     const asString = Buffer.from(message).toString();
     onSocketMessage(ws, asString);
   },
@@ -219,6 +220,8 @@ app.ws<WSUserData>('/*', {
   close: (ws, code, msg) => {
     const userData = ws.getUserData();
     logUws.info(`socket diconnected ${userData.jwtUserData.username} (${userData.jwtUserData.userId})`);
+    const msgString = Buffer.from(msg).toString();
+    logUws.info('closing info. code:', code, 'msg:', msgString);
     const client = clientConnections.get(ws);
     client?.removeWSInstance();
     if(!client){
@@ -237,7 +240,7 @@ app.ws<WSUserData>('/*', {
       }
     }
 
-    onSocketClose(ws, Buffer.from(msg).toString());
+    onSocketClose(ws, msgString);
   }
 }).listen(Number.parseInt(process.env.MEDIASOUP_PORT || '9001'), (listenSocket) => {
   if (listenSocket) {

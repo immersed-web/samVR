@@ -3,7 +3,7 @@ const log = new Log('Router:VR');
 process.env.DEBUG = 'Router:VR*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
-import { ClientRealtimeDataSchema, PlacedObjectIdSchema, PlacedObjectInsertSchema, VrSpaceIdSchema, vrSpaceUpdateSchema } from 'schemas';
+import { ClientRealtimeDataSchema, PlacedObjectIdSchema, PlacedObjectInsertSchema, VrSpaceIdSchema, VrSpaceUpdateSchema } from 'schemas';
 import { procedure as p, router, isUserClientM, userClientP, atLeastUserP, userInVrSpaceP, userWithEditRightsToVrSpace } from '../trpc/trpc.js';
 import { VrSpace } from 'classes/VrSpace.js';
 import { z } from 'zod';
@@ -78,10 +78,11 @@ export const vrRouter = router({
     ctx.client.leaveCurrentVrSpace();
     // ctx.vrSpace.removeClient(ctx.client);
   }),
-  updateVrSpace: userWithEditRightsToVrSpace.input(vrSpaceUpdateSchema).mutation(async ({ ctx, input }) => {
-    // log.info('updating vrSpace', input);
+  updateVrSpace: userWithEditRightsToVrSpace.input(VrSpaceUpdateSchema).mutation(async ({ ctx, input }) => {
+    log.info('updating vrSpace', input);
     const { vrSpaceId, reason, ...data } = input;
     const [dbResponse] = await db.update(schema.vrSpaces).set(data).where(eq(schema.vrSpaces.vrSpaceId, vrSpaceId)).returning();
+    console.log('db insert response: ', dbResponse);
     const vrSpace = VrSpace.getVrSpace(vrSpaceId);
     if (!vrSpace) return;
     vrSpace.reloadDbData(reason ?? 'dbData updated. Reloading');

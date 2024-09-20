@@ -1,9 +1,9 @@
 <template>
   <div class="flex flex-col gap-8">
     <h1 class=" text-3xl font-bold">
-      Redigera {{ vrSpaceStore.writableVrSpaceState?.dbData.name }}
+      Redigera {{ vrSpaceStore.writableVrSpaceDbData?.name }}
     </h1>
-    <div v-if="!vrSpaceStore.writableVrSpaceState">
+    <div v-if="!vrSpaceStore.writableVrSpaceDbData">
       Laddar...
     </div>
     <div v-else class="grid grid-cols-[2fr_3fr] gap-2">
@@ -27,7 +27,7 @@
                 <label class="flex flex-col gap-1">
                   <span class="label-text font-semibold">Scenens namn</span>
                 </label>
-                <input class="input input-bordered input-sm" v-model="vrSpaceStore.writableVrSpaceState.dbData.name">
+                <input class="input input-bordered input-sm" v-model="vrSpaceStore.writableVrSpaceDbData.name">
               </div>
             </div>
           </div>
@@ -53,7 +53,7 @@
                   Öppet för alla:
                 </span>
                 <input type="checkbox" class="toggle toggle-success" true-value="public" false-value="private"
-                  v-model="vrSpaceStore.writableVrSpaceState.dbData.visibility">
+                  v-model="vrSpaceStore.writableVrSpaceDbData.visibility">
               </label>
             </div>
             <div class="w-full">
@@ -114,7 +114,7 @@
                     Himlens färg
                   </span>
                   <input class="rounded-md border-black border-2" type="color"
-                    v-model="vrSpaceStore.writableVrSpaceState.dbData.skyColor">
+                    v-model="vrSpaceStore.writableVrSpaceDbData.skyColor">
                 </label>
               </div>
               <div class="w-full">
@@ -174,7 +174,7 @@
                           Startplatsens storlek
                         </span>
                         <input type="range" min="0.5" max="8" step="0.1"
-                          v-model.number="vrSpaceStore.writableVrSpaceState.dbData.spawnRadius" class="range">
+                          v-model.number="vrSpaceStore.writableVrSpaceDbData.spawnRadius" class="range">
                       </label>
                     </div>
                   </div>
@@ -244,9 +244,10 @@
             <a-entity id="vr-portals">
               <template v-for="placedObject in vrSpaceStore.currentVrSpace?.dbData.placedObjects"
                 :key="placedObject.placedObjectId">
-                <VrSpacePortal @click.stop="triggerCursorClick" v-if="placedObject.type === 'vrPortal'"
-                  :position="placedObject.position?.join(' ')" :vr-portal="placedObject.vrPortal"
-                  class="selectable-object" :label="placedObject.vrPortal?.name" />
+                <VrSpacePortal
+                  @click.stop="selectedPlacedObject = vrSpaceStore.writableVrSpaceDbData.placedObjects.find(p => p.placedObjectId === placedObject.placedObjectId)"
+                  v-if="placedObject.type === 'vrPortal'" :position="placedObject.position?.join(' ')"
+                  :vr-portal="placedObject.vrPortal" class="selectable-object" :label="placedObject.vrPortal?.name" />
               </template>
             </a-entity>
 
@@ -270,9 +271,10 @@
           <button v-if="currentCursorMode" class="btn btn-sm btn-circle" @click="setCursorMode(undefined)">
             <span class="material-icons">close</span>
           </button>
-          <pre>{{ selectedEntity }}</pre>
           <pre>{{ selectedPosition }}</pre>
           <input v-if="selectedPosition" type="range" v-model.number="selectedPosition[1]" min="0" max="15" step="0.1">
+          <pre>{{ selectedPlacedObject?.position }}</pre>
+          <pre>{{ vrSpaceStore.currentVrSpace?.dbData.placedObjects.find(p => p.placedObjectId === selectedPlacedObject?.placedObjectId)?.position }}</pre>
           <!-- <button class="btn btn-accent" @click="isRaycastingActive = !isRaycastingActive;">toggle raycasting</button> -->
           <template v-if="vrSpaceStore.currentVrSpace?.dbData.worldModelAsset">
             <h4>Interagera med VR-scenen</h4>
@@ -326,7 +328,7 @@ import VrSpacePreview from '@/components/lobby/VrSpacePreview.vue';
 import { ref, watch, onMounted, computed, type ComponentInstance, nextTick } from 'vue';
 // import { throttle } from 'lodash-es';
 import { Combobox, ComboboxInput, ComboboxOptions, ComboboxOption, ComboboxButton } from '@headlessui/vue';
-import { insertablePermissionHierarchy, type Asset, type PlacedObjectId, type VrSpaceId } from 'schemas';
+import { insertablePermissionHierarchy, type PlacedObject, type Asset, type PlacedObjectId, type VrSpaceId } from 'schemas';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import { useConnectionStore } from '@/stores/connectionStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -337,16 +339,19 @@ import AssetLibrary from '@/components/lobby/AssetLibrary.vue';
 import { getAssetUrl, uploadFileData } from '@/modules/utils';
 import VrSpacePortal from '@/components/entities/VrSpacePortal.vue';
 import AutoComplete from '@/components/AutoComplete.vue';
-import { useCurrentCursorIntersection, useSelectedEntity } from '@/composables/vrSpaceComposables';
+import { useCurrentCursorIntersection, useSelectedEntity, useSelectedPlacedObject } from '@/composables/vrSpaceComposables';
 import { THREE, type Entity } from 'aframe';
 import { arrToCoordString, isEntity } from '@/modules/3DUtils';
+import type { PlacedObjectWithIncludes } from 'database';
 
 // TODO: refine/find alternative way to get these types so we get intellisense for the emit key
 type ExtractEmitData<T extends string, emitUnion extends (...args: any[]) => void> = T extends Parameters<emitUnion>[0] ? Parameters<emitUnion>[1] : never
 type ScreenshotPayload = ExtractEmitData<'screenshot', ComponentInstance<typeof VrSpacePreview>['$emit']>
 
-const selectedEntity = ref<Entity>();
-const { position: selectedPosition } = useSelectedEntity(selectedEntity);
+// const selectedEntity = ref<Entity>();
+// const { position: selectedPosition } = useSelectedEntity(selectedEntity);
+const selectedPlacedObject = ref<PlacedObjectWithIncludes>();
+const { placedObjectPosition: selectedPosition } = useSelectedPlacedObject(selectedPlacedObject);
 
 const { setCursorMode, currentCursorMode, setCursorEntityRef, onCursorClick, currentCursorIntersection, triggerCursorClick } = useCurrentCursorIntersection();
 watch(currentCursorIntersection, (intersection) => {
@@ -388,20 +393,20 @@ onCursorClick(async (e) => {
 
   setCursorMode(undefined);
   if (!cursorMode) {
-    const target = e.target;
-    if (!target || !isEntity(target)) return;
-    selectedEntity.value = target;
+    // const target = e.target;
+    // if (!target || !isEntity(target)) return;
+    // selectedEntity.value = target;
   } else {
     switch (cursorMode) {
       case 'enterFirstPersonView':
         vrComponentTag.value?.enterFirstPersonView(point);
         break;
       case 'place-vrPortal':
-        if (!vrSpaceStore.writableVrSpaceState || !portalTargetVrSpace.value) return;
+        if (!vrSpaceStore.writableVrSpaceDbData || !portalTargetVrSpace.value) return;
         console.log(portalTargetVrSpace.value);
         const vrSpaceId = portalTargetVrSpace.value.vrSpaceId;
         backendConnection.client.vr.upsertPlacedObject.mutate({
-          vrSpaceId: vrSpaceStore.writableVrSpaceState.dbData.vrSpaceId,
+          vrSpaceId: vrSpaceStore.writableVrSpaceDbData.vrSpaceId,
           type: 'vrPortal',
           objectId: vrSpaceId,
           position: point,
@@ -409,9 +414,9 @@ onCursorClick(async (e) => {
         });
         break;
       case 'place-spawnposition':
-        if (!vrSpaceStore.writableVrSpaceState) return;
+        if (!vrSpaceStore.writableVrSpaceDbData) return;
         hideGizmos.value = true;
-        vrSpaceStore.writableVrSpaceState.dbData.spawnPosition = point;
+        vrSpaceStore.writableVrSpaceDbData.spawnPosition = point;
         const canvas = await vrComponentTag.value?.getPanoScreenshotFromPoint(point);
         if (!canvas) return;
         uploadScreenshot(canvas);
@@ -436,14 +441,14 @@ function onAssetPicked(asset: Asset) {
 
 function onModelUploaded(uploadDetails: AssetUploadEmitUploadedPayload) {
   console.log(uploadDetails);
-  if (!vrSpaceStore.writableVrSpaceState) return;
-  vrSpaceStore.writableVrSpaceState.dbData.worldModelAssetId = uploadDetails.assetId;
+  if (!vrSpaceStore.writableVrSpaceDbData) return;
+  vrSpaceStore.writableVrSpaceDbData.worldModelAssetId = uploadDetails.assetId;
 }
 
 function onNavmeshUploaded(uploadDetails: AssetUploadEmitUploadedPayload) {
   console.log(uploadDetails);
-  if (!vrSpaceStore.writableVrSpaceState) return;
-  vrSpaceStore.writableVrSpaceState.dbData.navMeshAssetId = uploadDetails.assetId;
+  if (!vrSpaceStore.writableVrSpaceDbData) return;
+  vrSpaceStore.writableVrSpaceDbData.navMeshAssetId = uploadDetails.assetId;
 }
 
 const hideGizmos = ref(false);
@@ -522,7 +527,7 @@ function uploadScreenshot(canvas: ScreenshotPayload) {
   // c.appendChild(canvas);
   abortController = new AbortController();
   canvas.toBlob(async (canvasBlob) => {
-    if (!vrSpaceStore.writableVrSpaceState) return;
+    if (!vrSpaceStore.writableVrSpaceDbData) return;
     if (!canvasBlob) return;
     const data = new FormData();
     data.append('file', canvasBlob, `${vrSpaceStore.currentVrSpace?.dbData.name}-screenshot.png`);
@@ -537,7 +542,7 @@ function uploadScreenshot(canvas: ScreenshotPayload) {
       console.error('failed to upload screenshot', response);
       return;
     }
-    vrSpaceStore.writableVrSpaceState.dbData.panoramicPreviewAssetId = response.assetId;
+    vrSpaceStore.writableVrSpaceDbData.panoramicPreviewAssetId = response.assetId;
   });
 }
 

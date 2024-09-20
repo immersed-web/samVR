@@ -2,8 +2,9 @@ import { computed, ref, readonly, shallowReadonly, shallowRef, type Ref, watch, 
 import { THREE, type Entity } from 'aframe';
 import { type EventBusKey } from '@vueuse/core';
 import { createEventHook } from '@vueuse/core';
-import { intersectionToTransform, type AframeClickeventData, type RayIntersectionData } from '@/modules/3DUtils';
+import { eulerTupleToQuaternionTuple, intersectionToTransform, quaternionTupleToAframeRotation, type AframeClickeventData, type RayIntersectionData } from '@/modules/3DUtils';
 import type { PlacedObject } from 'schemas';
+import type { PlacedObjectWithIncludes } from 'database';
 
 export type Tuple = [number, number]
 
@@ -123,14 +124,68 @@ export function useSelectedEntity(entity: typeof selectedEntity | undefined) {
   }
 }
 
-const selectedPlacedObject = ref<PlacedObject>();
+let selectedPlacedObject: Ref<PlacedObjectWithIncludes> | undefined;
 const placedObjectRotation = ref<THREE.Vector3Tuple>();
 const placedObjectPosition = ref<THREE.Vector3Tuple>();
 const placedObjectScale = ref<THREE.Vector3Tuple>();
-export function useSelectedPlacedObject() {
+export function useSelectedPlacedObject(selectedObjectRef: typeof selectedPlacedObject) {
+  if (selectedObjectRef) {
+    selectedPlacedObject = selectedObjectRef;
+    watch(selectedPlacedObject, (placedObject) => {
+      console.log('selectedPlacedObject watcher triggered:', placedObject);
+      if (!placedObject) {
+        placedObjectPosition.value = undefined;
+        placedObjectRotation.value = undefined;
+        placedObjectScale.value = undefined;
+        return;
+      }
+      placedObjectPosition.value = [...placedObject.position];
+      // let rotation = undefined
+      // if (placedObject.orientation) {
+      //   rotation = quaternionTupleToAframeRotation(placedObject.orientation)
+      // }
+      // placedObjectRotation.value = rotation;
+      // const scale = placedObject.scale ?? undefined;
+      // placedObjectScale.value = scale;
+      watch(placedObjectPosition, () => {
+        console.log('placedObjectPosition watcher triggered:', placedObjectPosition.value);
+        if (!selectedPlacedObject) {
+          console.warn('selectedPlacedObject not set!');
+          return;
+        }
+        if (!selectedPlacedObject.value || !placedObjectPosition.value) {
+          console.warn('selectedPlacedObject or placedObjectPosition not set!');
+          return;
+        }
+        selectedPlacedObject.value.position = [...placedObjectPosition.value];
+      }, { deep: true })
+      watch(placedObjectRotation, () => {
+        console.log('placedObjectRotation watcher triggered:', placedObjectRotation.value);
+        if (!selectedPlacedObject) {
+          console.warn('selectedPlacedObject not set!');
+          return;
+        }
+        if (!selectedPlacedObject.value || !placedObjectRotation.value) return;
+        const orientation = eulerTupleToQuaternionTuple(placedObjectRotation.value)
+        selectedPlacedObject.value.orientation = orientation;
+      })
+      watch(placedObjectScale, () => {
+        console.log('placedObjectScale watcher triggered:', placedObjectScale.value);
+        if (!selectedPlacedObject) {
+          console.warn('selectedPlacedObject not set!');
+          return;
+        }
+        if (!selectedPlacedObject.value || !placedObjectScale.value) return;
+        selectedPlacedObject.value.scale = placedObjectScale.value;
+      })
+    });
+  }
 
   return {
-
+    // setSelectedPlacedObjectRef,
+    placedObjectPosition,
+    placedObjectRotation,
+    placedObjectScale,
   }
 }
 

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 
-import { hasAtLeastPermissionLevel, type ClientRealtimeData, type ClientsRealtimeData, type ConnectionId, type PlacedObjectId, type PlacedObjectInsert, type VrSpaceId, type VrSpaceUpdate } from 'schemas';
+import { hasAtLeastPermissionLevel, VrSpaceSelectSchema, type ClientRealtimeData, type ClientsRealtimeData, type ConnectionId, type PlacedObjectId, type PlacedObjectInsert, type VrSpaceId, type VrSpaceSelect, type VrSpaceUpdate } from 'schemas';
 import { computed, readonly, ref, watch } from 'vue';
 import { useConnectionStore } from './connectionStore';
 import { eventReceiver, type ExtractPayload, type RouterOutputs, type SubscriptionValue } from '@/modules/trpcClient';
@@ -9,7 +9,6 @@ import { watchIgnorable, pausableWatch } from '@vueuse/core';
 import { debounce, throttle } from 'lodash-es';
 import { getAssetUrl } from '@/modules/utils';
 import { reactive } from 'vue';
-import type { PlacedObjectWithIncludes } from 'database';
 
 type _ReceivedVrSpaceState = ExtractPayload<typeof eventReceiver.vrSpace.vrSpaceStateUpdated.subscribe>['data'];
 
@@ -30,8 +29,10 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
   const connection = useConnectionStore();
   const clientStore = useClientStore();
 
-  const writableVrSpaceState = ref<_ReceivedVrSpaceState>();
-  const currentVrSpace = readonly(writableVrSpaceState);
+  // const writableVrSpaceState = ref<_ReceivedVrSpaceState>();
+  const writableVrSpaceDbData = ref<VrSpaceSelect>()
+  // const currentVrSpace = readonly(writableVrSpaceState);
+  const currentVrSpace = ref<_ReceivedVrSpaceState>();
 
   const worldModelUrl = computed(() => {
     if (!currentVrSpace.value) return undefined;
@@ -54,10 +55,10 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     return getAssetUrl(fileName);
   });
 
-  const { ignoreUpdates } = watchIgnorable(() => writableVrSpaceState.value, async (newVal, oldVal) => {
+  const { ignoreUpdates } = watchIgnorable(() => writableVrSpaceDbData.value, async (newVal, oldVal) => {
     console.log('currentVrSpace watcher triggered', oldVal, newVal);
-    if (newVal?.dbData.ownerUserId === clientStore.clientState?.userId
-      || newVal?.dbData.allowedUsers.some(p => {
+    if (newVal?.ownerUserId === clientStore.clientState?.userId
+      || currentVrSpace.value?.dbData.allowedUsers.some(p => {
         const permissionMatched = p.user.userId === clientStore.clientState?.userId;
         const isAtLeastEditor = hasAtLeastPermissionLevel(p.permissionLevel, 'edit');
         // console.log(permissionMatched, isAtLeastEditor);
@@ -71,24 +72,29 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
 
   eventReceiver.vrSpace.vrSpaceStateUpdated.subscribe(({ data, reason }) => {
     console.log(`vrSpaceState updated. ${reason}:`, data);
-    ignoreUpdates(() => writableVrSpaceState.value = data);
+    ignoreUpdates(() => {
+      writableVrSpaceDbData.value = VrSpaceSelectSchema.parse(data.dbData);
+      // writableVrSpaceDbData.value = data.dbData;
+    });
+    currentVrSpace.value = data;
     console.log('finished setting ignored state update');
   });
 
   eventReceiver.vrSpace.clientTransforms.subscribe((data) => {
     // console.log(`clientTransforms updated:`, data);
-    if (!writableVrSpaceState.value) return;
+    if (!currentVrSpace.value) return;
     for (const [cId, tsfm] of Object.entries(data)) {
       const cIdTyped = cId as ConnectionId;
       if (clientStore.clientState?.connectionId === cId) {
         // console.log('skipping because is own transform. cId:', cId);
         continue;
       }
-      if (!writableVrSpaceState.value.clients[cIdTyped]) {
+      if (!currentVrSpace.value.clients[cIdTyped]) {
         console.warn('received a clientTransform for a client that isnt listed in vrSpaceState');
         return;
       }
-      ignoreUpdates(() => writableVrSpaceState.value!.clients[cIdTyped].clientRealtimeData = tsfm);
+      // ignoreUpdates(() => writableVrSpaceDbData.value!.clients[cIdTyped].clientRealtimeData = tsfm);
+      currentVrSpace.value!.clients[cIdTyped].clientRealtimeData = tsfm;
     }
   });
 
@@ -103,12 +109,14 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
 
     ignoreUpdates(() => {
       console.log('setting ignored enter response');
-      writableVrSpaceState.value = response;
+      writableVrSpaceDbData.value = response.dbData;
     });
+    currentVrSpace.value = response;
   }
   async function leaveVrSpace() {
     await connection.client.vr.leaveVrSpace.mutate();
-    ignoreUpdates(() => writableVrSpaceState.value = undefined);
+    ignoreUpdates(() => writableVrSpaceDbData.value = undefined);
+    currentVrSpace.value = undefined;
   }
 
   async function upsertPlacedObject(placedObject: Omit<PlacedObjectInsert, 'vrSpaceId' | 'reason'>, reason?: string) {
@@ -168,8 +176,8 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
   // }
 
   return {
-    currentVrSpace,
-    writableVrSpaceState,
+    currentVrSpace: readonly(currentVrSpace),
+    writableVrSpaceDbData,
     worldModelUrl,
     navMeshUrl,
     panoramicPreviewUrl,

@@ -371,6 +371,15 @@ export type CameraInsert = z.TypeOf<typeof CameraInsertSchema>;
 export const CameraUpdateSchema = CameraInsertSchema.partial().required({ cameraId: true });
 export type CameraUpdate = z.TypeOf<typeof CameraUpdateSchema>;
 
+export const VrSpaceSelectSchema = createSelectSchema(schema.vrSpaces, {
+  vrSpaceId: VrSpaceIdSchema,
+  worldModelAssetId: AssetIdSchema,
+  navMeshAssetId: AssetIdSchema.optional(),
+  panoramicPreviewAssetId: AssetIdSchema.optional(),
+})
+
+export type VrSpaceSelect = z.TypeOf<typeof VrSpaceSelectSchema>;
+
 export const VrSpaceInserSchema = createInsertSchema(schema.vrSpaces, {
   vrSpaceId: VrSpaceIdSchema.optional(),
   worldModelAssetId: AssetIdSchema,
@@ -380,9 +389,11 @@ export const VrSpaceInserSchema = createInsertSchema(schema.vrSpaces, {
   .omit(timestampKeys)
   .omit({ ownerUserId: true })
   .merge(optionalReason);
+
+
 export type VrSpaceInsert = z.TypeOf<typeof VrSpaceInserSchema>;
-export const vrSpaceUpdateSchema = VrSpaceInserSchema.partial().required({ vrSpaceId: true });
-export type VrSpaceUpdate = z.TypeOf<typeof vrSpaceUpdateSchema>;
+export const VrSpaceUpdateSchema = VrSpaceInserSchema.partial().required({ vrSpaceId: true });
+export type VrSpaceUpdate = z.TypeOf<typeof VrSpaceUpdateSchema>;
 
 // type CameraUpdatePayload = Partial<Pick<Prisma.CameraUpdateInput,
 //   'name'
