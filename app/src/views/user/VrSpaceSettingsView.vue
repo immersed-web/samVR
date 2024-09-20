@@ -270,6 +270,9 @@
           <button v-if="currentCursorMode" class="btn btn-sm btn-circle" @click="setCursorMode(undefined)">
             <span class="material-icons">close</span>
           </button>
+          <pre>{{ selectedEntity }}</pre>
+          <pre>{{ selectedPosition }}</pre>
+          <input v-if="selectedPosition" type="range" v-model.number="selectedPosition[1]" min="0" max="15" step="0.1">
           <!-- <button class="btn btn-accent" @click="isRaycastingActive = !isRaycastingActive;">toggle raycasting</button> -->
           <template v-if="vrSpaceStore.currentVrSpace?.dbData.worldModelAsset">
             <h4>Interagera med VR-scenen</h4>
@@ -334,13 +337,16 @@ import AssetLibrary from '@/components/lobby/AssetLibrary.vue';
 import { getAssetUrl, uploadFileData } from '@/modules/utils';
 import VrSpacePortal from '@/components/entities/VrSpacePortal.vue';
 import AutoComplete from '@/components/AutoComplete.vue';
-import { useCurrentCursorIntersection } from '@/composables/vrSpaceComposables';
+import { useCurrentCursorIntersection, useSelectedObject } from '@/composables/vrSpaceComposables';
 import { THREE, type Entity } from 'aframe';
-import { arrToCoordString } from '@/modules/3DUtils';
+import { arrToCoordString, isEntity } from '@/modules/3DUtils';
 
 // TODO: refine/find alternative way to get these types so we get intellisense for the emit key
 type ExtractEmitData<T extends string, emitUnion extends (...args: any[]) => void> = T extends Parameters<emitUnion>[0] ? Parameters<emitUnion>[1] : never
 type ScreenshotPayload = ExtractEmitData<'screenshot', ComponentInstance<typeof VrSpacePreview>['$emit']>
+
+const selectedEntity = ref<Entity>();
+const { position: selectedPosition } = useSelectedObject(selectedEntity);
 
 const { setCursorMode, currentCursorMode, setCursorEntityRef, onCursorClick, currentCursorIntersection, triggerCursorClick } = useCurrentCursorIntersection();
 watch(currentCursorIntersection, (intersection) => {
@@ -348,6 +354,7 @@ watch(currentCursorIntersection, (intersection) => {
     uncommitedSpawnPosition.value = intersection?.intersection.point?.toArray() ?? [0, 0, 0];
   }
 });
+
 const raycastSelector = computed(() => {
   if (!currentCursorMode.value) return '.selectable-object';
   return '.selectable-object, .raycastable-surface'
@@ -380,31 +387,37 @@ onCursorClick(async (e) => {
   const cursorMode = currentCursorMode.value;
 
   setCursorMode(undefined);
-  switch (cursorMode) {
-    case 'enterFirstPersonView':
-      vrComponentTag.value?.enterFirstPersonView(point);
-      break;
-    case 'place-vrPortal':
-      if (!vrSpaceStore.writableVrSpaceState || !portalTargetVrSpace.value) return;
-      console.log(portalTargetVrSpace.value);
-      const vrSpaceId = portalTargetVrSpace.value.vrSpaceId;
-      backendConnection.client.vr.upsertPlacedObject.mutate({
-        vrSpaceId: vrSpaceStore.writableVrSpaceState.dbData.vrSpaceId,
-        type: 'vrPortal',
-        objectId: vrSpaceId,
-        position: point,
-        orientation: new THREE.Quaternion().identity().toArray() as [number, number, number, number],
-      });
-      break;
-    case 'place-spawnposition':
-      if (!vrSpaceStore.writableVrSpaceState) return;
-      hideGizmos.value = true;
-      vrSpaceStore.writableVrSpaceState.dbData.spawnPosition = point;
-      const canvas = await vrComponentTag.value?.getPanoScreenshotFromPoint(point);
-      if (!canvas) return;
-      uploadScreenshot(canvas);
-      hideGizmos.value = false;
-      break;
+  if (!cursorMode) {
+    const target = e.target;
+    if (!target || !isEntity(target)) return;
+    selectedEntity.value = target;
+  } else {
+    switch (cursorMode) {
+      case 'enterFirstPersonView':
+        vrComponentTag.value?.enterFirstPersonView(point);
+        break;
+      case 'place-vrPortal':
+        if (!vrSpaceStore.writableVrSpaceState || !portalTargetVrSpace.value) return;
+        console.log(portalTargetVrSpace.value);
+        const vrSpaceId = portalTargetVrSpace.value.vrSpaceId;
+        backendConnection.client.vr.upsertPlacedObject.mutate({
+          vrSpaceId: vrSpaceStore.writableVrSpaceState.dbData.vrSpaceId,
+          type: 'vrPortal',
+          objectId: vrSpaceId,
+          position: point,
+          orientation: new THREE.Quaternion().identity().toArray() as [number, number, number, number],
+        });
+        break;
+      case 'place-spawnposition':
+        if (!vrSpaceStore.writableVrSpaceState) return;
+        hideGizmos.value = true;
+        vrSpaceStore.writableVrSpaceState.dbData.spawnPosition = point;
+        const canvas = await vrComponentTag.value?.getPanoScreenshotFromPoint(point);
+        if (!canvas) return;
+        uploadScreenshot(canvas);
+        hideGizmos.value = false;
+        break;
+    }
   }
 })
 

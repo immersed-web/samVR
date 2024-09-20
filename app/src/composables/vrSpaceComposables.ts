@@ -37,9 +37,9 @@ let cursorEntity = ref<Entity>();
 let watchStopper: WatchStopHandle | undefined
 function setCursorEntityRef(entity: typeof cursorEntity | undefined) {
   if (!entity) {
-    watchStopper?.();
     return;
   }
+  watchStopper?.();
   cursorEntity = entity;
   watchStopper = watch(rayIntersectionData, () => {
     if (!cursorEntity.value) {
@@ -71,6 +71,56 @@ export function useCurrentCursorIntersection() {
     triggerCursorClick: clickHook.trigger,
     setCursorEntityRef,
   };
+}
+
+let selectedEntity = ref<Entity>();
+const rotation = ref<THREE.Vector3Tuple>();
+const position = ref<THREE.Vector3Tuple>();
+const scale = ref<THREE.Vector3Tuple>();
+watch(position, () => {
+  console.log('position watcher triggered:', position.value);
+  if (!selectedEntity.value || !position.value) return;
+  console.log('updating object3D position:', position.value);
+  selectedEntity.value.object3D.position.fromArray(position.value);
+}, { deep: true })
+watch(rotation, () => {
+  if (!selectedEntity.value || !rotation.value) return;
+  selectedEntity.value.object3D.rotation.fromArray(rotation.value);
+}, { deep: true })
+watch(scale, () => {
+  if (!selectedEntity.value || !scale.value) return;
+  selectedEntity.value.object3D.scale.fromArray(scale.value);
+}, { deep: true })
+let selectedEntityWatchStopper: WatchStopHandle | undefined
+function setSelectedEntityRef(entity: typeof selectedEntity) {
+  console.log('setSelectedEntityRef:', entity);
+  selectedEntityWatchStopper?.();
+  selectedEntity = entity;
+  selectedEntityWatchStopper = watch(selectedEntity, (entity) => {
+    console.log('selectedEntity watcher triggered:', entity);
+    if (!entity) {
+      position.value = undefined;
+      rotation.value = undefined;
+      scale.value = undefined;
+      return;
+    }
+    position.value = entity.object3D.position.toArray();
+    scale.value = entity.object3D.scale.toArray();
+    rotation.value = entity.object3D.rotation.toArray() as THREE.Vector3Tuple;
+  });
+}
+
+export function useSelectedObject(entity: typeof selectedEntity | undefined) {
+  if (entity) {
+    setSelectedEntityRef(entity);
+  }
+
+  return {
+    setSelectedEntity: setSelectedEntityRef,
+    position,
+    rotation,
+    scale,
+  }
 }
 
 export const clickKey: EventBusKey<{ model: string, cursorObject: THREE.Object3D | undefined }> = Symbol('symbol-key');
