@@ -10,7 +10,8 @@
       <!-- COLUMN 1 -->
       <div class="join join-vertical w-full">
         <div class="collapse collapse-arrow join-item border-base-300 border">
-          <input type="radio" name="settings-accordion" checked="checked">
+          <input type="checkbox" name="settings-accordion" false-value="" true-value="basicSettings"
+            v-model="activeAccordion">
           <div class="collapse-title bg-gray-100">
             Grundläggande information
           </div>
@@ -32,7 +33,8 @@
           </div>
         </div>
         <div class="collapse collapse-arrow join-item border-base-300 border">
-          <input type="radio" name="settings-accordion">
+          <input type="checkbox" name="settings-accordion" true-value="usersettings" false-value=""
+            v-model="activeAccordion">
           <div class="collapse-title bg-gray-100">
             Användare och rättigheter
           </div>
@@ -93,7 +95,8 @@
           </div>
         </div>
         <div class="collapse collapse-arrow join-item border-base-300 border">
-          <input type="radio" name="settings-accordion">
+          <input type="checkbox" name="settings-accordion" true-value="modelsettings" false-value=""
+            v-model="activeAccordion">
           <div class="collapse-title bg-gray-100">
             3D-modell
           </div>
@@ -353,6 +356,8 @@ const authStore = useAuthStore();
 const clientStore = useClientStore();
 const cursorEntity = ref<Entity>();
 setCursorEntityRef(cursorEntity);
+
+const activeAccordion = ref<string>();
 
 const libraryAssets = computed(() => {
   return clientStore.clientState?.assets.filter(a => a.showInUserLibrary) ?? [];
