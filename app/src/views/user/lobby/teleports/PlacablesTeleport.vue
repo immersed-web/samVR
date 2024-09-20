@@ -51,31 +51,7 @@
         class="w-full h-full transform rounded-2xl bg-white p-4 text-left align-middle shadow-xl transition-all">
         <div class="h-full overflow-y-auto">
           <DialogTitle>Pick an asset and place it in the scene</DialogTitle>
-          <!-- <DialogDescription>Pick it!</DialogDescription> -->
           <AssetLibrary :assets="assets" @assetPicked="pickAsset" />
-
-          <!-- <div class="flex flex-row flex-wrap ">
-              <div v-for="asset in assets" :key="asset.assetId" class="basis-1/4 cursor-pointer p-1"
-                @click="pickAsset(asset.assetType, asset.location + asset.generatedName)">
-                <div class="card card-compact bg-base-100 shadow-xl">
-                  <figure class="h-40">
-                    <img v-if="asset.assetType === 'a-image'" :src="asset.location + asset.generatedName">
-                    <embed v-if="asset.assetType === 'PdfEntity'" :src="asset.location + asset.generatedName"
-                      type="application/pdf" width="100%" height="100%">
-                  </figure>
-                  <div class="card-body">
-                    <p>{{ asset.originalFileName }}</p>
-                  </div>
-                </div>
-              </div>
-              <div class="basis-1/4 cursor-pointer p-1 flex items-center justify-center">
-                <div class="flex flex-col p-4">
-                  <button type="button" class="btn" @click="() => open">
-                    Upload a new asset
-                  </button>
-                </div>
-              </div>
-            </div> -->
         </div>
       </DialogPanel>
     </div>
