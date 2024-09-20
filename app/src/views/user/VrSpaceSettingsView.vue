@@ -4,9 +4,9 @@
       Redigera {{ vrSpaceStore.writableVrSpaceState?.dbData.name }}
     </h1>
     <div v-if="!vrSpaceStore.writableVrSpaceState">
-      loading...
+      Laddar...
     </div>
-    <div v-else class="grid grid-cols-2 gap-2">
+    <div v-else class="grid grid-cols-[2fr_3fr] gap-2">
       <!-- COLUMN 1 -->
       <div class="join join-vertical w-full">
         <div class="collapse collapse-arrow join-item border-base-300 border">
@@ -234,7 +234,7 @@
 
       <!-- COLUMN -->
       <div>
-        <div class="sticky top-0">
+        <div class="sticky top-2">
           <VrSpacePreview class="border rounded-md overflow-hidden" ref="vrComponentTag"
             :model-url="vrSpaceStore.worldModelUrl" :navmesh-url="vrSpaceStore.navMeshUrl"
             :raycast="currentCursorMode !== undefined" :auto-rotate="currentCursorMode === undefined">
