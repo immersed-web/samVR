@@ -1,3 +1,93 @@
+<template>
+  <!-- #region Place objects -->
+  <!-- <Teleport to="#tp-ui-left">
+      <button class="p-3 text-white rounded-md cursor-pointer bg-zinc-800"
+        @click="createPlaceableObject('a-image', '/photos/joey-chacon-edbYu4vxXww-unsplash.jpg')">place photo</button>
+      <button class="p-3 text-white rounded-md cursor-pointer bg-zinc-800"
+        @click="createPlaceableObject('PdfEntity', '/documents/smallpdf_sample.pdf')">Place pdf</button>
+    </Teleport> -->
+  <!-- #endregion -->
+
+  <!-- #region Tweakpane UI -->
+  <Teleport to="#teleport-target-ui-right">
+    <div id="paneContainer" ref="paneContainer" class="flex flex-col gap-1 pointer-events-auto">
+      <div id="pane1" />
+      <div id="pane2" />
+    </div>
+  </Teleport>
+  <!-- #endregion -->
+
+  <template v-if="isAsset(currentlyMovedObject)">
+    <Teleport to="#teleport-target-aframe-cursor">
+      <PlacedAsset v-if="currentlyMovedObject" :asset="currentlyMovedObject" />
+    </Teleport>
+  </template>
+  <!-- <component ref="currentlyMovedEntity" v-if="currentlyMovedObject" :is="currentlyMovedObject.type"
+        :src="currentlyMovedObject.src" /> -->
+
+  <a-entity id="placed-objects" ref="placedObjectsEntity">
+    <a-entity v-for="placedObject in placedObjects" :key="placedObject.placedObjectId"
+      :position="arrToCoordString(placedObject.position)"
+      :rotation="arrToCoordString(quaternionTupleToAframeRotation(placedObject.orientation ?? [0, 0, 0, 1]))"
+      :id="placedObject.placedObjectId">
+      <!-- <a-sphere color="red" position="0 1 0" /> -->
+      <PlacedAsset v-if="placedObject.type === 'asset' && placedObject.asset" :asset="placedObject.asset" />
+      <!-- <component @click="selectEntity(placedObject.placedObjectId, $event)" class="clickable"
+            :box-helper="`enabled: ${currentlySelectedPlacedObjectId === placedObject.placedObjectId};`"
+            :is="placedObject.type"
+            :src="placedObject.asset?.generatedName" /> -->
+    </a-entity>
+  </a-entity>
+
+  <!-- Asset picker -->
+  <Dialog ref="dropZoneRef" :open="assetPickerIsOpen" @close="assetPickerIsOpen = false" class="relative z-50">
+    <div class="fixed inset-0 flex w-screen items-center justify-center p-40">
+      <!-- <div v-if="isOverDropZone"
+          class="absolute top-0 left-0 bg-slate-50 opacity-90 w-screen h-screen pointer-events-none z-10 flex items-center justify-center">
+          Drop
+          your files here</div> -->
+
+      <DialogPanel
+        class="w-full h-full transform rounded-2xl bg-white p-4 text-left align-middle shadow-xl transition-all">
+        <div class="h-full overflow-y-auto">
+          <DialogTitle>Pick an asset and place it in the scene</DialogTitle>
+          <!-- <DialogDescription>Pick it!</DialogDescription> -->
+          <AssetLibrary :assets="assets" @assetPicked="pickAsset" />
+
+          <!-- <div class="flex flex-row flex-wrap ">
+              <div v-for="asset in assets" :key="asset.assetId" class="basis-1/4 cursor-pointer p-1"
+                @click="pickAsset(asset.assetType, asset.location + asset.generatedName)">
+                <div class="card card-compact bg-base-100 shadow-xl">
+                  <figure class="h-40">
+                    <img v-if="asset.assetType === 'a-image'" :src="asset.location + asset.generatedName">
+                    <embed v-if="asset.assetType === 'PdfEntity'" :src="asset.location + asset.generatedName"
+                      type="application/pdf" width="100%" height="100%">
+                  </figure>
+                  <div class="card-body">
+                    <p>{{ asset.originalFileName }}</p>
+                  </div>
+                </div>
+              </div>
+              <div class="basis-1/4 cursor-pointer p-1 flex items-center justify-center">
+                <div class="flex flex-col p-4">
+                  <button type="button" class="btn" @click="() => open">
+                    Upload a new asset
+                  </button>
+                </div>
+              </div>
+            </div> -->
+        </div>
+      </DialogPanel>
+    </div>
+  </Dialog>
+</template>
+
+<style scoped>
+#paneContainer>* {
+  display: inline-block;
+}
+</style>
+
 <script setup lang="ts">
 
 import { Pane } from 'tweakpane';
@@ -315,92 +405,3 @@ onMounted(() => {
 
 </script>
 
-<template>
-  <!-- #region Place objects -->
-  <!-- <Teleport to="#tp-ui-left">
-      <button class="p-3 text-white rounded-md cursor-pointer bg-zinc-800"
-        @click="createPlaceableObject('a-image', '/photos/joey-chacon-edbYu4vxXww-unsplash.jpg')">place photo</button>
-      <button class="p-3 text-white rounded-md cursor-pointer bg-zinc-800"
-        @click="createPlaceableObject('PdfEntity', '/documents/smallpdf_sample.pdf')">Place pdf</button>
-    </Teleport> -->
-  <!-- #endregion -->
-
-  <!-- #region Tweakpane UI -->
-  <Teleport to="#teleport-target-ui-right">
-    <div id="paneContainer" ref="paneContainer" class="flex flex-col gap-1 pointer-events-auto">
-      <div id="pane1" />
-      <div id="pane2" />
-    </div>
-  </Teleport>
-  <!-- #endregion -->
-
-  <template v-if="isAsset(currentlyMovedObject)">
-    <Teleport to="#teleport-target-aframe-cursor">
-      <PlacedAsset v-if="currentlyMovedObject" :asset="currentlyMovedObject" />
-    </Teleport>
-  </template>
-  <!-- <component ref="currentlyMovedEntity" v-if="currentlyMovedObject" :is="currentlyMovedObject.type"
-        :src="currentlyMovedObject.src" /> -->
-
-  <a-entity id="placed-objects" ref="placedObjectsEntity">
-    <a-entity v-for="placedObject in placedObjects" :key="placedObject.placedObjectId"
-      :position="arrToCoordString(placedObject.position)"
-      :rotation="arrToCoordString(quaternionTupleToAframeRotation(placedObject.orientation ?? [0, 0, 0, 1]))"
-      :id="placedObject.placedObjectId">
-      <!-- <a-sphere color="red" position="0 1 0" /> -->
-      <PlacedAsset v-if="placedObject.type === 'asset' && placedObject.asset" :asset="placedObject.asset" />
-      <!-- <component @click="selectEntity(placedObject.placedObjectId, $event)" class="clickable"
-            :box-helper="`enabled: ${currentlySelectedPlacedObjectId === placedObject.placedObjectId};`"
-            :is="placedObject.type"
-            :src="placedObject.asset?.generatedName" /> -->
-    </a-entity>
-  </a-entity>
-
-  <!-- Asset picker -->
-  <Dialog ref="dropZoneRef" :open="assetPickerIsOpen" @close="assetPickerIsOpen = false" class="relative z-50">
-    <div class="fixed inset-0 flex w-screen items-center justify-center p-40">
-      <!-- <div v-if="isOverDropZone"
-          class="absolute top-0 left-0 bg-slate-50 opacity-90 w-screen h-screen pointer-events-none z-10 flex items-center justify-center">
-          Drop
-          your files here</div> -->
-
-      <DialogPanel
-        class="w-full h-full transform rounded-2xl bg-white p-4 text-left align-middle shadow-xl transition-all">
-        <div class="h-full overflow-y-auto">
-          <DialogTitle>Pick an asset and place it in the scene</DialogTitle>
-          <!-- <DialogDescription>Pick it!</DialogDescription> -->
-          <AssetLibrary :assets="assets" @assetPicked="pickAsset" />
-
-          <!-- <div class="flex flex-row flex-wrap ">
-              <div v-for="asset in assets" :key="asset.assetId" class="basis-1/4 cursor-pointer p-1"
-                @click="pickAsset(asset.assetType, asset.location + asset.generatedName)">
-                <div class="card card-compact bg-base-100 shadow-xl">
-                  <figure class="h-40">
-                    <img v-if="asset.assetType === 'a-image'" :src="asset.location + asset.generatedName">
-                    <embed v-if="asset.assetType === 'PdfEntity'" :src="asset.location + asset.generatedName"
-                      type="application/pdf" width="100%" height="100%">
-                  </figure>
-                  <div class="card-body">
-                    <p>{{ asset.originalFileName }}</p>
-                  </div>
-                </div>
-              </div>
-              <div class="basis-1/4 cursor-pointer p-1 flex items-center justify-center">
-                <div class="flex flex-col p-4">
-                  <button type="button" class="btn" @click="() => open">
-                    Upload a new asset
-                  </button>
-                </div>
-              </div>
-            </div> -->
-        </div>
-      </DialogPanel>
-    </div>
-  </Dialog>
-</template>
-
-<style scoped>
-#paneContainer>* {
-  display: inline-block;
-}
-</style>
