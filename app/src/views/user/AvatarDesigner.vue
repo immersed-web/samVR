@@ -160,10 +160,10 @@ function openPopupParts(evt: Event, part: string, cIdx: number) {
           class="overflow-y-auto justify-center items-center pointer-events-auto join join-vertical bg-slate-200 p-2">
           <div class="join-item w-full">
             <div class="grid grid-cols-3 items-center gap-2">
-              <span class="label-text text-capitalize">Skin color</span>
+              <span class="label-text text-capitalize font-semibold">Skin color</span>
               <div></div>
               <div>
-                <button class="btn btn-xs btn-circle btn-outline join-item"
+                <button class="btn btn-xs btn-circle btn-outline"
                   :style="{ 'background': skinColorIsActive ? currentSkinColor : 'transparent' }"
                   @click="popupSkin.open">
                   <svg v-if="!skinColorIsActive" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
@@ -194,10 +194,10 @@ function openPopupParts(evt: Event, part: string, cIdx: number) {
             <template v-if="avatarAssets[key].length > 1">
               <div class="join-item w-full">
                 <div class="grid grid-cols-3 items-center gap-2">
-                  <span class="label-text text-capitalize">{{ key }}</span>
-                  <div class="flex items-center mt-1 bg-white join">
+                  <span class="label-text text-capitalize font-semibold">{{ key }}</span>
+                  <div class="flex bg-white join join-horizontal h-full items-stretch">
                     <button @click="changeClothingIdx(key, -1)"
-                      class="text-slate-700 pl-2 pr-2  hover:bg-slate-200 m-0 h-full join-item">
+                      class="text-slate-700 pl-2 pr-2  hover:bg-slate-200 m-0 join-item">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
                         <path fill-rule="evenodd"
                           d="M17 10a.75.75 0 0 1-.75.75H5.612l4.158 3.96a.75.75 0 1 1-1.04 1.08l-5.5-5.25a.75.75 0 0 1 0-1.08l5.5-5.25a.75.75 0 1 1 1.04 1.08L5.612 9.25H16.25A.75.75 0 0 1 17 10Z"
@@ -252,7 +252,7 @@ function openPopupParts(evt: Event, part: string, cIdx: number) {
 
                   <div class="flex gap-2">
                     <template v-for="(_v, cIdx) in partsNrOfColors[key]" :key="cIdx">
-                      <button class="btn btn-xs btn-circle btn-outline join-item"
+                      <button class="btn btn-xs btn-circle btn-outline"
                         :style="{ 'background': customColorsIsActive[key][cIdx] ? currentColorSettings[key][cIdx] : 'transparent' }"
                         @click="openPopupParts($event, key, cIdx)">
                         <svg v-if="!customColorsIsActive[key][cIdx]" xmlns="http://www.w3.org/2000/svg"
