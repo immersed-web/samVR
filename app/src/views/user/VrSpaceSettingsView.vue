@@ -240,12 +240,13 @@
         <div class="sticky top-2">
           <VrSpacePreview class="border rounded-md overflow-hidden" ref="vrComponentTag"
             :model-url="vrSpaceStore.worldModelUrl" :navmesh-url="vrSpaceStore.navMeshUrl"
-            :raycast="currentCursorMode !== undefined" :auto-rotate="currentCursorMode === undefined">
+            :raycastSelector="raycastSelector" :auto-rotate="currentCursorMode === undefined">
             <a-entity id="vr-portals">
               <template v-for="placedObject in vrSpaceStore.currentVrSpace?.dbData.placedObjects"
                 :key="placedObject.placedObjectId">
-                <VrSpacePortal v-if="placedObject.type === 'vrPortal'" :position="placedObject.position?.join(' ')"
-                  :vr-portal="placedObject.vrPortal" :label="placedObject.vrPortal?.name" />
+                <VrSpacePortal @click.stop="triggerCursorClick" v-if="placedObject.type === 'vrPortal'"
+                  :position="placedObject.position?.join(' ')" :vr-portal="placedObject.vrPortal"
+                  class="selectable-object" :label="placedObject.vrPortal?.name" />
               </template>
             </a-entity>
 
@@ -341,12 +342,16 @@ import { arrToCoordString } from '@/modules/3DUtils';
 type ExtractEmitData<T extends string, emitUnion extends (...args: any[]) => void> = T extends Parameters<emitUnion>[0] ? Parameters<emitUnion>[1] : never
 type ScreenshotPayload = ExtractEmitData<'screenshot', ComponentInstance<typeof VrSpacePreview>['$emit']>
 
-const { setCursorMode, currentCursorMode, setCursorEntityRef, onCursorClick, currentCursorIntersection } = useCurrentCursorIntersection();
+const { setCursorMode, currentCursorMode, setCursorEntityRef, onCursorClick, currentCursorIntersection, triggerCursorClick } = useCurrentCursorIntersection();
 watch(currentCursorIntersection, (intersection) => {
   if (currentCursorMode.value === 'place-spawnposition') {
     uncommitedSpawnPosition.value = intersection?.intersection.point?.toArray() ?? [0, 0, 0];
   }
 });
+const raycastSelector = computed(() => {
+  if (!currentCursorMode.value) return '.selectable-object';
+  return '.selectable-object, .raycastable-surface'
+})
 
 // Use imports
 // const router = useRouter();
