@@ -162,7 +162,7 @@
                         class="btn btn-sm btn-primary"
                         :class="{ activeRaycast: currentRaycastReason == 'spawnPosition' }"
                         v-model="currentRaycastReason"> -->
-                      <button class="btn btn-sm btn-primary" @click="setCursorMode('place-spawnpoint')">Placera
+                      <button class="btn btn-sm btn-primary" @click="setCursorMode('place-spawnposition')">Placera
                         startplats</button>
                     </div>
                     <div>
@@ -248,10 +248,10 @@
 
             <a-entity ref="spawnPosTag" v-if="spawnPosString" :position="spawnPosString">
               <a-circle color="yellow" transparent="true" rotation="-90 0 0" position="0 0.05 0"
-                :opacity="currentCursorMode === 'place-spawnpoint' ? 0.2 : 0.5"
+                :opacity="currentCursorMode === 'place-spawnposition' ? 0.2 : 0.5"
                 :radius="vrSpaceStore.currentVrSpace?.dbData.spawnRadius" />
               <a-icosahedron v-if="vrSpaceStore.panoramicPreviewUrl" detail="5" scale="-0.5 -0.5 -0.5"
-                position="0 1.1 0" :opacity="currentCursorMode === 'place-spawnpoint' ? 0.5 : 1.0"
+                position="0 1.1 0" :opacity="currentCursorMode === 'place-spawnposition' ? 0.5 : 1.0"
                 :material="`shader: pano-portal; warpParams: 3 0.9; src: ${vrSpaceStore.panoramicPreviewUrl};`" />
             </a-entity>
             <a-entity id="teleport-target-aframe-cursor" ref="cursorEntity">
@@ -266,7 +266,7 @@
           <button v-if="currentCursorMode" class="btn btn-sm btn-circle" @click="setCursorMode(undefined)">
             <span class="material-icons">close</span>
           </button>
-          <button class="btn btn-accent" @click="isRaycastingActive = !isRaycastingActive;">toggle raycasting</button>
+          <!-- <button class="btn btn-accent" @click="isRaycastingActive = !isRaycastingActive;">toggle raycasting</button> -->
           <template v-if="vrSpaceStore.currentVrSpace?.dbData.worldModelAsset">
             <h4>Interagera med VR-scenen</h4>
             <div class="grid grid-cols-2 gap-2">
@@ -331,7 +331,7 @@ import { getAssetUrl, uploadFileData } from '@/modules/utils';
 import VrSpacePortal from '@/components/entities/VrSpacePortal.vue';
 import AutoComplete from '@/components/AutoComplete.vue';
 import { useCurrentCursorIntersection } from '@/composables/vrSpaceComposables';
-import type { Entity, THREE } from 'aframe';
+import { THREE, type Entity } from 'aframe';
 import { arrToCoordString } from '@/modules/3DUtils';
 
 // TODO: refine/find alternative way to get these types so we get intellisense for the emit key
@@ -340,7 +340,7 @@ type ScreenshotPayload = ExtractEmitData<'screenshot', ComponentInstance<typeof 
 
 const { setCursorMode, currentCursorMode, setCursorEntityRef, onCursorClick, currentCursorIntersection } = useCurrentCursorIntersection();
 watch(currentCursorIntersection, (intersection) => {
-  if (currentCursorMode.value === 'place-spawnpoint') {
+  if (currentCursorMode.value === 'place-spawnposition') {
     uncommitedSpawnPosition.value = intersection?.intersection.point?.toArray() ?? [0, 0, 0];
   }
 });
@@ -386,7 +386,7 @@ onCursorClick(async (e) => {
         orientation: new THREE.Quaternion().identity().toArray() as [number, number, number, number],
       });
       break;
-    case 'place-spawnpoint':
+    case 'place-spawnposition':
       if (!vrSpaceStore.writableVrSpaceState) return;
       hideGizmos.value = true;
       vrSpaceStore.writableVrSpaceState.dbData.spawnPosition = point;

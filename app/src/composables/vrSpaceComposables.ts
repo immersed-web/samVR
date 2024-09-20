@@ -15,7 +15,7 @@ function setCursorIntersection(intersectionData: RayIntersectionData | undefined
   // console.log('currentCursor updated:', intersectionData);
   writableIntersection.value = intersectionData;
 }
-export type CursorMode = `place-${PlacedObject['type'] | 'spawnpoint'}` | 'teleport' | 'enterFirstPersonView' | 'hover' | undefined
+export type CursorMode = `place-${PlacedObject['type'] | 'spawnposition'}` | 'teleport' | 'enterFirstPersonView' | 'hover' | undefined
 
 const currentCursorMode = ref<CursorMode>();
 function setCursorMode(mode: CursorMode) {
