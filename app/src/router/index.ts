@@ -67,7 +67,7 @@ const router = createRouter({
           component: () => import('@/views/public/StreamListView.vue'),
         },
         {
-          path: 'vrSpace',
+          path: 'vr',
           name: '',
           meta: { requiredRole: 'guest', requiredConnectionType: 'client', breadcrumb: 'VR-scener' },
           children: [
@@ -76,6 +76,12 @@ const router = createRouter({
               name: 'vrList',
               meta: { breadcrumbIgnore: true },
               component: () => import('@/views/public/VrListView.vue'),
+            },
+            {
+              path: 'avatar',
+              name: 'avatarDesigner',
+              meta: { breadcrumb: 'Min avatar' },
+              component: () => import('@/views/user/AvatarDesigner.vue'),
             },
             {
               path: ':vrSpaceId/edit',
@@ -92,12 +98,6 @@ const router = createRouter({
             //   component: () => import('@/views/user/VrSpaceSceneView.vue'),
             // },
           ],
-        },
-        {
-          path: 'avatar',
-          name: 'avatarDesigner',
-          meta: { breadcrumb: 'Min avatar' },
-          component: () => import('@/views/user/AvatarDesigner.vue'),
         },
       ],
     },
