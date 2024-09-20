@@ -116,10 +116,21 @@ export function useSelectedEntity(entity: typeof selectedEntity | undefined) {
   }
 
   return {
-    setSelectedEntity: setSelectedEntityRef,
+    setSelectedEntityRef,
     position,
     rotation,
     scale,
+  }
+}
+
+const selectedPlacedObject = ref<PlacedObject>();
+const placedObjectRotation = ref<THREE.Vector3Tuple>();
+const placedObjectPosition = ref<THREE.Vector3Tuple>();
+const placedObjectScale = ref<THREE.Vector3Tuple>();
+export function useSelectedPlacedObject() {
+
+  return {
+
   }
 }
 
