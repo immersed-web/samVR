@@ -12,12 +12,12 @@ import {
   ListboxButton,
   ListboxOptions,
   ListboxOption,
-} from '@headlessui/vue'
-import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue'
+} from '@headlessui/vue';
+import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue';
 
 
 import { Vue3ColorPicker } from '@cyhnkckali/vue3-color-picker';
-import "@cyhnkckali/vue3-color-picker/dist/style.css"
+import '@cyhnkckali/vue3-color-picker/dist/style.css';
 import WaitForAframe from '@/components/WaitForAframe.vue';
 import { avatarAssets, type AvatarDesign, defaultAvatarDesign } from 'schemas';
 
@@ -27,7 +27,7 @@ const connectionStore = useConnectionStore();
 
 onMounted(() => {
   loadAvatarFromStorage();
-})
+});
 
 // const avatarAssets = {
 //   hands: ['hands_basic_left'],
@@ -51,7 +51,7 @@ const skinParts = ['hands', 'heads', 'torsos'];
 
 
 // const currentAvatarSettings = reactive<AvatarDesign>({ skinColor: '', parts: Object.fromEntries(Object.entries(avatarAssets).map(([k, p]) => [k as keyof typeof avatarAssets, { model: p[0], colors: [] }])) })
-const currentAvatarSettings = reactive<AvatarDesign>(defaultAvatarDesign)
+const currentAvatarSettings = reactive<AvatarDesign>(defaultAvatarDesign);
 
 watch(() => currentAvatarSettings, () => saveAvatarSettingsToStorage(), { deep: true });
 function saveAvatarSettingsToStorage() {
@@ -84,7 +84,7 @@ const skinColorIsActive = ref(false);
 function onColorPicked(part: string, colorIdx: number, color: string) {
   console.log('color picked', part, colorIdx, color);
   currentAvatarSettings.parts[part].colors[colorIdx] = color;
-  customColorsIsActive[part][colorIdx] = true
+  customColorsIsActive[part][colorIdx] = true;
 }
 
 function setDefaultColors(part: string, colors) {
@@ -99,11 +99,11 @@ watch([skinColorIsActive, currentSkinColor], ([active, newColor]) => {
   } else {
     currentAvatarSettings.skinColor = newColor;
   }
-})
+});
 
 function onCustomColorActiveChanged(part: string, colorIdx: number, active: boolean) {
-  console.log(avatarAssets)
-  console.log(active, currentAvatarSettings.parts[part].colors[colorIdx])
+  console.log(avatarAssets);
+  console.log(active, currentAvatarSettings.parts[part].colors[colorIdx]);
   if (!active || !currentColorSettings[part][colorIdx]) {
     currentAvatarSettings.parts[part].colors[colorIdx] = '';
   } else {
@@ -111,9 +111,9 @@ function onCustomColorActiveChanged(part: string, colorIdx: number, active: bool
   }
 }
 
-const mouthFlipAssets = ref(['flip_a_e_i', 'flip_b_m_p', 'flip_c_d_n_s_t_x_y_z', 'flip_e', 'flip_f_v', 'flip_i_ch_sh', 'flip_l', 'flip_o', 'flip_r', 'flip_th', 'flip_u'])
+const mouthFlipAssets = ref(['flip_a_e_i', 'flip_b_m_p', 'flip_c_d_n_s_t_x_y_z', 'flip_e', 'flip_f_v', 'flip_i_ch_sh', 'flip_l', 'flip_o', 'flip_r', 'flip_th', 'flip_u']);
 
-const partsNrOfColors = reactive(Object.fromEntries(Object.keys(avatarAssets).map(k => [k, 0])))
+const partsNrOfColors = reactive(Object.fromEntries(Object.keys(avatarAssets).map(k => [k, 0])));
 function setNrOfCustomColors(part: string, evt: CustomEvent) {
   // console.log(evt, part);
   const entity = evt.target as Entity;
@@ -124,8 +124,8 @@ function setNrOfCustomColors(part: string, evt: CustomEvent) {
 
 function changeClothingIdx(partType: keyof typeof avatarAssets, offset: number) {
   const partList = avatarAssets[partType];
-  const l = avatarAssets[partType].length
-  const modelName = currentAvatarSettings.parts[partType].model
+  const l = avatarAssets[partType].length;
+  const modelName = currentAvatarSettings.parts[partType].model;
   // @ts-ignore
   let idx = partList.indexOf(modelName);
   if (idx === -1) {
@@ -140,21 +140,22 @@ function changeClothingIdx(partType: keyof typeof avatarAssets, offset: number) 
   currentAvatarSettings.parts[partType].model = newModelName;
 }
 
-const popupSkin = ref<InstanceType<typeof PopUp> | null>(null)
-const popupParts = ref<InstanceType<typeof PopUp> | null>(null)
-const popupPartsKeys = ref<{ part: string, cIdx: number } | null>(null)
+const popupSkin = ref<InstanceType<typeof PopUp> | null>(null);
+const popupParts = ref<InstanceType<typeof PopUp> | null>(null);
+const popupPartsKeys = ref<{ part: string, cIdx: number } | null>(null);
 
 function openPopupParts(evt: Event, part: string, cIdx: number) {
-  popupParts.value?.open(evt)
-  popupPartsKeys.value = { part, cIdx }
+  popupParts.value?.open(evt);
+  popupPartsKeys.value = { part, cIdx };
 }
 
 </script>
 
 <template>
   <WaitForAframe>
-    <UIOverlay class="">
-      <template v-slot:left>
+    <div class="grid grid-cols-2 gap-2">
+      <!-- COLUMN 1 -->
+      <div class="join join-vertical w-full">
         <div
           class="overflow-y-auto grid justify-center grid-cols-[auto_auto_auto] items-center gap-2 pointer-events-auto ">
           <div class="col-start-1 text-center">
@@ -176,8 +177,8 @@ function openPopupParts(evt: Event, part: string, cIdx: number) {
             </button>
             <PopUp ref="popupSkin" class="bg-white rounded-xl">
               <Vue3ColorPicker v-model="currentSkinColor" @update:model-value="skinColorIsActive = true" mode="solid"
-                inputType="RGB" type="HEX" :showColorList="false" :showAlpha="false" :showEyeDrop="false"
-                :showInputMenu="false" :showInputSet="false" />
+                input-type="RGB" type="HEX" :show-color-list="false" :show-alpha="false" :show-eye-drop="false"
+                :show-input-menu="false" :show-input-set="false" />
               <label class="label cursor-pointer">
                 <span class="label-text">Color active</span>
                 <input type="checkbox" class="toggle"
@@ -210,7 +211,7 @@ function openPopupParts(evt: Event, part: string, cIdx: number) {
                         </span>
                       </ListboxButton>
 
-                      <transition leave-active-class="transition duration-100 ease-in" leave-from-class="opacity-100"
+                      <Transition leave-active-class="transition duration-100 ease-in" leave-from-class="opacity-100"
                         leave-to-class="opacity-0">
                         <ListboxOptions
                           class="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-10">
@@ -231,7 +232,7 @@ function openPopupParts(evt: Event, part: string, cIdx: number) {
                             </li>
                           </ListboxOption>
                         </ListboxOptions>
-                      </transition>
+                      </Transition>
                     </div>
                   </Listbox>
 
@@ -262,7 +263,6 @@ function openPopupParts(evt: Event, part: string, cIdx: number) {
                       </svg>
                     </button>
                   </div>
-
                 </div>
               </template>
             </template>
@@ -270,8 +270,8 @@ function openPopupParts(evt: Event, part: string, cIdx: number) {
           <PopUp ref="popupParts" class="bg-white rounded-xl">
             <Vue3ColorPicker v-model="currentColorSettings[popupPartsKeys!.part][popupPartsKeys!.cIdx]"
               @update:model-value="onColorPicked(popupPartsKeys!.part, popupPartsKeys!.cIdx, currentColorSettings[popupPartsKeys!.part][popupPartsKeys!.cIdx])"
-              mode="solid" inputType="RGB" type="HEX" :showColorList="false" :showAlpha="false" :showEyeDrop="false"
-              :showInputMenu="false" :showInputSet="false" />
+              mode="solid" input-type="RGB" type="HEX" :show-color-list="false" :show-alpha="false"
+              :show-eye-drop="false" :show-input-menu="false" :show-input-set="false" />
 
             <label class="label cursor-pointer">
               <span class="label-text">Color active</span>
@@ -280,7 +280,6 @@ function openPopupParts(evt: Event, part: string, cIdx: number) {
                 v-model="customColorsIsActive[popupPartsKeys!.part][popupPartsKeys!.cIdx]"
                 @change="onCustomColorActiveChanged(popupPartsKeys!.part, popupPartsKeys!.cIdx, customColorsIsActive[popupPartsKeys!.part][popupPartsKeys!.cIdx])">
             </label>
-
           </PopUp>
         </div>
 
@@ -288,46 +287,50 @@ function openPopupParts(evt: Event, part: string, cIdx: number) {
           <button class="p-3 text-white rounded-xl bg-slate-800" @click="saveAvatarSettingsToStorage">save</button>
           <button class="p-3 text-white rounded-xl bg-slate-800" @click="loadAvatarFromStorage">load</button>
         </div> -->
-      </template>
-    </UIOverlay>
+      </div>
 
-    <!-- <div class="absolute top-0 right-0 z-50 h-screen p-10 overflow-y-scroll">
+      <!-- <div class="absolute top-0 right-0 z-50 h-screen p-10 overflow-y-scroll">
       <pre class="text-xs">{{ currentColorSettings }}</pre>
       <pre class="text-xs">{{ currentAvatarSettings }}</pre>
     </div> -->
 
-    <a-scene ref="sceneTag" style="width: 100vw; height: 100vh;" cursor="fuse:false; rayOrigin:mouse;"
-      raycaster="objects: .clickable" xr-mode-ui="enabled: false;">
-      <a-assets v-once timeout="25000">
-        <template v-for="(fileNames, prop) in avatarAssets" :key="prop">
-          <a-asset-item :id="`${prop}-${idx}`" v-for="(fileName, idx) in fileNames" :key="fileName"
-            :src="`/avatar/${prop}/${fileName}.glb`" />
-        </template>
-      </a-assets>
-      <a-entity camera look-controls="enabled: false" camera-controls></a-entity>
-      <a-sky color="skyblue"></a-sky>
-      <a-entity laser-controls="hand: left" raycaster="objects: .clickable"></a-entity>
-      <a-entity laser-controls="hand: right" raycaster="objects: .clickable"></a-entity>
-
-
-      <a-entity position="0 0.2 0">
-        <template v-for="(modelSetting, key) in currentAvatarSettings.parts" :key="key">
-          <template v-if="modelSetting.model">
-            <template v-if="skinParts.includes(key)">
-              <a-gltf-model make-gltf-swappable
-                :src="`#${key}-${avatarAssets[key as keyof typeof avatarAssets].indexOf(modelSetting.model)}`"
-                :model-color="`colors: ${currentAvatarSettings.skinColor ?? ''}; materialName: skin`" />
-              <a-gltf-model v-if="key === 'hands' && modelSetting.model" make-gltf-swappable
-                :src="`#${key}-${avatarAssets[key as keyof typeof avatarAssets].indexOf(modelSetting.model)}`"
-                :model-color="`colors: ${currentAvatarSettings.skinColor ?? ''}; materialName: skin`" scale="-1 1 1" />
+      <!-- RIGHT COLUMN -->
+      <div>
+        <a-scene embedded ref="sceneTag" cursor="fuse:false; rayOrigin:mouse;" raycaster="objects: .clickable"
+          xr-mode-ui="enabled: false;">
+          <a-assets v-once timeout="25000">
+            <template v-for="(fileNames, prop) in avatarAssets" :key="prop">
+              <a-asset-item :id="`${prop}-${idx}`" v-for="(fileName, idx) in fileNames" :key="fileName"
+                :src="`/avatar/${prop}/${fileName}.glb`" />
             </template>
-            <a-gltf-model v-else make-gltf-swappable @nrOfCustomColors="setNrOfCustomColors(key, $event)"
-              :src="`#${key}-${avatarAssets[key as keyof typeof avatarAssets].indexOf(modelSetting.model)}`"
-              :model-color="`colors: ${modelSetting.colors ?? ''};`" />
-          </template>
-        </template>
-      </a-entity>
-    </a-scene>
+          </a-assets>
+          <a-entity camera look-controls="enabled: false" camera-controls />
+          <a-sky color="skyblue" />
+          <a-entity laser-controls="hand: left" raycaster="objects: .clickable" />
+          <a-entity laser-controls="hand: right" raycaster="objects: .clickable" />
+
+
+          <a-entity position="0 0.2 0">
+            <template v-for="(modelSetting, key) in currentAvatarSettings.parts" :key="key">
+              <template v-if="modelSetting.model">
+                <template v-if="skinParts.includes(key)">
+                  <a-gltf-model make-gltf-swappable
+                    :src="`#${key}-${avatarAssets[key as keyof typeof avatarAssets].indexOf(modelSetting.model)}`"
+                    :model-color="`colors: ${currentAvatarSettings.skinColor ?? ''}; materialName: skin`" />
+                  <a-gltf-model v-if="key === 'hands' && modelSetting.model" make-gltf-swappable
+                    :src="`#${key}-${avatarAssets[key as keyof typeof avatarAssets].indexOf(modelSetting.model)}`"
+                    :model-color="`colors: ${currentAvatarSettings.skinColor ?? ''}; materialName: skin`"
+                    scale="-1 1 1" />
+                </template>
+                <a-gltf-model v-else make-gltf-swappable @nr-of-custom-colors="setNrOfCustomColors(key, $event)"
+                  :src="`#${key}-${avatarAssets[key as keyof typeof avatarAssets].indexOf(modelSetting.model)}`"
+                  :model-color="`colors: ${modelSetting.colors ?? ''};`" />
+              </template>
+            </template>
+          </a-entity>
+        </a-scene>
+      </div>
+    </div>
   </WaitForAframe>
 </template>
 

@@ -1,29 +1,46 @@
 <template>
-  <div class="navbar bg-base-200">
+  <div class="navbar bg-base-200 px-4 xl:px-8">
     <div class="navbar-start">
-      <a class="btn btn-ghost text-xl w-28 m-1" @click="goHome">SamVR</a>
+      <!-- <div class="flex flex-col m-1"> -->
+      <!-- <a class="btn btn-ghost btn-sm text-xl w-28" @click="goHome">SamVR</a> -->
+      <!-- <RouterLink :to="{ path: '/' }" class="text-xl">
+        SamVR
+      </RouterLink> -->
       <Breadcrumbs />
+      <!-- </div> -->
     </div>
     <div class="navbar-center hidden lg:flex">
-      <div class="text-xs">{{ authStore.username }}: {{ authStore.userId }}</div>
+      <!-- <div class="text-xs">
+        {{ authStore.username }}: {{ authStore.userId }}
+      </div> -->
       <RouterLink :to="{ name: 'vrList' }">
         <button class="btn btn-ghost">
           VR-scener
         </button>
       </RouterLink>
+      <RouterLink :to="{ name: 'avatarDesigner' }">
+        <button class="btn btn-ghost">
+          Min avatar
+        </button>
+      </RouterLink>
 
-      <RouterLink :to="{ name: 'streamList' }">
+      <!-- <RouterLink :to="{ name: 'streamList' }">
         <button class="btn btn-ghost">
           Strömmar
         </button>
-      </RouterLink>
+      </RouterLink> -->
 
       <!-- <div class="divider divider-horizontal" /> -->
 
       <div v-if="hasAtLeastSecurityRole(authStore.role, 'admin')">
-        <RouterLink :to="{ name: 'adminHome' }">
+        <!-- <RouterLink :to="{ name: 'adminHome' }">
           <button class="btn btn-neutral btn-sm ml-4">
             Admin
+          </button>
+        </RouterLink> -->
+        <RouterLink :to="{ name: 'adminUserManager' }">
+          <button class="btn btn-neutral btn-sm ml-4">
+            Hantera användare
           </button>
         </RouterLink>
       </div>

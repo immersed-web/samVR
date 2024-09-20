@@ -1,16 +1,22 @@
 <template>
-  <UserBanner>Hej&nbsp; </UserBanner>
-  <div class="flex gap-2 flex-col items-start my-6">
+  <h1 class="text-3xl font-bold">
+    Välkommen {{ authStore.username }}!
+  </h1>
 
-    <RouterLink :to="{ name: 'streamList' }">
-      <button class="btn btn-primary">Till Kamerasändningarna ></button>
-    </RouterLink>
-    <RouterLink :to="{ name: 'vrList' }">
-      <button class="btn btn-primary">Till Vr-miljöerna ></button>
-    </RouterLink>
+  <div class="space-y-2">
+    <h2 class="text-2xl font-bold">
+      VR-scener
+    </h2>
+    <VRList :max="6" />
   </div>
 </template>
 
 <script setup lang="ts">
-import UserBanner from '@/components/UserBanner.vue';
+// import UserBanner from '@/components/UserBanner.vue';
+import ColumnCenter from '@/components/layout/ColumnCenter.vue';
+import VRList from '@/components/VRList.vue';
+import { useAuthStore } from '@/stores/authStore';
+
+const authStore = useAuthStore();
 </script>
+
