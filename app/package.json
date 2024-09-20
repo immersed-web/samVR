@@ -19,7 +19,7 @@
     "@tweakpane/core": "^2.0.3",
     "@types/lodash-es": "^4.17.12",
     "@vueuse/components": "^10.11.0",
-    "@vueuse/core": "^10.10.0",
+    "@vueuse/core": "^11.1.0",
     "aframe": "^1.6.0",
     "aframe-atlas-uvs-component": "^3.0.0",
     "aframe-blink-controls": "^0.4.3",

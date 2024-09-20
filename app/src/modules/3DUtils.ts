@@ -66,6 +66,10 @@ export function generateSpawnPosition(spawnPosition: THREE.Vector3Tuple, spawnRa
   return spawnPointVector;
 }
 
+export function isEntity(obj: object & { isEntity?: boolean }): obj is Entity {
+  return obj.isEntity ?? false;
+}
+
 export function arrToCoordString(arr: Readonly<Array<unknown>>) {
   const constructedString = arr.join(' ');
   return constructedString;

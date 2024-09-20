@@ -5,16 +5,9 @@
         <span class="label-text mr-1 font-bold">visa navmesh</span>
         <input type="checkbox" class="toggle toggle-xs" v-model="showNavMesh">
       </label>
-      <!-- <div>
-        <button class="btn btn-xs btn-primary" @click="attachOrbitControls">attach orbitctls</button>
-        <button class="btn btn-xs btn-primary" @click="removeOrbitControls">remove orbitctls</button>
-      </div>
-      <div>
-        <button class="btn btn-xs btn-primary" @click="attachFirstPersonComponents">attach fps comps</button>
-        <button class="btn btn-xs btn-primary" @click="removeFirstPersonComponents">remove fps comps</button>
-      </div> -->
     </div>
-    <a-scene embedded class=" min-h-96" ref="sceneTag" id="ascene" xr-mode-ui="enabled: false">
+    <a-scene embedded class="min-h-96" ref="sceneTag" id="ascene" xr-mode-ui="enabled: false"
+      @raycast-update="setCursorIntersection($event.detail)">
       <a-assets timeout="20000">
         <a-asset-item id="icon-font"
           src="https://fonts.gstatic.com/s/materialicons/v70/flUhRq6tzZclQEJ-Vdg-IuiaDsNa.woff" />
@@ -25,11 +18,11 @@
 
       <!-- The model -->
       <a-entity>
-        <a-gltf-model v-if="props.modelUrl" @model-loaded="onModelLoaded" id="model" ref="modelTag"
-          :src="props.modelUrl" />
-        <a-gltf-model id="navmesh" ref="navmeshTag" @model-loaded="onNavMeshLoaded" :visible="showNavMesh"
-          :model-opacity="`opacity: ${navMeshOpacity}`" :src="props.navmeshUrl ? props.navmeshUrl : props.modelUrl"
-          @raycast-change="onIntersection" @raycast-out="onNoIntersection" @click="on3DClick" />
+        <a-gltf-model class="raycastable-surface" v-if="props.modelUrl" @model-loaded="onModelLoaded" id="model"
+          ref="modelTag" :src="props.modelUrl" @click.stop="triggerCursorClick" />
+        <a-gltf-model id="navmesh" class="raycastable-surface" ref="navmeshTag" @model-loaded="onNavMeshLoaded"
+          :visible="showNavMesh" :model-opacity="`opacity: ${navMeshOpacity}`"
+          :src="props.navmeshUrl ? props.navmeshUrl : props.modelUrl" @click.stop="triggerCursorClick" />
       </a-entity>
     </a-scene>
   </div>
@@ -42,9 +35,12 @@ import { useTimeoutFn, usePointerLock } from '@vueuse/core';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import registerAframeComponents from '@/ts/aframe/components';
 import { defaultHeightOverGround } from 'schemas';
+import { useCurrentCursorIntersection } from '@/composables/vrSpaceComposables';
 registerAframeComponents();
 
 const vrSpaceStore = useVrSpaceStore();
+
+const { setCursorIntersection, isCursorOnNavmesh, triggerCursorClick } = useCurrentCursorIntersection();
 
 const { lock, unlock, element } = usePointerLock();
 
@@ -52,20 +48,25 @@ const props = withDefaults(defineProps<{
   modelUrl?: string,
   navmeshUrl?: string,
   autoRotate?: boolean,
-  raycast?: boolean,
+  raycastSelector?: string,
 }>(), {
   modelUrl: undefined,
   navmeshUrl: undefined,
   autoRotate: true,
-  raycast: false,
+  raycastSelector: undefined,
 });
 
+onMounted(() => {
+  if (props.raycastSelector) {
+    attachRaycaster(props.raycastSelector)
+  }
+});
 
-const emit = defineEmits<{
-  'raycastClick': [point: [number, number, number]]
-  'raycastHover': [point: [number, number, number]]
-  'screenshot': [canvas: HTMLCanvasElement]
-}>();
+// const emit = defineEmits<{
+//   'raycastClick': [point: [number, number, number]]
+//   'raycastHover': [point: [number, number, number]]
+//   'screenshot': [canvas: HTMLCanvasElement]
+// }>();
 
 const firstPersonViewActive = ref(false);
 
@@ -81,7 +82,6 @@ const sceneTag = ref<Scene>();
 const modelTag = ref<Entity>();
 const navmeshTag = ref<Entity>();
 const cameraTag = ref<Entity>();
-// const spawnPosTag = ref<Entity>();
 
 const showNavMesh = ref(false);
 const navMeshOpacity = computed(() => {
@@ -108,24 +108,74 @@ watch(() => props.autoRotate, (rotate) => {
   }
 });
 
-watch(() => props.raycast, (raycast) => {
-  if (raycast) {
-    // the  raycaster seem to keep a reference to the intersected object which leads to us missing "new" intersection after reattaching raycaster-listen.
-    // This is a hacky work-around to "reset" the raycasting logic
-    sceneTag.value?.setAttribute('raycaster', 'objects', '#navmesh');
-    sceneTag.value?.setAttribute('cursor', { fuse: false, rayOrigin: 'mouse' });
-    navmeshTag.value?.setAttribute('raycaster-listen', true);
+watch(() => props.raycastSelector, (selector) => {
+  if (selector) {
+    attachRaycaster(selector);
   } else {
-    sceneTag.value?.removeAttribute('cursor');
-    sceneTag.value?.removeAttribute('raycaster');
-    navmeshTag.value?.removeAttribute('raycaster-listen');
+    removeRaycaster();
   }
 });
 
-
-function lockCanvas() {
+function lockMouseOnCanvas() {
   lock(sceneTag.value!.canvas);
 }
+const navmeshId = computed(() => {
+  return vrSpaceStore.currentVrSpace?.dbData.navMeshAssetId !== undefined ? 'navmesh' : 'model';
+});
+
+const skyColor = computed(() => {
+  const storeSkyColor = vrSpaceStore.currentVrSpace?.dbData.skyColor;
+  if (!storeSkyColor) return 'lightskyblue';
+  return storeSkyColor;
+});
+
+const modelCenter = new THREE.Vector3();
+function onModelLoaded() {
+  if (modelTag.value && cameraTag.value) {
+    console.log('centering camera on model bbox');
+    const obj3D = modelTag.value.getObject3D('mesh');
+
+    const bbox = new THREE.Box3().setFromObject(obj3D);
+    bbox.getCenter(modelCenter);
+    attachOrbitControls();
+  }
+}
+
+function attachOrbitControls() {
+  if (!cameraTag.value) return;
+  cameraTag.value.setAttribute('position', '0 0 0');
+  let orbitControlSettings = `autoRotate: true; rotateSpeed: 1; initialPosition: ${modelCenter.x} ${modelCenter.y + 2} ${modelCenter.z + 5};`;
+  orbitControlSettings += `target:${modelCenter.x} ${modelCenter.y} ${modelCenter.z};`;
+  cameraTag.value.setAttribute('orbit-controls', orbitControlSettings);
+}
+
+function removeOrbitControls() {
+  if (!cameraTag.value) {
+    console.warn('no cameraTag provided to remove orbit-controls from');
+    return;
+  };
+  cameraTag.value.removeAttribute('orbit-controls');
+}
+
+function attachRaycaster(selector: string) {
+  if (!sceneTag.value) {
+    console.warn('no sceneTag provided to attach raycaster to');
+  }
+// console.log('attaching raycaster to scene');
+// console.log('scene:', sceneTag.value);
+  // the raycaster seem to keep a reference to the intersected object which leads to us missing "new" intersection after reattaching raycaster-listen.
+  // This is a hacky work-around to "reset" the raycasting logic
+  sceneTag.value?.setAttribute('raycaster', 'objects', selector);
+  sceneTag.value?.setAttribute('cursor', { fuse: false, rayOrigin: 'mouse', mouseCursorStylesEnabled: true });
+  sceneTag.value?.setAttribute('raycaster-update', true);
+
+}
+function removeRaycaster() {
+  sceneTag.value?.removeAttribute('cursor');
+  sceneTag.value?.removeAttribute('raycaster');
+  sceneTag.value?.removeAttribute('raycaster-update');
+}
+
 async function enterFirstPersonView(point: THREE.Vector3Tuple) {
   console.log('enter first person triggered');
   firstPersonViewActive.value = true;
@@ -134,14 +184,14 @@ async function enterFirstPersonView(point: THREE.Vector3Tuple) {
     console.error('no cameraTag or point provided');
     return;
   }
-  camTag.removeAttribute('orbit-controls');
+  removeOrbitControls();
   camTag.setAttribute('look-controls', { reverseMouseDrag: false, reverseTouchDrag: false, pointerLockEnabled: true, })
   camTag.setAttribute('wasd-controls', { fly: false });
   point[1] += defaultHeightOverGround;
   camTag.object3D.position.set(...point);
   camTag.setAttribute('simple-navmesh-constraint', `navmesh:#${navmeshId.value}; fall:0.5; height: ${defaultHeightOverGround};`);
   const canvas = sceneTag.value!.canvas
-  canvas.addEventListener('mousedown', lockCanvas);
+  canvas.addEventListener('mousedown', lockMouseOnCanvas);
   window.addEventListener('mouseup', unlock)
 }
 
@@ -158,7 +208,7 @@ async function exitFirstPersonView() {
   await nextTick();
   attachOrbitControls();
   const canvas = sceneTag.value!.canvas
-  canvas.removeEventListener('mousedown', lockCanvas);
+  canvas.removeEventListener('mousedown', lockMouseOnCanvas);
   window.removeEventListener('mouseup', unlock)
 }
 
@@ -193,81 +243,8 @@ async function getPanoScreenshotFromPoint(point: THREE.Vector3Tuple) {
   return canvasScreenshot;
 }
 
-const navmeshId = computed(() => {
-  return vrSpaceStore.currentVrSpace?.dbData.navMeshAssetId !== undefined ? 'navmesh' : 'model';
-});
-
-onMounted(() => {
-});
-
-const skyColor = computed(() => {
-  const storeSkyColor = vrSpaceStore.currentVrSpace?.dbData.skyColor;
-  if (!storeSkyColor) return 'lightskyblue';
-  return storeSkyColor;
-});
-
-function onIntersection(evt: DetailEvent<any>) {
-  // console.log('model hovered', evt);
-  const point: THREE.Vector3 = evt.detail.intersection.point;
-  if (!point) {
-    console.error('no point from intersection event');
-    return;
-  }
-  emit('raycastHover', point.toArray());
-}
-
-function onNoIntersection(evt: DetailEvent<any>) {
-  // console.log('raycast-out');
-}
-
-function on3DClick(evt: DetailEvent<{ intersection: { point: THREE.Vector3 } }>) {
-  // console.log(evt.detail.intersection);
-  emit('raycastClick', evt.detail.intersection.point.toArray());
-}
-
-const modelCenter = new THREE.Vector3();
-function onModelLoaded(){
-  if(modelTag.value && cameraTag.value){
-    console.log('centering camera on model bbox');
-    const obj3D = modelTag.value.getObject3D('mesh');
-
-    const bbox = new THREE.Box3().setFromObject(obj3D);
-    bbox.getCenter(modelCenter);
-    attachOrbitControls();
-  }
-}
-
-function attachFirstPersonComponents() {
-  if (!cameraTag.value) return;
-  cameraTag.value.setAttribute('look-controls', 'enabled', true);
-  cameraTag.value.setAttribute('wasd-controls', { fly: true });
-}
-
-function removeFirstPersonComponents() {
-  if (!cameraTag.value) return;
-  cameraTag.value.removeAttribute('look-controls');
-  cameraTag.value.removeAttribute('wasd-controls');
-}
-
-function attachOrbitControls() {
-  if (!cameraTag.value) return;
-  cameraTag.value.setAttribute('position', '0 0 0');
-  let orbitControlSettings = `autoRotate: true; rotateSpeed: 1; initialPosition: ${modelCenter.x} ${modelCenter.y + 2} ${modelCenter.z + 5};`;
-  orbitControlSettings += `target:${modelCenter.x} ${modelCenter.y} ${modelCenter.z};`;
-  cameraTag.value.setAttribute('orbit-controls', orbitControlSettings);
-}
-
-function removeOrbitControls() {
-  if (!cameraTag.value) return;
-  cameraTag.value.removeAttribute('orbit-controls');
-  const cameraEntityPos = cameraTag.value.object3D.position;
-  const cameraObj3DPos = cameraTag.value.getObject3D('camera').position;
-  console.log('camera entity pos:', cameraEntityPos);
-  console.log('camera obj3d pos:', cameraObj3DPos);
-}
-
 function onNavMeshLoaded() {
-  // Hack to trigger update of model opacity when its loaded. The aframe component doesnt initialize properly for some reason.
+  // Hack to trigger update of model opacity when its loaded. The aframe model-opacity component doesnt initialize properly for some reason.
   navmeshTag.value?.setAttribute('model-opacity', 'opacity', navMeshOpacity.value);
 }
 
