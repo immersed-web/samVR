@@ -1,6 +1,9 @@
 <template>
   <a-entity v-bind="attrsWithoutClass">
     <a-troika-text v-if="props.label" look-at-camera :value="props.label" position="0 2.2 0" />
+    <a-troika-text look-at-camera :value="vrPortal?.vrSpaceId" position="0 2.5 0" />
+    <a-troika-text look-at-camera :value="vrPortal?.panoramicPreview?.originalFileName" position="0 2.8 0" />
+
     <a-troika-text transparent="true" fill-opacity="0.4" font-size="1.1" v-if="!allowed" look-at-camera color="red"
       value="block" font="#icon-font" position="0 1.5 0" />
 
@@ -9,9 +12,8 @@
       animation__leave="property: scale; startEvents: mouseleave; easing: easeInOutCubic; dur: 120; from: 0.6 0.6 0.6; to: 0.5 0.5 0.5"
       :class="[{ 'clickable': (props.clickable && allowed) }, $attrs.class]" transparent="true" scale="0.5 0.5 0.5"
       :opacity="allowed ? 1.0 : 0.5" material="shader: outer-glow; start: 0.3; color: 0.5 0 1;" position="0 1.5 0">
-      <a-icosahedron v-if="panoramicPreviewUrl" detail="5" scale="0.98 0.98 0.98" transparent="true"
-        :opacity="allowed ? 1.0 : 0.2"
-        :material="`shader: pano-portal; dynamicOpacity: true; warpParams: 2.8 0.5; src: ${panoramicPreviewUrl}; side:back;`">
+      <a-icosahedron ref="portalTagRef" v-if="true" detail="5" scale="0.98 0.98 0.98" transparent="true"
+        :opacity="allowed ? 1.0 : 0.2">
       </a-icosahedron>
       <a-sphere v-else color="black" transparent="true" opacity="0.9" scale="0.98 0.98 0.98" />
     </a-sphere>
@@ -21,13 +23,16 @@
 import { getAssetUrl } from '@/modules/utils';
 // import type { THREE } from 'aframe';
 import type { PlacedObjectWithIncludes } from 'database';
-import { computed, type DeepReadonly, useAttrs } from 'vue';
+import { computed, type DeepReadonly, nextTick, onMounted, ref, useAttrs, watch } from 'vue';
 import { useClientStore } from '@/stores/clientStore';
 import { omit } from 'lodash-es';
+import type { Entity } from 'aframe';
 const clientStore = useClientStore();
 const attrs = useAttrs();
 
 const attrsWithoutClass = computed(() => omit(attrs, 'class'));
+
+const portalTagRef = ref<Entity>()
 
 defineOptions({
   inheritAttrs: false,
@@ -43,9 +48,35 @@ const props = withDefaults(defineProps<{
   clickable: true
 });
 
-const panoramicPreviewUrl = computed(() => {
-  if (!props.vrPortal?.panoramicPreview) return undefined;
-  return getAssetUrl(props.vrPortal.panoramicPreview.generatedName);
+watch(() => props.vrPortal?.panoramicPreview, (panoPreview) => {
+  if (!panoPreview) {
+    portalTagRef.value?.removeAttribute('material')
+    console.log('pano shader removed');
+  } else {
+    const url = getAssetUrl(panoPreview.generatedName);
+    setPanoshader(url);
+  }
+})
+
+async function setPanoshader(url: string) {
+  // const url = getAssetUrl(panoPreview.generatedName);
+  portalTagRef.value?.removeAttribute('material');
+  await nextTick();
+  // EXTREMELY PECULIAR WHY WE NEED TO WRAP THIS IN A timeout
+  setTimeout(() => {
+    const opacity = allowed.value ? 1.0 : 0.2;
+    portalTagRef.value?.setAttribute('material', `shader: pano-portal;transparent: true; dynamicOpacity: true; opacity: ${opacity}; warpParams: 2.8 0.5; src: url(${url}); side:back;`);
+    console.log(`pano shader set with url: ${url}`);
+  }, 1);
+}
+
+onMounted(() => {
+  console.log('portalTagRef: ', portalTagRef.value);
+  console.log('portal mounted');
+  if (props.vrPortal?.panoramicPreview) {
+    const url = getAssetUrl(props.vrPortal.panoramicPreview.generatedName);
+    setPanoshader(url);
+  }
 });
 
 const allowed = computed(() => {
@@ -57,7 +88,4 @@ const allowed = computed(() => {
   return isOwner || isAllowed || isPubliclyAvailable;
 })
 
-// const emit = defineEmits<{
-//   click: [point: THREE.Vector3Tuple]
-// }>();
 </script>

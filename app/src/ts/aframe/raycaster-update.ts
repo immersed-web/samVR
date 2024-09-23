@@ -92,7 +92,7 @@ export default function () {
           if (!this.prev || !intersection.point.equals(this.prev)) {
             // console.log('emitting raycast: ', intersectionData);
             const transform = intersectionToTransform(intersectionData);
-            console.log('raycast update', transform);
+            // console.log('raycast update', transform);
             this.el.emit('raycast-update', intersectionData);
           }
           this.prev = intersection.point

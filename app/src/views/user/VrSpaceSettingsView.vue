@@ -242,13 +242,14 @@
           :model-url="vrSpaceStore.worldModelUrl" :navmesh-url="vrSpaceStore.navMeshUrl"
           :raycastSelector="raycastSelector" :auto-rotate="currentCursorMode === undefined">
           <a-entity id="vr-portals">
-            <template v-for="placedObject in vrSpaceStore.currentVrSpace?.dbData.placedObjects"
-              :key="placedObject.placedObjectId">
-              <VrSpacePortal
-                @click.stop="selectedPlacedObject = vrSpaceStore.writableVrSpaceDbData.placedObjects.find(p => p.placedObjectId === placedObject.placedObjectId)"
-                v-if="placedObject.type === 'vrPortal'" :position="placedObject.position?.join(' ')"
-                :vr-portal="placedObject.vrPortal" class="selectable-object" :label="placedObject.vrPortal?.name" />
+            <template v-for="placedObject in placedObjectsSelectFiltered" :key="placedObject.placedObjectId">
+              <VrSpacePortal @click.stop="selectedPlacedObject = placedObject" v-if="placedObject.type === 'vrPortal'"
+                :position="placedObject.position?.join(' ')" :vr-portal="placedObject.vrPortal"
+                class="selectable-object" :label="placedObject.vrPortal?.name" />
             </template>
+            <VrSpacePortal key="selected-portal" v-if="transformedSelectedObject"
+              :position="transformedSelectedObject.position?.join(' ')" :vr-portal="transformedSelectedObject.vrPortal"
+              :label="'markerad!!!!!'" />
           </a-entity>
 
           <a-entity ref="spawnPosTag" v-if="spawnPosString" :position="spawnPosString">
@@ -271,10 +272,13 @@
         <button v-if="currentCursorMode" class="btn btn-sm btn-circle" @click="setCursorMode(undefined)">
           <span class="material-icons">close</span>
         </button>
+        <input class="range range-primary w-64" v-if="selectedPosition" type="range"
+          v-model.number="selectedPosition[1]" min="0" max="40" step="0.1">
+        <pre>{{ transformedSelectedObject }}</pre>
         <pre>{{ selectedPosition }}</pre>
-        <input v-if="selectedPosition" type="range" v-model.number="selectedPosition[1]" min="0" max="15" step="0.1">
+        <!-- 
         <pre>{{ selectedPlacedObject?.position }}</pre>
-        <pre>{{ vrSpaceStore.currentVrSpace?.dbData.placedObjects.find(p => p.placedObjectId === selectedPlacedObject?.placedObjectId)?.position }}</pre>
+        <pre>{{ vrSpaceStore.currentVrSpace?.dbData.placedObjects.find(p => p.placedObjectId === selectedPlacedObject?.placedObjectId)?.position }}</pre> -->
         <!-- <button class="btn btn-accent" @click="isRaycastingActive = !isRaycastingActive;">toggle raycasting</button> -->
         <template v-if="vrSpaceStore.currentVrSpace?.dbData.worldModelAsset">
           <h4>Interagera med VR-scenen</h4>
@@ -325,7 +329,7 @@
 <script setup lang="ts">
 import AssetUpload, { type AssetUploadEmitUploadedPayload } from './AssetUpload.vue';
 import VrSpacePreview from '@/components/lobby/VrSpacePreview.vue';
-import { ref, watch, onMounted, computed, type ComponentInstance, nextTick } from 'vue';
+import { ref, watch, onMounted, computed, type ComponentInstance, nextTick, type DeepReadonly } from 'vue';
 // import { throttle } from 'lodash-es';
 import { Combobox, ComboboxInput, ComboboxOptions, ComboboxOption, ComboboxButton } from '@headlessui/vue';
 import { insertablePermissionHierarchy, type PlacedObject, type Asset, type PlacedObjectId, type VrSpaceId } from 'schemas';
@@ -348,10 +352,21 @@ import type { PlacedObjectWithIncludes } from 'database';
 type ExtractEmitData<T extends string, emitUnion extends (...args: any[]) => void> = T extends Parameters<emitUnion>[0] ? Parameters<emitUnion>[1] : never
 type ScreenshotPayload = ExtractEmitData<'screenshot', ComponentInstance<typeof VrSpacePreview>['$emit']>
 
-// const selectedEntity = ref<Entity>();
-// const { position: selectedPosition } = useSelectedEntity(selectedEntity);
-const selectedPlacedObject = ref<PlacedObjectWithIncludes>();
-const { placedObjectPosition: selectedPosition } = useSelectedPlacedObject(selectedPlacedObject);
+const selectedPlacedObject = ref<DeepReadonly<PlacedObjectWithIncludes>>();
+// const selectedPlacedObjectId = ref<PlacedObjectId>();
+// watch(selectedPlacedObjectId, (newId) => {
+//   if (!newId) {
+//     selectedPlacedObject.value = undefined;
+//     return;
+//   }
+//   const selectedPO = vrSpaceStore.currentVrSpace?.dbData.placedObjects.find(po => po.placedObjectId === newId) ?? undefined;
+//   selectedPlacedObject.value = selectedPO;
+// })
+
+const { placedObjectPosition: selectedPosition, transformedSelectedObject } = useSelectedPlacedObject(selectedPlacedObject);
+const placedObjectsSelectFiltered = computed(() => {
+  return vrSpaceStore.currentVrSpace?.dbData.placedObjects.filter(po => po.placedObjectId !== selectedPlacedObject.value?.placedObjectId) ?? [];
+})
 
 const { setCursorMode, currentCursorMode, setCursorEntityRef, onCursorClick, currentCursorIntersection, triggerCursorClick } = useCurrentCursorIntersection();
 watch(currentCursorIntersection, (intersection) => {
