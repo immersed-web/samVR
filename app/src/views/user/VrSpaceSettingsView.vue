@@ -255,7 +255,7 @@
           <a-entity ref="spawnPosTag" v-if="spawnPosString" :position="spawnPosString">
             <a-circle color="yellow" transparent="true" rotation="-90 0 0" position="0 0.05 0"
               :opacity="currentCursorMode === 'place-spawnposition' ? 0.2 : 0.5"
-              :radius="vrSpaceStore.currentVrSpace?.dbData.spawnRadius" />
+              :radius="vrSpaceStore.writableVrSpaceDbData.spawnRadius" />
             <a-icosahedron v-if="vrSpaceStore.panoramicPreviewUrl" detail="5" scale="-0.5 -0.5 -0.5"
               :position="`0 ${defaultHeightOverGround} 0`"
               :opacity="currentCursorMode === 'place-spawnposition' ? 0.5 : 1.0"
@@ -330,7 +330,7 @@
 <script setup lang="ts">
 import AssetUpload, { type AssetUploadEmitUploadedPayload } from './AssetUpload.vue';
 import VrSpacePreview from '@/components/lobby/VrSpacePreview.vue';
-import { ref, watch, onMounted, computed, type ComponentInstance, nextTick, type DeepReadonly } from 'vue';
+import { ref, watch, onMounted, computed, toRaw, toValue, type ComponentInstance, nextTick, type DeepReadonly } from 'vue';
 // import { throttle } from 'lodash-es';
 import { Combobox, ComboboxInput, ComboboxOptions, ComboboxOption, ComboboxButton } from '@headlessui/vue';
 import { insertablePermissionHierarchy, type PlacedObject, type Asset, type PlacedObjectId, type VrSpaceId, defaultHeightOverGround } from 'schemas';
@@ -348,23 +348,25 @@ import { useCurrentCursorIntersection, useSelectedEntity, useSelectedPlacedObjec
 import { THREE, type Entity } from 'aframe';
 import { arrToCoordString, isEntity } from '@/modules/3DUtils';
 import type { PlacedObjectWithIncludes } from 'database';
+import { watchDebounced } from '@vueuse/core';
 
 // TODO: refine/find alternative way to get these types so we get intellisense for the emit key
 type ExtractEmitData<T extends string, emitUnion extends (...args: any[]) => void> = T extends Parameters<emitUnion>[0] ? Parameters<emitUnion>[1] : never
 type ScreenshotPayload = ExtractEmitData<'screenshot', ComponentInstance<typeof VrSpacePreview>['$emit']>
 
 const selectedPlacedObject = ref<DeepReadonly<PlacedObjectWithIncludes>>();
-// const selectedPlacedObjectId = ref<PlacedObjectId>();
-// watch(selectedPlacedObjectId, (newId) => {
-//   if (!newId) {
-//     selectedPlacedObject.value = undefined;
-//     return;
-//   }
-//   const selectedPO = vrSpaceStore.currentVrSpace?.dbData.placedObjects.find(po => po.placedObjectId === newId) ?? undefined;
-//   selectedPlacedObject.value = selectedPO;
-// })
-
 const { placedObjectPosition: selectedPosition, transformedSelectedObject } = useSelectedPlacedObject(selectedPlacedObject);
+
+watchDebounced(transformedSelectedObject, (updatedPO, oldPO) => {
+  console.log('selectedPlacedObject changed', updatedPO, oldPO);
+  if (!updatedPO || !oldPO) {
+    return;
+  }
+  const uPO = updatedPO as PlacedObjectWithIncludes;
+  uPO.objectSettings
+  vrSpaceStore.upsertPlacedObject(uPO)
+}, { deep: true, debounce: 400, maxWait: 1500 });
+
 const placedObjectsSelectFiltered = computed(() => {
   return vrSpaceStore.currentVrSpace?.dbData.placedObjects.filter(po => po.placedObjectId !== selectedPlacedObject.value?.placedObjectId) ?? [];
 })

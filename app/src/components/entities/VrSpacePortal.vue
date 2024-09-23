@@ -66,13 +66,13 @@ async function setPanoshader(url: string) {
   setTimeout(() => {
     const opacity = allowed.value ? 1.0 : 0.2;
     portalTagRef.value?.setAttribute('material', `shader: pano-portal;transparent: true; dynamicOpacity: true; opacity: ${opacity}; warpParams: 2.8 0.5; src: url(${url}); side:back;`);
-    console.log(`pano shader set with url: ${url}`);
+    // console.log(`pano shader set with url: ${url}`);
   }, 1);
 }
 
 onMounted(() => {
-  console.log('portalTagRef: ', portalTagRef.value);
-  console.log('portal mounted');
+  // console.log('portalTagRef: ', portalTagRef.value);
+  // console.log('portal mounted');
   if (props.vrPortal?.panoramicPreview) {
     const url = getAssetUrl(props.vrPortal.panoramicPreview.generatedName);
     setPanoshader(url);

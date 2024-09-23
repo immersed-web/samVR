@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 
-import { hasAtLeastPermissionLevel, VrSpaceSelectSchema, type ClientRealtimeData, type ClientsRealtimeData, type ConnectionId, type PlacedObjectId, type PlacedObjectInsert, type VrSpaceId, type VrSpaceSelect, type VrSpaceUpdate } from 'schemas';
-import { computed, readonly, ref, watch } from 'vue';
+import { hasAtLeastPermissionLevel, PlacedObjectInsertSchema, VrSpaceSelectSchema, type ClientRealtimeData, type ClientsRealtimeData, type ConnectionId, type PlacedObjectId, type PlacedObjectInsert, type VrSpaceId, type VrSpaceSelect, type VrSpaceUpdate } from 'schemas';
+import { computed, readonly, ref, watch, type DeepReadonly } from 'vue';
 import { useConnectionStore } from './connectionStore';
 import { eventReceiver, type ExtractPayload, type RouterOutputs, type SubscriptionValue } from '@/modules/trpcClient';
 import { useClientStore } from './clientStore';
@@ -119,13 +119,15 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     currentVrSpace.value = undefined;
   }
 
-  async function upsertPlacedObject(placedObject: Omit<PlacedObjectInsert, 'vrSpaceId' | 'reason'>, reason?: string) {
+  type PlacedObjectInVrSpaceReceivedState = _ReceivedVrSpaceState['dbData']['placedObjects'][number];
+  // type PlacedObjectUpsert = PlacedObjectInsert ;
+  async function upsertPlacedObject(placedObject: PlacedObjectInVrSpaceReceivedState, reason?: string) {
     if (!currentVrSpace.value) {
       console.warn('trying to upsert placedObject but currentVrSpace is undefined');
       return;
     }
-    const po: PlacedObjectInsert = { reason, vrSpaceId: currentVrSpace.value?.dbData.vrSpaceId, ...placedObject };
-    return connection.client.vr.upsertPlacedObject.mutate(po);
+    const parsedPlacedObject = PlacedObjectInsertSchema.parse({ ...placedObject, reason, vrSpaceId: currentVrSpace.value.dbData.vrSpaceId });
+    return connection.client.vr.upsertPlacedObject.mutate(parsedPlacedObject);
   }
 
   async function reloadVrSpaceFromDB() {

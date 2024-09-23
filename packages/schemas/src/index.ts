@@ -471,7 +471,7 @@ export const PlacedObjectInsertSchema = createInsertSchema(schema.placedObjects,
   .merge(optionalReason);
 export type PlacedObjectInsert = z.TypeOf<typeof PlacedObjectInsertSchema>;
 export type PlacedObject = Omit<PlacedObjectInsert, 'placedObjectId'> & { placedObjectId: PlacedObjectId };
-// type tt = PlacedObjectInsert['type'];
+// type tt = PlacedObjectInsert['objectSettings'];
 
 const AssetSelectSchema = createSelectSchema(schema.assets, {
   assetFileExtension: AllFileExtensionsSchema,
