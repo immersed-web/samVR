@@ -16,6 +16,7 @@ import { eq } from 'drizzle-orm';
 import type { MyWebsocketType } from 'index.js';
 import { Payload, createTypedEvents, EventSender } from 'ts-event-bridge/sender';
 import { createWebRtcTransport } from 'modules/soupUtils.js';
+import { stringify } from 'devalue'
 
 export type DataAndReason<T> = Prettify<{ data: T, reason?: string }>
 
@@ -40,7 +41,7 @@ export type BaseClientEventMap = {
   },
 }
 
-const { createSender } = createTypedEvents<BaseClientEventMap>();
+const { createSender } = createTypedEvents<BaseClientEventMap>(stringify);
 
 type SoupObjectClosePayload =
       {type: 'transport', id: TransportId }

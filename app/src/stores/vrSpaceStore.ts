@@ -29,9 +29,7 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
   const connection = useConnectionStore();
   const clientStore = useClientStore();
 
-  // const writableVrSpaceState = ref<_ReceivedVrSpaceState>();
   const writableVrSpaceDbData = ref<VrSpaceSelect>()
-  // const currentVrSpace = readonly(writableVrSpaceState);
   const currentVrSpace = ref<_ReceivedVrSpaceState>();
 
   const worldModelUrl = computed(() => {
@@ -73,8 +71,9 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
   eventReceiver.vrSpace.vrSpaceStateUpdated.subscribe(({ data, reason }) => {
     console.log(`vrSpaceState updated. ${reason}:`, data);
     ignoreUpdates(() => {
-      writableVrSpaceDbData.value = VrSpaceSelectSchema.parse(data.dbData);
-      // writableVrSpaceDbData.value = data.dbData;
+      const parsedVrSpaceDbData = VrSpaceSelectSchema.parse(data.dbData);
+      console.log('parsedVrSpaceDbData', parsedVrSpaceDbData);
+      writableVrSpaceDbData.value = parsedVrSpaceDbData;
     });
     currentVrSpace.value = data;
     console.log('finished setting ignored state update');
@@ -109,7 +108,8 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
 
     ignoreUpdates(() => {
       console.log('setting ignored enter response');
-      writableVrSpaceDbData.value = response.dbData;
+      const parsedVrSpaceDbData = VrSpaceSelectSchema.parse(response.dbData);
+      writableVrSpaceDbData.value = parsedVrSpaceDbData;
     });
     currentVrSpace.value = response;
   }

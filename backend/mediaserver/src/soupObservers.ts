@@ -31,7 +31,7 @@ export function attachMediasoupObservers () {
 
   observer.on('newworker', (worker: mediasoupTypes.Worker) =>
   {
-    observerLog.info('new worker created [worker.pid:%d]', worker.pid);
+    observerLog.info('worker created [worker.pid:%d]', worker.pid);
     totalNrOf.workers++;
 
     worker.observer.on('close', () =>

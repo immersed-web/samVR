@@ -49,7 +49,7 @@ export const vrRouter = router({
         eq(schema.vrSpaces.visibility, 'public'),
       ));
 
-      log.info(dbResponse)
+      // log.info(dbResponse)
     return dbResponse;
     } catch (e) {
       log.error(e);

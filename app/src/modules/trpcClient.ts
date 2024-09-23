@@ -6,6 +6,7 @@ import type { AppRouter } from 'mediaserver';
 import type { UserClientEventMap } from 'mediaserver/user-events'
 import type { ClientType, Prettify } from 'schemas';
 import superjson from 'superjson';
+import { parse } from 'devalue'
 import { createReceiver } from 'ts-event-bridge/receiver'
 // import { guestAutoToken, loginWithAutoToken, getToken } from '@/modules/authClient';
 
@@ -21,6 +22,7 @@ const { receiver, onMessageReceived } = createReceiver<UserClientEventMap>({
   onUnparseableMsg(receivedMsg, error) {
     console.warn('unparseable message: ', receivedMsg, error);
   },
+  deserialize: parse
 });
 
 export type UnPayload<T extends Payload<any>> = T extends Payload<infer Inner> ? Inner : T;

@@ -28,6 +28,7 @@
     "database": "workspace:*",
     "date-fns": "^2.29.3",
     "debug-level": "3.0.0-1",
+    "devalue": "^4.3.3",
     "h264-profile-level-id": "^2.0.0",
     "ip": "^1.1.8",
     "lodash-es": "^4.17.21",
