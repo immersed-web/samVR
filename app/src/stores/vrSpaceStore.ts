@@ -141,10 +141,10 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
    */
   const updateVrSpace = debounce(async (reason?: string) => {
     if (!currentVrSpace.value) return;
-    console.log(`*** Gonna send update for VrSpace ${currentVrSpace.value.dbData.vrSpaceId}`);
+    console.log(`*** Gonna send update for VrSpace ${writableVrSpaceDbData.value?.vrSpaceId}`);
 
     // @ts-ignore
-    await connection.client.vr.updateVrSpace.mutate({ ...currentVrSpace.value.dbData, reason });
+    await connection.client.vr.updateVrSpace.mutate({ ...writableVrSpaceDbData.value, reason });
   }, 700);
 
   const ownClientTransform = reactive<ClientRealtimeData>({
