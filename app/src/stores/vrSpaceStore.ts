@@ -17,7 +17,7 @@ type _ReceivedVrSpaceState = ExtractPayload<typeof eventReceiver.vrSpace.vrSpace
  * The Vr space store
  * There are two versions of the vrSpaceState. CurrentVrSpace and WritableVrSpaceState. 
  * The currentVrSpace should be the one you use in components for reading and showing values.
- * The writableVrSpaceState should be the one you use in components for writing values.
+ * The writableVrSpaceState is shallow (doesnt include relations) should be the one you use in components for writing values.
  * There is an ignorable watcher on writableVrSpaceState that will send any updates to the server.
  * Its very important that you wrap any received updates from the server in an ignorable watcher.
  * Otherwise there will be an infinite loop of updates triggering a new update.
