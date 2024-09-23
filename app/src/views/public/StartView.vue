@@ -3,7 +3,12 @@
     Välkommen {{ authStore.username }}!
   </h1>
 
-  <div class="space-y-2">
+  <p class="text-lg italic text-gray-600">
+    Välkommen till OrigoShift! Här kan du utforska och fördjupa dig i fantastiska VR-scener som tar din
+    upplevelse till en ny nivå.
+  </p>
+
+  <div class="space-y-2 mt-4">
     <h2 class="text-2xl font-bold">
       VR-scener
     </h2>
