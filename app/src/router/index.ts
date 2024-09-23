@@ -48,7 +48,7 @@ const router = createRouter({
       name: 'enter',
       component: () => import('@/views/public/EnterView.vue'),
     },
-    // simpleLayout routes
+    // HeaderLayout routes
     {
       path: '/',
       // component: () => import('@/layouts/SimpleLayout.vue'),
@@ -67,7 +67,7 @@ const router = createRouter({
           component: () => import('@/views/public/StreamListView.vue'),
         },
         {
-          path: 'vrSpace',
+          path: 'vr',
           name: '',
           meta: { requiredRole: 'guest', requiredConnectionType: 'client', breadcrumb: 'VR-scener' },
           children: [
@@ -80,6 +80,7 @@ const router = createRouter({
             {
               path: 'avatar',
               name: 'avatarDesigner',
+              meta: { breadcrumb: 'Min avatar' },
               component: () => import('@/views/user/AvatarDesigner.vue'),
             },
             {
@@ -186,7 +187,7 @@ const router = createRouter({
     },
     {
       path: '/admin/',
-      meta: { requiredRole: 'admin', loginNeededRedirect: 'login', requiredConnectionType: 'client', breadcrumb: 'Admin' },
+      meta: { requiredRole: 'admin', loginNeededRedirect: 'login', requiredConnectionType: 'client', breadcrumbIgnore: true, breadcrumb: 'Admin' },
       component:  () => import('@/layouts/HeaderLayout.vue'),
       children: [
         {

@@ -67,7 +67,7 @@
             </span>
             <div class="flex gap-2 justify-between items-center z-10">
               <AutoComplete v-if="users?.length" class="grow" v-model="selectedUser" display-key="username"
-                idKey="userId" :options="users" />
+                id-key="userId" :options="users" />
               <select v-model="selectedPermission" class="select select-bordered select-sm">
                 <option :value="permissionLevel" v-for="permissionLevel in insertablePermissionHierarchy"
                   :key="permissionLevel">
@@ -163,8 +163,10 @@
                         class="btn btn-sm btn-primary"
                         :class="{ activeRaycast: currentRaycastReason == 'spawnPosition' }"
                         v-model="currentRaycastReason"> -->
-                    <button class="btn btn-sm btn-primary" @click="setCursorMode('place-spawnposition')">Placera
-                      startplats</button>
+                    <button class="btn btn-sm btn-primary" @click="setCursorMode('place-spawnposition')">
+                      Placera
+                      startplats
+                    </button>
                   </div>
                   <div>
                     <label class="flex flex-col gap-1">
@@ -286,12 +288,13 @@
                     v-model="currentRaycastReason"> -->
                 <pre>{{ currentCursorMode }}</pre>
                 <button v-if="!vrComponentTag?.firstPersonViewActive" @click="setCursorMode('enterFirstPersonView')"
-                  class="btn btn-primary btn-sm">Hoppa in i scenen</button>
-                <button v-else @click="vrComponentTag?.exitFirstPersonView" class="btn btn-primary btn-sm">Hoppa ut ur
-                  scenen</button>
-                <!-- <input v-else type="radio" value="undefined" aria-label="Hoppa ut ur scenen"
-                    class="btn btn-sm btn-primary" v-model="currentRaycastReason"
-                    @click="vrComponentTag?.exitFirstPersonView"> -->
+                  class="btn btn-primary btn-sm">
+                  Hoppa in i scenen
+                </button>
+                <button v-else @click="vrComponentTag?.exitFirstPersonView" class="btn btn-primary btn-sm">
+                  Hoppa ut ur
+                  scenen
+                </button>
               </div>
             </div>
             <div>
@@ -359,8 +362,8 @@ watch(currentCursorIntersection, (intersection) => {
 
 const raycastSelector = computed(() => {
   if (!currentCursorMode.value) return '.selectable-object';
-  return '.selectable-object, .raycastable-surface'
-})
+  return '.selectable-object, .raycastable-surface';
+});
 
 // Use imports
 // const router = useRouter();
@@ -421,7 +424,7 @@ onCursorClick(async (e) => {
         break;
     }
   }
-})
+});
 
 function onAssetUploaded(uploadDetails: AssetUploadEmitUploadedPayload) {
   console.log(uploadDetails);
@@ -480,11 +483,11 @@ const allowedVrSpaces = ref<RouterOutputs['vr']['listAvailableVrSpaces']>();
 const portalTargetVrSpace = ref<NonNullable<typeof allowedVrSpaces.value>[number]>();
 watch(portalTargetVrSpace, (newVrSpaceId) => {
   if (!newVrSpaceId) {
-    setCursorMode(undefined)
+    setCursorMode(undefined);
   } else {
     setCursorMode('place-vrPortal');
   }
-})
+});
 onMounted(async () => {
   await vrSpaceStore.enterVrSpace(props.vrSpaceId);
 
