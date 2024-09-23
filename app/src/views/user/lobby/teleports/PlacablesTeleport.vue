@@ -31,7 +31,8 @@
       :rotation="arrToCoordString(quaternionTupleToAframeRotation(placedObject.orientation ?? [0, 0, 0, 1]))"
       :id="placedObject.placedObjectId">
       <!-- <a-sphere color="red" position="0 1 0" /> -->
-      <PlacedAsset v-if="placedObject.type === 'asset' && placedObject.asset" :asset="placedObject.asset" />
+      <PlacedAsset @click="selectedPlacedObject = placedObject" class="selectable-object"
+        v-if="placedObject.type === 'asset' && placedObject.asset" :asset="placedObject.asset" />
       <!-- <component @click="selectEntity(placedObject.placedObjectId, $event)" class="clickable"
             :box-helper="`enabled: ${currentlySelectedPlacedObjectId === placedObject.placedObjectId};`"
             :is="placedObject.type"
@@ -70,7 +71,7 @@ import { Pane } from 'tweakpane';
 
 import { computed, ref, onMounted, reactive, shallowRef } from 'vue';
 import { useEventBus } from '@vueuse/core';
-import { clickKey, useCurrentCursorIntersection } from '@/composables/vrSpaceComposables';
+import { useCurrentCursorIntersection, useSelectedPlacedObject } from '@/composables/vrSpaceComposables';
 
 import { type DetailEvent, THREE, type Entity } from 'aframe';
 import PdfEntity from '@/components/lobby/PdfEntity.vue';
@@ -96,6 +97,7 @@ import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 const vrSpaceStore = useVrSpaceStore();
 
 const { currentCursorIntersection, onCursorClick, setCursorMode, currentCursorMode } = useCurrentCursorIntersection();
+const { selectedPlacedObject } = useSelectedPlacedObject();
 
 
 defineOptions({

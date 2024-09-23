@@ -126,7 +126,9 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
       console.warn('trying to upsert placedObject but currentVrSpace is undefined');
       return;
     }
+    console.log('gonna upsert placedObject. before schema check:', placedObject);
     const parsedPlacedObject = PlacedObjectInsertSchema.parse({ ...placedObject, reason, vrSpaceId: currentVrSpace.value.dbData.vrSpaceId });
+    console.log('will send upsert to server. schema-checked placedObject:', parsedPlacedObject);
     return connection.client.vr.upsertPlacedObject.mutate(parsedPlacedObject);
   }
 

@@ -124,12 +124,14 @@ export function useSelectedEntity(entity: typeof selectedEntity | undefined) {
   }
 }
 
-let selectedPlacedObject: DeepReadonly<Ref<PlacedObjectWithIncludes | undefined>>;
+// const selectedPlacedObject: DeepReadonly<Ref<PlacedObjectWithIncludes | undefined>>;
+const selectedPlacedObject = shallowRef<DeepReadonly<PlacedObjectWithIncludes>>();
 const placedObjectRotation = ref<THREE.Vector3Tuple>();
 const placedObjectPosition = ref<THREE.Vector3Tuple>();
 const placedObjectScale = ref<THREE.Vector3Tuple>();
-export function useSelectedPlacedObject(selectedObjectRef: typeof selectedPlacedObject) {
-  selectedPlacedObject = selectedObjectRef;
+export function useSelectedPlacedObject() {
+  // export function useSelectedPlacedObject(selectedObjectRef: typeof selectedPlacedObject) {
+  // selectedPlacedObject = selectedObjectRef;
   const transformedSelectedObject = computed(() => {
     console.log('transformedSelectedObject computed triggered');
     if (!selectedPlacedObject.value) {
@@ -201,6 +203,7 @@ export function useSelectedPlacedObject(selectedObjectRef: typeof selectedPlaced
 
   return {
     // setSelectedPlacedObjectRef,
+    selectedPlacedObject,
     transformedSelectedObject,
     placedObjectPosition,
     placedObjectRotation,

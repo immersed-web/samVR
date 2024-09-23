@@ -247,9 +247,9 @@
                 :position="placedObject.position?.join(' ')" :vr-portal="placedObject.vrPortal"
                 class="selectable-object" :label="placedObject.vrPortal?.name" />
             </template>
-            <VrSpacePortal key="selected-portal" v-if="transformedSelectedObject"
+            <!-- <VrSpacePortal key="selected-portal" v-if="transformedSelectedObject"
               :position="transformedSelectedObject.position?.join(' ')" :vr-portal="transformedSelectedObject.vrPortal"
-              :label="'markerad!!!!!'" />
+              :label="'markerad!!!!!'" /> -->
           </a-entity>
 
           <a-entity ref="spawnPosTag" v-if="spawnPosString" :position="spawnPosString">
@@ -265,6 +265,7 @@
             <a-ring :visible="currentCursorMode !== undefined" color="yellow" radius-inner="0.1" radius-outer="0.2"
               material="shader: flat; side: double;" rotation="0 0 0" />
           </a-entity>
+          <PlacablesTeleport />
           <!-- <a-entity :position="hoverPosString" :visible="hoverPosString !== undefined">
               <a-ring color="yellow" radius-inner="0.1" radius-outer="0.2" material="shader: flat;"
                 rotation="-90 0 0" />
@@ -349,13 +350,14 @@ import { THREE, type Entity } from 'aframe';
 import { arrToCoordString, isEntity } from '@/modules/3DUtils';
 import type { PlacedObjectWithIncludes } from 'database';
 import { watchDebounced } from '@vueuse/core';
+import PlacablesTeleport from './lobby/teleports/PlacablesTeleport.vue';
 
 // TODO: refine/find alternative way to get these types so we get intellisense for the emit key
 type ExtractEmitData<T extends string, emitUnion extends (...args: any[]) => void> = T extends Parameters<emitUnion>[0] ? Parameters<emitUnion>[1] : never
 type ScreenshotPayload = ExtractEmitData<'screenshot', ComponentInstance<typeof VrSpacePreview>['$emit']>
 
-const selectedPlacedObject = ref<DeepReadonly<PlacedObjectWithIncludes>>();
-const { placedObjectPosition: selectedPosition, transformedSelectedObject } = useSelectedPlacedObject(selectedPlacedObject);
+// const selectedPlacedObject = ref<DeepReadonly<PlacedObjectWithIncludes>>();
+const { selectedPlacedObject, placedObjectPosition: selectedPosition, transformedSelectedObject } = useSelectedPlacedObject();
 
 watchDebounced(transformedSelectedObject, (updatedPO, oldPO) => {
   console.log('selectedPlacedObject changed', updatedPO, oldPO);
@@ -363,7 +365,6 @@ watchDebounced(transformedSelectedObject, (updatedPO, oldPO) => {
     return;
   }
   const uPO = updatedPO as PlacedObjectWithIncludes;
-  uPO.objectSettings
   vrSpaceStore.upsertPlacedObject(uPO)
 }, { deep: true, debounce: 400, maxWait: 1500 });
 

@@ -90,7 +90,8 @@ onMounted(() => {
 
 <template>
   <a-entity>
-    <a-entity ref="pdfEntityTag" :canvas-material="`autoUpdate: false; src: #${canvasSelector};`" />
+    <a-entity :class="$attrs.class" ref="pdfEntityTag"
+      :canvas-material="`autoUpdate: false; src: #${canvasSelector};`" />
     <Teleport to="body">
       <canvas :id="canvasSelector" style="display: none;" ref="pdfCanvasTag"></canvas>
     </Teleport>

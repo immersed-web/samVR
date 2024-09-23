@@ -1,8 +1,8 @@
 <template>
   <a-entity>
-    <a-image @materialtextureloaded="onTextureLoaded" v-if="tagName === 'a-image'" :src="src" />
-    <PdfEntity v-else-if="tagName === 'PdfEntity'" :src="src" />
-    <component v-else :is="tagName" :src="src" />
+    <a-image @materialtextureloaded="onTextureLoaded" v-if="tagName === 'a-image'" :class="$attrs.class" :src="src" />
+    <PdfEntity v-else-if="tagName === 'PdfEntity'" :src="src" :class="$attrs.class" />
+    <component v-else :is="tagName" :src="src" :class="$attrs.class" />
   </a-entity>
 </template>
 <script setup lang="ts">
