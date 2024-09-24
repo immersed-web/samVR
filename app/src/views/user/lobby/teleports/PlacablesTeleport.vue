@@ -31,8 +31,9 @@
       :rotation="arrToCoordString(quaternionTupleToAframeRotation(placedObject.orientation ?? [0, 0, 0, 1]))"
       :id="placedObject.placedObjectId">
       <!-- <a-sphere color="red" position="0 1 0" /> -->
-      <PlacedAsset @click="selectedPlacedObject = placedObject" class="selectable-object"
-        v-if="placedObject.type === 'asset' && placedObject.asset" :asset="placedObject.asset" />
+      <PlacedAsset :key="placedObject.placedObjectId" @click="selectedPlacedObject = placedObject"
+        class="selectable-object" v-if="placedObject.type === 'asset' && placedObject.asset"
+        :asset="placedObject.asset" />
       <!-- <component @click="selectEntity(placedObject.placedObjectId, $event)" class="clickable"
             :box-helper="`enabled: ${currentlySelectedPlacedObjectId === placedObject.placedObjectId};`"
             :is="placedObject.type"

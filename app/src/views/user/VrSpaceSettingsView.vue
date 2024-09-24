@@ -241,16 +241,31 @@
         <VrSpacePreview class="border rounded-md overflow-hidden" ref="vrComponentTag"
           :model-url="vrSpaceStore.worldModelUrl" :navmesh-url="vrSpaceStore.navMeshUrl"
           :raycastSelector="raycastSelector" :auto-rotate="currentCursorMode === undefined">
-          <a-entity v-if="!hideGizmos" id="vr-portals">
+          <a-entity v-if="!hideGizmos" id="placed-objects">
             <template v-for="placedObject in placedObjectsSelectFiltered" :key="placedObject.placedObjectId">
-              <VrSpacePortal :key="placedObject.placedObjectId" @click.stop="selectedPlacedObject = placedObject"
-                v-if="placedObject.type === 'vrPortal'" :position="placedObject.position?.join(' ')"
-                :vr-portal="placedObject.vrPortal" class="selectable-object" :label="placedObject.vrPortal?.name" />
+              <template v-if="placedObject.type === 'vrPortal'">
+                <VrSpacePortal :key="placedObject.placedObjectId" @click.stop="selectedPlacedObject = placedObject"
+                  :position="placedObject.position?.join(' ')" :vr-portal="placedObject.vrPortal"
+                  class="selectable-object" :label="placedObject.vrPortal?.name" />
+              </template>
+              <template v-else-if="placedObject.type === 'asset' && placedObject.asset">
+                <PlacedAsset :key="placedObject.placedObjectId" @click="selectedPlacedObject = placedObject"
+                  :rotation="arrToCoordString(quaternionTupleToAframeRotation(placedObject.orientation ?? [0, 0, 0, 1]))"
+                  :position="arrToCoordString(placedObject.position)" class="selectable-object"
+                  :asset="placedObject.asset" />
+              </template>
             </template>
-            <VrSpacePortal :key="`selected-${transformedSelectedObject.placedObjectId}`"
-              v-if="transformedSelectedObject?.type === 'vrPortal'" show-box-helper
-              :position="transformedSelectedObject.position?.join(' ')" :vr-portal="transformedSelectedObject.vrPortal"
-              :label="'markerad!!!!!'" />
+            <template v-if="transformedSelectedObject">
+              <VrSpacePortal :key="`selected-${transformedSelectedObject.placedObjectId}`"
+                v-if="transformedSelectedObject.type === 'vrPortal'" show-box-helper
+                :position="transformedSelectedObject.position?.join(' ')"
+                :vr-portal="transformedSelectedObject.vrPortal" :label="'markerad'" />
+              <PlacedAsset v-else-if="transformedSelectedObject.type === 'asset' && transformedSelectedObject.asset"
+                :key="transformedSelectedObject.placedObjectId" box-helper
+                :rotation="arrToCoordString(quaternionTupleToAframeRotation(transformedSelectedObject.orientation ?? [0, 0, 0, 1]))"
+                :position="arrToCoordString(transformedSelectedObject.position)" class="selectable-object"
+                :asset="transformedSelectedObject.asset" />
+            </template>
           </a-entity>
 
           <a-entity ref="spawnPosTag" v-if="spawnPosString" :position="spawnPosString">
@@ -266,7 +281,7 @@
             <a-ring :visible="currentCursorMode !== undefined" color="yellow" radius-inner="0.1" radius-outer="0.2"
               material="shader: flat; side: double;" rotation="0 0 0" />
           </a-entity>
-          <PlacablesTeleport />
+          <!-- <PlacablesTeleport /> -->
           <!-- <a-entity :position="hoverPosString" :visible="hoverPosString !== undefined">
               <a-ring color="yellow" radius-inner="0.1" radius-outer="0.2" material="shader: flat;"
                 rotation="-90 0 0" />
@@ -275,8 +290,8 @@
         <button v-if="currentCursorMode" class="btn btn-sm btn-circle" @click="setCursorMode(undefined)">
           <span class="material-icons">close</span>
         </button>
-        <input class="range range-primary w-64" v-if="selectedPosition" type="range"
-          v-model.number="selectedPosition[1]" min="0" max="40" step="0.1">
+        <OffsetSlider v-if="selectedPosition" v-model.number="selectedPosition[1]" />
+        <button class="btn btn-sm" @click="testNumber++"> change testNumber</button>
         <pre>{{ transformedSelectedObject }}</pre>
         <pre>{{ selectedPosition }}</pre>
         <!-- 
@@ -348,10 +363,14 @@ import VrSpacePortal from '@/components/entities/VrSpacePortal.vue';
 import AutoComplete from '@/components/AutoComplete.vue';
 import { useCurrentCursorIntersection, useSelectedEntity, useSelectedPlacedObject } from '@/composables/vrSpaceComposables';
 import { THREE, type Entity } from 'aframe';
-import { arrToCoordString, isEntity } from '@/modules/3DUtils';
+import { arrToCoordString, isEntity, quaternionTupleToAframeRotation } from '@/modules/3DUtils';
 import type { PlacedObjectWithIncludes } from 'database';
 import { watchDebounced } from '@vueuse/core';
 import PlacablesTeleport from './lobby/teleports/PlacablesTeleport.vue';
+import PlacedAsset from '@/components/lobby/PlacedAsset.vue';
+import OffsetSlider from '@/components/OffsetSlider.vue';
+
+const testNumber = ref(10);
 
 // TODO: refine/find alternative way to get these types so we get intellisense for the emit key
 type ExtractEmitData<T extends string, emitUnion extends (...args: any[]) => void> = T extends Parameters<emitUnion>[0] ? Parameters<emitUnion>[1] : never
