@@ -131,7 +131,7 @@ const placedObjectPosition = ref<THREE.Vector3Tuple>();
 const placedObjectScale = ref<THREE.Vector3Tuple>();
 const transformUpdatedHook = createEventHook<NonNullable<typeof transformedSelectedObject.value>>();
 const transformedSelectedObject = computed(() => {
-  console.log('transformedSelectedObject computed triggered');
+  // console.log('transformedSelectedObject computed triggered');
   if (!selectedPlacedObject.value || !placedObjectPosition.value) {
     return undefined;
   }
@@ -146,73 +146,39 @@ const transformedSelectedObject = computed(() => {
   return transformedPO;
 });
 let transformWatchStopper: WatchStopHandle | undefined;
+watch(selectedPlacedObject, (placedObject) => {
+  // console.log('selectedPlacedObject watcher triggered:', placedObject);
+  if (transformWatchStopper) {
+    transformWatchStopper();
+  }
+  if (!placedObject) {
+    placedObjectPosition.value = undefined;
+    placedObjectRotation.value = undefined;
+    placedObjectScale.value = undefined;
+    return;
+  }
+  placedObjectPosition.value = [...placedObject.position];
+  let rotation = undefined
+  if (placedObject.orientation) {
+    rotation = quaternionTupleToAframeRotation(placedObject.orientation)
+  }
+  placedObjectRotation.value = rotation;
+
+  const scale = placedObject.scale ?? undefined;
+  if (!scale) {
+    placedObjectScale.value = undefined;
+  } else {
+    placedObjectScale.value = [...scale];
+  }
+
+  transformWatchStopper = watchDebounced([placedObjectPosition, placedObjectRotation, placedObjectScale], () => {
+    console.log('transform refs watcher triggered:', placedObjectPosition.value, placedObjectRotation.value, placedObjectScale.value);
+    if (!transformedSelectedObject.value) return;
+    transformUpdatedHook.trigger(transformedSelectedObject.value);
+  }, { deep: true, debounce: 450, maxWait: 1500 })
+});
+
 export function useSelectedPlacedObject() {
-// export function useSelectedPlacedObject(selectedObjectRef: typeof selectedPlacedObject) {
-// selectedPlacedObject = selectedObjectRef;
-
-  watch(selectedPlacedObject, (placedObject) => {
-    // console.log('selectedPlacedObject watcher triggered:', placedObject);
-    if (transformWatchStopper) {
-      transformWatchStopper();
-    }
-    if (!placedObject) {
-      placedObjectPosition.value = undefined;
-      placedObjectRotation.value = undefined;
-      placedObjectScale.value = undefined;
-      return;
-    }
-    placedObjectPosition.value = [...placedObject.position];
-    let rotation = undefined
-    if (placedObject.orientation) {
-      rotation = quaternionTupleToAframeRotation(placedObject.orientation)
-    }
-    placedObjectRotation.value = rotation;
-
-    const scale = placedObject.scale ?? undefined;
-    if (!scale) {
-      placedObjectScale.value = undefined;
-    } else {
-      placedObjectScale.value = [...scale];
-    }
-
-
-    transformWatchStopper = watchDebounced([placedObjectPosition, placedObjectRotation, placedObjectScale], () => {
-      console.log('transform refs watcher triggered:', placedObjectPosition.value, placedObjectRotation.value, placedObjectScale.value);
-      if (!transformedSelectedObject.value) return;
-      transformUpdatedHook.trigger(transformedSelectedObject.value);
-    }, { deep: true, debounce: 450, maxWait: 1500 })
-    // watch(placedObjectPosition, () => {
-    //   console.log('placedObjectPosition watcher triggered:', placedObjectPosition.value);
-    //   if (!selectedPlacedObject) {
-    //     console.warn('selectedPlacedObject not set!');
-    //     return;
-    //   }
-    //   if (!selectedPlacedObject.value || !placedObjectPosition.value) {
-    //     console.warn('selectedPlacedObject or placedObjectPosition not set!');
-    //     return;
-    //   }
-    //   // selectedPlacedObject.value.position = [...placedObjectPosition.value];
-    // }, { deep: true })
-    // watch(placedObjectRotation, () => {
-    //   console.log('placedObjectRotation watcher triggered:', placedObjectRotation.value);
-    //   if (!selectedPlacedObject) {
-    //     console.warn('selectedPlacedObject not set!');
-    //     return;
-    //   }
-    //   if (!selectedPlacedObject.value || !placedObjectRotation.value) return;
-    //   const orientation = eulerTupleToQuaternionTuple(placedObjectRotation.value)
-    //   // selectedPlacedObject.value.orientation = orientation;
-    // })
-    // watch(placedObjectScale, () => {
-    //   console.log('placedObjectScale watcher triggered:', placedObjectScale.value);
-    //   if (!selectedPlacedObject) {
-    //     console.warn('selectedPlacedObject not set!');
-    //     return;
-    //   }
-    //   if (!selectedPlacedObject.value || !placedObjectScale.value) return;
-    //   // selectedPlacedObject.value.scale = placedObjectScale.value;
-    // })
-  });
 
   return {
     // setSelectedPlacedObjectRef,
