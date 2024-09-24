@@ -248,7 +248,7 @@
                 :vr-portal="placedObject.vrPortal" class="selectable-object" :label="placedObject.vrPortal?.name" />
             </template>
             <VrSpacePortal :key="`selected-${transformedSelectedObject.placedObjectId}`"
-              v-if="transformedSelectedObject?.type === 'vrPortal'" box-helper
+              v-if="transformedSelectedObject?.type === 'vrPortal'" show-box-helper
               :position="transformedSelectedObject.position?.join(' ')" :vr-portal="transformedSelectedObject.vrPortal"
               :label="'markerad!!!!!'" />
           </a-entity>

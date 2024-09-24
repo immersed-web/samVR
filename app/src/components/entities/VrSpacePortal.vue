@@ -12,7 +12,7 @@
       animation__leave="property: scale; startEvents: mouseleave; easing: easeInOutCubic; dur: 120; from: 0.6 0.6 0.6; to: 0.5 0.5 0.5"
       :class="[{ 'clickable': (props.clickable && allowed) }, $attrs.class]" transparent="true" scale="0.5 0.5 0.5"
       :opacity="allowed ? 1.0 : 0.5" material="shader: outer-glow; start: 0.3; color: 0.5 0 1;"
-      :position="`0 ${defaultHeightOverGround} 0`">
+      :position="`0 ${defaultHeightOverGround} 0`" :box-helper="`enabled: ${showBoxHelper}`">
       <!-- <a-icosahedron ref="portalTagRef" v-if="true" detail="5" scale="0.98 0.98 0.98" transparent="true"
         :opacity="allowed ? 1.0 : 0.2">
       </a-icosahedron> -->
@@ -47,11 +47,13 @@ defineOptions({
 type VrPortalData = PlacedObjectWithIncludes['vrPortal'];
 const props = withDefaults(defineProps<{
   // panoramicPreviewUrl?: string
+  showBoxHelper?: boolean
   label?: string
   clickable?: boolean
   vrPortal: DeepReadonly<VrPortalData>
 }>(), {
-  clickable: true
+  clickable: true,
+  showBoxHelper: false,
 });
 
 const panoramicPreviewUrl = computed(() => {
