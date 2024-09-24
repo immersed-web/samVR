@@ -243,13 +243,14 @@
           :raycastSelector="raycastSelector" :auto-rotate="currentCursorMode === undefined">
           <a-entity v-if="!hideGizmos" id="vr-portals">
             <template v-for="placedObject in placedObjectsSelectFiltered" :key="placedObject.placedObjectId">
-              <VrSpacePortal @click.stop="selectedPlacedObject = placedObject" v-if="placedObject.type === 'vrPortal'"
-                :position="placedObject.position?.join(' ')" :vr-portal="placedObject.vrPortal"
-                class="selectable-object" :label="placedObject.vrPortal?.name" />
+              <VrSpacePortal :key="placedObject.placedObjectId" @click.stop="selectedPlacedObject = placedObject"
+                v-if="placedObject.type === 'vrPortal'" :position="placedObject.position?.join(' ')"
+                :vr-portal="placedObject.vrPortal" class="selectable-object" :label="placedObject.vrPortal?.name" />
             </template>
-            <!-- <VrSpacePortal key="selected-portal" v-if="transformedSelectedObject"
+            <VrSpacePortal :key="`selected-${transformedSelectedObject.placedObjectId}`"
+              v-if="transformedSelectedObject?.type === 'vrPortal'" box-helper
               :position="transformedSelectedObject.position?.join(' ')" :vr-portal="transformedSelectedObject.vrPortal"
-              :label="'markerad!!!!!'" /> -->
+              :label="'markerad!!!!!'" />
           </a-entity>
 
           <a-entity ref="spawnPosTag" v-if="spawnPosString" :position="spawnPosString">
