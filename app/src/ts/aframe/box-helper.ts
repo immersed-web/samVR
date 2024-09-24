@@ -8,8 +8,19 @@ export default function () {
       enabled: { type: 'boolean', default: true },
       color: { type: 'color', default: '#ffffff' }
     },
+    currentPosition: undefined as unknown as THREE.Vector3,
+    prevPosition: undefined as unknown as THREE.Vector3,
+    currentQuat: undefined as unknown as THREE.Quaternion,
+    prevQuat: undefined as unknown as THREE.Quaternion,
+    currentScale: undefined as unknown as THREE.Vector3,
+    prevScale: undefined as unknown as THREE.Vector3,
     init: function () {
-      // this.tick = AFRAME.utils.throttleTick(this.tick, 100, this);
+      this.currentPosition = new THREE.Vector3();
+      this.prevPosition = new THREE.Vector3();
+      this.currentQuat = new THREE.Quaternion();
+      this.prevQuat = new THREE.Quaternion();
+      this.currentScale = new THREE.Vector3();
+      this.prevScale = new THREE.Vector3();
       this.boxHelper = new THREE.BoxHelper(this.el.object3D)
 
       const scene = this.el.sceneEl?.object3D
@@ -17,27 +28,16 @@ export default function () {
         scene.add(this.boxHelper);
       }
     },
-    tick: (function () {
-      let prevScale = new THREE.Vector3();
-      let prevQuat = new THREE.Quaternion();
-
-      let currentScale = new THREE.Vector3();
-      let currentQuat = new THREE.Quaternion();
-
-      return function () {
-        const el = this.el as Entity;
-        // const currentScale = el.object3D.scale.clone();
-        currentScale.copy(el.object3D.scale);
-        currentQuat.setFromEuler(el.object3D.rotation);
-        if (currentScale.distanceTo(prevScale) > 0.01 || currentQuat.angleTo(prevQuat) > 0.01) {
-          // console.log('UPDATING');
-          this.boxHelper.update();
-        }
-
-        prevScale.copy(currentScale);
-        prevQuat.copy(currentQuat);
-      };
-    })(),
+    tick() {
+      this.el.object3D.matrix.decompose(this.currentPosition, this.currentQuat, this.currentScale);
+      if (this.currentScale.distanceTo(this.prevScale) > 0.01 || this.currentQuat.angleTo(this.prevQuat) > 0.01 || this.currentPosition.distanceTo(this.prevPosition) > 0.01) {
+        console.log('UPDATING box helper');
+        this.boxHelper.update();
+      }
+      this.prevPosition.copy(this.currentPosition);
+      this.prevQuat.copy(this.currentQuat);
+      this.prevScale.copy(this.currentScale);
+    },
     update: function () {
       this.boxHelper.visible = this.data.enabled;
       if (this.data.color && this.boxHelper) {
