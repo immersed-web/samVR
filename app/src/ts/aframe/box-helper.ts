@@ -29,7 +29,7 @@ export default function () {
       }
     },
     tick() {
-      this.el.object3D.matrix.decompose(this.currentPosition, this.currentQuat, this.currentScale);
+      this.el.object3D.matrixWorld.decompose(this.currentPosition, this.currentQuat, this.currentScale);
       if (this.currentScale.distanceTo(this.prevScale) > 0.01 || this.currentQuat.angleTo(this.prevQuat) > 0.01 || this.currentPosition.distanceTo(this.prevPosition) > 0.01) {
         console.log('UPDATING box helper');
         this.boxHelper.update();
