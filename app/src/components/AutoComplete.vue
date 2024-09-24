@@ -3,7 +3,8 @@
 
     <Combobox v-model="selected" nullable>
       <div ref="comboBoxInputTag" class="input input-bordered input-sm flex gap-2 items-center">
-        <ComboboxInput class="grow" :displayValue="option => option ? option[displayKey] : undefined"
+        <ComboboxInput aria-autocomplete="none" autocomplete="one-time-code" class="grow"
+          :displayValue="option => option ? option[displayKey] : undefined"
           @change="searchString = $event.target.value; updateDropdownPos()" />
         <button v-if="searchString !== '' || selected" @click="selected = null; searchString = '';"
           class="material-icons">close</button>
