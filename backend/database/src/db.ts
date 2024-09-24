@@ -238,6 +238,7 @@ export const queryVrSpaceWithIncludes = db.query.vrSpaces.findFirst({
 export type VrSpaceWithIncludes = NonNullable<Awaited<ReturnType<typeof queryVrSpaceWithIncludes.execute>>>
 export type PlacedObjectWithIncludes = VrSpaceWithIncludes['placedObjects'][number];
 // type dd = PlacedObjectWithIncludes['position']
+// type dd = PlacedObjectWithIncludes['orientation']
 
 // type VrSpaceId = typeof schema.vrSpaces.$inferSelect.vrSpaceId;
 
