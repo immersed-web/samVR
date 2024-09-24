@@ -15,6 +15,7 @@ export default function () {
     currentScale: undefined as unknown as THREE.Vector3,
     prevScale: undefined as unknown as THREE.Vector3,
     init: function () {
+      // console.log('box-helper init');
       this.currentPosition = new THREE.Vector3();
       this.prevPosition = new THREE.Vector3();
       this.currentQuat = new THREE.Quaternion();
@@ -29,9 +30,10 @@ export default function () {
       }
     },
     tick() {
+      if (this.data.enabled === false) return;
       this.el.object3D.matrixWorld.decompose(this.currentPosition, this.currentQuat, this.currentScale);
       if (this.currentScale.distanceTo(this.prevScale) > 0.01 || this.currentQuat.angleTo(this.prevQuat) > 0.01 || this.currentPosition.distanceTo(this.prevPosition) > 0.01) {
-        console.log('UPDATING box helper');
+        // console.log('UPDATING box helper');
         this.boxHelper.update();
       }
       this.prevPosition.copy(this.currentPosition);
@@ -47,7 +49,7 @@ export default function () {
     },
 
     remove: function () {
-      console.log('removing box helper');
+      // console.log('box-helper remove');
       // if (this.boxHelper) {
       this.el.sceneEl?.object3D.remove(this.boxHelper);
       this.boxHelper.dispose();
