@@ -20,11 +20,14 @@ export default function () {
     tick: (function () {
       let prevScale = new THREE.Vector3();
       let prevQuat = new THREE.Quaternion();
+
+      let currentScale = new THREE.Vector3();
       let currentQuat = new THREE.Quaternion();
 
       return function () {
         const el = this.el as Entity;
-        const currentScale = el.object3D.scale.clone();
+        // const currentScale = el.object3D.scale.clone();
+        currentScale.copy(el.object3D.scale);
         currentQuat.setFromEuler(el.object3D.rotation);
         if (currentScale.distanceTo(prevScale) > 0.01 || currentQuat.angleTo(prevQuat) > 0.01) {
           // console.log('UPDATING');
@@ -44,6 +47,7 @@ export default function () {
     },
 
     remove: function () {
+      console.log('removing box helper');
       // if (this.boxHelper) {
       this.el.sceneEl?.object3D.remove(this.boxHelper);
       this.boxHelper.dispose();
