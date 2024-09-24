@@ -287,7 +287,8 @@
                 rotation="-90 0 0" />
             </a-entity> -->
         </VrSpacePreview>
-        <button v-if="currentCursorMode" class="btn btn-sm btn-circle" @click="setCursorMode(undefined)">
+        <button v-if="currentCursorMode || selectedPlacedObject" class="btn btn-sm btn-circle"
+          @click="setCursorMode(undefined); selectedPlacedObject = undefined">
           <span class="material-icons">close</span>
         </button>
         <OffsetSlider v-if="selectedPosition" v-model.number="selectedPosition[1]" />
