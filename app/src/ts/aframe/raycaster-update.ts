@@ -10,19 +10,19 @@ export default function () {
     // },
     prev: undefined as THREE.Vector3 | undefined,
     stashedCursorStyle: undefined as string | undefined,
-    outsideWindow: false,
+    outsideCanvas: false,
     onMouseEnter(e: MouseEvent) {
       if (e instanceof MouseEvent) {
-        console.log('cursor entered the canvas', e);
-        this.outsideWindow = false;
+        // console.log('cursor entered the canvas', e);
+        this.outsideCanvas = false;
       }
     },
     onMouseLeave(e: MouseEvent) {
       if (e instanceof MouseEvent) {
         // this.el.components.raycaster.data.enabled = false;
         // console.log(this.el.components.raycaster);
-        console.log('cursor left the canvas', e);
-        this.outsideWindow = true;
+        // console.log('cursor left the canvas', e);
+        this.outsideCanvas = true;
       }
     },
     init: function () {
@@ -53,13 +53,13 @@ export default function () {
         const canvas = this.el.sceneEl!.canvas;
         const canvasCursor = canvas.style.cursor;
         if (canvasCursor !== '') {
-          console.log('stashing canvasCursor:', canvasCursor);
+          // console.log('stashing canvasCursor:', canvasCursor);
           this.stashedCursorStyle = canvasCursor;
           canvas.style.cursor = 'pointer';
         }
       },
       'raycaster-intersection-cleared': function (evt: DetailEvent<any>) {
-        console.log('intersection cleared!');
+        // console.log('intersection cleared!');
         const canvas = this.el.sceneEl!.canvas;
         if (this.stashedCursorStyle) {
           canvas.style.cursor = this.stashedCursorStyle;
@@ -67,13 +67,12 @@ export default function () {
       },
     },
     tick: function (t, dt) {
-      if (this.outsideWindow) {
+      if (this.outsideCanvas) {
         if (this.prev) {
-          console.log('emitting raycast with undefined when exited window');
+          // console.log('emitting raycast with undefined when exited window');
           this.el.emit('raycast-update', undefined);
         }
         this.prev = undefined;
-
         return;
       }
       const raycasterComponent = this.el.components.raycaster as ComponentDefinition<{
