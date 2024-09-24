@@ -82,12 +82,13 @@ export const vrRouter = router({
     log.info('updating vrSpace', input);
     const { vrSpaceId, reason, ...data } = input;
     const [dbResponse] = await db.update(schema.vrSpaces).set(data).where(eq(schema.vrSpaces.vrSpaceId, vrSpaceId)).returning();
-    console.log('db insert response: ', dbResponse);
+    log.info('db insert response: ', dbResponse);
     const vrSpace = VrSpace.getVrSpace(vrSpaceId);
     if (!vrSpace) return;
     vrSpace.reloadDbData(reason ?? 'dbData updated. Reloading');
   }),
   upsertPlacedObject: userWithEditRightsToVrSpace.input(PlacedObjectInsertSchema).mutation(async ({ ctx, input }) => {
+    log.info(`upserting placedObject (${input.placedObjectId}): pos: ${input.position}, rot: ${input.orientation}`);
     const { reason, ...data } = input;
     const [dbResponse] = await db.insert(schema.placedObjects).values(data).onConflictDoUpdate({
       target: [schema.placedObjects.placedObjectId],
