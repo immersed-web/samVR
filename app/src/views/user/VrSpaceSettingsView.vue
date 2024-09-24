@@ -88,6 +88,7 @@
               <div v-for="userPermission in vrSpaceStore.currentVrSpace?.dbData.allowedUsers"
                 :key="userPermission.user.userId">
                 {{ userPermission.user.username }}: {{ userPermission.permissionLevel }}
+                <button @click="removeEditPermission(userPermission.user.userId)">x</button>
               </div>
             </div>
           </div>
@@ -292,9 +293,7 @@
           <span class="material-icons">close</span>
         </button>
         <OffsetSlider v-if="selectedPosition" v-model.number="selectedPosition[1]" />
-        <button class="btn btn-sm" @click="testNumber++"> change testNumber</button>
         <pre>{{ transformedSelectedObject }}</pre>
-        <pre>{{ selectedPosition }}</pre>
         <!-- 
         <pre>{{ selectedPlacedObject?.position }}</pre>
         <pre>{{ vrSpaceStore.currentVrSpace?.dbData.placedObjects.find(p => p.placedObjectId === selectedPlacedObject?.placedObjectId)?.position }}</pre> -->
@@ -351,7 +350,7 @@ import VrSpacePreview from '@/components/lobby/VrSpacePreview.vue';
 import { ref, watch, onMounted, computed, toRaw, toValue, type ComponentInstance, nextTick, type DeepReadonly } from 'vue';
 // import { throttle } from 'lodash-es';
 import { Combobox, ComboboxInput, ComboboxOptions, ComboboxOption, ComboboxButton } from '@headlessui/vue';
-import { insertablePermissionHierarchy, type PlacedObject, type Asset, type PlacedObjectId, type VrSpaceId, defaultHeightOverGround } from 'schemas';
+import { insertablePermissionHierarchy, type PlacedObject, type Asset, type PlacedObjectId, type VrSpaceId, defaultHeightOverGround, type UserId } from 'schemas';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import { useConnectionStore } from '@/stores/connectionStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -531,6 +530,13 @@ async function addEditPermission() {
     targetType: 'vrSpace',
     permissionLevel: selectedPermission.value,
   });
+}
+async function removeEditPermission(userId: UserId) {
+  const response = await backendConnection.client.user.removePermission.mutate({
+    targetId: props.vrSpaceId,
+    targetType: 'vrSpace',
+    userId,
+  })
 }
 
 const allowedVrSpaces = ref<RouterOutputs['vr']['listAvailableVrSpaces']>();

@@ -447,6 +447,12 @@ const PermissionSelectSchema = createSelectSchema(schema.permissions, {
 })
 type PermissionSelect = z.TypeOf<typeof PermissionSelectSchema>;
 
+export const PermissionDeleteSchema = createSelectSchema(schema.permissions, {
+  userId: UserIdSchema,
+  targetId: z.union([StreamIdSchema, VrSpaceIdSchema]),
+}).pick({ userId: true, targetId: true, targetType: true });
+type PermissionDelete = z.TypeOf<typeof PermissionDeleteSchema>;
+
 const StreamPermissionSelectSchema = PermissionSelectSchema.extend({ targetType: z.literal('stream'), targetId: StreamIdSchema })
 type StreamPermission = z.TypeOf<typeof StreamPermissionSelectSchema>
 export function isStreamPermission(dbPermission: PermissionSelect): dbPermission is StreamPermission {

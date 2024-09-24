@@ -6,8 +6,9 @@ log.enable(process.env.DEBUG);
 import { db, getPermissionLevelForTarget, groupUserPermissions, queryUserWithIncludes, schema } from 'database';
 import { procedure as p, router, atLeastUserP, isUserClientM } from '../trpc/trpc.js';
 import { z } from 'zod';
-import { AvatarDesignSchema, LocalClientInitDataSchema, PermissionInsertSchema, UuidSchema, hasAtLeastPermissionLevel, isStreamPermission, isVrSpacePermission } from 'schemas';
+import { AvatarDesignSchema, LocalClientInitDataSchema, PermissionDeleteSchema, PermissionInsertSchema, UuidSchema, hasAtLeastPermissionLevel, isStreamPermission, isVrSpacePermission } from 'schemas';
 import { Stream, VrSpace } from 'classes/InternalClasses.js';
+import { and, eq } from 'drizzle-orm';
 
 export const userRouter = router({
   // getClientState: p.query(({ctx}) => {
@@ -36,13 +37,13 @@ export const userRouter = router({
       throw Error('cant create permission for yourself!');
     }
     const providedUserPermissionLevel = await getPermissionLevelForTarget(input.targetType, input.targetId, input.userId);
-    if (providedUserPermissionLevel !== 'unauthorized' && hasAtLeastPermissionLevel(providedUserPermissionLevel, 'view')) {
+    if (providedUserPermissionLevel && hasAtLeastPermissionLevel(providedUserPermissionLevel, 'view')) {
       throw new Error('permission to that target already exists for that user');
     }
     const userPermissionLevel = await getPermissionLevelForTarget(input.targetType, input.targetId, ctx.userId);
 
     log.info('permission for requesting user', userPermissionLevel);
-    if (userPermissionLevel === 'unauthorized' || !hasAtLeastPermissionLevel(userPermissionLevel, 'edit')) {
+    if (!userPermissionLevel || !hasAtLeastPermissionLevel(userPermissionLevel, 'edit')) {
       throw Error('you are not authorized to do that');
     }
     if (input.permissionLevel && !hasAtLeastPermissionLevel(userPermissionLevel, input.permissionLevel)) {
@@ -77,5 +78,24 @@ export const userRouter = router({
       if (vrSpace) vrSpace.reloadDbData('permission was created');
     }
     return dbResponse
+  }),
+  removePermission: atLeastUserP.use(isUserClientM).input(PermissionDeleteSchema).mutation(async ({ ctx, input }) => {
+
+    //TODO: Check permission to delete permission :-P
+    const [dbResponse] = await db.delete(schema.permissions).where(
+      and(
+        eq(schema.permissions.userId, input.userId),
+        eq(schema.permissions.targetType, input.targetType),
+        eq(schema.permissions.targetId, input.targetId)
+      )
+    ).returning();
+    if (isStreamPermission(dbResponse)) {
+      const stream = Stream.getStream(dbResponse.targetId);
+      if (stream) stream.reloadDbData('permission was deleted');
+    } else if (isVrSpacePermission(dbResponse)) {
+      const vrSpace = VrSpace.getVrSpace(dbResponse.targetId);
+      if (vrSpace) vrSpace.reloadDbData('permission was deleted');
+    }
+    return dbResponse;
   })
 });
