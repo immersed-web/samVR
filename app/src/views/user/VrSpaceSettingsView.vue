@@ -358,16 +358,30 @@ type ExtractEmitData<T extends string, emitUnion extends (...args: any[]) => voi
 type ScreenshotPayload = ExtractEmitData<'screenshot', ComponentInstance<typeof VrSpacePreview>['$emit']>
 
 // const selectedPlacedObject = ref<DeepReadonly<PlacedObjectWithIncludes>>();
-const { selectedPlacedObject, placedObjectPosition: selectedPosition, transformedSelectedObject } = useSelectedPlacedObject();
+const { selectedPlacedObject, placedObjectPosition: selectedPosition, transformedSelectedObject, onTransformUpdate } = useSelectedPlacedObject();
 
-watchDebounced(transformedSelectedObject, (updatedPO, oldPO) => {
-  console.log('selectedPlacedObject changed', updatedPO, oldPO);
-  if (!updatedPO || !oldPO) {
-    return;
-  }
-  const uPO = updatedPO as PlacedObjectWithIncludes;
-  vrSpaceStore.upsertPlacedObject(uPO)
-}, { deep: true, debounce: 400, maxWait: 1500 });
+// watchDebounced(transformedSelectedObject, (updatedPO, oldPO) => {
+//   console.log('selectedPlacedObject changed', updatedPO, oldPO);
+//   if (!updatedPO || !oldPO) {
+//     return;
+//   }
+//   const uPO = updatedPO as PlacedObjectWithIncludes;
+//   vrSpaceStore.upsertPlacedObject(uPO)
+// }, { deep: true, debounce: 400, maxWait: 1500 });
+onTransformUpdate(spo => {
+  const transformedPO = spo as PlacedObjectWithIncludes;
+  console.log('selected object transform hook triggered');
+  // const pos = transformedPO.orientation
+  vrSpaceStore.upsertPlacedObject(transformedPO);
+})
+// watchDebounced(() => transformedSelectedObject.value?.position, (updatedPosition, oldPosition) => {
+
+//   if (!transformedSelectedObject.value) return;
+//   const transformedPO = transformedSelectedObject.value as PlacedObjectWithIncludes;
+//   console.log('transformed selected object position changed');
+//   // const pos = transformedPO.orientation
+//   vrSpaceStore.upsertPlacedObject(transformedPO);
+// }, { deep: true, debounce: 400, maxWait: 1500 });
 
 const placedObjectsSelectFiltered = computed(() => {
   return vrSpaceStore.currentVrSpace?.dbData.placedObjects.filter(po => po.placedObjectId !== selectedPlacedObject.value?.placedObjectId) ?? [];

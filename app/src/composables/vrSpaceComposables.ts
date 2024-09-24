@@ -1,6 +1,6 @@
 import { computed, ref, readonly, shallowReadonly, shallowRef, type Ref, watch, type WatchStopHandle, type DeepReadonly } from 'vue';
 import { THREE, type Entity } from 'aframe';
-import { type EventBusKey } from '@vueuse/core';
+import { watchDebounced, type EventBusKey } from '@vueuse/core';
 import { createEventHook } from '@vueuse/core';
 import { eulerTupleToQuaternionTuple, intersectionToTransform, quaternionTupleToAframeRotation, type AframeClickeventData, type RayIntersectionData } from '@/modules/3DUtils';
 import type { PlacedObject } from 'schemas';
@@ -129,26 +129,32 @@ const selectedPlacedObject = shallowRef<DeepReadonly<PlacedObjectWithIncludes>>(
 const placedObjectRotation = ref<THREE.Vector3Tuple>();
 const placedObjectPosition = ref<THREE.Vector3Tuple>();
 const placedObjectScale = ref<THREE.Vector3Tuple>();
+const transformUpdatedHook = createEventHook<NonNullable<typeof transformedSelectedObject.value>>();
+const transformedSelectedObject = computed(() => {
+  console.log('transformedSelectedObject computed triggered');
+  if (!selectedPlacedObject.value || !placedObjectPosition.value) {
+    return undefined;
+  }
+  // TODO: We dont handle orientation vs rotaion properly yet
+  const transformedPO = {
+    ...selectedPlacedObject.value,
+    position: placedObjectPosition.value,
+    rotation: placedObjectRotation.value,
+    scale: placedObjectScale.value,
+  }
+  // console.log('transformedSelectedObject result:', transformedPO);
+  return transformedPO;
+});
+let transformWatchStopper: WatchStopHandle | undefined;
 export function useSelectedPlacedObject() {
-  // export function useSelectedPlacedObject(selectedObjectRef: typeof selectedPlacedObject) {
-  // selectedPlacedObject = selectedObjectRef;
-  const transformedSelectedObject = computed(() => {
-    console.log('transformedSelectedObject computed triggered');
-    if (!selectedPlacedObject.value) {
-      return undefined;
-    }
-    const transformedPO = {
-      ...selectedPlacedObject.value,
-      position: placedObjectPosition.value,
-      rotation: placedObjectRotation.value,
-      scale: placedObjectScale.value,
-    }
-    console.log('transformedSelectedObject reseult:', transformedPO);
-    return transformedPO;
-  });
+// export function useSelectedPlacedObject(selectedObjectRef: typeof selectedPlacedObject) {
+// selectedPlacedObject = selectedObjectRef;
 
   watch(selectedPlacedObject, (placedObject) => {
-    console.log('selectedPlacedObject watcher triggered:', placedObject);
+    // console.log('selectedPlacedObject watcher triggered:', placedObject);
+    if (transformWatchStopper) {
+      transformWatchStopper();
+    }
     if (!placedObject) {
       placedObjectPosition.value = undefined;
       placedObjectRotation.value = undefined;
@@ -168,6 +174,13 @@ export function useSelectedPlacedObject() {
     } else {
       placedObjectScale.value = [...scale];
     }
+
+
+    transformWatchStopper = watchDebounced([placedObjectPosition, placedObjectRotation, placedObjectScale], () => {
+      console.log('transform refs watcher triggered:', placedObjectPosition.value, placedObjectRotation.value, placedObjectScale.value);
+      if (!transformedSelectedObject.value) return;
+      transformUpdatedHook.trigger(transformedSelectedObject.value);
+    }, { deep: true, debounce: 450, maxWait: 1500 })
     // watch(placedObjectPosition, () => {
     //   console.log('placedObjectPosition watcher triggered:', placedObjectPosition.value);
     //   if (!selectedPlacedObject) {
@@ -205,6 +218,7 @@ export function useSelectedPlacedObject() {
     // setSelectedPlacedObjectRef,
     selectedPlacedObject,
     transformedSelectedObject,
+    onTransformUpdate: transformUpdatedHook.on,
     placedObjectPosition,
     placedObjectRotation,
     placedObjectScale,
