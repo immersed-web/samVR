@@ -1,10 +1,19 @@
 <template>
   <div class="relative">
-    <div v-if="props.navmeshUrl" class="absolute right-0 z-10 rounded-bl-lg bg-neutral-50/70 py-1 px-2">
-      <label class="flex items-center cursor-pointer select-none">
-        <span class="label-text mr-1 font-bold">visa navmesh</span>
-        <input type="checkbox" class="toggle toggle-xs" v-model="showNavMesh">
-      </label>
+    <div class="absolute right-0 z-10 flex flex-col gap-1">
+      <div v-if="props.navmeshUrl" class="rounded-bl-lg bg-neutral-50/70 py-1 px-2">
+        <label class="flex items-center cursor-pointer select-none">
+          <span class="label-text mr-1 font-bold">visa navmesh</span>
+          <input type="checkbox" class="toggle toggle-xs" v-model="showNavMesh">
+        </label>
+      </div>
+      <div v-if="transformedSelectedObject" class="rounded-l-lg flex flex-col bg-neutral-50/70 py-1 px-2">
+        <template v-if="placedObjectPosition">
+          <OffsetSlider v-model.number="placedObjectPosition[0]" />
+          <OffsetSlider v-model.number="placedObjectPosition[1]" />
+          <OffsetSlider v-model.number="placedObjectPosition[2]" />
+        </template>
+      </div>
     </div>
     <a-scene embedded class="min-h-96" ref="sceneTag" id="ascene" xr-mode-ui="enabled: false"
       @raycast-update="setCursorIntersection($event.detail)">
@@ -35,12 +44,14 @@ import { useTimeoutFn, usePointerLock } from '@vueuse/core';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import registerAframeComponents from '@/ts/aframe/components';
 import { defaultHeightOverGround } from 'schemas';
-import { useCurrentCursorIntersection } from '@/composables/vrSpaceComposables';
+import { useCurrentCursorIntersection, useSelectedPlacedObject } from '@/composables/vrSpaceComposables';
+import OffsetSlider from '../OffsetSlider.vue';
 registerAframeComponents();
 
 const vrSpaceStore = useVrSpaceStore();
 
 const { setCursorIntersection, isCursorOnNavmesh, triggerCursorClick } = useCurrentCursorIntersection();
+const { transformedSelectedObject, placedObjectPosition, placedObjectScale } = useSelectedPlacedObject();
 
 const { lock, unlock, element } = usePointerLock();
 
