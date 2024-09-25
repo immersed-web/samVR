@@ -1,14 +1,14 @@
 <template>
   <div class="relative">
-    <div class="absolute right-0 z-10 flex flex-col gap-1 text-base-content">
-      <div v-if="props.navmeshUrl" class="rounded-bl-lg bg-base-100/70 py-1 px-2">
-        <label class="flex items-center cursor-pointer select-none">
-          <span class="label-text mr-1 font-bold">visa navmesh</span>
+    <div class="absolute right-0 z-10 flex flex-col gap-1 lowercase font-bold text-base-content *:bg-base-100/75">
+      <div v-if="props.navmeshUrl" class="rounded-bl-lg py-1 px-2">
+        <label class="flex items-center justify-between cursor-pointer select-none">
+          <span class="label-text mr-1">visa navmesh</span>
           <input type="checkbox" class="toggle toggle-xs" v-model="showNavMesh">
         </label>
       </div>
       <div v-if="transformedSelectedObject"
-        class="rounded-l-lg grid grid-cols-[auto_auto] items-center justify-items-center gap-x-2 gap-y-2 font-bold bg-base-100/75 py-1 px-2">
+        class="rounded-l-lg grid grid-cols-[auto_auto] items-center justify-items-center gap-x-2 gap-y-2 py-1 px-2">
         <div class="col-span-2 justify-self-stretch divider divider-start text-xs m-0">Position</div>
         <div class="contents" v-if="placedObjectPosition">
           <span class="-mt-1">x</span>
