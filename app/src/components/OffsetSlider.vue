@@ -1,6 +1,6 @@
 <template>
-  <input type="range" :step="props.steps" :min="currentMin" :max="currentMax" :value="localModelValue" @input="onInput"
-    @change="updateMinMax">
+  <input class="accent-primary" type="range" :step="props.steps" :min="currentMin" :max="currentMax"
+    :value="localModelValue" @input="onInput" @change="updateMinMax">
 </template>
 <script setup lang="ts">
 import { ref, watch } from 'vue';
