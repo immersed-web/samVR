@@ -241,7 +241,8 @@
       <div class="sticky top-2">
         <VrSpacePreview class="border rounded-md overflow-hidden" ref="vrComponentTag"
           :model-url="vrSpaceStore.worldModelUrl" :navmesh-url="vrSpaceStore.navMeshUrl"
-          :raycastSelector="raycastSelector" :auto-rotate="currentCursorMode === undefined">
+          :raycastSelector="raycastSelector"
+          :auto-rotate="currentCursorMode === undefined && selectedPlacedObject === undefined">
           <a-entity v-if="!hideGizmos" id="placed-objects">
             <template v-for="placedObject in placedObjectsSelectFiltered" :key="placedObject.placedObjectId">
               <template v-if="placedObject.type === 'vrPortal'">
