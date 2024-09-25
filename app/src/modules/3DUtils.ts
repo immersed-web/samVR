@@ -1,6 +1,11 @@
 import { THREE, type Entity } from "aframe";
 import type { Vector3Tuple } from "env";
 
+const utilMatrix4 = new THREE.Matrix4();
+const utilVector3 = new THREE.Vector3();
+const utilEuler = new THREE.Euler();
+const utilQuaternion = new THREE.Quaternion();
+
 export type RayIntersectionData = { intersection: THREE.Intersection, rayDirection: THREE.Vector3 };
 export type AframeClickeventData = {
   // intersectedEl:
@@ -75,26 +80,35 @@ export function arrToCoordString(arr: Readonly<Array<unknown>>) {
   return constructedString;
 }
 
-export function threeRotationToAframeRotation(threeRotation: THREE.Vector3Tuple): THREE.Vector3Tuple {
+export function radiansEulerTupleToDegreesEulerTuple(eulerTuple: THREE.Vector3Tuple): THREE.Vector3Tuple {
   return [
-    THREE.MathUtils.radToDeg(threeRotation[0]),
-    THREE.MathUtils.radToDeg(threeRotation[1]),
-    THREE.MathUtils.radToDeg(threeRotation[2]),
+    THREE.MathUtils.radToDeg(eulerTuple[0]),
+    THREE.MathUtils.radToDeg(eulerTuple[1]),
+    THREE.MathUtils.radToDeg(eulerTuple[2]),
   ];
 }
 
+export function degreesEulerTupleToRadiansEulerTuple(eulerTuple: THREE.Vector3Tuple): THREE.Vector3Tuple {
+  return [
+    THREE.MathUtils.degToRad(eulerTuple[0]),
+    THREE.MathUtils.degToRad(eulerTuple[1]),
+    THREE.MathUtils.degToRad(eulerTuple[2]),
+  ]
+}
+
 export function quaternionToAframeRotation(quaternion: THREE.Quaternion): THREE.Vector3Tuple {
-  const euler = new THREE.Euler().reorder('YXZ').setFromQuaternion(quaternion);
+  const euler = utilEuler.reorder('YXZ').setFromQuaternion(quaternion);
   const arr = euler.toArray() as THREE.Vector3Tuple;
-  return threeRotationToAframeRotation(arr);
+  return radiansEulerTupleToDegreesEulerTuple(arr);
 }
 
 export function quaternionTupleToAframeRotation(quaternionTuple: Readonly<THREE.Vector4Tuple>): THREE.Vector3Tuple {
-  return quaternionToAframeRotation(new THREE.Quaternion(...quaternionTuple));
+  return quaternionToAframeRotation(utilQuaternion.fromArray(quaternionTuple));
 }
 
-export function eulerTupleToQuaternionTuple(eulerTuple: Vector3Tuple) {
-  const euler = new THREE.Euler().fromArray(eulerTuple);
-  const quaternion = new THREE.Quaternion().setFromEuler(euler);
+export function aFrameRotationTupleToQuaternionTuple(eulerTuple: Vector3Tuple) {
+  utilEuler.reorder('YXZ');
+  const euler = utilEuler.fromArray(degreesEulerTupleToRadiansEulerTuple(eulerTuple));
+  const quaternion = utilQuaternion.setFromEuler(euler);
   return quaternion.toArray() as THREE.Vector4Tuple;
 }

@@ -89,7 +89,7 @@ import {
 import AssetLibrary from '@/components/lobby/AssetLibrary.vue';
 import { extensionsToAframeTagsMap, type Asset, type AssetAframeTagname, type AssetId, type AssetType, type PlacedObject, type PlacedObjectId, type PlacedObjectInsert, type UserId } from 'schemas';
 import { getAssetUrl } from '@/modules/utils';
-import { quaternionToAframeRotation, arrToCoordString, quaternionTupleToAframeRotation, eulerTupleToQuaternionTuple, intersectionToTransform } from '@/modules/3DUtils';
+import { quaternionToAframeRotation, arrToCoordString, quaternionTupleToAframeRotation, aFrameRotationTupleToQuaternionTuple, intersectionToTransform } from '@/modules/3DUtils';
 import PlacedAsset from '@/components/lobby/PlacedAsset.vue';
 import type { PlacedObjectWithIncludes } from 'database';
 import { useClientStore } from '@/stores/clientStore';
@@ -322,7 +322,7 @@ function updatePaneSelected() {
 
       pane.value.addBinding(paneParams.value, 'rotation', { label: 'Rotation', step: 1, min: -180, max: 180 }).on('change', (ev) => {
         if (!currentlySelectedPlacedObject.value) { return; }
-        const quatTuple = eulerTupleToQuaternionTuple(ev.value);
+        const quatTuple = aFrameRotationTupleToQuaternionTuple(ev.value);
         // currentlySelectedPlacedObject.value.orientation = quatTuple;
       });
 

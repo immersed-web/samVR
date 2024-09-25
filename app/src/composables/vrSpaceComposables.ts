@@ -2,7 +2,7 @@ import { computed, ref, readonly, shallowReadonly, shallowRef, type Ref, watch, 
 import { THREE, type Entity } from 'aframe';
 import { watchDebounced, type EventBusKey } from '@vueuse/core';
 import { createEventHook } from '@vueuse/core';
-import { eulerTupleToQuaternionTuple, intersectionToTransform, quaternionTupleToAframeRotation, type AframeClickeventData, type RayIntersectionData } from '@/modules/3DUtils';
+import { aFrameRotationTupleToQuaternionTuple, intersectionToTransform, quaternionTupleToAframeRotation, type AframeClickeventData, type RayIntersectionData } from '@/modules/3DUtils';
 import type { PlacedObject } from 'schemas';
 import type { PlacedObjectWithIncludes } from 'database';
 
@@ -137,7 +137,7 @@ const transformedSelectedObject = computed(() => {
   }
   let orientation: THREE.Vector4Tuple | undefined = undefined;
   if (placedObjectRotation.value) {
-    orientation = eulerTupleToQuaternionTuple(placedObjectRotation.value);
+    orientation = aFrameRotationTupleToQuaternionTuple(placedObjectRotation.value);
   }
   const transformedPO = {
     ...selectedPlacedObject.value,

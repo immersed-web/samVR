@@ -294,8 +294,11 @@
           @click="setCursorMode(undefined); selectedPlacedObject = undefined">
           <span class="material-icons">close</span>
         </button>
-        <pre class="text-xs">{{ selectedPlacedObject }}</pre>
-        <pre class="text-xs">{{ transformedSelectedObject }}</pre>
+        <pre
+          class="text-xs">qToAframe(sPo): {{ quaternionTupleToAframeRotation(selectedPlacedObject?.orientation ?? [0, 0, 0, 1]) }}</pre>
+        <pre class="text-xs">composable rotation ref: {{ placedObjectRotation }}</pre>
+        <pre class="text-xs">sPO orientation: {{ selectedPlacedObject?.orientation }}</pre>
+        <pre class="text-xs">tsPO orientation: {{ transformedSelectedObject?.orientation }}</pre>
         <!-- 
         <pre>{{ selectedPlacedObject?.position }}</pre>
         <pre>{{ vrSpaceStore.currentVrSpace?.dbData.placedObjects.find(p => p.placedObjectId === selectedPlacedObject?.placedObjectId)?.position }}</pre> -->
@@ -379,7 +382,7 @@ type ExtractEmitData<T extends string, emitUnion extends (...args: any[]) => voi
 type ScreenshotPayload = ExtractEmitData<'screenshot', ComponentInstance<typeof VrSpacePreview>['$emit']>
 
 // const selectedPlacedObject = ref<DeepReadonly<PlacedObjectWithIncludes>>();
-const { selectedPlacedObject, placedObjectPosition: selectedPosition, transformedSelectedObject, onTransformUpdate } = useSelectedPlacedObject();
+const { selectedPlacedObject, placedObjectPosition: selectedPosition, placedObjectRotation, transformedSelectedObject, onTransformUpdate } = useSelectedPlacedObject();
 
 // watchDebounced(transformedSelectedObject, (updatedPO, oldPO) => {
 //   console.log('selectedPlacedObject changed', updatedPO, oldPO);

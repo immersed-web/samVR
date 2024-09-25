@@ -29,11 +29,11 @@
         <div class="col-span-2 justify-self-stretch divider text-xs m-0">Rotation</div>
         <div class="contents" v-if="placedObjectRotation">
           <span class="-mt-1">x</span>
-          <OffsetSlider v-model.number="placedObjectRotation[0]" />
+          <OffsetSlider :offset="90" v-model.number="placedObjectRotation[0]" />
           <span class="-mt-1">y</span>
-          <OffsetSlider v-model.number="placedObjectRotation[1]" />
+          <OffsetSlider :offset="90" v-model.number="placedObjectRotation[1]" />
           <span class="-mt-1">z</span>
-          <OffsetSlider v-model.number="placedObjectRotation[2]" />
+          <OffsetSlider :offset="90" v-model.number="placedObjectRotation[2]" />
         </div>
       </div>
     </div>
