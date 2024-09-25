@@ -1,15 +1,15 @@
 <template>
   <div class="relative">
-    <div class="absolute right-0 z-10 flex flex-col gap-1">
-      <div v-if="props.navmeshUrl" class="rounded-bl-lg bg-neutral-50/70 py-1 px-2">
+    <div class="absolute right-0 z-10 flex flex-col gap-1 text-base-content">
+      <div v-if="props.navmeshUrl" class="rounded-bl-lg bg-base-100/70 py-1 px-2">
         <label class="flex items-center cursor-pointer select-none">
           <span class="label-text mr-1 font-bold">visa navmesh</span>
           <input type="checkbox" class="toggle toggle-xs" v-model="showNavMesh">
         </label>
       </div>
       <div v-if="transformedSelectedObject"
-        class="rounded-l-lg grid grid-cols-[auto_auto] items-center justify-items-end gap-x-2 gap-y-2 font-bold bg-neutral-50/70 py-1 px-2">
-        <div class="col-span-2 justify-self-stretch divider text-xs m-0">Position</div>
+        class="rounded-l-lg grid grid-cols-[auto_auto] items-center justify-items-center gap-x-2 gap-y-2 font-bold bg-base-100/75 py-1 px-2">
+        <div class="col-span-2 justify-self-stretch divider divider-start text-xs m-0">Position</div>
         <div class="contents" v-if="placedObjectPosition">
           <span class="-mt-1">x</span>
           <OffsetSlider v-model.number="placedObjectPosition[0]" />
@@ -18,22 +18,28 @@
           <span class="-mt-1">z</span>
           <OffsetSlider v-model.number="placedObjectPosition[2]" />
         </div>
-        <div class="col-span-2 justify-self-stretch divider text-xs m-0">Storlek</div>
-        <button class="btn btn-xs col-start-2" v-if="!placedObjectScale" @click="placedObjectScale = [1, 1, 1]">ändra
-          storlek</button>
-        <template v-else>
-          <button class="btn btn-xs col-start-2" @click="placedObjectScale = undefined">originalstorlek</button>
-          <span class="-mt-0.5 text-xs">{{ uniformScale }}</span>
-          <OffsetSlider v-model.number="uniformScale" />
-        </template>
-        <div class="col-span-2 justify-self-stretch divider text-xs m-0">Rotation</div>
+        <div class="col-span-2 justify-self-stretch flex items-center gap-2 justify-between">
+          <span class="grow self-center divider divider-start text-xs m-0">Storlek</span>
+          <button class="btn btn-xs btn-circle material-icons"
+            @click="placedObjectScale = undefined">restart_alt</button>
+        </div>
+        <span class=" material-icons">zoom_out_map</span>
+        <OffsetSlider v-model.number="uniformScale" />
+        <div class="col-span-2 justify-self-stretch flex items-center gap-2 justify-between">
+          <span class="grow self-center divider divider-start text-xs m-0">Rotation</span>
+          <button @click="placedObjectRotation = [0, 0, 0]"
+            class="btn btn-xs btn-circle material-icons">restart_alt</button>
+        </div>
         <div class="contents" v-if="placedObjectRotation">
-          <span class="-mt-1">x</span>
-          <OffsetSlider :offset="90" v-model.number="placedObjectRotation[0]" />
-          <span class="-mt-1">y</span>
-          <OffsetSlider :offset="90" v-model.number="placedObjectRotation[1]" />
-          <span class="-mt-1">z</span>
-          <OffsetSlider :offset="90" v-model.number="placedObjectRotation[2]" />
+          <span class="material-icons">360</span>
+          <input type="range" class="accent-primary" min="-90" max="90" v-model.number="placedObjectRotation[1]">
+          <!-- <OffsetSlider :offset="90" v-model.number="placedObjectRotation[1]" /> -->
+          <span class="rotate-90 material-icons">360</span>
+          <input type="range" class="accent-primary" min="-180" max="180" v-model.number="placedObjectRotation[0]">
+          <!-- <OffsetSlider :offset="90" v-model.number="placedObjectRotation[0]" /> -->
+          <span class="material-icons">refresh</span>
+          <input type="range" class="accent-primary" min="-180" max="180" v-model.number="placedObjectRotation[2]">
+          <!-- <OffsetSlider :offset="90" v-model.number="placedObjectRotation[2]" /> -->
         </div>
       </div>
     </div>
@@ -76,11 +82,15 @@ const { setCursorIntersection, isCursorOnNavmesh, triggerCursorClick } = useCurr
 const { transformedSelectedObject, placedObjectPosition, placedObjectScale, placedObjectRotation } = useSelectedPlacedObject();
 
 // const uniformScale = ref(1);
-const uniformScale = computed({
+const uniformScale = computed<number>({
   get() {
     return placedObjectScale.value ? placedObjectScale.value[0] : 1
   },
   set(newValue: number) {
+    // if (!newValue) {
+    //   placedObjectScale.value = undefined;
+    //   return;
+    // }
     placedObjectScale.value = [newValue, newValue, newValue];
   }
 })

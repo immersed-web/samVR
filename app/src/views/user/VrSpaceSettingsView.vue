@@ -294,6 +294,7 @@
           @click="setCursorMode(undefined); selectedPlacedObject = undefined">
           <span class="material-icons">close</span>
         </button>
+        <pre class="text-xs">composable scale ref: {{ placedObjectScale }}</pre>
         <pre
           class="text-xs">qToAframe(sPo): {{ quaternionTupleToAframeRotation(selectedPlacedObject?.orientation ?? [0, 0, 0, 1]) }}</pre>
         <pre class="text-xs">composable rotation ref: {{ placedObjectRotation }}</pre>
@@ -382,7 +383,7 @@ type ExtractEmitData<T extends string, emitUnion extends (...args: any[]) => voi
 type ScreenshotPayload = ExtractEmitData<'screenshot', ComponentInstance<typeof VrSpacePreview>['$emit']>
 
 // const selectedPlacedObject = ref<DeepReadonly<PlacedObjectWithIncludes>>();
-const { selectedPlacedObject, placedObjectPosition: selectedPosition, placedObjectRotation, transformedSelectedObject, onTransformUpdate } = useSelectedPlacedObject();
+const { selectedPlacedObject, placedObjectPosition: selectedPosition, placedObjectRotation, placedObjectScale, transformedSelectedObject, onTransformUpdate } = useSelectedPlacedObject();
 
 // watchDebounced(transformedSelectedObject, (updatedPO, oldPO) => {
 //   console.log('selectedPlacedObject changed', updatedPO, oldPO);
