@@ -9,7 +9,10 @@
       </div>
       <div v-if="transformedSelectedObject"
         class="rounded-l-lg grid grid-cols-[auto_auto] items-center justify-items-center gap-x-2 gap-y-2 py-1 px-2">
-        <div class="col-span-2 justify-self-stretch divider divider-start text-xs m-0">Position</div>
+        <div class="col-span-2 justify-self-stretch flex items-center gap-2 justify-between">
+          <span class="grow self-center divider divider-start text-xs m-0">Position</span>
+          <button class="btn btn-xs btn-circle material-icons" @click="startMovingObject">ads_click</button>
+        </div>
         <div class="contents" v-if="placedObjectPosition">
           <span class="-mt-1">x</span>
           <OffsetSlider v-model.number="placedObjectPosition[0]" />
@@ -72,14 +75,15 @@ import { useTimeoutFn, usePointerLock } from '@vueuse/core';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import registerAframeComponents from '@/ts/aframe/components';
 import { defaultHeightOverGround } from 'schemas';
-import { useCurrentCursorIntersection, useSelectedPlacedObject } from '@/composables/vrSpaceComposables';
+import { useCurrentCursorIntersection, useSelectedPlacedObject, useCurrentlyMovedObject } from '@/composables/vrSpaceComposables';
 import OffsetSlider from '../OffsetSlider.vue';
 registerAframeComponents();
 
 const vrSpaceStore = useVrSpaceStore();
 
-const { setCursorIntersection, isCursorOnNavmesh, triggerCursorClick } = useCurrentCursorIntersection();
-const { transformedSelectedObject, placedObjectPosition, placedObjectScale, placedObjectRotation } = useSelectedPlacedObject();
+const { setCursorIntersection, isCursorOnNavmesh, triggerCursorClick, setCursorMode } = useCurrentCursorIntersection();
+const { selectedPlacedObject, transformedSelectedObject, placedObjectPosition, placedObjectScale, placedObjectRotation } = useSelectedPlacedObject();
+const { currentlyMovedObject } = useCurrentlyMovedObject();
 
 // const uniformScale = ref(1);
 const uniformScale = computed<number>({
@@ -94,6 +98,12 @@ const uniformScale = computed<number>({
     placedObjectScale.value = [newValue, newValue, newValue];
   }
 })
+
+function startMovingObject() {
+  currentlyMovedObject.value = selectedPlacedObject.value;
+  selectedPlacedObject.value = undefined;
+  setCursorMode('place-asset');
+}
 
 const { lock, unlock, element } = usePointerLock();
 

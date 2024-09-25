@@ -241,7 +241,7 @@
       <div class="sticky top-2">
         <VrSpacePreview class="border rounded-md overflow-hidden" ref="vrComponentTag"
           :model-url="vrSpaceStore.worldModelUrl" :navmesh-url="vrSpaceStore.navMeshUrl"
-          :raycastSelector="raycastSelector"
+          :raycastSelector="currentRaycastSelector"
           :auto-rotate="currentCursorMode === undefined && selectedPlacedObject === undefined">
           <a-entity v-if="!hideGizmos" id="placed-objects">
             <template v-for="placedObject in placedObjectsSelectFiltered" :key="placedObject.placedObjectId">
@@ -281,8 +281,21 @@
               :material="`shader: pano-portal; warpParams: 3 0.9; src: ${vrSpaceStore.panoramicPreviewUrl};`" />
           </a-entity>
           <a-entity id="teleport-target-aframe-cursor" ref="cursorEntity">
+
             <a-ring :visible="currentCursorMode !== undefined" color="yellow" radius-inner="0.1" radius-outer="0.2"
               material="shader: flat; side: double;" rotation="0 0 0" />
+            <template v-if="currentlyMovedObject">
+              <!-- <VrSpacePortal :key="`selected-${transformedSelectedObject.placedObjectId}`"
+                v-if="transformedSelectedObject.type === 'vrPortal'" show-box-helper
+                :position="transformedSelectedObject.position?.join(' ')"
+                :vr-portal="transformedSelectedObject.vrPortal" :label="'markerad'" /> -->
+              <PlacedAsset v-if="isAsset(currentlyMovedObject)" :key="currentlyMovedObject.assetId"
+                :asset="currentlyMovedObject" />
+              <template v-else>
+                <PlacedAsset v-if="currentlyMovedObject.type === 'asset' && currentlyMovedObject.asset"
+                  :asset="currentlyMovedObject.asset" />
+              </template>
+            </template>
           </a-entity>
           <!-- <PlacablesTeleport /> -->
           <!-- <a-entity :position="hoverPosString" :visible="hoverPosString !== undefined">
@@ -294,12 +307,14 @@
           @click="setCursorMode(undefined); selectedPlacedObject = undefined">
           <span class="material-icons">close</span>
         </button>
-        <pre class="text-xs">composable scale ref: {{ placedObjectScale }}</pre>
-        <pre
-          class="text-xs">qToAframe(sPo): {{ quaternionTupleToAframeRotation(selectedPlacedObject?.orientation ?? [0, 0, 0, 1]) }}</pre>
-        <pre class="text-xs">composable rotation ref: {{ placedObjectRotation }}</pre>
+
+        <pre class="text-xs">currentlyMovedObject: {{ currentlyMovedObject }}</pre>
+        <!-- <pre class="text-xs">composable scale ref: {{ placedObjectScale }}</pre> -->
+        <!-- <pre
+          class="text-xs">qToAframe(sPo): {{ quaternionTupleToAframeRotation(selectedPlacedObject?.orientation ?? [0, 0, 0, 1]) }}</pre> -->
+        <!-- <pre class="text-xs">composable rotation ref: {{ placedObjectRotation }}</pre>
         <pre class="text-xs">sPO orientation: {{ selectedPlacedObject?.orientation }}</pre>
-        <pre class="text-xs">tsPO orientation: {{ transformedSelectedObject?.orientation }}</pre>
+        <pre class="text-xs">tsPO orientation: {{ transformedSelectedObject?.orientation }}</pre> -->
         <!-- 
         <pre>{{ selectedPlacedObject?.position }}</pre>
         <pre>{{ vrSpaceStore.currentVrSpace?.dbData.placedObjects.find(p => p.placedObjectId === selectedPlacedObject?.placedObjectId)?.position }}</pre> -->
@@ -367,7 +382,7 @@ import AssetLibrary from '@/components/lobby/AssetLibrary.vue';
 import { getAssetUrl, uploadFileData } from '@/modules/utils';
 import VrSpacePortal from '@/components/entities/VrSpacePortal.vue';
 import AutoComplete from '@/components/AutoComplete.vue';
-import { useCurrentCursorIntersection, useSelectedEntity, useSelectedPlacedObject } from '@/composables/vrSpaceComposables';
+import { useCurrentCursorIntersection, useSelectedEntity, useSelectedPlacedObject, useCurrentlyMovedObject, isAsset } from '@/composables/vrSpaceComposables';
 import { THREE, type Entity } from 'aframe';
 import { arrToCoordString, isEntity, quaternionTupleToAframeRotation } from '@/modules/3DUtils';
 import type { PlacedObjectWithIncludes } from 'database';
@@ -376,14 +391,13 @@ import PlacablesTeleport from './lobby/teleports/PlacablesTeleport.vue';
 import PlacedAsset from '@/components/lobby/PlacedAsset.vue';
 import OffsetSlider from '@/components/OffsetSlider.vue';
 
-const testNumber = ref(10);
 
 // TODO: refine/find alternative way to get these types so we get intellisense for the emit key
 type ExtractEmitData<T extends string, emitUnion extends (...args: any[]) => void> = T extends Parameters<emitUnion>[0] ? Parameters<emitUnion>[1] : never
 type ScreenshotPayload = ExtractEmitData<'screenshot', ComponentInstance<typeof VrSpacePreview>['$emit']>
 
-// const selectedPlacedObject = ref<DeepReadonly<PlacedObjectWithIncludes>>();
-const { selectedPlacedObject, placedObjectPosition: selectedPosition, placedObjectRotation, placedObjectScale, transformedSelectedObject, onTransformUpdate } = useSelectedPlacedObject();
+const { selectedPlacedObject, placedObjectRotation, placedObjectScale, transformedSelectedObject, onTransformUpdate } = useSelectedPlacedObject();
+const { currentlyMovedObject } = useCurrentlyMovedObject();
 
 // watchDebounced(transformedSelectedObject, (updatedPO, oldPO) => {
 //   console.log('selectedPlacedObject changed', updatedPO, oldPO);
@@ -412,17 +426,17 @@ const placedObjectsSelectFiltered = computed(() => {
   return vrSpaceStore.currentVrSpace?.dbData.placedObjects.filter(po => po.placedObjectId !== selectedPlacedObject.value?.placedObjectId) ?? [];
 })
 
-const { setCursorMode, currentCursorMode, setCursorEntityRef, onCursorClick, currentCursorIntersection, triggerCursorClick } = useCurrentCursorIntersection();
+const { setCursorMode, currentCursorMode, currentRaycastSelector, setCursorEntityRef, onCursorClick, currentCursorIntersection, triggerCursorClick } = useCurrentCursorIntersection();
 watch(currentCursorIntersection, (intersection) => {
   if (currentCursorMode.value === 'place-spawnposition') {
     uncommitedSpawnPosition.value = intersection?.intersection.point?.toArray() ?? [0, 0, 0];
   }
 });
 
-const raycastSelector = computed(() => {
-  if (!currentCursorMode.value) return '.selectable-object';
-  return '.selectable-object, .raycastable-surface';
-});
+// const raycastSelector = computed(() => {
+//   if (!currentCursorMode.value) return '.selectable-object';
+//   return '.selectable-object, .raycastable-surface';
+// });
 
 // Use imports
 // const router = useRouter();

@@ -3,7 +3,7 @@ import { THREE, type Entity } from 'aframe';
 import { watchDebounced, type EventBusKey } from '@vueuse/core';
 import { createEventHook } from '@vueuse/core';
 import { aFrameRotationTupleToQuaternionTuple, intersectionToTransform, quaternionTupleToAframeRotation, type AframeClickeventData, type RayIntersectionData } from '@/modules/3DUtils';
-import type { PlacedObject } from 'schemas';
+import type { Asset, PlacedObject } from 'schemas';
 import type { PlacedObjectWithIncludes } from 'database';
 
 export type Tuple = [number, number]
@@ -17,11 +17,27 @@ function setCursorIntersection(intersectionData: RayIntersectionData | undefined
   writableIntersection.value = intersectionData;
 }
 export type CursorMode = `place-${PlacedObject['type'] | 'spawnposition'}` | 'teleport' | 'enterFirstPersonView' | 'hover' | undefined
+export type RaycastSelector = `.${'selectable-object' | 'raycastable-surface'}`
 
 const currentCursorMode = ref<CursorMode>();
 function setCursorMode(mode: CursorMode) {
   currentCursorMode.value = mode;
 }
+
+const currentRaycastSelector = computed(() => {
+  switch (currentCursorMode.value) {
+    case 'place-spawnposition':
+    case 'teleport':
+    case 'enterFirstPersonView':
+    case 'hover':
+    case 'place-asset':
+    case 'place-vrPortal':
+    case 'place-pointLight':
+      return '.raycastable-surface';
+    default:
+      return '.selectable-object';
+  }
+});
 
 const isCursorOnNavmesh = computed((): boolean => {
   if (!rayIntersectionData.value) { return false; }
@@ -66,6 +82,7 @@ export function useCurrentCursorIntersection() {
     currentCursorIntersection: rayIntersectionData,
     setCursorIntersection,
     setCursorMode,
+    currentRaycastSelector,
     currentCursorMode: readonly(currentCursorMode),
     isCursorOnNavmesh,
     onCursorClick: clickHook.on,
@@ -192,6 +209,18 @@ export function useSelectedPlacedObject() {
     placedObjectPosition,
     placedObjectRotation,
     placedObjectScale,
+  }
+}
+
+export function isAsset(obj?: DeepReadonly<Asset> | DeepReadonly<PlacedObjectWithIncludes>): obj is Asset {
+  if (!obj) return false;
+  return 'assetId' in obj
+}
+
+const currentlyMovedObject = shallowRef<DeepReadonly<Asset> | DeepReadonly<PlacedObjectWithIncludes>>();
+export function useCurrentlyMovedObject() {
+  return {
+    currentlyMovedObject,
   }
 }
 
