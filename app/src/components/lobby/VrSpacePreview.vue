@@ -8,7 +8,8 @@
         </label>
       </div>
       <div v-if="transformedSelectedObject"
-        class="rounded-l-lg grid grid-cols-[auto_auto] items-center justify-items-end gap-x-2 gap-y-3 font-bold bg-neutral-50/70 py-1 px-2">
+        class="rounded-l-lg grid grid-cols-[auto_auto] items-center justify-items-end gap-x-2 gap-y-2 font-bold bg-neutral-50/70 py-1 px-2">
+        <div class="col-span-2 justify-self-stretch divider text-xs m-0">Position</div>
         <div class="contents" v-if="placedObjectPosition">
           <span class="-mt-1">x</span>
           <OffsetSlider v-model.number="placedObjectPosition[0]" />
@@ -17,19 +18,23 @@
           <span class="-mt-1">z</span>
           <OffsetSlider v-model.number="placedObjectPosition[2]" />
         </div>
+        <div class="col-span-2 justify-self-stretch divider text-xs m-0">Storlek</div>
         <button class="btn btn-xs col-start-2" v-if="!placedObjectScale" @click="placedObjectScale = [1, 1, 1]">ändra
           storlek</button>
         <template v-else>
           <button class="btn btn-xs col-start-2" @click="placedObjectScale = undefined">originalstorlek</button>
-          <div class="contents">
-            <span class="-mt-1">{{ uniformScale }}</span>
-            <OffsetSlider v-model.number="uniformScale" />
-            <!-- <span class="-mt-1">y</span>
-            <OffsetSlider v-model.number="placedObjectScale[1]" />
-            <span class="-mt-1">z</span>
-            <OffsetSlider v-model.number="placedObjectScale[2]" /> -->
-          </div>
+          <span class="-mt-0.5 text-xs">{{ uniformScale }}</span>
+          <OffsetSlider v-model.number="uniformScale" />
         </template>
+        <div class="col-span-2 justify-self-stretch divider text-xs m-0">Rotation</div>
+        <div class="contents" v-if="placedObjectRotation">
+          <span class="-mt-1">x</span>
+          <OffsetSlider v-model.number="placedObjectRotation[0]" />
+          <span class="-mt-1">y</span>
+          <OffsetSlider v-model.number="placedObjectRotation[1]" />
+          <span class="-mt-1">z</span>
+          <OffsetSlider v-model.number="placedObjectRotation[2]" />
+        </div>
       </div>
     </div>
     <a-scene embedded class="min-h-96" ref="sceneTag" id="ascene" xr-mode-ui="enabled: false"

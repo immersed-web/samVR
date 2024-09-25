@@ -135,11 +135,15 @@ const transformedSelectedObject = computed(() => {
   if (!selectedPlacedObject.value || !placedObjectPosition.value) {
     return undefined;
   }
-  // TODO: We dont handle orientation vs rotaion properly yet
+  let orientation: THREE.Vector4Tuple | undefined = undefined;
+  if (placedObjectRotation.value) {
+    orientation = eulerTupleToQuaternionTuple(placedObjectRotation.value);
+  }
   const transformedPO = {
     ...selectedPlacedObject.value,
     position: placedObjectPosition.value,
-    rotation: placedObjectRotation.value,
+    // rotation: placedObjectRotation.value,
+    orientation,
     scale: placedObjectScale.value,
   }
   // console.log('transformedSelectedObject result:', transformedPO);
