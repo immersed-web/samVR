@@ -172,7 +172,7 @@ function pickAsset(asset: Asset) {
   if (src) {
     // createPlaceableObject(extensionsToAframeTagsMap[asset.assetFileExtension], src);
     currentlyMovedObject.value = asset;
-    setCursorMode('placeObject');
+    setCursorMode('place-asset');
   }
 }
 
@@ -366,7 +366,7 @@ onCursorClick((e) => {
     currentlySelectedPlacedObjectId.value = undefined;
     updatePaneSelected();
   }
-  if (currentCursorMode.value === 'placeObject') {
+  if (currentCursorMode.value === 'place-asset') {
     // const position = e.detail.intersection.point.toArray();
     // const orientation = e.detail.intersection.;
     if (!currentCursorIntersection.value) return;

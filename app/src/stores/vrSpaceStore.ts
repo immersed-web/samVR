@@ -119,9 +119,10 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     currentVrSpace.value = undefined;
   }
 
-  type PlacedObjectInVrSpaceReceivedState = _ReceivedVrSpaceState['dbData']['placedObjects'][number];
-  // type PlacedObjectUpsert = PlacedObjectInsert ;
-  async function upsertPlacedObject(placedObject: PlacedObjectInVrSpaceReceivedState, reason?: string) {
+  // type PlacedObjectInVrSpaceReceivedState = _ReceivedVrSpaceState['dbData']['placedObjects'][number];
+
+  type PlacedObjectUpsert = Omit<PlacedObjectInsert, 'reason'>;
+  async function upsertPlacedObject(placedObject: PlacedObjectUpsert, reason?: string) {
     if (!currentVrSpace.value) {
       console.warn('trying to upsert placedObject but currentVrSpace is undefined');
       return;

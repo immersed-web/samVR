@@ -212,7 +212,7 @@ export function useSelectedPlacedObject() {
   }
 }
 
-export function isAsset(obj?: DeepReadonly<Asset> | DeepReadonly<PlacedObjectWithIncludes>): obj is Asset {
+export function isAsset(obj?: DeepReadonly<Asset> | DeepReadonly<PlacedObjectWithIncludes>): obj is DeepReadonly<Asset> {
   if (!obj) return false;
   return 'assetId' in obj
 }

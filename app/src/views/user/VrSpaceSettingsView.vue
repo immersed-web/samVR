@@ -304,7 +304,7 @@
             </a-entity> -->
         </VrSpacePreview>
         <button v-if="currentCursorMode || selectedPlacedObject" class="btn btn-sm btn-circle"
-          @click="setCursorMode(undefined); selectedPlacedObject = undefined">
+          @click="cancelCursorStuff">
           <span class="material-icons">close</span>
         </button>
 
@@ -384,7 +384,7 @@ import VrSpacePortal from '@/components/entities/VrSpacePortal.vue';
 import AutoComplete from '@/components/AutoComplete.vue';
 import { useCurrentCursorIntersection, useSelectedEntity, useSelectedPlacedObject, useCurrentlyMovedObject, isAsset } from '@/composables/vrSpaceComposables';
 import { THREE, type Entity } from 'aframe';
-import { arrToCoordString, isEntity, quaternionTupleToAframeRotation } from '@/modules/3DUtils';
+import { arrToCoordString, intersectionToTransform, isEntity, quaternionTupleToAframeRotation } from '@/modules/3DUtils';
 import type { PlacedObjectWithIncludes } from 'database';
 import { watchDebounced } from '@vueuse/core';
 import PlacablesTeleport from './lobby/teleports/PlacablesTeleport.vue';
@@ -399,28 +399,16 @@ type ScreenshotPayload = ExtractEmitData<'screenshot', ComponentInstance<typeof 
 const { selectedPlacedObject, placedObjectRotation, placedObjectScale, transformedSelectedObject, onTransformUpdate } = useSelectedPlacedObject();
 const { currentlyMovedObject } = useCurrentlyMovedObject();
 
-// watchDebounced(transformedSelectedObject, (updatedPO, oldPO) => {
-//   console.log('selectedPlacedObject changed', updatedPO, oldPO);
-//   if (!updatedPO || !oldPO) {
-//     return;
-//   }
-//   const uPO = updatedPO as PlacedObjectWithIncludes;
-//   vrSpaceStore.upsertPlacedObject(uPO)
-// }, { deep: true, debounce: 400, maxWait: 1500 });
 onTransformUpdate(spo => {
-  const transformedPO = spo as PlacedObjectWithIncludes;
+  const transformedPO = spo;
   console.log('selected object transform hook triggered');
+  // const objectId = transformedPO.asset?.assetId??transformedPO.vrPortal?.vrSpaceId??transformedPO.streamPortal?.streamId;
   // const pos = transformedPO.orientation
-  vrSpaceStore.upsertPlacedObject(transformedPO);
+  vrSpaceStore.upsertPlacedObject({
+    vrSpaceId: props.vrSpaceId,
+    ...transformedPO
+  });
 })
-// watchDebounced(() => transformedSelectedObject.value?.position, (updatedPosition, oldPosition) => {
-
-//   if (!transformedSelectedObject.value) return;
-//   const transformedPO = transformedSelectedObject.value as PlacedObjectWithIncludes;
-//   console.log('transformed selected object position changed');
-//   // const pos = transformedPO.orientation
-//   vrSpaceStore.upsertPlacedObject(transformedPO);
-// }, { deep: true, debounce: 400, maxWait: 1500 });
 
 const placedObjectsSelectFiltered = computed(() => {
   return vrSpaceStore.currentVrSpace?.dbData.placedObjects.filter(po => po.placedObjectId !== selectedPlacedObject.value?.placedObjectId) ?? [];
@@ -433,13 +421,12 @@ watch(currentCursorIntersection, (intersection) => {
   }
 });
 
-// const raycastSelector = computed(() => {
-//   if (!currentCursorMode.value) return '.selectable-object';
-//   return '.selectable-object, .raycastable-surface';
-// });
+function cancelCursorStuff() {
+  setCursorMode(undefined);
+  selectedPlacedObject.value = undefined;
+  currentlyMovedObject.value = undefined;
+}
 
-// Use imports
-// const router = useRouter();
 const backendConnection = useConnectionStore();
 const vrSpaceStore = useVrSpaceStore();
 const authStore = useAuthStore();
@@ -495,9 +482,48 @@ onCursorClick(async (e) => {
         uploadScreenshot(canvas);
         hideGizmos.value = false;
         break;
+      case 'place-asset':
+        await placeMovedObject();
+        cancelCursorStuff();
     }
   }
 });
+
+async function placeMovedObject() {
+  console.log('placeMovedObject triggered');
+  if (!currentlyMovedObject.value || !currentCursorIntersection.value) {
+    console.warn('no currentlyMovedObject or currentCursorIntersection provided to placeMovedObject');
+    return;
+  }
+  const transform = intersectionToTransform(currentCursorIntersection.value)
+  if (!transform) {
+    console.error('intersectionToTransform gave undefined');
+    return;
+  }
+  const { position, rotation } = transform;
+
+  if (isAsset(currentlyMovedObject.value)) {
+    console.log('placed an asset. Need to create a placedObject');
+    await vrSpaceStore.upsertPlacedObject({
+      vrSpaceId: props.vrSpaceId,
+      type: 'asset',
+      objectId: currentlyMovedObject.value.assetId,
+      position,
+      orientation: rotation
+    }, 'placing an asset')
+    currentlyMovedObject.value = undefined;
+    return;
+  } else {
+    console.log('placed an already placedObject, should update the DB');
+    await vrSpaceStore.upsertPlacedObject({
+      vrSpaceId: props.vrSpaceId,
+      placedObjectId: currentlyMovedObject.value.placedObjectId,
+      position,
+      orientation: rotation,
+      type: currentlyMovedObject.value.type,
+    })
+  }
+}
 
 function onAssetUploaded(uploadDetails: AssetUploadEmitUploadedPayload) {
   console.log(uploadDetails);
