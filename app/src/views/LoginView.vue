@@ -146,12 +146,13 @@ const login = async () => {
     } else {
       // console.log('Regular login', authStore.role);
       // router.push('/');
-      if (authStore.role && hasAtLeastSecurityRole(authStore.role, 'admin')) {
-        router.push({name: 'adminHome'});
-      }
-      else {
-        router.push({name: 'userHome'});
-      }
+      router.push({ name: 'start' });
+      // if (authStore.role && hasAtLeastSecurityRole(authStore.role, 'admin')) {
+      //   router.push({name: 'adminHome'});
+      // }
+      // else {
+      //   router.push({name: 'userHome'});
+      // }
 
     }
   }

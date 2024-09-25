@@ -24,12 +24,6 @@
         </button>
       </RouterLink>
 
-      <!-- <RouterLink :to="{ name: 'streamList' }">
-        <button class="btn btn-ghost">
-          Strömmar
-        </button>
-      </RouterLink> -->
-
       <!-- <div class="divider divider-horizontal" /> -->
 
       <div v-if="hasAtLeastSecurityRole(authStore.role, 'admin')">
@@ -48,17 +42,36 @@
     <div class="navbar-end">
       <div class="dropdown dropdown-end">
         <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
-          <div class="w-10 rounded-full">
-            <img alt="Tailwind CSS Navbar component"
-              src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp">
-          </div>
+
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+            stroke="currentColor" class="size-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+          </svg>
+
+
         </div>
         <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow">
           <li>
-            <a>Min profil</a>
+            <RouterLink :to="{ name: 'vrList' }">
+              VR-scener
+            </RouterLink>
           </li>
           <li>
-            <a class="bg-error" @click="logout">Logga ut</a>
+            <RouterLink :to="{ name: 'avatarDesigner' }">
+              Min avatar
+            </RouterLink>
+          </li>
+          <template v-if="hasAtLeastSecurityRole(authStore.role, 'admin')">
+            <!-- <div class="divider">Admin</div> -->
+            <li>
+              <RouterLink :to="{ name: 'adminUserManager' }">
+                Hantera användare
+              </RouterLink>
+            </li>
+          </template>
+
+          <li class="text-error">
+            <a @click="logout">Logga ut</a>
           </li>
         </ul>
       </div>

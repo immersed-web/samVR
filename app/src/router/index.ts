@@ -194,7 +194,8 @@ const router = createRouter({
           path: '',
           name: 'adminHome',
           meta: { breadcrumbIgnore: true },
-          component:  () => import('@/views/admin/AdminHomeView.vue'),
+          // component:  () => import('@/views/admin/AdminHomeView.vue'),
+          redirect: { name: 'start' },
         },
         {
           path: 'usermanager',
