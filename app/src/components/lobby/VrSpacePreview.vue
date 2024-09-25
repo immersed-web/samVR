@@ -7,11 +7,28 @@
           <input type="checkbox" class="toggle toggle-xs" v-model="showNavMesh">
         </label>
       </div>
-      <div v-if="transformedSelectedObject" class="rounded-l-lg flex flex-col bg-neutral-50/70 py-1 px-2">
-        <template v-if="placedObjectPosition">
+      <div v-if="transformedSelectedObject"
+        class="rounded-l-lg grid grid-cols-[auto_auto] items-center justify-items-end gap-x-2 gap-y-3 font-bold bg-neutral-50/70 py-1 px-2">
+        <div class="contents" v-if="placedObjectPosition">
+          <span class="-mt-1">x</span>
           <OffsetSlider v-model.number="placedObjectPosition[0]" />
+          <span class="-mt-1">y</span>
           <OffsetSlider v-model.number="placedObjectPosition[1]" />
+          <span class="-mt-1">z</span>
           <OffsetSlider v-model.number="placedObjectPosition[2]" />
+        </div>
+        <button class="btn btn-xs col-start-2" v-if="!placedObjectScale" @click="placedObjectScale = [1, 1, 1]">ändra
+          storlek</button>
+        <template v-else>
+          <button class="btn btn-xs col-start-2" @click="placedObjectScale = undefined">originalstorlek</button>
+          <div class="contents">
+            <span class="-mt-1">{{ uniformScale }}</span>
+            <OffsetSlider v-model.number="uniformScale" />
+            <!-- <span class="-mt-1">y</span>
+            <OffsetSlider v-model.number="placedObjectScale[1]" />
+            <span class="-mt-1">z</span>
+            <OffsetSlider v-model.number="placedObjectScale[2]" /> -->
+          </div>
         </template>
       </div>
     </div>
@@ -51,7 +68,17 @@ registerAframeComponents();
 const vrSpaceStore = useVrSpaceStore();
 
 const { setCursorIntersection, isCursorOnNavmesh, triggerCursorClick } = useCurrentCursorIntersection();
-const { transformedSelectedObject, placedObjectPosition, placedObjectScale } = useSelectedPlacedObject();
+const { transformedSelectedObject, placedObjectPosition, placedObjectScale, placedObjectRotation } = useSelectedPlacedObject();
+
+// const uniformScale = ref(1);
+const uniformScale = computed({
+  get() {
+    return placedObjectScale.value ? placedObjectScale.value[0] : 1
+  },
+  set(newValue: number) {
+    placedObjectScale.value = [newValue, newValue, newValue];
+  }
+})
 
 const { lock, unlock, element } = usePointerLock();
 

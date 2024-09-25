@@ -253,7 +253,7 @@
                 <PlacedAsset :key="placedObject.placedObjectId" @click="selectedPlacedObject = placedObject"
                   :rotation="arrToCoordString(quaternionTupleToAframeRotation(placedObject.orientation ?? [0, 0, 0, 1]))"
                   :position="arrToCoordString(placedObject.position)" class="selectable-object"
-                  :asset="placedObject.asset" />
+                  :scale="placedObject.scale ? arrToCoordString(placedObject.scale) : ''" :asset="placedObject.asset" />
               </template>
             </template>
             <template v-if="transformedSelectedObject">
@@ -265,6 +265,7 @@
                 :key="transformedSelectedObject.placedObjectId" box-helper
                 :rotation="arrToCoordString(quaternionTupleToAframeRotation(transformedSelectedObject.orientation ?? [0, 0, 0, 1]))"
                 :position="arrToCoordString(transformedSelectedObject.position)" class="selectable-object"
+                :scale="transformedSelectedObject.scale ? arrToCoordString(transformedSelectedObject.scale) : ''"
                 :asset="transformedSelectedObject.asset" />
             </template>
           </a-entity>
@@ -292,8 +293,8 @@
           @click="setCursorMode(undefined); selectedPlacedObject = undefined">
           <span class="material-icons">close</span>
         </button>
-        <OffsetSlider v-if="selectedPosition" v-model.number="selectedPosition[1]" />
-        <pre>{{ transformedSelectedObject }}</pre>
+        <pre class="text-xs">{{ selectedPlacedObject }}</pre>
+        <pre class="text-xs">{{ transformedSelectedObject }}</pre>
         <!-- 
         <pre>{{ selectedPlacedObject?.position }}</pre>
         <pre>{{ vrSpaceStore.currentVrSpace?.dbData.placedObjects.find(p => p.placedObjectId === selectedPlacedObject?.placedObjectId)?.position }}</pre> -->
