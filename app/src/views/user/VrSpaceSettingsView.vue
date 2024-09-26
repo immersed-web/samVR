@@ -217,8 +217,9 @@
                   Placera objekt såsom bilder och PDF i 3D-modellen.
                 </p>
                 <div>
-                  <AssetUpload @uploaded="onAssetUploaded" :accepted-asset-types="['document', 'image', 'video']"
-                    name="object" :show-in-user-library="true" />
+                  <AssetUpload @uploaded="onAssetUploaded"
+                    :accepted-asset-types="['document', 'image', 'video', 'model']" name="object"
+                    :show-in-user-library="true" />
                 </div>
                 <!-- <div v-if="clientStore.clientState?.assets" class="grid gap-2 grid-cols-[auto_auto] max-h-64 overflow-y-auto">
           <template v-for="asset in clientStore.clientState.assets" :key="asset.assetId">
