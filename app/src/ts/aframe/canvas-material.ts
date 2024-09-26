@@ -41,25 +41,25 @@ export default function () {
       // console.log(this.data.src);
     },
     update: function (_oldData) {
-      console.log(this.data.src);
+      // console.log(this.data.src);
       // this.updateMaterial();
     },
     setAttributes: function () {
       this.el.removeAttribute('material');
-      this.el.setAttribute('material', { src: this.data.src });
+      this.el.setAttribute('material', { src: this.data.src, side: 'double' });
     },
     updateMaterial: function () {
 
-      console.log('update Material triggered!');
-      console.log('this.el', this.el);
+      // console.log('update Material triggered!');
+      // console.log('this.el', this.el);
       const canvas = this.data.src as HTMLCanvasElement;
       if (this.prevSize.width !== canvas.width || this.prevSize.height !== canvas.height) {
-        console.log(canvas, 'canvas resized. need to flush material to avoid texture error');
+        // console.log(canvas, 'canvas resized. need to flush material to avoid texture error');
         const ratio = canvas.height / canvas.width;
         // console.log(ratio);
         this.el.removeAttribute('material');
         this.el.setAttribute('geometry', { primitive: 'plane', width: 1, height: ratio });
-        this.el.setAttribute('material', { src: this.data.src });
+        this.el.setAttribute('material', { src: this.data.src, side: 'double' });
         return;
       }
 

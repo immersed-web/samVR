@@ -195,6 +195,8 @@ export const queryVrSpaceWithIncludes = db.query.vrSpaces.findFirst({
         type: true,
         scale: true,
         objectSettings: true,
+        objectId: true,
+        updatedAt: true,
       },
       with: {
         vrPortal: {

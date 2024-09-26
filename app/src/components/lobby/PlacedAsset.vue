@@ -1,5 +1,6 @@
 <template>
   <a-entity>
+    <a-sphere :class="$attrs.class" color="yellow" scale="0.2 0.2 0.2" />
     <a-image @materialtextureloaded="onTextureLoaded" v-if="tagName === 'a-image'" :class="$attrs.class" :src="src" />
     <PdfEntity v-else-if="tagName === 'PdfEntity'" :current-page="currentPage" @click="currentPage++" :src="src"
       :class="$attrs.class" />
@@ -20,6 +21,7 @@ onUpdated(() => {
 onMounted(() => {
   console.log('PlacedAsset mounted');
   console.log('attrs:', attrs);
+  console.log('props:', props);
 })
 onUnmounted(() => {
   console.log('PlacedAsset unmounted');

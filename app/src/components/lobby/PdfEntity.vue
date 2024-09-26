@@ -83,7 +83,7 @@ async function renderPage(pageIdx: number = 1) {
   canvas.height = vp.height;
   let renderCtx = { canvasContext: ctx, viewport: vp };
   await page.render(renderCtx).promise;
-  console.log('rendered');
+  // console.log('rendered');
   if (!pdfEntityTag.value) {
     console.error('no pdfEntity ref available to trigger material update');
     return
@@ -91,7 +91,7 @@ async function renderPage(pageIdx: number = 1) {
   pdfEntityTag.value.emit('update');
 }
 function onPdfEntityLoaded() {
-  console.log('pdfEntity loaded');
+  // console.log('pdfEntity loaded');
   pdfEntityTag.value?.emit('update');
 }
 onMounted(() => {
