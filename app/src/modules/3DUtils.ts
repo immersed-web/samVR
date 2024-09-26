@@ -29,17 +29,20 @@ export function intersectionToTransform(intersectionData: RayIntersectionData, n
   }
 
   //Rotation part
-  const fromVector = new THREE.Vector3(0, 0, 1);
-  rotation.setFromUnitVectors(fromVector, normal);
+  // const fromVector = new THREE.Vector3(0, 0, 1);
+  const up = new THREE.Vector3(0, 1, 0);
+  const z_pos = new THREE.Vector3(0, 0, 1);
+  rotation.setFromUnitVectors(up, normal);
   const euler = new THREE.Euler().reorder('YXZ').setFromQuaternion(rotation);
   euler.z = 0;
   // if flat placement, align with camera direction
-  if (euler.x < (-Math.PI / 2 + 0.1)) {// && euler.x > (-Math.PI / 4 - 0.01)) {
+  // if (euler.x < (-Math.PI / 2 + 0.1)) {// && euler.x > (-Math.PI / 4 - 0.01)) {
+  if (Math.abs(euler.x) < 0.1) {// && euler.x > (-Math.PI / 4 - 0.01)) {
     // const quat = new THREE.Quaternion();
     // const cameraRot = sceneTag.value!.camera.getWorldQuaternion(quat);
     // const eul = new THREE.Euler().reorder('YXZ').setFromQuaternion(cameraRot);
 
-    const quat = new THREE.Quaternion().setFromUnitVectors(fromVector, rayDirection.clone().negate());
+    const quat = new THREE.Quaternion().setFromUnitVectors(z_pos, rayDirection.clone().negate());
     const eul = new THREE.Euler().reorder('YXZ').setFromQuaternion(quat);
     euler.y = eul.y;
   }
