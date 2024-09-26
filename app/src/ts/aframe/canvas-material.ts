@@ -7,7 +7,7 @@ export default function () {
     },
     // dependencies: ['geometry'],
     // canvasReady: false,
-    prevSize: undefined as { width: number, height: number } | undefined,
+    prevSize: undefined as unknown as { width: number, height: number },
     events: {
       // canvasReady: function () {
       //   if (this.canvasReady) return;
@@ -30,37 +30,48 @@ export default function () {
     init(data) {
       this.prevSize = { width: 0, height: 0 };
       const canvas = this.data.src as HTMLCanvasElement
+      if (!canvas) {
+        console.error('no canvas available yet in init');
+        return;
+      }
+      this.setAttributes = this.setAttributes.bind(this);
+      this.updateMaterial = this.updateMaterial.bind(this);
+
+      // this.setAttributes();
       // console.log(this.data.src);
     },
     update: function (_oldData) {
       console.log(this.data.src);
       // this.updateMaterial();
     },
+    setAttributes: function () {
+      this.el.removeAttribute('material');
+      this.el.setAttribute('material', { src: this.data.src });
+    },
     updateMaterial: function () {
 
       console.log('update Material triggered!');
-      // if (!this.canvasReady) return;
-      let el = this.el;
+      console.log('this.el', this.el);
       const canvas = this.data.src as HTMLCanvasElement;
-      if (this.prevSize!.width !== canvas.width || this.prevSize!.height !== canvas.height) {
-        // console.log(this.prevSize);
+      if (this.prevSize.width !== canvas.width || this.prevSize.height !== canvas.height) {
         console.log(canvas, 'canvas resized. need to flush material to avoid texture error');
         const ratio = canvas.height / canvas.width;
         // console.log(ratio);
+        this.el.removeAttribute('material');
         this.el.setAttribute('geometry', { primitive: 'plane', width: 1, height: ratio });
-        el.removeAttribute('material');
-        el.setAttribute('material', { src: this.data.src });
+        this.el.setAttribute('material', { src: this.data.src });
+        return;
       }
 
-      const material = el.getObject3D('mesh').material;
+      const material = this.el.getObject3D('mesh').material;
       if (!material.map) {
         console.error('no material map. exiting');
         return;
       }
       console.log('marking material for update');
       material.map.needsUpdate = true;
-      this.prevSize!.width = canvas.width;
-      this.prevSize!.height = canvas.height;
+      this.prevSize.width = canvas.width;
+      this.prevSize.height = canvas.height;
     },
     tick: function () {
       if (this.data.autoUpdate) {

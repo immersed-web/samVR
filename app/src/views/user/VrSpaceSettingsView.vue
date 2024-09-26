@@ -244,7 +244,7 @@
           :raycastSelector="currentRaycastSelector"
           :auto-rotate="currentCursorMode === undefined && selectedPlacedObject === undefined">
           <a-entity v-if="!hideGizmos" id="placed-objects">
-            <template v-for="placedObject in placedObjectsSelectFiltered" :key="placedObject.placedObjectId">
+            <template v-for="placedObject in placedObjectsNotBeingEdited" :key="placedObject.placedObjectId">
               <template v-if="placedObject.type === 'vrPortal'">
                 <VrSpacePortal :key="placedObject.placedObjectId" @click.stop="selectedPlacedObject = placedObject"
                   :position="placedObject.position?.join(' ')" :vr-portal="placedObject.vrPortal"
@@ -263,7 +263,7 @@
                 :position="transformedSelectedObject.position?.join(' ')"
                 :vr-portal="transformedSelectedObject.vrPortal" :label="'markerad'" />
               <PlacedAsset v-else-if="transformedSelectedObject.type === 'asset' && transformedSelectedObject.asset"
-                :key="transformedSelectedObject.placedObjectId" box-helper
+                :key="`transformed-${transformedSelectedObject.placedObjectId}`" box-helper
                 :rotation="arrToCoordString(quaternionTupleToAframeRotation(transformedSelectedObject.orientation ?? [0, 0, 0, 1]))"
                 :position="arrToCoordString(transformedSelectedObject.position)" class="selectable-object"
                 :scale="transformedSelectedObject.scale ? arrToCoordString(transformedSelectedObject.scale) : ''"
@@ -293,7 +293,8 @@
                 :asset="currentlyMovedObject" />
               <template v-else>
                 <PlacedAsset v-if="currentlyMovedObject.type === 'asset' && currentlyMovedObject.asset"
-                  :asset="currentlyMovedObject.asset" />
+                  :asset="currentlyMovedObject.asset"
+                  :scale="currentlyMovedObject.scale ? arrToCoordString(currentlyMovedObject.scale) : ''" />
               </template>
             </template>
           </a-entity>
@@ -308,6 +309,7 @@
           <span class="material-icons">close</span>
         </button>
 
+        <pre class="text-xs">nrOfPlacedObjects: {{ placedObjectsNotBeingEdited.length }}</pre>
         <pre class="text-xs">currentlyMovedObject: {{ currentlyMovedObject }}</pre>
         <!-- <pre class="text-xs">composable scale ref: {{ placedObjectScale }}</pre> -->
         <!-- <pre
@@ -386,7 +388,7 @@ import { useCurrentCursorIntersection, useSelectedEntity, useSelectedPlacedObjec
 import { THREE, type Entity } from 'aframe';
 import { arrToCoordString, intersectionToTransform, isEntity, quaternionTupleToAframeRotation } from '@/modules/3DUtils';
 import type { PlacedObjectWithIncludes } from 'database';
-import { watchDebounced } from '@vueuse/core';
+import { useArrayFilter, watchDebounced } from '@vueuse/core';
 import PlacablesTeleport from './lobby/teleports/PlacablesTeleport.vue';
 import PlacedAsset from '@/components/lobby/PlacedAsset.vue';
 import OffsetSlider from '@/components/OffsetSlider.vue';
@@ -411,7 +413,16 @@ onTransformUpdate(spo => {
 })
 
 const placedObjectsSelectFiltered = computed(() => {
-  return vrSpaceStore.currentVrSpace?.dbData.placedObjects.filter(po => po.placedObjectId !== selectedPlacedObject.value?.placedObjectId) ?? [];
+  return vrSpaceStore.currentVrSpace?.dbData.placedObjects.filter(po => po.placedObjectId !== selectedPlacedObject.value?.placedObjectId && po.placedObjectId !== currentlyMovedObject.value?.placedObjectId) ?? [];
+})
+
+const placedObjectsNotBeingEdited = useArrayFilter(() => vrSpaceStore.currentVrSpace?.dbData.placedObjects ?? [], po => {
+  const isSelected = selectedPlacedObject.value?.placedObjectId === po.placedObjectId;
+  let isCurrentlyMoved = false;
+  if (!isAsset(currentlyMovedObject.value)) {
+    isCurrentlyMoved = currentlyMovedObject.value?.placedObjectId === po.placedObjectId;
+  }
+  return !isSelected && !isCurrentlyMoved
 })
 
 const { setCursorMode, currentCursorMode, currentRaycastSelector, setCursorEntityRef, onCursorClick, currentCursorIntersection, triggerCursorClick } = useCurrentCursorIntersection();

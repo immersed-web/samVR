@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 
-import { hasAtLeastPermissionLevel, PlacedObjectInsertSchema, VrSpaceSelectSchema, type ClientRealtimeData, type ClientsRealtimeData, type ConnectionId, type PlacedObjectId, type PlacedObjectInsert, type VrSpaceId, type VrSpaceSelect, type VrSpaceUpdate } from 'schemas';
+import { hasAtLeastPermissionLevel, PlacedObjectInsertSchema, VrSpaceSelectSchema, type ClientRealtimeData, type ClientsRealtimeData, type ConnectionId, type PlacedObjectId, type PlacedObjectInsert, type Prettify, type VrSpaceId, type VrSpaceSelect, type VrSpaceUpdate } from 'schemas';
 import { computed, readonly, ref, watch, type DeepReadonly } from 'vue';
 import { useConnectionStore } from './connectionStore';
 import { eventReceiver, type ExtractPayload, type RouterOutputs, type SubscriptionValue } from '@/modules/trpcClient';
@@ -181,7 +181,11 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
   // }
 
   return {
-    currentVrSpace: readonly(currentVrSpace),
+    // The DeepReadonly type returned from readonly pollutes the typesystem and makes it hard to e.g. use
+    // external functions where arguments arent marked as readonly.
+    // Soooo. Lets just cast the type back to its mutable version and 
+    // rely on runtime warnings triggered when trying to mutate the object.
+    currentVrSpace: readonly(currentVrSpace) as typeof currentVrSpace,
     writableVrSpaceDbData,
     worldModelUrl,
     navMeshUrl,

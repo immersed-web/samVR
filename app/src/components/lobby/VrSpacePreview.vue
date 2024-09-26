@@ -100,8 +100,11 @@ const uniformScale = computed<number>({
 })
 
 function startMovingObject() {
-  currentlyMovedObject.value = selectedPlacedObject.value;
+  const placedObjectId = selectedPlacedObject.value?.placedObjectId;
   selectedPlacedObject.value = undefined;
+
+  const selectedObjectInVrSpace = vrSpaceStore.currentVrSpace?.dbData.placedObjects.find(po => po.placedObjectId === placedObjectId)
+  currentlyMovedObject.value = selectedObjectInVrSpace;
   setCursorMode('place-asset');
 }
 

@@ -5,6 +5,7 @@ import type { PDFDocumentLoadingTask, PDFDocumentProxy } from 'pdfjs-dist';
 // import { useScriptTag } from '@vueuse/core';
 import type { Entity } from 'aframe';
 import { usePDF } from '@/composables/pdf';
+import { watchOnce } from '@vueuse/core';
 
 const pdfUtils = usePDF();
 
@@ -47,7 +48,11 @@ watch(() => props.currentPage, newPage => renderPage(newPage));
 watch(() => props.src, newSrc => loadDocument(newSrc));
 
 async function loadDocument(src: string) {
-  if (!pdfUtils.pdfjsLoaded.value) return;
+  if (!pdfUtils.pdfjsLoaded.value) {
+    console.info('pdfjs not loaded yet when trying to load document. setting up watcher to autoload when possible');
+    watchOnce(pdfUtils.pdfjsLoaded, () => loadDocument(src))
+    return
+  }
   // @ts-ignore
   const { pdfjsLib } = globalThis;
   const pdfDoc = pdfjsLib.getDocument(src) as PDFDocumentLoadingTask;
@@ -60,10 +65,16 @@ async function loadDocument(src: string) {
 
 async function renderPage(pageIdx: number = 1) {
   // console.log(pageIdx);
-  if (!loadedDoc.value || !pdfCanvasTag.value || pageIdx == 0) return;
+  if (!loadedDoc.value || !pdfCanvasTag.value || pageIdx === 0) {
+    console.error('provided pageIdx is 0 or no pdf doc loaded or no canvas available to render page');
+    return;
+  }
   const canvas = pdfCanvasTag.value
   const ctx = canvas.getContext('2d');
-  if (!ctx) return;
+  if (!ctx) {
+    console.error('no 2d context received from canvas');
+    return;
+  } 
   const wrappedPageNr = ((pageIdx - 1) % loadedDoc.value.numPages) + 1;
   const page = await loadedDoc.value.getPage(wrappedPageNr)
   const vp = page.getViewport({ scale: 4, })
@@ -72,7 +83,15 @@ async function renderPage(pageIdx: number = 1) {
   canvas.height = vp.height;
   let renderCtx = { canvasContext: ctx, viewport: vp };
   await page.render(renderCtx).promise;
-  // console.log('rendered');
+  console.log('rendered');
+  if (!pdfEntityTag.value) {
+    console.error('no pdfEntity ref available to trigger material update');
+    return
+  }
+  pdfEntityTag.value.emit('update');
+}
+function onPdfEntityLoaded() {
+  console.log('pdfEntity loaded');
   pdfEntityTag.value?.emit('update');
 }
 onMounted(() => {
@@ -90,7 +109,8 @@ onMounted(() => {
 
 <template>
   <a-entity>
-    <a-entity :class="$attrs.class" ref="pdfEntityTag"
+    <a-sphere color="purple" scale="0.2 0.2 0.2" />
+    <a-entity @loaded="onPdfEntityLoaded" class="clickable" :class="$attrs.class" ref="pdfEntityTag"
       :canvas-material="`autoUpdate: false; src: #${canvasSelector};`" />
     <Teleport to="body">
       <canvas :id="canvasSelector" style="display: none;" ref="pdfCanvasTag"></canvas>

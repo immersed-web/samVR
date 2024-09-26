@@ -28,7 +28,7 @@
 import { getAssetUrl } from '@/modules/utils';
 // import type { THREE } from 'aframe';
 import type { PlacedObjectWithIncludes } from 'database';
-import { computed, type DeepReadonly, nextTick, onMounted, ref, useAttrs, watch } from 'vue';
+import { computed, type DeepReadonly, nextTick, onMounted, onUnmounted, onUpdated, ref, useAttrs, watch } from 'vue';
 import { useClientStore } from '@/stores/clientStore';
 import { omit } from 'lodash-es';
 import type { Entity } from 'aframe';
@@ -39,6 +39,15 @@ const attrs = useAttrs();
 const attrsWithoutClass = computed(() => omit(attrs, 'class'));
 
 const portalTagRef = ref<Entity>()
+onUpdated(() => {
+  // console.log('VrSpacePortal updated');
+})
+onMounted(() => {
+  console.log('VrSpacePortal mounted');
+})
+onUnmounted(() => {
+  console.log('VrSpacePortal unmounted');
+})
 
 defineOptions({
   inheritAttrs: false,
