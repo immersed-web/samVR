@@ -280,8 +280,15 @@
           </a-entity>
           <a-entity id="teleport-target-aframe-cursor" ref="cursorEntity">
 
-            <a-ring :visible="currentCursorMode !== undefined" color="yellow" radius-inner="0.1" radius-outer="0.2"
-              material="shader: flat; side: double;" rotation="0 0 0" />
+            <a-entity :visible="currentCursorMode !== undefined" axes-helper>
+              <!-- <a-ring color="yellow" radius-inner="0.1" radius-outer="0.2"
+                material="shader: flat; side: double;" rotation="-90 0 0">
+                <a-cone color="green" position="0 0 0" scale="0.1 0.2 0.1" rotation="0 0 0" />
+              </a-ring> -->
+              <a-box material="shader: flat; side: double;" scale="0.2 0.2 0.2" color="magenta" rotation="90 0 0">
+                <a-cone color="green" position="0 1 0" scale="0.5 1 0.5" rotation="0 0 0" />
+              </a-box>
+            </a-entity>
             <template v-if="currentlyMovedObject">
               <!-- <VrSpacePortal :key="`selected-${transformedSelectedObject.placedObjectId}`"
                 v-if="transformedSelectedObject.type === 'vrPortal'" show-box-helper
@@ -295,7 +302,21 @@
                   :scale="currentlyMovedObject.scale ? arrToCoordString(currentlyMovedObject.scale) : ''" />
               </template>
             </template>
+
+            <a-entity ref="debugConeTag" position="0.3 0 0" axes-helper>
+              <a-troika-text look-at-camera value="normal" font-size="0.1" position="0 0.2 0" />
+              <!-- <a-cone color="orange" position="-0.2 0 0" scale="0.1 0.2 0.1" rotation="90 0 0" /> -->
+            </a-entity>
+            <a-entity ref="debugConeTag2" position="-0.3 0 0" axes-helper>
+              <a-troika-text look-at-camera value="facenormal" font-size="0.1" position="0 0.2 0" />
+              <!-- <a-cone color="pink" position="0.2 0 0" scale="0.1 0.2 0.1" rotation="90 0 0" /> -->
+            </a-entity>
           </a-entity>
+
+          <a-box material="shader: flat; side: double;" scale="0.2 0.2 0.2" color="magenta" rotation="0 0 0"
+            position="5 0.7 3">
+            <a-cone color="green" position="0 1 0" scale="0.5 1 0.5" rotation="0 0 0" />
+          </a-box>
           <!-- <PlacablesTeleport /> -->
           <!-- <a-entity :position="hoverPosString" :visible="hoverPosString !== undefined">
               <a-ring color="yellow" radius-inner="0.1" radius-outer="0.2" material="shader: flat;"
@@ -306,7 +327,11 @@
           @click="cancelCursorStuff">
           <span class="material-icons">close</span>
         </button>
+        <button @click="setCursorMode('hover')" class="btn btn-sm">show cursor</button>
 
+        <pre class="text-xs">currentCursorTransform: {{ currentCursorTransform }}</pre>
+        <pre v-if="currentCursorTransform"
+          class="text-xs">currentCursorTransform aframe rotation: {{ quaternionTupleToAframeRotation(currentCursorTransform.rotation) }}</pre>
         <pre class="text-xs">nrOfPlacedObjects: {{ placedObjectsNotBeingEdited.length }}</pre>
         <pre class="text-xs">currentlyMovedObject: {{ currentlyMovedObject }}</pre>
         <!-- <pre class="text-xs">composable scale ref: {{ placedObjectScale }}</pre> -->
@@ -409,7 +434,7 @@ onTransformUpdate(spo => {
 })
 
 
-const { setCursorMode, currentCursorMode, currentRaycastSelector, setCursorEntityRef, onCursorClick, currentCursorIntersection, triggerCursorClick } = useCurrentCursorIntersection();
+const { setCursorMode, currentCursorMode, currentRaycastSelector, setCursorEntityRef, onCursorClick, currentCursorIntersection, currentCursorTransform, triggerCursorClick } = useCurrentCursorIntersection();
 watch(currentCursorIntersection, (intersection) => {
   if (currentCursorMode.value === 'place-spawnposition') {
     uncommitedSpawnPosition.value = intersection?.intersection.point?.toArray() ?? [0, 0, 0];
@@ -445,6 +470,34 @@ const placedObjectsNotBeingEdited = useArrayFilter(() => {
   return !isSelected && !isCurrentlyMoved
 })
 
+const debugConeTag = ref<Entity>();
+const debugConeTag2 = ref<Entity>();
+const utilMatrix = new THREE.Matrix4();
+const utilVector = new THREE.Vector3();
+watch(currentCursorIntersection, (intersection) => {
+  if (!intersection || !debugConeTag.value || !debugConeTag2.value) return;
+  let normal = intersection.intersection.normal;
+  let faceNormal = intersection.intersection.face?.normal
+  if (normal) {
+    normal = utilVector.copy(normal);
+    utilVector.multiplyScalar(2000);
+    debugConeTag.value?.object3D.lookAt(utilVector);
+    debugConeTag.value.setAttribute('visible', true);
+  } else {
+    debugConeTag.value.setAttribute('visible', false);
+  }
+  if (faceNormal) {
+    faceNormal = utilVector.copy(faceNormal);
+    utilVector.multiplyScalar(2000);
+    debugConeTag2.value?.object3D.lookAt(utilVector);
+    debugConeTag2.value.setAttribute('visible', 'pink');
+  } else {
+    debugConeTag2.value.setAttribute('visible', false);
+  }
+
+})
+
+
 const activeAccordion = ref<string>();
 
 const libraryAssets = computed(() => {
@@ -462,7 +515,9 @@ onCursorClick(async (e) => {
   const point = e.detail.intersection.point.toArray();
   const cursorMode = currentCursorMode.value;
 
-  setCursorMode(undefined);
+  if (currentCursorMode.value !== 'hover') {
+    setCursorMode(undefined);
+  } 
   if (!cursorMode) {
     // const target = e.target;
     // if (!target || !isEntity(target)) return;

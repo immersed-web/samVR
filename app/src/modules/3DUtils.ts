@@ -1,5 +1,4 @@
 import { THREE, type Entity } from "aframe";
-import type { Vector3Tuple } from "env";
 
 const utilMatrix4 = new THREE.Matrix4();
 const utilVector3 = new THREE.Vector3();
@@ -14,46 +13,61 @@ export type AframeClickeventData = {
   touchEvent?: TouchEvent,
   intersection: THREE.Intersection
 }
+
+const utilNormal = new THREE.Vector3();
+const utilRotation = new THREE.Quaternion();
+const up = new THREE.Vector3(0, 1, 0);
+const origo = new THREE.Vector3(0, 0, 0);
+const zAxis = new THREE.Vector3(0, 0, 1);
 export function intersectionToTransform(intersectionData: RayIntersectionData, normalOffset: number = 0.09) {
   if (!intersectionData) { return; }
   const { intersection, rayDirection } = intersectionData;
   const position = intersection.point.clone();
-  const rotation = new THREE.Quaternion();
-  let normal = intersection.normal;
-  if (!normal) {
-    normal = intersection.face?.normal.normalize();
-    if (!normal) {
+
+  if (intersection.normal) {
+    utilNormal.copy(intersection.normal);
+  } else if (intersection.face) {
+    utilNormal.copy(intersection.face.normal);
+  } else {
       console.error('no normal vector found in intersection object'); return;
       return;
     }
-  }
+
+  console.log('normal:', utilNormal.toArray());
 
   //Rotation part
-  // const fromVector = new THREE.Vector3(0, 0, 1);
-  const up = new THREE.Vector3(0, 1, 0);
-  const z_pos = new THREE.Vector3(0, 0, 1);
-  rotation.setFromUnitVectors(up, normal);
-  const euler = new THREE.Euler().reorder('YXZ').setFromQuaternion(rotation);
-  euler.z = 0;
+  //Might seem weird to we look at origo from normal. But it works
+  utilMatrix4.lookAt(utilNormal, origo, up);
+  utilEuler.setFromRotationMatrix(utilMatrix4);
+  // utilRotation.setFromRotationMatrix(utilMatrix4);
+
   // if flat placement, align with camera direction
-  // if (euler.x < (-Math.PI / 2 + 0.1)) {// && euler.x > (-Math.PI / 4 - 0.01)) {
-  if (Math.abs(euler.x) < 0.1) {// && euler.x > (-Math.PI / 4 - 0.01)) {
+  if (Math.abs(Math.abs(utilEuler.x) - (Math.PI / 2)) < 0.1) {// && euler.x > (-Math.PI / 4 - 0.01)) {
+  // if (Math.abs(euler.x) < 0.1) {// && euler.x > (-Math.PI / 4 - 0.01)) {
     // const quat = new THREE.Quaternion();
     // const cameraRot = sceneTag.value!.camera.getWorldQuaternion(quat);
     // const eul = new THREE.Euler().reorder('YXZ').setFromQuaternion(cameraRot);
 
-    const quat = new THREE.Quaternion().setFromUnitVectors(z_pos, rayDirection.clone().negate());
+    console.log('flat placement', utilEuler.x);
+
+    const rayAlongFloor = rayDirection.clone().negate()
+    rayAlongFloor.y = 0
+    rayAlongFloor.normalize();
+    const quat = new THREE.Quaternion().setFromUnitVectors(zAxis, rayAlongFloor);
     const eul = new THREE.Euler().reorder('YXZ').setFromQuaternion(quat);
-    euler.y = eul.y;
+    const eulerArr = eul.toArray() as [number, number, number];
+    console.log('flat euler:', radiansEulerTupleToDegreesEulerTuple(eulerArr));
+    utilEuler.y = eul.y;
   }
-  const quat = new THREE.Quaternion().setFromEuler(euler);
+  utilRotation.setFromEuler(utilEuler);
 
   // Position part
-  position.add(normal.clone().setLength(normalOffset));
+  position.add(utilNormal.setLength(normalOffset));
   position.set(...position.toArray());
   return {
     position: position.toArray(),
-    rotation: quat.toArray() as THREE.Vector4Tuple,
+    // rotation: quat.toArray() as THREE.Vector4Tuple,
+    rotation: utilRotation.toArray() as THREE.Vector4Tuple,
   };
 }
 
