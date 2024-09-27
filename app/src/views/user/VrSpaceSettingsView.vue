@@ -362,6 +362,127 @@
         </template>
       </div>
     </div>
+    <div class="col-start-1">
+
+      <div role="tablist" class="tabs tabs-bordered">
+        <input type="radio" name="my_tabs_1" role="tab" class="tab whitespace-nowrap"
+          aria-label="Grundläggande information" />
+
+        <div role="tabpanel" class="tab-content">
+          <div class="w-full">
+            <div class="divider">
+              Scenens namn
+            </div>
+            <p class="text-sm mb-2 text-gray-600">
+              Ange ett namn för VR-scenen som är synligt för andra användare och besökare.
+            </p>
+            <div>
+              <span class="label-text font-semibold">Scenens namn</span>
+            </div>
+            <input type="text" class="input input-bordered input-sm" v-model="vrSpaceStore.writableVrSpaceDbData.name">
+          </div>
+        </div>
+        <input type="radio" name="my_tabs_1" role="tab" class="tab whitespace-nowrap"
+          aria-label="Användare och rättigheter" />
+        <div role="tabpanel" class="tab-content">
+          <div class="w-full">
+            <div>
+              <div class="divider">
+                Publik eller privat?
+              </div>
+            </div>
+            <p class="text-sm mb-2 text-gray-600">
+              Välj ifall VR-scenen ska vara publikt tillgänglig, öppen för vem som helst att besöka. Eller om scenen
+              är
+              privat
+              för dig och de du har valt att dela den med.
+            </p>
+            <label class="max-w-sm label cursor-pointer gap-2 font-semibold">
+              <span class="label-text">Öppet för alla:</span>
+              <input type="checkbox" class="toggle toggle-success" true-value="public" false-value="private"
+                v-model="vrSpaceStore.writableVrSpaceDbData.visibility">
+            </label>
+
+            <div class="w-full mt-4">
+              <div class="divider">
+                Delning
+              </div>
+            </div>
+            <p class="text-sm mb-2 text-gray-600">
+              Välj de användare som ska ha tillgång till scenen, samt på vilken nivå de ska ha tillgång.
+            </p>
+            <span class="label-text font-semibold whitespace-nowrap">
+              Dela med en ny person
+            </span>
+            <div class="flex gap-2 justify-between items-center z-10">
+              <AutoComplete v-if="users?.length" class="grow" v-model="selectedUser" display-key="username"
+                id-key="userId" :options="users" />
+              <select v-model="selectedPermission" class="select select-bordered select-sm">
+                <option :value="permissionLevel" v-for="permissionLevel in insertablePermissionHierarchy"
+                  :key="permissionLevel">
+                  {{ permissionLevel }}
+                </option>
+              </select>
+              <button :disabled="!selectedUser" @click="addEditPermission" class="btn btn-primary btn-sm">
+                Lägg till {{ selectedUser?.username }}: {{ selectedPermission }}
+              </button>
+            </div>
+
+            <div class="flex flex-col gap-1 mt-2">
+              <span class="label-text font-semibold whitespace-nowrap">
+                Personer med tillgång till VR-scenen
+              </span>
+              <div v-for="userPermission in vrSpaceStore.currentVrSpace?.dbData.allowedUsers"
+                :key="userPermission.user.userId">
+                {{ userPermission.user.username }}: {{ userPermission.permissionLevel }}
+                <button @click="removeEditPermission(userPermission.user.userId)">x</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <input type="radio" name="my_tabs_1" role="tab" class="tab whitespace-nowrap" aria-label="3D-modell" />
+        <div role="tabpanel" class="tab-content">
+          <div class="w-full">
+            <div class="divider">Himlens färg</div>
+            <p class="text-sm mb-2 text-gray-600">
+              Välj den färg som himlen ska ha i VR-scenen.
+            </p>
+            <label class="flex flex-col gap-1">
+              <span class="label-text font-semibold whitespace-nowrap">Himlens färg</span>
+              <input class="rounded-md border-black border-2" type="color"
+                v-model="vrSpaceStore.writableVrSpaceDbData.skyColor" />
+            </label>
+          </div>
+
+          <div class="w-full">
+            <div class="divider">3D-modell för miljön</div>
+            <p class="text-sm mb-2 text-gray-600">
+              Ladda upp en 3D-modell för VR-scenens miljö. Detta är den modell som omsluter besökaren, t.ex. ett rum
+              eller en park.
+            </p>
+            <pre>{{ vrSpaceStore.currentVrSpace.dbData.worldModelAsset?.originalFileName }}</pre>
+            <AssetUpload @uploaded="onModelUploaded" :accepted-asset-types="['model']" name="miljömodell"
+              :show-in-user-library="false" :uploaded-asset-data="vrSpaceStore.currentVrSpace.dbData.worldModelAsset"
+              @asset-deleted="vrSpaceStore.reloadVrSpaceFromDB" />
+          </div>
+
+          <template v-if="vrSpaceStore.currentVrSpace.dbData.worldModelAsset">
+            <div class="w-full">
+              <div class="divider">3D-modell för gåbara ytor (navmesh)</div>
+              <p class="text-sm mb-2 text-gray-600">
+                Ladda upp en 3D-modell för miljöns navmesh. Modellen anger var besökarna kan röra sig fritt samt vilka
+                ytor som inte går att beträda. Ifall en navmesh-modell inte laddas upp så försöker programmet att
+                beräkna detta automatiskt, vilket kan ge upphov till oväntade fel.
+              </p>
+              <pre>{{ vrSpaceStore.currentVrSpace.dbData.navMeshAsset?.originalFileName }}</pre>
+              <AssetUpload @uploaded="onNavmeshUploaded" accepted-asset-types="navmesh" name="navmesh"
+                :show-in-user-library="false" :uploaded-asset-data="vrSpaceStore.currentVrSpace.dbData.navMeshAsset"
+                @asset-deleted="vrSpaceStore.reloadVrSpaceFromDB" />
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
