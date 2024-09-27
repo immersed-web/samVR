@@ -24,18 +24,24 @@ function setCursorMode(mode: CursorMode) {
   currentCursorMode.value = mode;
 }
 
+const currentCursorTransform = computed(() => {
+  if (!rayIntersectionData.value) { return; }
+  return intersectionToTransform(rayIntersectionData.value);
+});
+
 const currentRaycastSelector = computed(() => {
   switch (currentCursorMode.value) {
     case 'place-spawnposition':
     case 'teleport':
     case 'enterFirstPersonView':
-    case 'hover':
     case 'place-asset':
     case 'place-vrPortal':
     case 'place-pointLight':
       return '.raycastable-surface';
     default:
       return '.selectable-object';
+    case 'hover':
+      return '.raycastable-surface, .selectable-object';
   }
 });
 
@@ -81,6 +87,7 @@ function setCursorEntityRef(entity: typeof cursorEntity | undefined) {
 export function useCurrentCursorIntersection() {
   return {
     currentCursorIntersection: rayIntersectionData,
+    currentCursorTransform,
     setCursorIntersection,
     setCursorMode,
     currentRaycastSelector,
