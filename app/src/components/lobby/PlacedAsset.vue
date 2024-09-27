@@ -1,10 +1,10 @@
 <template>
   <a-entity>
-    <a-sphere :class="$attrs.class" color="yellow" scale="0.2 0.2 0.2" />
+    <!-- <a-sphere :class="$attrs.class" color="yellow" scale="0.2 0.2 0.2" /> -->
     <a-image @materialtextureloaded="onTextureLoaded" v-if="tagName === 'a-image'" :class="$attrs.class" :src="src" />
     <PdfEntity v-else-if="tagName === 'PdfEntity'" :current-page="currentPage" @click="currentPage++" :src="src"
       :class="$attrs.class" />
-    <component v-else :is="tagName" :src="src" :class="$attrs.class" />
+    <component rotation="90 0 0" v-else :is="tagName" :src="src" :class="$attrs.class" />
   </a-entity>
 </template>
 <script setup lang="ts">
