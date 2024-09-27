@@ -29,9 +29,9 @@ const props = withDefaults(defineProps<{
 const localModelValue = ref(props.modelValue);
 
 watch(() => props.modelValue, (newModelValue) => {
-  console.log('watcher trigger: ', newModelValue);
+  // console.log('watcher trigger: ', newModelValue);
   if (newModelValue !== localModelValue.value) {
-    console.log('parent updated the v-model');
+    // console.log('parent updated the v-model');
     updateMinMax();
   }
   localModelValue.value = newModelValue;

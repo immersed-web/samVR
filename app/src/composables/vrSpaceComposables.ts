@@ -24,23 +24,30 @@ function setCursorMode(mode: CursorMode) {
   currentCursorMode.value = mode;
 }
 
+const currentCursorTransform = computed(() => {
+  if (!rayIntersectionData.value) { return; }
+  return intersectionToTransform(rayIntersectionData.value);
+});
+
 const currentRaycastSelector = computed(() => {
   switch (currentCursorMode.value) {
     case 'place-spawnposition':
     case 'teleport':
     case 'enterFirstPersonView':
-    case 'hover':
     case 'place-asset':
     case 'place-vrPortal':
     case 'place-pointLight':
       return '.raycastable-surface';
     default:
       return '.selectable-object';
+    case 'hover':
+      return '.raycastable-surface, .selectable-object';
   }
 });
 
 const isCursorOnNavmesh = computed((): boolean => {
   if (!rayIntersectionData.value) { return false; }
+  // @ts-ignore
   return rayIntersectionData.value.intersection.object.el.classList.contains('navmesh');
 });
 
@@ -80,6 +87,7 @@ function setCursorEntityRef(entity: typeof cursorEntity | undefined) {
 export function useCurrentCursorIntersection() {
   return {
     currentCursorIntersection: rayIntersectionData,
+    currentCursorTransform,
     setCursorIntersection,
     setCursorMode,
     currentRaycastSelector,
@@ -142,7 +150,7 @@ export function useSelectedEntity(entity: typeof selectedEntity | undefined) {
 }
 
 // const selectedPlacedObject: DeepReadonly<Ref<PlacedObjectWithIncludes | undefined>>;
-const selectedPlacedObject = shallowRef<DeepReadonly<PlacedObjectWithIncludes>>();
+const selectedPlacedObject = shallowRef<PlacedObjectWithIncludes>();
 const placedObjectRotation = ref<THREE.Vector3Tuple>();
 const placedObjectPosition = ref<THREE.Vector3Tuple>();
 const placedObjectScale = ref<THREE.Vector3Tuple>();
@@ -212,12 +220,12 @@ export function useSelectedPlacedObject() {
   }
 }
 
-export function isAsset(obj?: DeepReadonly<Asset> | DeepReadonly<PlacedObjectWithIncludes>): obj is DeepReadonly<Asset> {
+export function isAsset(obj?: Asset | PlacedObjectWithIncludes): obj is Asset {
   if (!obj) return false;
   return 'assetId' in obj
 }
 
-const currentlyMovedObject = shallowRef<DeepReadonly<Asset> | DeepReadonly<PlacedObjectWithIncludes>>();
+const currentlyMovedObject = shallowRef<Asset | PlacedObjectWithIncludes>();
 export function useCurrentlyMovedObject() {
   return {
     currentlyMovedObject,

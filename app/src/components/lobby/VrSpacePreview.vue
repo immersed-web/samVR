@@ -35,10 +35,10 @@
         </div>
         <div class="contents" v-if="placedObjectRotation">
           <span class="material-icons">360</span>
-          <input type="range" class="accent-primary" min="-90" max="90" v-model.number="placedObjectRotation[1]">
+          <input type="range" class="accent-primary" min="-180" max="180" v-model.number="placedObjectRotation[1]">
           <!-- <OffsetSlider :offset="90" v-model.number="placedObjectRotation[1]" /> -->
           <span class="rotate-90 material-icons">360</span>
-          <input type="range" class="accent-primary" min="-180" max="180" v-model.number="placedObjectRotation[0]">
+          <input type="range" class="accent-primary" min="-90" max="90" v-model.number="placedObjectRotation[0]">
           <!-- <OffsetSlider :offset="90" v-model.number="placedObjectRotation[0]" /> -->
           <span class="material-icons">refresh</span>
           <input type="range" class="accent-primary" min="-180" max="180" v-model.number="placedObjectRotation[2]">
@@ -100,8 +100,11 @@ const uniformScale = computed<number>({
 })
 
 function startMovingObject() {
-  currentlyMovedObject.value = selectedPlacedObject.value;
+  const placedObjectId = selectedPlacedObject.value?.placedObjectId;
   selectedPlacedObject.value = undefined;
+
+  const selectedObjectInVrSpace = vrSpaceStore.currentVrSpace?.dbData.placedObjects.find(po => po.placedObjectId === placedObjectId)
+  currentlyMovedObject.value = selectedObjectInVrSpace;
   setCursorMode('place-asset');
 }
 

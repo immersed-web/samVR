@@ -2,7 +2,9 @@ import { ZodLiteral, ZodObject, ZodSchema, ZodUnion, ZodUnionOptions, z } from '
 import type { JwtPayload as JwtShapeFromLib } from 'jsonwebtoken'
 // import { Role, Venue, VirtualSpace3DModel, Visibility, Camera, CameraType as PrismaCameraType, Prisma, ModelFileFormat } from "database";
 import * as schema from 'database/schema';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+import { createInsertSchema, createSelectSchema, jsonSchema } from 'drizzle-zod';
+
+export type Json = z.TypeOf<typeof jsonSchema>
 
 // const PlacedObjectInsertSchema = createInsertSchema(schema.placedObjects)
 

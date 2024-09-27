@@ -217,8 +217,9 @@
                   Placera objekt såsom bilder och PDF i 3D-modellen.
                 </p>
                 <div>
-                  <AssetUpload @uploaded="onAssetUploaded" :accepted-asset-types="['document', 'image', 'video']"
-                    name="object" :show-in-user-library="true" />
+                  <AssetUpload @uploaded="onAssetUploaded"
+                    :accepted-asset-types="['document', 'image', 'video', 'model']" name="object"
+                    :show-in-user-library="true" />
                 </div>
                 <!-- <div v-if="clientStore.clientState?.assets" class="grid gap-2 grid-cols-[auto_auto] max-h-64 overflow-y-auto">
           <template v-for="asset in clientStore.clientState.assets" :key="asset.assetId">
@@ -244,31 +245,28 @@
           :raycastSelector="currentRaycastSelector"
           :auto-rotate="currentCursorMode === undefined && selectedPlacedObject === undefined">
           <a-entity v-if="!hideGizmos" id="placed-objects">
-            <template v-for="placedObject in placedObjectsSelectFiltered" :key="placedObject.placedObjectId">
-              <template v-if="placedObject.type === 'vrPortal'">
-                <VrSpacePortal :key="placedObject.placedObjectId" @click.stop="selectedPlacedObject = placedObject"
-                  :position="placedObject.position?.join(' ')" :vr-portal="placedObject.vrPortal"
-                  class="selectable-object" :label="placedObject.vrPortal?.name" />
-              </template>
-              <template v-else-if="placedObject.type === 'asset' && placedObject.asset">
-                <PlacedAsset :key="placedObject.placedObjectId" @click="selectedPlacedObject = placedObject"
-                  :rotation="arrToCoordString(quaternionTupleToAframeRotation(placedObject.orientation ?? [0, 0, 0, 1]))"
-                  :position="arrToCoordString(placedObject.position)" class="selectable-object"
-                  :scale="placedObject.scale ? arrToCoordString(placedObject.scale) : ''" :asset="placedObject.asset" />
-              </template>
-            </template>
-            <template v-if="transformedSelectedObject">
-              <VrSpacePortal :key="`selected-${transformedSelectedObject.placedObjectId}`"
-                v-if="transformedSelectedObject.type === 'vrPortal'" show-box-helper
-                :position="transformedSelectedObject.position?.join(' ')"
-                :vr-portal="transformedSelectedObject.vrPortal" :label="'markerad'" />
-              <PlacedAsset v-else-if="transformedSelectedObject.type === 'asset' && transformedSelectedObject.asset"
-                :key="transformedSelectedObject.placedObjectId" box-helper
-                :rotation="arrToCoordString(quaternionTupleToAframeRotation(transformedSelectedObject.orientation ?? [0, 0, 0, 1]))"
-                :position="arrToCoordString(transformedSelectedObject.position)" class="selectable-object"
-                :scale="transformedSelectedObject.scale ? arrToCoordString(transformedSelectedObject.scale) : ''"
-                :asset="transformedSelectedObject.asset" />
-            </template>
+            <a-entity v-for="placedObject in placedObjectsNotBeingEdited"
+              :key="`${placedObject.placedObjectId}_${placedObject.updatedAt}`"
+              :rotation="arrToCoordString(quaternionTupleToAframeRotation(placedObject.orientation ?? [0, 0, 0, 1]))"
+              :position="arrToCoordString(placedObject.position)">
+              <VrSpacePortal v-if="placedObject.type === 'vrPortal'" @click.stop="selectedPlacedObject = placedObject"
+                :vr-portal="placedObject.vrPortal" class="selectable-object" :label="placedObject.vrPortal?.name" />
+              <PlacedAsset v-else-if="placedObject.type === 'asset' && placedObject.asset"
+                @click="selectedPlacedObject = placedObject" class="selectable-object"
+                :scale="placedObject.scale ? arrToCoordString(placedObject.scale) : ''" :asset="placedObject.asset" />
+            </a-entity>
+          </a-entity>
+          <a-entity v-if="transformedSelectedObject">
+            <VrSpacePortal :key="`selected-${transformedSelectedObject.placedObjectId}`"
+              v-if="transformedSelectedObject.type === 'vrPortal'" show-box-helper
+              :position="transformedSelectedObject.position?.join(' ')" :vr-portal="transformedSelectedObject.vrPortal"
+              :label="'markerad'" />
+            <PlacedAsset v-else-if="transformedSelectedObject.type === 'asset' && transformedSelectedObject.asset"
+              :key="`transformed-${transformedSelectedObject.placedObjectId}`" box-helper
+              :rotation="arrToCoordString(quaternionTupleToAframeRotation(transformedSelectedObject.orientation ?? [0, 0, 0, 1]))"
+              :position="arrToCoordString(transformedSelectedObject.position)" class="selectable-object"
+              :scale="transformedSelectedObject.scale ? arrToCoordString(transformedSelectedObject.scale) : ''"
+              :asset="transformedSelectedObject.asset" />
           </a-entity>
 
           <a-entity ref="spawnPosTag" v-if="spawnPosString" :position="spawnPosString">
@@ -282,8 +280,15 @@
           </a-entity>
           <a-entity id="teleport-target-aframe-cursor" ref="cursorEntity">
 
-            <a-ring :visible="currentCursorMode !== undefined" color="yellow" radius-inner="0.1" radius-outer="0.2"
-              material="shader: flat; side: double;" rotation="0 0 0" />
+            <a-entity :visible="currentCursorMode !== undefined" axes-helper>
+              <!-- <a-ring color="yellow" radius-inner="0.1" radius-outer="0.2"
+                material="shader: flat; side: double;" rotation="-90 0 0">
+                <a-cone color="green" position="0 0 0" scale="0.1 0.2 0.1" rotation="0 0 0" />
+              </a-ring> -->
+              <a-box material="shader: flat; side: double;" scale="0.2 0.2 0.2" color="magenta" rotation="90 0 0">
+                <a-cone color="green" position="0 1 0" scale="0.5 1 0.5" rotation="0 0 0" />
+              </a-box>
+            </a-entity>
             <template v-if="currentlyMovedObject">
               <!-- <VrSpacePortal :key="`selected-${transformedSelectedObject.placedObjectId}`"
                 v-if="transformedSelectedObject.type === 'vrPortal'" show-box-helper
@@ -293,10 +298,25 @@
                 :asset="currentlyMovedObject" />
               <template v-else>
                 <PlacedAsset v-if="currentlyMovedObject.type === 'asset' && currentlyMovedObject.asset"
-                  :asset="currentlyMovedObject.asset" />
+                  :asset="currentlyMovedObject.asset"
+                  :scale="currentlyMovedObject.scale ? arrToCoordString(currentlyMovedObject.scale) : ''" />
               </template>
             </template>
+
+            <a-entity ref="debugConeTag" position="0.3 0 0" axes-helper>
+              <a-troika-text look-at-camera value="normal" font-size="0.1" position="0 0.2 0" />
+              <!-- <a-cone color="orange" position="-0.2 0 0" scale="0.1 0.2 0.1" rotation="90 0 0" /> -->
+            </a-entity>
+            <a-entity ref="debugConeTag2" position="-0.3 0 0" axes-helper>
+              <a-troika-text look-at-camera value="facenormal" font-size="0.1" position="0 0.2 0" />
+              <!-- <a-cone color="pink" position="0.2 0 0" scale="0.1 0.2 0.1" rotation="90 0 0" /> -->
+            </a-entity>
           </a-entity>
+
+          <a-box material="shader: flat; side: double;" scale="0.2 0.2 0.2" color="magenta" rotation="0 0 0"
+            position="5 0.7 3">
+            <a-cone color="green" position="0 1 0" scale="0.5 1 0.5" rotation="0 0 0" />
+          </a-box>
           <!-- <PlacablesTeleport /> -->
           <!-- <a-entity :position="hoverPosString" :visible="hoverPosString !== undefined">
               <a-ring color="yellow" radius-inner="0.1" radius-outer="0.2" material="shader: flat;"
@@ -307,7 +327,12 @@
           @click="cancelCursorStuff">
           <span class="material-icons">close</span>
         </button>
+        <button @click="setCursorMode('hover')" class="btn btn-sm">show cursor</button>
 
+        <pre class="text-xs">currentCursorTransform: {{ currentCursorTransform }}</pre>
+        <pre v-if="currentCursorTransform"
+          class="text-xs">currentCursorTransform aframe rotation: {{ quaternionTupleToAframeRotation(currentCursorTransform.rotation) }}</pre>
+        <pre class="text-xs">nrOfPlacedObjects: {{ placedObjectsNotBeingEdited.length }}</pre>
         <pre class="text-xs">currentlyMovedObject: {{ currentlyMovedObject }}</pre>
         <!-- <pre class="text-xs">composable scale ref: {{ placedObjectScale }}</pre> -->
         <!-- <pre
@@ -489,10 +514,9 @@
 <script setup lang="ts">
 import AssetUpload, { type AssetUploadEmitUploadedPayload } from './AssetUpload.vue';
 import VrSpacePreview from '@/components/lobby/VrSpacePreview.vue';
-import { ref, watch, onMounted, computed, toRaw, toValue, type ComponentInstance, nextTick, type DeepReadonly } from 'vue';
+import { ref, watch, onMounted, computed, type ComponentInstance } from 'vue';
 // import { throttle } from 'lodash-es';
-import { Combobox, ComboboxInput, ComboboxOptions, ComboboxOption, ComboboxButton } from '@headlessui/vue';
-import { insertablePermissionHierarchy, type PlacedObject, type Asset, type PlacedObjectId, type VrSpaceId, defaultHeightOverGround, type UserId } from 'schemas';
+import { insertablePermissionHierarchy, type Asset, type VrSpaceId, defaultHeightOverGround, type UserId, type Json } from 'schemas';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import { useConnectionStore } from '@/stores/connectionStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -500,17 +524,14 @@ import { useClientStore } from '@/stores/clientStore';
 import type { RouterOutputs } from '@/modules/trpcClient';
 // import UserBanner from '@/components/UserBanner.vue';
 import AssetLibrary from '@/components/lobby/AssetLibrary.vue';
-import { getAssetUrl, uploadFileData } from '@/modules/utils';
+import { uploadFileData } from '@/modules/utils';
 import VrSpacePortal from '@/components/entities/VrSpacePortal.vue';
 import AutoComplete from '@/components/AutoComplete.vue';
-import { useCurrentCursorIntersection, useSelectedEntity, useSelectedPlacedObject, useCurrentlyMovedObject, isAsset } from '@/composables/vrSpaceComposables';
+import { useCurrentCursorIntersection, useSelectedPlacedObject, useCurrentlyMovedObject, isAsset } from '@/composables/vrSpaceComposables';
 import { THREE, type Entity } from 'aframe';
-import { arrToCoordString, intersectionToTransform, isEntity, quaternionTupleToAframeRotation } from '@/modules/3DUtils';
-import type { PlacedObjectWithIncludes } from 'database';
-import { watchDebounced } from '@vueuse/core';
-import PlacablesTeleport from './lobby/teleports/PlacablesTeleport.vue';
+import { arrToCoordString, intersectionToTransform, quaternionTupleToAframeRotation } from '@/modules/3DUtils';
+import { useArrayFilter, watchDebounced } from '@vueuse/core';
 import PlacedAsset from '@/components/lobby/PlacedAsset.vue';
-import OffsetSlider from '@/components/OffsetSlider.vue';
 
 
 // TODO: refine/find alternative way to get these types so we get intellisense for the emit key
@@ -525,17 +546,16 @@ onTransformUpdate(spo => {
   console.log('selected object transform hook triggered');
   // const objectId = transformedPO.asset?.assetId??transformedPO.vrPortal?.vrSpaceId??transformedPO.streamPortal?.streamId;
   // const pos = transformedPO.orientation
+  const { objectSettings, ...data } = transformedPO;
   vrSpaceStore.upsertPlacedObject({
     vrSpaceId: props.vrSpaceId,
-    ...transformedPO
+    ...data,
+    objectSettings: objectSettings as Json
   });
 })
 
-const placedObjectsSelectFiltered = computed(() => {
-  return vrSpaceStore.currentVrSpace?.dbData.placedObjects.filter(po => po.placedObjectId !== selectedPlacedObject.value?.placedObjectId) ?? [];
-})
 
-const { setCursorMode, currentCursorMode, currentRaycastSelector, setCursorEntityRef, onCursorClick, currentCursorIntersection, triggerCursorClick } = useCurrentCursorIntersection();
+const { setCursorMode, currentCursorMode, currentRaycastSelector, setCursorEntityRef, onCursorClick, currentCursorIntersection, currentCursorTransform, triggerCursorClick } = useCurrentCursorIntersection();
 watch(currentCursorIntersection, (intersection) => {
   if (currentCursorMode.value === 'place-spawnposition') {
     uncommitedSpawnPosition.value = intersection?.intersection.point?.toArray() ?? [0, 0, 0];
@@ -555,6 +575,50 @@ const clientStore = useClientStore();
 const cursorEntity = ref<Entity>();
 setCursorEntityRef(cursorEntity);
 
+watch(() => vrSpaceStore.currentVrSpace?.dbData.placedObjects, () => {
+  console.log('placedObjectsNotBeingEdited watcher triggered');
+})
+
+const placedObjectsNotBeingEdited = useArrayFilter(() => {
+  console.log('placedObjectsNotBeingEdited recalculated');
+  return vrSpaceStore.currentVrSpace?.dbData.placedObjects ?? []
+}, po => {
+  const isSelected = selectedPlacedObject.value?.placedObjectId === po.placedObjectId;
+  let isCurrentlyMoved = false;
+  if (!isAsset(currentlyMovedObject.value)) {
+    isCurrentlyMoved = currentlyMovedObject.value?.placedObjectId === po.placedObjectId;
+  }
+  return !isSelected && !isCurrentlyMoved
+})
+
+const debugConeTag = ref<Entity>();
+const debugConeTag2 = ref<Entity>();
+const utilMatrix = new THREE.Matrix4();
+const utilVector = new THREE.Vector3();
+watch(currentCursorIntersection, (intersection) => {
+  if (!intersection || !debugConeTag.value || !debugConeTag2.value) return;
+  let normal = intersection.intersection.normal;
+  let faceNormal = intersection.intersection.face?.normal
+  if (normal) {
+    normal = utilVector.copy(normal);
+    utilVector.multiplyScalar(2000);
+    debugConeTag.value?.object3D.lookAt(utilVector);
+    debugConeTag.value.setAttribute('visible', true);
+  } else {
+    debugConeTag.value.setAttribute('visible', false);
+  }
+  if (faceNormal) {
+    faceNormal = utilVector.copy(faceNormal);
+    utilVector.multiplyScalar(2000);
+    debugConeTag2.value?.object3D.lookAt(utilVector);
+    debugConeTag2.value.setAttribute('visible', 'pink');
+  } else {
+    debugConeTag2.value.setAttribute('visible', false);
+  }
+
+})
+
+
 const activeAccordion = ref<string>();
 
 const libraryAssets = computed(() => {
@@ -572,7 +636,9 @@ onCursorClick(async (e) => {
   const point = e.detail.intersection.point.toArray();
   const cursorMode = currentCursorMode.value;
 
-  setCursorMode(undefined);
+  if (currentCursorMode.value !== 'hover') {
+    setCursorMode(undefined);
+  } 
   if (!cursorMode) {
     // const target = e.target;
     // if (!target || !isEntity(target)) return;
