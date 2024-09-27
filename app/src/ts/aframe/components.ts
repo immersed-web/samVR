@@ -22,6 +22,8 @@ import boxHelper from './box-helper';
 import laserPointer from './laser-pointer';
 import canvasMaterial from './canvas-material';
 import cameraControls from './camera-controls';
+import normalsHelper from './normals-helper';
+import axesHelper from './axes-helper';
 
 let componentsAreRegistered = false;
 
@@ -50,6 +52,8 @@ export default async function () {
   makeGltfSwappable();
   raycasterUpdate();
   boxHelper();
+  normalsHelper();
+  axesHelper();
   laserPointer();
   canvasMaterial();
 
