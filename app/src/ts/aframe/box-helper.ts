@@ -36,7 +36,11 @@ export default function () {
         setTimeout(() => {
           this.boxHelper.update();
         }, 15);
-      }
+      },
+      'pdf-loaded': function () {
+        // console.log('boxhelper: pdf loaded');
+        this.boxHelper.update();
+      },
     },
     createAndAddBoxHelper: function () {
       console.log('creating and adding box helper');

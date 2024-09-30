@@ -2,30 +2,15 @@
 import { computed, onBeforeMount, onMounted, onUnmounted, ref, shallowRef, watch, type Ref } from 'vue';
 import type { PDFDocumentLoadingTask, PDFDocumentProxy } from 'pdfjs-dist';
 
-// import { useScriptTag } from '@vueuse/core';
 import type { Entity } from 'aframe';
 import { usePDF } from '@/composables/pdf';
 import { watchOnce } from '@vueuse/core';
 
 const pdfUtils = usePDF();
-
-// const pdfjsLoaded = ref(false);
-// useScriptTag('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.mjs', async el => {
-//   console.log('pdfjs loaded');
-//   // @ts-ignore
-//   const { pdfjsLib } = globalThis;
-
-//   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.worker.mjs'
-//   pdfjsLoaded.value = true;
-//   loadDocument(props.src);
-// }, { type: 'module' })
-
 const props = withDefaults(defineProps<{
-  // pdfEntityRef: Entity | undefined,
   src: string,
   currentPage?: number,
 }>(), { currentPage: 1 })
-
 
 const uuid = crypto.randomUUID().substring(0, 8);;
 const canvasSelector = `pdf-${uuid}`;
@@ -33,17 +18,12 @@ const canvasSelector = `pdf-${uuid}`;
 const pdfCanvasTag = ref<HTMLCanvasElement>();
 const pdfEntityTag = ref<Entity>();
 
-// const activePage = ref(1);
 let numPages = computed(() => loadedDoc.value?.numPages);
 
 let loadedDoc = shallowRef<PDFDocumentProxy>();
 
 defineExpose({ numPages })
 
-// function nextPage() {
-//   activePage.value = (activePage.value + 1) % numPages;
-//   renderPage(activePage.value + 1);
-// }
 watch(() => props.currentPage, newPage => renderPage(newPage));
 watch(() => props.src, newSrc => loadDocument(newSrc));
 
@@ -57,14 +37,10 @@ async function loadDocument(src: string) {
   const { pdfjsLib } = globalThis;
   const pdfDoc = pdfjsLib.getDocument(src) as PDFDocumentLoadingTask;
   loadedDoc.value = await pdfDoc.promise
-  // numPages.value = loadedDoc.value.numPages;
-  // console.log(numPages);
   await renderPage(props.currentPage);
-  // pdfEntityTag.value?.emit('canvasReady');
 }
 
 async function renderPage(pageIdx: number = 1) {
-  // console.log(pageIdx);
   if (!loadedDoc.value || !pdfCanvasTag.value || pageIdx === 0) {
     console.error('provided pageIdx is 0 or no pdf doc loaded or no canvas available to render page');
     return;
@@ -78,40 +54,34 @@ async function renderPage(pageIdx: number = 1) {
   const wrappedPageNr = ((pageIdx - 1) % loadedDoc.value.numPages) + 1;
   const page = await loadedDoc.value.getPage(wrappedPageNr)
   const vp = page.getViewport({ scale: 4, })
-  // console.log(vp.width, vp.height);
   canvas.width = vp.width;
   canvas.height = vp.height;
   let renderCtx = { canvasContext: ctx, viewport: vp };
   await page.render(renderCtx).promise;
-  // console.log('rendered');
   if (!pdfEntityTag.value) {
     console.error('no pdfEntity ref available to trigger material update');
     return
   }
-  pdfEntityTag.value.emit('update');
+  pdfEntityTag.value.emit('update-canvas-material');
 }
 function onPdfEntityLoaded() {
-  // console.log('pdfEntity loaded');
-  pdfEntityTag.value?.emit('update');
+  pdfEntityTag.value?.emit('update-canvas-material');
+}
+function onCanvasUpdated() {
+  // console.log('canvas updated');
+
+  //NOTE: Cant use component emits cause they dont bubble. Which we actually want in this case.
+  pdfEntityTag.value?.emit('pdf-loaded');
 }
 onMounted(() => {
   loadDocument(props.src);
 })
-
-// onBeforeMount(() => {
-//   console.log('BEFORE MOUNT');
-// })
-// onUnmounted(() => {
-//   console.log('UNMOUNTED');
-// })
-
 </script>
 
 <template>
   <a-entity>
-    <a-sphere color="purple" scale="0.2 0.2 0.2" />
-    <a-entity @loaded="onPdfEntityLoaded" class="clickable" :class="$attrs.class" ref="pdfEntityTag"
-      :canvas-material="`autoUpdate: false; src: #${canvasSelector};`" />
+    <a-entity @canvas-updated.stop="onCanvasUpdated" @loaded="onPdfEntityLoaded" class="clickable" :class="$attrs.class"
+      ref="pdfEntityTag" :canvas-material="`autoUpdate: false; src: #${canvasSelector};`" />
     <Teleport to="body">
       <canvas :id="canvasSelector" style="display: none;" ref="pdfCanvasTag"></canvas>
     </Teleport>

@@ -22,7 +22,7 @@ export default function () {
       //   // console.log(geometry);
       //   // geometry.height = ratio;
       // },
-      update: function (evt: CustomEvent) {
+      'update-canvas-material': function (evt: CustomEvent) {
         // console.log('update riggered');
         this.updateMaterial();
       }
@@ -60,6 +60,8 @@ export default function () {
         this.el.removeAttribute('material');
         this.el.setAttribute('geometry', { primitive: 'plane', width: 1, height: ratio });
         this.el.setAttribute('material', { src: this.data.src, side: 'double' });
+
+        this.el.emit('canvas-updated');
         return;
       }
 
