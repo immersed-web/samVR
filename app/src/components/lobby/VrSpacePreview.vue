@@ -27,7 +27,7 @@
             @click="placedObjectScale = undefined">restart_alt</button>
         </div>
         <span class=" material-icons">zoom_out_map</span>
-        <OffsetSlider v-model.number="uniformScale" />
+        <OffsetSlider :step="0.01" :offset="0.7" v-model.number="uniformScale" />
         <div class="col-span-2 justify-self-stretch flex items-center gap-2 justify-between">
           <span class="grow self-center divider divider-start text-xs m-0">Rotation</span>
           <button @click="placedObjectRotation = [0, 0, 0]"
