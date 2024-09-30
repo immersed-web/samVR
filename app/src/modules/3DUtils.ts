@@ -48,7 +48,7 @@ export function intersectionToTransform(intersectionData: RayIntersectionData, n
     // const cameraRot = sceneTag.value!.camera.getWorldQuaternion(quat);
     // const eul = new THREE.Euler().reorder('YXZ').setFromQuaternion(cameraRot);
 
-    console.log('flat placement', utilEuler.x);
+    // console.log('flat placement', utilEuler.x);
 
     const rayAlongFloor = rayDirection.clone().negate()
     rayAlongFloor.y = 0
