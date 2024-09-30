@@ -33,7 +33,7 @@ export function intersectionToTransform(intersectionData: RayIntersectionData, n
       return;
     }
 
-  console.log('normal:', utilNormal.toArray());
+  // console.log('normal:', utilNormal.toArray());
 
   //Rotation part
   //Might seem weird to we look at origo from normal. But it works
@@ -56,7 +56,7 @@ export function intersectionToTransform(intersectionData: RayIntersectionData, n
     const quat = new THREE.Quaternion().setFromUnitVectors(zAxis, rayAlongFloor);
     const eul = new THREE.Euler().reorder('YXZ').setFromQuaternion(quat);
     const eulerArr = eul.toArray() as [number, number, number];
-    console.log('flat euler:', radiansEulerTupleToDegreesEulerTuple(eulerArr));
+    // console.log('flat euler:', radiansEulerTupleToDegreesEulerTuple(eulerArr));
     utilEuler.y = eul.y;
   }
   utilRotation.setFromEuler(utilEuler);
