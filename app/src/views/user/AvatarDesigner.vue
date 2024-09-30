@@ -176,9 +176,10 @@ function openPopupParts(evt: Event, part: string, cIdx: number) {
                   </svg>
                 </button>
                 <PopUp ref="popupSkin" class="bg-white rounded-xl">
-                  <Vue3ColorPicker v-model="currentSkinColor" @update:model-value="skinColorIsActive = true"
-                    mode="solid" input-type="RGB" type="HEX" :show-color-list="false" :show-alpha="false"
-                    :show-eye-drop="false" :show-input-menu="false" :show-input-set="false" />
+                  <Vue3ColorPicker v-model="currentSkinColor" :show-picker-mode="false"
+                    @update:model-value="skinColorIsActive = true" mode="solid" input-type="RGB" type="HEX"
+                    :show-color-list="false" :show-alpha="false" :show-eye-drop="false" :show-input-menu="false"
+                    :show-input-set="false" />
                   <label class="label cursor-pointer">
                     <span class="label-text">Color active</span>
                     <input type="checkbox" class="toggle"
@@ -273,6 +274,7 @@ function openPopupParts(evt: Event, part: string, cIdx: number) {
           </template>
           <PopUp ref="popupParts" class="bg-white rounded-xl">
             <Vue3ColorPicker v-model="currentColorSettings[popupPartsKeys!.part][popupPartsKeys!.cIdx]"
+              :show-picker-mode="false"
               @update:model-value="onColorPicked(popupPartsKeys!.part, popupPartsKeys!.cIdx, currentColorSettings[popupPartsKeys!.part][popupPartsKeys!.cIdx])"
               mode="solid" input-type="RGB" type="HEX" :show-color-list="false" :show-alpha="false"
               :show-eye-drop="false" :show-input-menu="false" :show-input-set="false" />
