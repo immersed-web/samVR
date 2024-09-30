@@ -1,5 +1,5 @@
 <template>
-  <input class="accent-primary" type="range" :step="props.steps" :min="currentMin" :max="currentMax"
+  <input class="accent-primary" type="range" :step="props.step" :min="currentMin" :max="currentMax"
     :value="localModelValue" @input="onInput" @change="updateMinMax">
 </template>
 <script setup lang="ts">
@@ -17,11 +17,11 @@ function onInput(event: Event) {
 
 const props = withDefaults(defineProps<{
   modelValue: number
-  steps?: number
+  step?: number
   offset?: number
   // offsetType?: 'absolute' | 'relative'
 }>(), {
-  steps: 0.1,
+  step: 0.1,
   offset: 3.0,
   // offsetType: 'relative'
 });
