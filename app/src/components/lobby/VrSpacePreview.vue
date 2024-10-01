@@ -218,7 +218,7 @@ function onModelLoaded() {
   }
   setTimeout(() => {
     attachOrbitControls(target);
-  }, 250);
+  }, 500);
 }
 
 function onCameraEntityLoaded(evt: CustomEvent<unknown>) {
