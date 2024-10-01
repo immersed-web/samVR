@@ -723,6 +723,8 @@ function onAssetUploaded(uploadDetails: AssetUploadEmitUploadedPayload) {
 
 function onAssetPicked(asset: Asset) {
   console.log(asset);
+  currentlyMovedObject.value = asset
+  setCursorMode('place-asset');
 }
 
 function onModelUploaded(uploadDetails: AssetUploadEmitUploadedPayload) {
