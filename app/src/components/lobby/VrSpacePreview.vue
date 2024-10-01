@@ -46,13 +46,13 @@
         </div>
       </div>
     </div>
-    <a-scene embedded class="min-h-96" ref="sceneTag" id="ascene" xr-mode-ui="enabled: false"
-      @raycast-update="setCursorIntersection($event.detail)">
+    <a-scene @renderstart="onRenderStart" @loaded="onSceneLoaded" embedded class="min-h-96" ref="sceneTag" id="ascene"
+      xr-mode-ui="enabled: false" @raycast-update="setCursorIntersection($event.detail)">
       <a-assets timeout="20000">
         <a-asset-item id="icon-font"
           src="https://fonts.gstatic.com/s/materialicons/v70/flUhRq6tzZclQEJ-Vdg-IuiaDsNa.woff" />
       </a-assets>
-      <a-entity camera ref="cameraTag" />
+      <a-entity @loaded="onCameraEntityLoaded" camera ref="cameraTag" />
       <a-sky :color="skyColor" />
       <slot />
 
@@ -85,16 +85,11 @@ const { setCursorIntersection, isCursorOnNavmesh, triggerCursorClick, setCursorM
 const { selectedPlacedObject, transformedSelectedObject, placedObjectPosition, placedObjectScale, placedObjectRotation } = useSelectedPlacedObject();
 const { currentlyMovedObject } = useCurrentlyMovedObject();
 
-// const uniformScale = ref(1);
 const uniformScale = computed<number>({
   get() {
     return placedObjectScale.value ? placedObjectScale.value[0] : 1
   },
   set(newValue: number) {
-    // if (!newValue) {
-    //   placedObjectScale.value = undefined;
-    //   return;
-    // }
     placedObjectScale.value = [newValue, newValue, newValue];
   }
 })
@@ -127,12 +122,6 @@ onMounted(() => {
     attachRaycaster(props.raycastSelector)
   }
 });
-
-// const emit = defineEmits<{
-//   'raycastClick': [point: [number, number, number]]
-//   'raycastHover': [point: [number, number, number]]
-//   'screenshot': [canvas: HTMLCanvasElement]
-// }>();
 
 const firstPersonViewActive = ref(false);
 
@@ -195,24 +184,59 @@ const skyColor = computed(() => {
   return storeSkyColor;
 });
 
-const modelCenter = new THREE.Vector3();
-function onModelLoaded() {
-  if (modelTag.value && cameraTag.value) {
-    console.log('centering camera on model bbox');
-    const obj3D = modelTag.value.getObject3D('mesh');
-
-    const bbox = new THREE.Box3().setFromObject(obj3D);
-    bbox.getCenter(modelCenter);
-    attachOrbitControls();
+function calculateOrbitTarget() {
+  if (!modelTag.value || !cameraTag.value) {
+    console.warn('no modelTag or cameraTag provided to calculateOrbitTarget');
+    return;
   }
+  const spawnPoint = vrSpaceStore.currentVrSpace?.dbData.spawnPosition;
+  if (spawnPoint) {
+    return new THREE.Vector3(...spawnPoint);
+  }
+  console.log('centering camera on model bbox');
+  const obj3D = modelTag.value.getObject3D('mesh');
+
+  const bbox = new THREE.Box3().setFromObject(obj3D);
+  const modelCenter = new THREE.Vector3();
+  bbox.getCenter(modelCenter);
+  return modelCenter;
 }
 
-function attachOrbitControls() {
-  if (!cameraTag.value) return;
+function onSceneLoaded(event: CustomEvent<unknown>) {
+  console.log('scene loaded:', event);
+}
+
+function onRenderStart(event: CustomEvent<unknown>) {
+  console.log('scene render start:', event);
+}
+
+function onModelLoaded() {
+  const target = calculateOrbitTarget();
+  if (!target) {
+    console.error('calculateOrbitTarget returned undefined');
+    return;
+  }
+  setTimeout(() => {
+    attachOrbitControls(target);
+  }, 250);
+}
+
+function onCameraEntityLoaded(evt: CustomEvent<unknown>) {
+  console.log('camera entity loaded', evt);
+
+}
+
+function attachOrbitControls(target: THREE.Vector3) {
+  if (!cameraTag.value) {
+    console.warn('no cameraTag provided to attach orbit-controls to');
+    return;
+  }
   cameraTag.value.setAttribute('position', '0 0 0');
-  let orbitControlSettings = `autoRotate: true; rotateSpeed: 1; initialPosition: ${modelCenter.x} ${modelCenter.y + 2} ${modelCenter.z + 5};`;
-  orbitControlSettings += `target:${modelCenter.x} ${modelCenter.y} ${modelCenter.z};`;
+  let orbitControlSettings = `autoRotate: true; rotateSpeed: 1; initialPosition: ${target.x} ${target.y + 2} ${target.z + 5}; `;
+  orbitControlSettings += `target:${target.x} ${target.y} ${target.z};`;
+  console.log('attaching orbit-controls to camera:', orbitControlSettings);
   cameraTag.value.setAttribute('orbit-controls', orbitControlSettings);
+  console.log('cameraTag after attaching orbit-controls:', cameraTag.value);
 }
 
 function removeOrbitControls() {
@@ -272,7 +296,10 @@ async function exitFirstPersonView() {
   camTag.removeAttribute('wasd-controls');
   camTag.removeAttribute('simple-navmesh-constraint');
   await nextTick();
-  attachOrbitControls();
+  const target = calculateOrbitTarget();
+  if (target) {
+    attachOrbitControls(target);
+  }
   const canvas = sceneTag.value!.canvas
   canvas.removeEventListener('mousedown', lockMouseOnCanvas);
   window.removeEventListener('mouseup', unlock)
