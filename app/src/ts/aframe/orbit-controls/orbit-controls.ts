@@ -42,9 +42,10 @@ AFRAME.registerComponent('orbit-controls', {
   oldPosition: undefined as THREE.Vector3 | undefined,
   target: undefined as THREE.Vector3 | undefined,
   cursor: undefined as THREE.Vector3 | undefined,
-  controls: undefined as any,
+  controls: undefined as unknown as OrbitControls,
   rotateTimer: undefined as ReturnType<typeof setTimeout> | undefined,
   init: function () {
+    console.log('orbit-controls:init');
     const el = this.el;
     this.oldPosition = new THREE.Vector3();
 
@@ -66,14 +67,7 @@ AFRAME.registerComponent('orbit-controls', {
     el.getObject3D('camera').position.copy(this.data.initialPosition);
 
     // el.object3D.position.copy(this.data.initialPosition);
-  },
 
-  pause: function () {
-    this.controls.dispose();
-  },
-
-  play: function () {
-    const el = this.el;
     // @ts-expect-error
     this.controls = new THREE.OrbitControls(el.getObject3D('camera'), el.sceneEl.renderer.domElement);
 
@@ -82,8 +76,27 @@ AFRAME.registerComponent('orbit-controls', {
     // if (camera) {
     //   camera.rotation.y = THREE.MathUtils.degToRad(180);
     // }
-    this.update(undefined);
-    this.controls.saveState();
+    // this.update(undefined);
+    // this.controls.saveState();
+  },
+
+  pause: function () {
+    this.controls.dispose();
+  },
+
+  play: function () {
+    console.log('orbit-controls:play');
+  // const el = this.el;
+  // // @ts-expect-error
+  // this.controls = new THREE.OrbitControls(el.getObject3D('camera'), el.sceneEl.renderer.domElement);
+
+  // // this.controls = new THREE.OrbitControls(el.object3D, el.sceneEl.renderer.domElement);
+  // // const camera = el.getObject3D('camera');
+  // // if (camera) {
+  // //   camera.rotation.y = THREE.MathUtils.degToRad(180);
+  // // }
+  // this.update(undefined);
+  // this.controls.saveState();
   },
 
   onEnterVR: function() {
@@ -139,6 +152,7 @@ AFRAME.registerComponent('orbit-controls', {
     const data = this.data;
 
     if (!controls) { return; }
+    console.log('orbit-controls:update');
     // avoid moving to startPosition if not explicitly updated
     if(!oldData || !AFRAME.utils.deepEqual(data.target, oldData.target)){
       console.log('target was changed in component update');
@@ -171,6 +185,8 @@ AFRAME.registerComponent('orbit-controls', {
     controls.screenSpacePanning = data.screenSpacePanning;
     controls.zoomSpeed = data.zoomSpeed;
     controls.zoomToCursor = data.zoomToCursor;
+
+    controls.saveState();
   },
 
   tick: function (_, deltaTime) {
