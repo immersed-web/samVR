@@ -62,7 +62,7 @@ const comboOptionsStyle = computed(() => {
     top: bottom.value + 'px',
   }
   const pxFromBottom = window.innerHeight - bottom.value
-  console.log(pxFromBottom);
+  // console.log(pxFromBottom);
   const placedAbove = {
     inset: 'unset',
     bottom: (height.value + pxFromBottom) + 'px',
