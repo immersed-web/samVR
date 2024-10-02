@@ -12,8 +12,8 @@
           unfold_more
         </ComboboxButton>
       </div>
-      <ComboboxOptions popover id="options-list" :style="{ left: left + 'px', top: bottom + 'px', width: width + 'px' }"
-        class="menu z-50 rounded-box flex-nowrap max-h-32 bg-base-200">
+      <ComboboxOptions popover id="options-list" :style="comboOptionsStyle" :class="[maxHOptionsListClass]"
+        class="menu z-50 rounded-box flex-nowrap bg-base-200">
         <ComboboxOption v-for="option in filteredOptions" as="template" :key="option[idKey]" :value="option"
           v-slot="{ selected, active }">
           <li class="select-none flex gap-2" :class="{
@@ -47,7 +47,31 @@ import {
 import { useElementBounding } from '@vueuse/core';
 
 const comboBoxInputTag = ref<HTMLInputElement>();
-const { bottom, left, width, update: updateElementBounding } = useElementBounding(comboBoxInputTag, {
+const { bottom, left, width, height, update: updateElementBounding } = useElementBounding(comboBoxInputTag, {
+});
+
+const maxHOptionsListClass = 'max-h-72';
+const maxHOptionsListInPixels = 72 / 4 * parseFloat(getComputedStyle(document.documentElement).fontSize);
+
+const comboOptionsStyle = computed(() => {
+  let style = {
+    left: left.value + 'px',
+    width: width.value + 'px',
+  }
+  let placedBelow = {
+    top: bottom.value + 'px',
+  }
+  const pxFromBottom = window.innerHeight - bottom.value
+  console.log(pxFromBottom);
+  const placedAbove = {
+    inset: 'unset',
+    bottom: (height.value + pxFromBottom) + 'px',
+  }
+  if (pxFromBottom < maxHOptionsListInPixels) {
+    return { ...style, ...placedAbove }
+  } else {
+    return { ...style, ...placedBelow }
+  }
 });
 
 function updateDropdownPos() {
