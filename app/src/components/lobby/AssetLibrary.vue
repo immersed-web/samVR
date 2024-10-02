@@ -8,6 +8,8 @@
           <img v-if="asset.assetType === 'image'" :src="assetsUrl + asset.generatedName">
           <embed v-if="asset.assetType === 'document'" :src="assetsUrl + asset.generatedName" type="application/pdf"
             width="100%" height="100%">
+          <span v-if="asset.assetType === 'model' || asset.assetType === 'navmesh'"
+            class="material-icons text-8xl">view_in_ar</span>
         </figure>
         <div class="card-body break-words">
           <p>{{ asset.originalFileName }}</p>
