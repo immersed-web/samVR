@@ -208,31 +208,24 @@
                 </div>
               </div>
 
-              <!-- Placera objekt -->
-              <div class="w-full">
-                <div class="divider">
-                  Placera objekt
-                </div>
-                <p class="text-sm mb-2 text-gray-600">
-                  Placera objekt såsom bilder och PDF i 3D-modellen.
-                </p>
-                <div>
-                  <AssetUpload @uploaded="onAssetUploaded"
-                    :accepted-asset-types="['document', 'image', 'video', 'model']" name="object"
-                    :show-in-user-library="true" />
-                </div>
-                <!-- <div v-if="clientStore.clientState?.assets" class="grid gap-2 grid-cols-[auto_auto] max-h-64 overflow-y-auto">
-          <template v-for="asset in clientStore.clientState.assets" :key="asset.assetId">
-            <div>{{ asset.originalFileName }}</div>
-            <button class="btn btn-sm btn-secondary">
-              placera
-            </button>
-          </template>
-        </div> -->
-                <AssetLibrary :assets="libraryAssets" @asset-picked="onAssetPicked" />
-              </div>
             </template>
           </template>
+        </div>
+      </div>
+      <div class="collapse collapse-arrow join-item border-base-300 border">
+        <input type="checkbox" name="settings-accordion" true-value="assetLibrary" false-value=""
+          v-model="activeAccordion">
+        <div class="collapse-title bg-gray-100">
+          Mediabibliotek
+        </div>
+        <div class="collapse-content flex flex-col items-start gap-4">
+          <!-- Placera objekt -->
+          <p class="text-sm label">
+            Placera objekt såsom bilder och PDF i 3D-modellen.
+          </p>
+          <AssetUpload @uploaded="onAssetUploaded" :accepted-asset-types="['document', 'image', 'video', 'model']"
+            name="object" :show-in-user-library="true" />
+          <AssetLibrary :assets="libraryAssets" @asset-picked="onAssetPicked" />
         </div>
       </div>
     </div>
@@ -303,20 +296,20 @@
               </template>
             </template>
 
-            <a-entity ref="debugConeTag" position="0.3 0 0" axes-helper>
+            <!-- <a-entity ref="debugConeTag" position="0.3 0 0" axes-helper>
               <a-troika-text look-at-camera value="normal" font-size="0.1" position="0 0.2 0" />
-              <!-- <a-cone color="orange" position="-0.2 0 0" scale="0.1 0.2 0.1" rotation="90 0 0" /> -->
+              <a-cone color="orange" position="-0.2 0 0" scale="0.1 0.2 0.1" rotation="90 0 0" />
             </a-entity>
             <a-entity ref="debugConeTag2" position="-0.3 0 0" axes-helper>
               <a-troika-text look-at-camera value="facenormal" font-size="0.1" position="0 0.2 0" />
-              <!-- <a-cone color="pink" position="0.2 0 0" scale="0.1 0.2 0.1" rotation="90 0 0" /> -->
-            </a-entity>
+              <a-cone color="pink" position="0.2 0 0" scale="0.1 0.2 0.1" rotation="90 0 0" />
+            </a-entity> -->
           </a-entity>
 
-          <a-box material="shader: flat; side: double;" scale="0.2 0.2 0.2" color="magenta" rotation="0 0 0"
+          <!-- <a-box material="shader: flat; side: double;" scale="0.2 0.2 0.2" color="magenta" rotation="0 0 0"
             position="5 0.7 3">
             <a-cone color="green" position="0 1 0" scale="0.5 1 0.5" rotation="0 0 0" />
-          </a-box>
+          </a-box> -->
           <!-- <PlacablesTeleport /> -->
           <!-- <a-entity :position="hoverPosString" :visible="hoverPosString !== undefined">
               <a-ring color="yellow" radius-inner="0.1" radius-outer="0.2" material="shader: flat;"
@@ -387,127 +380,6 @@
         </template>
       </div>
     </div>
-    <div class="col-start-1">
-
-      <div role="tablist" class="tabs tabs-bordered">
-        <input type="radio" name="my_tabs_1" role="tab" class="tab whitespace-nowrap"
-          aria-label="Grundläggande information" />
-
-        <div role="tabpanel" class="tab-content">
-          <div class="w-full">
-            <div class="divider">
-              Scenens namn
-            </div>
-            <p class="text-sm mb-2 text-gray-600">
-              Ange ett namn för VR-scenen som är synligt för andra användare och besökare.
-            </p>
-            <div>
-              <span class="label-text font-semibold">Scenens namn</span>
-            </div>
-            <input type="text" class="input input-bordered input-sm" v-model="vrSpaceStore.writableVrSpaceDbData.name">
-          </div>
-        </div>
-        <input type="radio" name="my_tabs_1" role="tab" class="tab whitespace-nowrap"
-          aria-label="Användare och rättigheter" />
-        <div role="tabpanel" class="tab-content">
-          <div class="w-full">
-            <div>
-              <div class="divider">
-                Publik eller privat?
-              </div>
-            </div>
-            <p class="text-sm mb-2 text-gray-600">
-              Välj ifall VR-scenen ska vara publikt tillgänglig, öppen för vem som helst att besöka. Eller om scenen
-              är
-              privat
-              för dig och de du har valt att dela den med.
-            </p>
-            <label class="max-w-sm label cursor-pointer gap-2 font-semibold">
-              <span class="label-text">Öppet för alla:</span>
-              <input type="checkbox" class="toggle toggle-success" true-value="public" false-value="private"
-                v-model="vrSpaceStore.writableVrSpaceDbData.visibility">
-            </label>
-
-            <div class="w-full mt-4">
-              <div class="divider">
-                Delning
-              </div>
-            </div>
-            <p class="text-sm mb-2 text-gray-600">
-              Välj de användare som ska ha tillgång till scenen, samt på vilken nivå de ska ha tillgång.
-            </p>
-            <span class="label-text font-semibold whitespace-nowrap">
-              Dela med en ny person
-            </span>
-            <div class="flex gap-2 justify-between items-center z-10">
-              <AutoComplete v-if="users?.length" class="grow" v-model="selectedUser" display-key="username"
-                id-key="userId" :options="users" />
-              <select v-model="selectedPermission" class="select select-bordered select-sm">
-                <option :value="permissionLevel" v-for="permissionLevel in insertablePermissionHierarchy"
-                  :key="permissionLevel">
-                  {{ permissionLevel }}
-                </option>
-              </select>
-              <button :disabled="!selectedUser" @click="addEditPermission" class="btn btn-primary btn-sm">
-                Lägg till {{ selectedUser?.username }}: {{ selectedPermission }}
-              </button>
-            </div>
-
-            <div class="flex flex-col gap-1 mt-2">
-              <span class="label-text font-semibold whitespace-nowrap">
-                Personer med tillgång till VR-scenen
-              </span>
-              <div v-for="userPermission in vrSpaceStore.currentVrSpace?.dbData.allowedUsers"
-                :key="userPermission.user.userId">
-                {{ userPermission.user.username }}: {{ userPermission.permissionLevel }}
-                <button @click="removeEditPermission(userPermission.user.userId)">x</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <input type="radio" name="my_tabs_1" role="tab" class="tab whitespace-nowrap" aria-label="3D-modell" />
-        <div role="tabpanel" class="tab-content">
-          <div class="w-full">
-            <div class="divider">Himlens färg</div>
-            <p class="text-sm mb-2 text-gray-600">
-              Välj den färg som himlen ska ha i VR-scenen.
-            </p>
-            <label class="flex flex-col gap-1">
-              <span class="label-text font-semibold whitespace-nowrap">Himlens färg</span>
-              <input class="rounded-md border-black border-2" type="color"
-                v-model="vrSpaceStore.writableVrSpaceDbData.skyColor" />
-            </label>
-          </div>
-
-          <div class="w-full">
-            <div class="divider">3D-modell för miljön</div>
-            <p class="text-sm mb-2 text-gray-600">
-              Ladda upp en 3D-modell för VR-scenens miljö. Detta är den modell som omsluter besökaren, t.ex. ett rum
-              eller en park.
-            </p>
-            <pre>{{ vrSpaceStore.currentVrSpace.dbData.worldModelAsset?.originalFileName }}</pre>
-            <AssetUpload @uploaded="onModelUploaded" :accepted-asset-types="['model']" name="miljömodell"
-              :show-in-user-library="false" :uploaded-asset-data="vrSpaceStore.currentVrSpace.dbData.worldModelAsset"
-              @asset-deleted="vrSpaceStore.reloadVrSpaceFromDB" />
-          </div>
-
-          <template v-if="vrSpaceStore.currentVrSpace.dbData.worldModelAsset">
-            <div class="w-full">
-              <div class="divider">3D-modell för gåbara ytor (navmesh)</div>
-              <p class="text-sm mb-2 text-gray-600">
-                Ladda upp en 3D-modell för miljöns navmesh. Modellen anger var besökarna kan röra sig fritt samt vilka
-                ytor som inte går att beträda. Ifall en navmesh-modell inte laddas upp så försöker programmet att
-                beräkna detta automatiskt, vilket kan ge upphov till oväntade fel.
-              </p>
-              <pre>{{ vrSpaceStore.currentVrSpace.dbData.navMeshAsset?.originalFileName }}</pre>
-              <AssetUpload @uploaded="onNavmeshUploaded" accepted-asset-types="navmesh" name="navmesh"
-                :show-in-user-library="false" :uploaded-asset-data="vrSpaceStore.currentVrSpace.dbData.navMeshAsset"
-                @asset-deleted="vrSpaceStore.reloadVrSpaceFromDB" />
-            </div>
-          </template>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -532,7 +404,6 @@ import { THREE, type Entity } from 'aframe';
 import { arrToCoordString, intersectionToTransform, quaternionTupleToAframeRotation } from '@/modules/3DUtils';
 import { useArrayFilter, watchDebounced } from '@vueuse/core';
 import PlacedAsset from '@/components/lobby/PlacedAsset.vue';
-
 
 // TODO: refine/find alternative way to get these types so we get intellisense for the emit key
 type ExtractEmitData<T extends string, emitUnion extends (...args: any[]) => void> = T extends Parameters<emitUnion>[0] ? Parameters<emitUnion>[1] : never

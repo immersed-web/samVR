@@ -1,27 +1,26 @@
 <template>
 
-  <div class="flex flex-row flex-wrap ">
+  <div class="grid grid-cols-[repeat(auto-fill,_minmax(8rem,_1fr))] gap-2">
     <!-- <div v-for="asset in assets.filter(a => a.assetType === 'image')" :key="asset.assetId" -->
-    <div v-for="asset in assets" :key="asset.assetId" class="basis-1/4 cursor-pointer p-1" @click="pickAsset(asset)">
-      <div class="card card-compact bg-base-100 shadow-xl">
-        <figure class="h-40">
+    <div v-for="asset in assets" :key="asset.assetId" class="cursor-pointer" @click="pickAsset(asset)">
+      <div class="card card-compact bg-base-100 shadow-md">
+        <figure class="">
           <img v-if="asset.assetType === 'image'" :src="assetsUrl + asset.generatedName">
           <embed v-if="asset.assetType === 'document'" :src="assetsUrl + asset.generatedName" type="application/pdf"
             width="100%" height="100%">
         </figure>
-        <div class="card-body">
+        <div class="card-body break-words">
           <p>{{ asset.originalFileName }}</p>
         </div>
       </div>
     </div>
-    <div class="basis-1/4 cursor-pointer p-1 flex items-center justify-center">
+    <!-- <div class="basis-1/4 cursor-pointer p-1 flex items-center justify-center">
       <div class="flex flex-col p-4">
         <button type="button" class="btn" @click="() => open">
           Upload a new asset
         </button>
-        <!-- <span class="label-text">or drag and drop your files</span> -->
       </div>
-    </div>
+    </div> -->
   </div>
 </template>
 <script setup lang="ts">
