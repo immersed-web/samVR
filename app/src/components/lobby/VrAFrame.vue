@@ -8,7 +8,7 @@
         <VrSpacePortal v-if="placedObject.type === 'vrPortal'" :vr-portal="placedObject.vrPortal"
           @click.stop="router.replace({ name: 'vrSpace', params: { vrSpaceId: placedObject.vrPortal?.vrSpaceId } })"
           class="clickable" :label="placedObject.vrPortal?.name" />
-        <PlacedAsset v-else-if="placedObject.type === 'asset' && placedObject.asset"
+        <PlacedAsset class="raycastable-surface" v-else-if="placedObject.type === 'asset' && placedObject.asset"
           :scale="placedObject.scale ? arrToCoordString(placedObject.scale) : ''" :asset="placedObject.asset" />
       </a-entity>
     </a-entity>
