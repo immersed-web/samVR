@@ -70,6 +70,19 @@ function loadAvatarFromStorage() {
   const parsedAvatarSettings = parse(loadedString);
   currentAvatarSettings.parts = parsedAvatarSettings.parts;
   currentAvatarSettings.skinColor = parsedAvatarSettings.skinColor;
+  console.log("Loaded skin color", parsedAvatarSettings.skinColor);
+  if (parsedAvatarSettings.skinColor) {
+    skinColorIsActive.value = true
+    currentSkinColor.value = parsedAvatarSettings.skinColor
+  }
+  console.log("Loaded parts", parsedAvatarSettings.parts)
+  // parsedAvatarSettings.parts.forEach(part => {
+  //   console.log(part, part.colors)
+  // });
+  // for (const [key, value] of Object.entries(parsedAvatarSettings.parts)) {
+  //   console.log(key, value, partsNrOfColors[key]);
+  // }
+
 }
 
 const currentColorSettings = reactive(Object.fromEntries(Object.keys(avatarAssets).map((k) => [k as keyof typeof avatarAssets, []])));
@@ -94,6 +107,7 @@ function setDefaultColors(part: string, colors) {
 }
 
 watch([skinColorIsActive, currentSkinColor], ([active, newColor]) => {
+  console.log("Changed skin color", newColor)
   if (!active || !currentSkinColor.value) {
     currentAvatarSettings.skinColor = '';
   } else {
@@ -120,6 +134,16 @@ function setNrOfCustomColors(part: string, evt: CustomEvent) {
   const nrOfColors = entity.components['model-color'].nrOfCustomColors;
   console.log(part, nrOfColors, entity.components['model-color']);
   partsNrOfColors[part] = nrOfColors;
+  for (const [key, value] of Object.entries(currentAvatarSettings.parts)) {
+    console.log(key, value, partsNrOfColors[key]);
+    for (let i = 0; i < partsNrOfColors[key]; i++) {
+      console.log(currentAvatarSettings.parts[key].colors[i])
+      currentColorSettings[key][i] = currentAvatarSettings.parts[key].colors[i]
+      if (currentAvatarSettings.parts[key].colors[i]) {
+        customColorsIsActive[key][i] = true;
+      }
+    }
+  }
 }
 
 function changeClothingIdx(partType: keyof typeof avatarAssets, offset: number) {
