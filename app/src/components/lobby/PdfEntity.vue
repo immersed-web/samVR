@@ -7,10 +7,18 @@ import { usePDF } from '@/composables/pdf';
 import { watchOnce } from '@vueuse/core';
 
 const pdfUtils = usePDF();
+const currentPage = defineModel<number>('currentPage', {
+  default: 1,
+  required: false,
+});
 const props = withDefaults(defineProps<{
   src: string,
-  currentPage?: number,
-}>(), { currentPage: 1 })
+  withPageButtons?: boolean,
+  // currentPage?: number,
+}>(), {
+  // currentPage: 1 
+  withPageButtons: true,
+})
 
 const uuid = crypto.randomUUID().substring(0, 8);;
 const canvasSelector = `pdf-${uuid}`;
@@ -24,7 +32,7 @@ let loadedDoc = shallowRef<PDFDocumentProxy>();
 
 defineExpose({ numPages })
 
-watch(() => props.currentPage, newPage => renderPage(newPage));
+watch(currentPage, newPage => renderPage(newPage));
 watch(() => props.src, newSrc => loadDocument(newSrc));
 
 async function loadDocument(src: string) {
@@ -37,12 +45,24 @@ async function loadDocument(src: string) {
   const { pdfjsLib } = globalThis;
   const pdfDoc = pdfjsLib.getDocument(src) as PDFDocumentLoadingTask;
   loadedDoc.value = await pdfDoc.promise
-  await renderPage(props.currentPage);
+  await renderPage(currentPage.value);
+}
+
+function nextPage() {
+  // console.log('next page called');
+  if (currentPage.value === numPages.value) return
+  currentPage.value++;
+}
+function prevPage() {
+  // console.log('prev page called');
+  if (currentPage.value === 1) return
+  currentPage.value--;
 }
 
 async function renderPage(pageIdx: number = 1) {
-  if (!loadedDoc.value || !pdfCanvasTag.value || pageIdx === 0) {
-    console.error('provided pageIdx is 0 or no pdf doc loaded or no canvas available to render page');
+  // console.log('renderPage called', pageIdx);
+  if (!loadedDoc.value || !pdfCanvasTag.value || pageIdx < 1 || pageIdx > numPages.value) {
+    console.error('provided pageIdx is outside range or no pdf doc loaded or no canvas available to render page');
     return;
   }
   const canvas = pdfCanvasTag.value
@@ -80,8 +100,23 @@ onMounted(() => {
 
 <template>
   <a-entity>
-    <a-entity @canvas-updated.stop="onCanvasUpdated" @loaded="onPdfEntityLoaded" class="clickable" :class="$attrs.class"
-      ref="pdfEntityTag" :canvas-material="`autoUpdate: false; src: #${canvasSelector};`" />
+    <a-entity @canvas-updated.stop="onCanvasUpdated" @loaded="onPdfEntityLoaded" :class="$attrs.class"
+      ref="pdfEntityTag" :canvas-material="`autoUpdate: false; src: #${canvasSelector};`">
+      <a-entity v-if="withPageButtons" position="0 0 0.01">
+        <!-- <a-sphere color="red" scale="0.1 0.1 0.1" position="0 -0.1 0" /> -->
+        <a-troika-text v-if="currentPage < numPages" value="keyboard_arrow_right" font-size="0.2" font="#icon-font"
+          position="0.7 0 0">
+          <a-circle class="clickable" @click.stop="nextPage()" transparent="true" opacity="0.4" color="black"
+            scale="0.1 0.1 0.1" position="0 0 -0.001" />
+        </a-troika-text>
+        <a-troika-text v-if="currentPage > 1" value="keyboard_arrow_left" font-size="0.2" font="#icon-font"
+          position="-0.7 0 0">
+          <a-circle class="clickable" @click.stop="prevPage()" transparent="true" opacity="0.4" color="black"
+            scale="0.1 0.1 0.1" position="0 0 -0.001" />
+        </a-troika-text>
+        <!-- <a-troika-text color="red" value="helllo" position="0 0 0" look-at-camera /> -->
+      </a-entity>
+    </a-entity>
     <Teleport to="body">
       <canvas :id="canvasSelector" style="display: none;" ref="pdfCanvasTag"></canvas>
     </Teleport>

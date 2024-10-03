@@ -41,7 +41,7 @@ const currentRaycastSelector = computed(() => {
     default:
       return '.selectable-object';
     case 'hover':
-      return '.raycastable-surface, .selectable-object';
+      return '.raycastable-surface, .selectable-object, .clickable';
   }
 });
 
