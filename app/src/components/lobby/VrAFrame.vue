@@ -28,7 +28,8 @@
 
     <!-- <a-entity id="camera-rig" ref="playerOriginTag"> -->
     <a-entity camera @loaded="onCameraLoaded" id="camera" ref="headTag"
-      look-controls="reverseMouseDrag: false; reverseTouchDrag: true;" wasd-controls="acceleration:65;"
+      look-controls="reverseMouseDrag: false; reverseTouchDrag: true; pointerLockEnabled: true;"
+      wasd-controls="acceleration:65;"
       :simple-navmesh-constraint="`navmesh: #navmesh; fall: 1; height: ${defaultHeightOverGround};`"
       emit-move="interval: 20;" :position="`0 ${defaultHeightOverGround} 0`">
       <a-entity id="teleport-target-aframe-camera" />
@@ -227,10 +228,10 @@ function onCameraLoaded() {
     console.error('no sceneTag provided in onCameraLoaded');
     return;
   }
-  // sceneTag.value.sceneEl?.canvas.addEventListener('mousedown', () => {
-  //   lock(sceneTag.value!.canvas);
-  // });
-  // window.addEventListener('mouseup', unlock)
+  sceneTag.value.sceneEl?.canvas.addEventListener('mousedown', () => {
+    lock(sceneTag.value!.canvas);
+  });
+  window.addEventListener('mouseup', unlock)
 }
 
 onBeforeUnmount(async () => {
