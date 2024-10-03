@@ -2,9 +2,9 @@
 
   <a-entity interpolated-transform="interpolationTime: 350;" @near-range-entered="onNearRangeEntered"
     @near-range-exited="onNearRangeExited" ref="avatarEntity" mediastream-audio-source @loaded="onAvatarEntityLoaded">
-    <Teleport to="#teleport-target-ui-right">
+    <!-- <Teleport to="#teleport-target-ui-right">
       <pre>{{ username }} {{ distanceColor }} {{ stream }} {{ producers }}</pre>
-    </Teleport>
+    </Teleport> -->
     <slot />
     <a-troika-text :color="distanceColor" look-at-camera :value="username" position="0 0.5 0" />
     <a-entity rotation="0 180 0">
