@@ -18,7 +18,7 @@
       <a-gltf-model @model-loaded="onModelLoaded" id="model" ref="modelTag" :src="vrSpaceStore.worldModelUrl"
         class="clickable" :class="{ 'navmesh': !vrSpaceStore.navMeshUrl }" @click.stop="triggerCursorClick" />
       <a-gltf-model v-if="vrSpaceStore.navMeshUrl" id="navmesh" :src="vrSpaceStore.navMeshUrl" :visible="showNavMesh"
-        class="clickable navmesh" @mousedown="teleportMouseDown" @click.stop="triggerCursorClick" />
+        class="navmesh" @mousedown="teleportMouseDown" @click.stop="triggerCursorClick" />
     </a-entity>
 
     <slot />
