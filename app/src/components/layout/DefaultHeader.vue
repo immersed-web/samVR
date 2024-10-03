@@ -33,7 +33,7 @@
           </button>
         </RouterLink> -->
         <RouterLink :to="{ name: 'adminUserManager' }">
-          <button class="btn btn-neutral btn-sm ml-4">
+          <button class="btn btn-ghost">
             Hantera användare
           </button>
         </RouterLink>
