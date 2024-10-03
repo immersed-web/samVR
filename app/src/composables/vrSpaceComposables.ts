@@ -17,7 +17,7 @@ function setCursorIntersection(intersectionData: RayIntersectionData | undefined
   writableIntersection.value = intersectionData;
 }
 export type CursorMode = `place-${PlacedObject['type'] | 'spawnposition'}` | 'teleport' | 'enterFirstPersonView' | 'hover' | undefined
-export type RaycastSelector = `.${'selectable-object' | 'raycastable-surface'}`
+export type RaycastSelector = `.${'selectable-object' | 'raycastable-surface' | 'clickable'}`
 
 const currentCursorMode = ref<CursorMode>();
 function setCursorMode(mode: CursorMode) {
