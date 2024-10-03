@@ -44,6 +44,7 @@
           <input type="range" class="accent-primary" min="-180" max="180" v-model.number="placedObjectRotation[2]">
           <!-- <OffsetSlider :offset="90" v-model.number="placedObjectRotation[2]" /> -->
         </div>
+        <button class="btn btn-xs btn-error" @click="removeSelectedObject">Radera</button>
       </div>
     </div>
     <a-scene @renderstart="onRenderStart" @loaded="onSceneLoaded" embedded class="min-h-96" ref="sceneTag" id="ascene"
@@ -93,6 +94,12 @@ const uniformScale = computed<number>({
     placedObjectScale.value = [newValue, newValue, newValue];
   }
 })
+
+async function removeSelectedObject() {
+  if (!selectedPlacedObject.value) { return; }
+  await vrSpaceStore.removePlacedObject(selectedPlacedObject.value.placedObjectId);
+  selectedPlacedObject.value = undefined;
+}
 
 function startMovingObject() {
   const placedObjectId = selectedPlacedObject.value?.placedObjectId;

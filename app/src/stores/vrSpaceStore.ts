@@ -138,6 +138,7 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
   }
 
   async function removePlacedObject(placedObjectId: PlacedObjectId) {
+    console.log('gonna remove placedObject', placedObjectId);
     await connection.client.vr.removePlacedObject.mutate({ placedObjectId });
   }
 

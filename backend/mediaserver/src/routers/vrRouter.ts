@@ -100,7 +100,9 @@ export const vrRouter = router({
     return dbResponse;
   }),
   removePlacedObject: userWithEditRightsToVrSpace.input(z.object({ placedObjectId: PlacedObjectIdSchema })).mutation(async ({ ctx, input }) => {
+    console.log('gonna remove placedObject', input.placedObjectId);
     const [dbResponse] = await db.delete(schema.placedObjects).where(eq(schema.placedObjects.placedObjectId, input.placedObjectId)).returning();
+    ctx.vrSpace.reloadDbData('placedObject removed');
   }),
   reloadVrSpaceFromDB: userWithEditRightsToVrSpace.query(async ({ ctx }) => {
     await ctx.vrSpace.reloadDbData();
