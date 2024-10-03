@@ -18,7 +18,7 @@
                 rotation="0 0 0" />
             </a-entity>
           </VrAFrame>
-          <PlacablesTeleport />
+          <!-- <PlacablesTeleport /> -->
         </a-scene>
 
         <!-- Components that render to multiple places in the DOM

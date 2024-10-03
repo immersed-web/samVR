@@ -1,16 +1,16 @@
 <template>
   <template v-if="vrSpaceStore.currentVrSpace">
     <a-entity id="vr-portals">
-      <template v-for="placedObject in vrSpaceStore.currentVrSpace?.dbData.placedObjects"
-        :key="placedObject.placedObjectId">
-
-        <a-entity v-if="placedObject.type === 'vrPortal'" :position="placedObject.position?.join(' ')">
-          <VrSpacePortal :vr-portal="placedObject.vrPortal"
-            @click.stop="router.replace({ name: 'vrSpace', params: { vrSpaceId: placedObject.vrPortal?.vrSpaceId } })"
-            class="clickable" :label="placedObject.vrPortal?.name" />
-        </a-entity>
-        <!-- <PlacedAsset v-if="placedObject.type === 'asset' && placedObject.asset" :asset="placedObject.asset" /> -->
-      </template>
+      <a-entity v-for="placedObject in vrSpaceStore.currentVrSpace?.dbData.placedObjects"
+        :key="`${placedObject.placedObjectId}_${placedObject.updatedAt}`"
+        :rotation="arrToCoordString(quaternionTupleToAframeRotation(placedObject.orientation ?? [0, 0, 0, 1]))"
+        :position="arrToCoordString(placedObject.position)">
+        <VrSpacePortal v-if="placedObject.type === 'vrPortal'" :vr-portal="placedObject.vrPortal"
+          @click.stop="router.replace({ name: 'vrSpace', params: { vrSpaceId: placedObject.vrPortal?.vrSpaceId } })"
+          class="clickable" :label="placedObject.vrPortal?.name" />
+        <PlacedAsset v-else-if="placedObject.type === 'asset' && placedObject.asset"
+          :scale="placedObject.scale ? arrToCoordString(placedObject.scale) : ''" :asset="placedObject.asset" />
+      </a-entity>
     </a-entity>
 
     <a-sky :color="skyColor" />
@@ -28,16 +28,17 @@
 
     <!-- <a-entity id="camera-rig" ref="playerOriginTag"> -->
     <a-entity camera @loaded="onCameraLoaded" id="camera" ref="headTag"
-      look-controls="reverseMouseDrag: true; reverseTouchDrag: true;" wasd-controls="acceleration:65;"
+      look-controls="reverseMouseDrag: false; reverseTouchDrag: true; pointerLockEnabled: true;"
+      wasd-controls="acceleration:65;"
       :simple-navmesh-constraint="`navmesh: #navmesh; fall: 1; height: ${defaultHeightOverGround};`"
       emit-move="interval: 20;" :position="`0 ${defaultHeightOverGround} 0`">
       <a-entity id="teleport-target-aframe-camera" />
-      <a-entity ref="debugConeTag" position="0.5 -0.5 -1">
+      <!-- <a-entity ref="debugConeTag" position="0.5 -0.5 -1">
         <a-cone color="orange" scale="0.1 0.1 0.1" rotation="90 0 0" />
       </a-entity>
       <a-entity ref="debugConeTag2" position="0.9 -0.5 -1">
         <a-cone color="pink" scale="0.1 0.1 0.1" rotation="90 0 0" />
-      </a-entity>
+      </a-entity> -->
 
       <!-- <a-entity ref="leftHandTag" id="left-hand" @controllerconnected="leftControllerConnected = true"
         @controllerdisconnected="leftControllerConnected = false" laser-controls="hand:left"
@@ -57,14 +58,12 @@
 
 
     <Teleport to="#teleport-target-ui-right">
-      <div class="card bg-base-200 text-base-content p-2 text-xs overflow-y-scroll max-h-60 pointer-events-auto">
-        <div>
+      <div class="card bg-base-200 text-base-content p-4 text-xs pointer-events-auto">
+        <!-- <div>
           <pre>normal:{{ currentCursorIntersection?.intersection.normal }}</pre>
           <pre>faceNormal:{{ currentCursorIntersection?.intersection.face?.normal }}</pre>
-          <!-- <pre>{{ vrSpaceStore.ownClientTransform.laserPointer }}</pre> -->
-          <!-- <pre>{{ vrSpaceStore.currentVrSpace.dbData.placedObjects.filter(po => po.type === 'asset') }}</pre> -->
-        </div>
-        <p class="label-text font-bold">Personer i rummet:</p>
+        </div> -->
+        <p class="label-text font-bold">Personer i rummet</p>
         <p>Du: {{ clientStore.clientState?.username }}</p>
         <p v-for="(clientInfo, id, idx) in otherClients" :key="id">
           {{ idx }}: {{ clientInfo.username }}, {{ clientInfo.role }}
@@ -123,26 +122,28 @@ import EmojiOther from './EmojiOther.vue';
 import LaserPointerOther from './LaserPointerOther.vue';
 import { useCurrentCursorIntersection } from '@/composables/vrSpaceComposables';
 import BasicAvatarEntity from './BasicAvatarEntity.vue';
-import { generateSpawnPosition } from '@/modules/3DUtils';
+import { generateSpawnPosition, arrToCoordString, quaternionTupleToAframeRotation } from '@/modules/3DUtils';
 import PlacedAsset from './PlacedAsset.vue';
+import { usePointerLock } from '@vueuse/core';
 const { currentCursorIntersection, triggerCursorClick, isCursorOnNavmesh } = useCurrentCursorIntersection();
+const { lock, unlock, element } = usePointerLock();
 
 const utilMatrix = new THREE.Matrix4();
 const utilVector = new THREE.Vector3();
 watch(currentCursorIntersection, (intersection) => {
-  if (!intersection || !debugConeTag.value || !debugConeTag2) return;
-  let normal = intersection.intersection.normal;
-  let faceNormal = intersection.intersection.face?.normal
-  if (normal) {
-    normal = utilVector.copy(normal);
-    utilVector.multiplyScalar(2000);
-    debugConeTag.value?.object3D.lookAt(utilVector);
-  }
-  if (faceNormal) {
-    faceNormal = utilVector.copy(faceNormal);
-    utilVector.multiplyScalar(2000);
-    debugConeTag2.value?.object3D.lookAt(utilVector);
-  }
+  // if (!intersection || !debugConeTag.value || !debugConeTag2) return;
+  // let normal = intersection.intersection.normal;
+  // let faceNormal = intersection.intersection.face?.normal
+  // if (normal) {
+  //   normal = utilVector.copy(normal);
+  //   utilVector.multiplyScalar(2000);
+  //   debugConeTag.value?.object3D.lookAt(utilVector);
+  // }
+  // if (faceNormal) {
+  //   faceNormal = utilVector.copy(faceNormal);
+  //   utilVector.multiplyScalar(2000);
+  //   debugConeTag2.value?.object3D.lookAt(utilVector);
+  // }
 
 })
 
@@ -223,6 +224,14 @@ function onCameraLoaded() {
   // This is a hacky work-around to "reset" the raycasting logic
   sceneTag.value!.setAttribute('raycaster', { objects: '.clickable' });
   // headTag.value!.setAttribute('simple-navmesh-constraint', `navmesh:#${navmeshId.value}; fall:2; height: ${defaultHeightOverGround};`);
+  if (!sceneTag.value) {
+    console.error('no sceneTag provided in onCameraLoaded');
+    return;
+  }
+  sceneTag.value.sceneEl?.canvas.addEventListener('mousedown', () => {
+    lock(sceneTag.value!.canvas);
+  });
+  window.addEventListener('mouseup', unlock)
 }
 
 onBeforeUnmount(async () => {

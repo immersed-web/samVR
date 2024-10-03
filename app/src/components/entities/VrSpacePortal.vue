@@ -1,8 +1,9 @@
 <template>
   <a-entity v-bind="attrsWithoutClass">
-    <a-troika-text v-if="props.label" look-at-camera :value="props.label" position="0 2.2 0" />
-    <a-troika-text look-at-camera :value="vrPortal?.vrSpaceId" position="0 2.5 0" />
-    <a-troika-text look-at-camera :value="vrPortal?.panoramicPreview?.originalFileName" position="0 2.8 0" />
+    <a-troika-text v-if="props.label" look-at-camera :value="props.label"
+      :position="`0 ${defaultHeightOverGround + 0.5 + 0.3} 0`" />
+    <!-- <a-troika-text look-at-camera :value="vrPortal?.vrSpaceId" position="0 2.5 0" />
+    <a-troika-text look-at-camera :value="vrPortal?.panoramicPreview?.originalFileName" position="0 2.8 0" /> -->
 
     <a-troika-text transparent="true" fill-opacity="0.4" font-size="1.1" v-if="!allowed" look-at-camera color="red"
       value="block" font="#icon-font" position="0 1.5 0" />
