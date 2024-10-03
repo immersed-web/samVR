@@ -1,16 +1,16 @@
 <template>
   <template v-if="vrSpaceStore.currentVrSpace">
     <a-entity id="vr-portals">
-      <template v-for="placedObject in vrSpaceStore.currentVrSpace?.dbData.placedObjects"
-        :key="placedObject.placedObjectId">
-
-        <a-entity v-if="placedObject.type === 'vrPortal'" :position="placedObject.position?.join(' ')">
-          <VrSpacePortal :vr-portal="placedObject.vrPortal"
-            @click.stop="router.replace({ name: 'vrSpace', params: { vrSpaceId: placedObject.vrPortal?.vrSpaceId } })"
-            class="clickable" :label="placedObject.vrPortal?.name" />
-        </a-entity>
-        <!-- <PlacedAsset v-if="placedObject.type === 'asset' && placedObject.asset" :asset="placedObject.asset" /> -->
-      </template>
+      <a-entity v-for="placedObject in vrSpaceStore.currentVrSpace?.dbData.placedObjects"
+        :key="`${placedObject.placedObjectId}_${placedObject.updatedAt}`"
+        :rotation="arrToCoordString(quaternionTupleToAframeRotation(placedObject.orientation ?? [0, 0, 0, 1]))"
+        :position="arrToCoordString(placedObject.position)">
+        <VrSpacePortal v-if="placedObject.type === 'vrPortal'" :vr-portal="placedObject.vrPortal"
+          @click.stop="router.replace({ name: 'vrSpace', params: { vrSpaceId: placedObject.vrPortal?.vrSpaceId } })"
+          class="clickable" :label="placedObject.vrPortal?.name" />
+        <PlacedAsset v-else-if="placedObject.type === 'asset' && placedObject.asset"
+          :scale="placedObject.scale ? arrToCoordString(placedObject.scale) : ''" :asset="placedObject.asset" />
+      </a-entity>
     </a-entity>
 
     <a-sky :color="skyColor" />
@@ -122,7 +122,7 @@ import EmojiOther from './EmojiOther.vue';
 import LaserPointerOther from './LaserPointerOther.vue';
 import { useCurrentCursorIntersection } from '@/composables/vrSpaceComposables';
 import BasicAvatarEntity from './BasicAvatarEntity.vue';
-import { generateSpawnPosition } from '@/modules/3DUtils';
+import { generateSpawnPosition, arrToCoordString, quaternionTupleToAframeRotation } from '@/modules/3DUtils';
 import PlacedAsset from './PlacedAsset.vue';
 import { usePointerLock } from '@vueuse/core';
 const { currentCursorIntersection, triggerCursorClick, isCursorOnNavmesh } = useCurrentCursorIntersection();
