@@ -14,7 +14,7 @@
         <div class="collapse-title bg-gray-100">
           Grundläggande information
         </div>
-        <div class="collapse-content flex flex-col items-start space-y-4">
+        <div class="collapse-content flex flex-col items-start gap-4">
           <div class="w-full">
             <div class="divider">
               Scenens namn
@@ -37,7 +37,7 @@
         <div class="collapse-title bg-gray-100">
           Användare och rättigheter
         </div>
-        <div class="collapse-content flex flex-col items-start space-y-4">
+        <div class="collapse-content flex flex-col items-start gap-4">
           <div class="w-full">
             <div class="divider">
               Publik eller privat?
@@ -65,7 +65,7 @@
             <span class="label-text font-semibold whitespace-nowrap">
               Dela med en ny person
             </span>
-            <div class="flex gap-2 justify-between items-center z-10">
+            <div class="flex gap-2 justify-between items-center z-10 flex-wrap">
               <AutoComplete v-if="users?.length" class="grow" v-model="selectedUser" display-key="username"
                 id-key="userId" :options="users" />
               <select v-model="selectedPermission" class="select select-bordered select-sm">
@@ -100,7 +100,7 @@
         <div class="collapse-title bg-gray-100">
           3D-modell
         </div>
-        <div class="collapse-content flex flex-col items-start space-y-4">
+        <div class="collapse-content flex flex-col items-start gap-4">
           <template v-if="vrSpaceStore.currentVrSpace">
             <div class="w-full">
               <div class="divider">
@@ -125,7 +125,8 @@
                 Ladda upp en 3D-modell för VR-scenens miljö. Detta är den modell som omsluter besökaren, t.ex. ett
                 rum eller en park.
               </p>
-              <pre>{{ vrSpaceStore.currentVrSpace.dbData.worldModelAsset?.originalFileName }}</pre>
+              <pre
+                class="whitespace-normal">{{ vrSpaceStore.currentVrSpace.dbData.worldModelAsset?.originalFileName }}</pre>
               <AssetUpload @uploaded="onModelUploaded" :accepted-asset-types="['model']" name="miljömodell"
                 :show-in-user-library="false" :uploaded-asset-data="vrSpaceStore.currentVrSpace.dbData.worldModelAsset"
                 @asset-deleted="vrSpaceStore.reloadVrSpaceFromDB" />
@@ -141,7 +142,8 @@
                   vilka ytor som inte går att beträda. Ifall en navmesh-modell inte laddas upp så försöker programmet
                   att beräkna detta automatiskt, vilket kan ge upphov till oväntade fel.
                 </p>
-                <pre>{{ vrSpaceStore.currentVrSpace.dbData.navMeshAsset?.originalFileName }}</pre>
+                <pre
+                  class="whitespace-normal">{{ vrSpaceStore.currentVrSpace.dbData.navMeshAsset?.originalFileName }}</pre>
                 <AssetUpload @uploaded="onNavmeshUploaded" accepted-asset-types="navmesh" name="navmesh"
                   :show-in-user-library="false" :uploaded-asset-data="vrSpaceStore.currentVrSpace.dbData.navMeshAsset"
                   @asset-deleted="vrSpaceStore.reloadVrSpaceFromDB" />
@@ -220,11 +222,17 @@
         </div>
         <div class="collapse-content flex flex-col items-start gap-4">
           <!-- Placera objekt -->
-          <p class="text-sm label">
-            Placera objekt såsom bilder och PDF i 3D-modellen.
-          </p>
+          <div class="divider">
+            Ladda upp objekt till ditt bibliotek
+          </div>
           <AssetUpload @uploaded="onAssetUploaded" :accepted-asset-types="['document', 'image', 'video', 'model']"
             name="object" :show-in-user-library="true" />
+          <!-- <p class="text-sm label">
+            Placera objekt såsom bilder och PDF i 3D-modellen.
+          </p> -->
+          <div class="divider">
+            Placera object i scenen
+          </div>
           <AssetLibrary :assets="libraryAssets" @asset-picked="onAssetPicked" />
         </div>
       </div>

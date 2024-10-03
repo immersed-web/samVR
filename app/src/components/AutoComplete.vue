@@ -1,8 +1,8 @@
 <template>
-  <div v-if="options?.length">
+  <template v-if="options?.length">
 
     <Combobox v-model="selected" nullable>
-      <div ref="comboBoxInputTag" class="input input-bordered input-sm flex gap-2 items-center">
+      <div ref="comboBoxInputTag" :class="$attrs.class" class="input input-bordered input-sm flex gap-2 items-center">
         <ComboboxInput aria-autocomplete="none" autocomplete="one-time-code" class="grow"
           :displayValue="option => option ? option[displayKey] : undefined"
           @change="searchString = $event.target.value; updateDropdownPos()" />
@@ -32,7 +32,7 @@
     <!-- <pre>{{ searchString }}</pre> -->
     <!-- <pre>{{ selected }}</pre> -->
     <!-- <pre>{{ bottom }}</pre> -->
-  </div>
+  </template>
 </template>
 
 <script setup lang="ts">
@@ -78,6 +78,20 @@ function updateDropdownPos() {
   // console.log('updating dropdown pos');
   updateElementBounding();
 }
+
+const charLengthLongestOptions = computed(() => {
+  let maxSoFar = 0;
+  props.options.forEach(option => {
+    maxSoFar = Math.max(maxSoFar, option[props.displayKey].length);
+  });
+  return maxSoFar;
+})
+
+const comboInputStyle = computed(() => {
+  return {
+    'min-width': (charLengthLongestOptions.value + 2) + 'ch',
+  }
+});
 
 // watch(bottom, newBottom => console.log(newBottom));
 
