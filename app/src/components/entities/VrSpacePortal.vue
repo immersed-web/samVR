@@ -6,7 +6,7 @@
     <a-troika-text look-at-camera :value="vrPortal?.panoramicPreview?.originalFileName" position="0 2.8 0" /> -->
 
     <a-troika-text transparent="true" fill-opacity="0.4" font-size="1.1" v-if="!allowed" look-at-camera color="red"
-      value="block" font="#icon-font" position="0 1.5 0" />
+      value="block" font="#icon-font" :position="`0 ${defaultHeightOverGround} 0`" />
 
     <a-sphere
       animation__hover="property: scale; startEvents: mouseenter; easing: easeInOutCubic; dur: 120; from: 0.5 0.5 0.5; to: 0.6 0.6 0.6"
