@@ -1,6 +1,6 @@
 <template>
 
-  <div class="grid grid-cols-[repeat(auto-fill,_minmax(8rem,_1fr))] gap-2">
+  <div class="grid grid-cols-[repeat(auto-fill,_minmax(6rem,_1fr))] gap-2">
     <!-- <div v-for="asset in assets.filter(a => a.assetType === 'image')" :key="asset.assetId" -->
     <div v-for="asset in assets" :key="asset.assetId" class="cursor-pointer" @click="pickAsset(asset)">
       <div class="card card-compact bg-base-100 shadow-md">
@@ -12,17 +12,10 @@
             class="material-icons text-8xl">view_in_ar</span>
         </figure>
         <div class="card-body break-words">
-          <p>{{ asset.originalFileName }}</p>
+          <p class="text-xs">{{ asset.originalFileName }}</p>
         </div>
       </div>
     </div>
-    <!-- <div class="basis-1/4 cursor-pointer p-1 flex items-center justify-center">
-      <div class="flex flex-col p-4">
-        <button type="button" class="btn" @click="() => open">
-          Upload a new asset
-        </button>
-      </div>
-    </div> -->
   </div>
 </template>
 <script setup lang="ts">
