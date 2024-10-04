@@ -5,15 +5,13 @@
     <!-- <a-troika-text look-at-camera :value="vrPortal?.vrSpaceId" position="0 2.5 0" />
     <a-troika-text look-at-camera :value="vrPortal?.panoramicPreview?.originalFileName" position="0 2.8 0" /> -->
 
-    <a-troika-text transparent="true" fill-opacity="0.4" font-size="1.1" v-if="!allowed" look-at-camera color="red"
+    <a-troika-text v-if="!allowed" transparent="true" fill-opacity="0.4" font-size="1.1" look-at-camera color="red"
       value="block" font="#icon-font" :position="`0 ${defaultHeightOverGround} 0`" />
 
-    <a-sphere
-      animation__hover="property: scale; startEvents: mouseenter; easing: easeInOutCubic; dur: 90; from: 0.5 0.5 0.5; to: 0.57 0.57 0.57"
-      animation__leave="property: scale; startEvents: mouseleave; easing: easeInOutCubic; dur: 90; from: 0.57 0.57 0.57; to: 0.5 0.5 0.5"
-      :class="[{ 'clickable': (props.clickable && allowed) }, $attrs.class]" transparent="true" scale="0.5 0.5 0.5"
-      :opacity="allowed ? 1.0 : 0.5" material="shader: outer-glow; start: 0.3; color: 0.5 0 1;"
-      :position="`0 ${defaultHeightOverGround} 0`" :box-helper="`enabled: ${showBoxHelper}`">
+    <a-sphere v-bind="animationAttributes" :class="[{ 'clickable': (props.clickable && allowed) }, $attrs.class]"
+      transparent="true" scale="0.5 0.5 0.5" :opacity="allowed ? 1.0 : 0.5"
+      material="shader: outer-glow; start: 0.3; color: 0.5 0 1;" :position="`0 ${defaultHeightOverGround} 0`"
+      :box-helper="`enabled: ${showBoxHelper}`">
       <!-- <a-icosahedron ref="portalTagRef" v-if="true" detail="5" scale="0.98 0.98 0.98" transparent="true"
         :opacity="allowed ? 1.0 : 0.2">
       </a-icosahedron> -->
@@ -38,6 +36,14 @@ const clientStore = useClientStore();
 const attrs = useAttrs();
 
 const attrsWithoutClass = computed(() => omit(attrs, 'class'));
+
+const animationAttributes = computed(() => {
+  if (!allowed.value) return {};
+  return {
+    animation__hover: "property: scale; startEvents: mouseenter; easing: easeInOutCubic; dur: 90; from: 0.5 0.5 0.5; to: 0.57 0.57 0.57",
+    animation__leave: "property: scale; startEvents: mouseleave; easing: easeInOutCubic; dur: 90; from: 0.57 0.57 0.57; to: 0.5 0.5 0.5"
+  }
+})
 
 const portalTagRef = ref<Entity>()
 onUpdated(() => {
