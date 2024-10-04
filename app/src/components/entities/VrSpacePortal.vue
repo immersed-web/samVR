@@ -9,8 +9,8 @@
       value="block" font="#icon-font" :position="`0 ${defaultHeightOverGround} 0`" />
 
     <a-sphere
-      animation__hover="property: scale; startEvents: mouseenter; easing: easeInOutCubic; dur: 120; from: 0.5 0.5 0.5; to: 0.6 0.6 0.6"
-      animation__leave="property: scale; startEvents: mouseleave; easing: easeInOutCubic; dur: 120; from: 0.6 0.6 0.6; to: 0.5 0.5 0.5"
+      animation__hover="property: scale; startEvents: mouseenter; easing: easeInOutCubic; dur: 90; from: 0.5 0.5 0.5; to: 0.57 0.57 0.57"
+      animation__leave="property: scale; startEvents: mouseleave; easing: easeInOutCubic; dur: 90; from: 0.57 0.57 0.57; to: 0.5 0.5 0.5"
       :class="[{ 'clickable': (props.clickable && allowed) }, $attrs.class]" transparent="true" scale="0.5 0.5 0.5"
       :opacity="allowed ? 1.0 : 0.5" material="shader: outer-glow; start: 0.3; color: 0.5 0 1;"
       :position="`0 ${defaultHeightOverGround} 0`" :box-helper="`enabled: ${showBoxHelper}`">
