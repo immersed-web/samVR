@@ -21,29 +21,33 @@
           <span class="-mt-1">z</span>
           <OffsetSlider v-model.number="placedObjectPosition[2]" />
         </div>
-        <div class="col-span-2 justify-self-stretch flex items-center gap-2 justify-between">
-          <span class="grow self-center divider divider-start text-xs m-0">Storlek</span>
-          <button class="btn btn-xs btn-circle material-icons"
-            @click="placedObjectScale = undefined">restart_alt</button>
-        </div>
-        <span class=" material-icons">zoom_out_map</span>
-        <OffsetSlider :step="0.01" :offset="0.7" v-model.number="uniformScale" />
-        <div class="col-span-2 justify-self-stretch flex items-center gap-2 justify-between">
-          <span class="grow self-center divider divider-start text-xs m-0">Rotation</span>
-          <button @click="placedObjectRotation = [0, 0, 0]"
-            class="btn btn-xs btn-circle material-icons">restart_alt</button>
-        </div>
-        <div class="contents" v-if="placedObjectRotation">
-          <span class="material-icons">360</span>
-          <input type="range" class="accent-primary" min="-180" max="180" v-model.number="placedObjectRotation[1]">
-          <!-- <OffsetSlider :offset="90" v-model.number="placedObjectRotation[1]" /> -->
-          <span class="rotate-90 material-icons">360</span>
-          <input type="range" class="accent-primary" min="-90" max="90" v-model.number="placedObjectRotation[0]">
-          <!-- <OffsetSlider :offset="90" v-model.number="placedObjectRotation[0]" /> -->
-          <span class="material-icons">refresh</span>
-          <input type="range" class="accent-primary" min="-180" max="180" v-model.number="placedObjectRotation[2]">
-          <!-- <OffsetSlider :offset="90" v-model.number="placedObjectRotation[2]" /> -->
-        </div>
+        <template v-if="transformedSelectedObject.type !== 'vrPortal'">
+          <div class="col-span-2 justify-self-stretch flex items-center gap-2 justify-between">
+            <span class="grow self-center divider divider-start text-xs m-0">Storlek</span>
+            <button class="btn btn-xs btn-circle material-icons"
+              @click="placedObjectScale = undefined">restart_alt</button>
+          </div>
+          <div class="contents">
+            <span class=" material-icons">zoom_out_map</span>
+            <OffsetSlider :step="0.01" :offset="0.7" v-model.number="uniformScale" />
+          </div>
+          <div class="col-span-2 justify-self-stretch flex items-center gap-2 justify-between">
+            <span class="grow self-center divider divider-start text-xs m-0">Rotation</span>
+            <button @click="placedObjectRotation = [0, 0, 0]"
+              class="btn btn-xs btn-circle material-icons">restart_alt</button>
+          </div>
+          <div class="contents" v-if="placedObjectRotation">
+            <span class="material-icons">360</span>
+            <input type="range" class="accent-primary" min="-180" max="180" v-model.number="placedObjectRotation[1]">
+            <!-- <OffsetSlider :offset="90" v-model.number="placedObjectRotation[1]" /> -->
+            <span class="rotate-90 material-icons">360</span>
+            <input type="range" class="accent-primary" min="-90" max="90" v-model.number="placedObjectRotation[0]">
+            <!-- <OffsetSlider :offset="90" v-model.number="placedObjectRotation[0]" /> -->
+            <span class="material-icons">refresh</span>
+            <input type="range" class="accent-primary" min="-180" max="180" v-model.number="placedObjectRotation[2]">
+            <!-- <OffsetSlider :offset="90" v-model.number="placedObjectRotation[2]" /> -->
+          </div>
+        </template>
         <button class="btn btn-xs btn-error" @click="removeSelectedObject">Radera</button>
       </div>
     </div>
