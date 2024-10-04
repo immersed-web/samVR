@@ -7,7 +7,7 @@
         :position="arrToCoordString(placedObject.position)">
         <VrSpacePortal v-if="placedObject.type === 'vrPortal'" :vr-portal="placedObject.vrPortal"
           @click.stop="router.replace({ name: 'vrSpace', params: { vrSpaceId: placedObject.vrPortal?.vrSpaceId } })"
-          class="clickable" :label="placedObject.vrPortal?.name" />
+          :label="placedObject.vrPortal?.name" />
         <PlacedAsset class="raycastable-surface" v-else-if="placedObject.type === 'asset' && placedObject.asset"
           :scale="placedObject.scale ? arrToCoordString(placedObject.scale) : ''" :asset="placedObject.asset" />
       </a-entity>
@@ -16,7 +16,7 @@
     <a-sky :color="skyColor" />
     <a-entity>
       <a-gltf-model @model-loaded="onModelLoaded" id="model" ref="modelTag" :src="vrSpaceStore.worldModelUrl"
-        class="clickable" :class="{ 'navmesh': !vrSpaceStore.navMeshUrl }" @click.stop="triggerCursorClick" />
+        class="raycastable-surface" :class="{ 'navmesh': !vrSpaceStore.navMeshUrl }" @click.stop="triggerCursorClick" />
       <a-gltf-model v-if="vrSpaceStore.navMeshUrl" id="navmesh" :src="vrSpaceStore.navMeshUrl" :visible="showNavMesh"
         class="navmesh" @mousedown="teleportMouseDown" @click.stop="triggerCursorClick" />
     </a-entity>
@@ -219,10 +219,10 @@ onMounted(async () => {
 
 function onCameraLoaded() {
   console.log('camera loaded. attaching scene attributes', navmeshId.value);
-  sceneTag.value!.setAttribute('cursor', { rayOrigin: 'mouse', fuse: false });
+  // sceneTag.value!.setAttribute('cursor', { rayOrigin: 'mouse', fuse: false });
   // the  raycaster seem to keep a reference to the intersected object which leads to us missing "new" intersection after reattaching raycaster-listen.
   // This is a hacky work-around to "reset" the raycasting logic
-  sceneTag.value!.setAttribute('raycaster', { objects: '.clickable' });
+  // sceneTag.value!.setAttribute('raycaster', { objects: '.clickable' });
   // headTag.value!.setAttribute('simple-navmesh-constraint', `navmesh:#${navmeshId.value}; fall:2; height: ${defaultHeightOverGround};`);
   if (!sceneTag.value) {
     console.error('no sceneTag provided in onCameraLoaded');
@@ -235,8 +235,8 @@ function onCameraLoaded() {
 }
 
 onBeforeUnmount(async () => {
-  sceneTag.value?.removeAttribute('raycaster');
-  sceneTag.value?.removeAttribute('cursor');
+  // sceneTag.value?.removeAttribute('raycaster');
+  // sceneTag.value?.removeAttribute('cursor');
   await vrSpaceStore.leaveVrSpace();
 });
 
