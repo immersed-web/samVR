@@ -5,7 +5,7 @@ import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import { useCurrentCursorIntersection } from '@/composables/vrSpaceComposables';
 
 const vrSpaceStore = useVrSpaceStore();
-const { currentCursorIntersection: currentCursor } = useCurrentCursorIntersection();
+const { currentCursorIntersection: currentCursor, setCursorMode } = useCurrentCursorIntersection();
 
 const laserActive = ref(false);
 
@@ -17,6 +17,11 @@ useEventListener(window, 'keydown', (event) => {
 
 function toggleLaser() {
   laserActive.value = !laserActive.value;
+  if (laserActive.value) {
+    setCursorMode('laser');
+  } else {
+    setCursorMode(undefined);
+  }
 }
 
 watch([laserActive, currentCursor], ([newActive, newIntersection], [oldActive, oldIntersection]) => {
@@ -39,7 +44,7 @@ watch([laserActive, currentCursor], ([newActive, newIntersection], [oldActive, o
 <template>
   <!-- Laser pointer, self -->
   <Teleport to="#teleport-target-aframe-cursor">
-    <a-sphere v-if="laserActive" scale=".075 .075 .075" color="green" />
+    <a-sphere v-if="laserActive" position="0 0 0" scale=".075 .075 .075" color="green" />
   </Teleport>
 
   <!-- For optimization, other avatars' laser pointers are rendered directly in the remote avatar iteration -->
