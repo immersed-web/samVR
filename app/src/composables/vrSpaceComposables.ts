@@ -75,7 +75,7 @@ function setCursorEntityRef(entity: typeof cursorEntity | undefined) {
     if (!cursorEntity.value) return;
     const cursor = cursorEntity.value;
     if (!cursor) return;
-    const transform = intersectionToTransform(intersectionData);
+    const transform = intersectionToTransform(intersectionData, 0);
     if (!transform) return;
     cursor.object3D.position.set(...transform.position);
     const quat = new THREE.Quaternion().fromArray(transform.rotation);
