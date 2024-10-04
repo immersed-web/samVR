@@ -59,9 +59,10 @@
 
       <!-- The model -->
       <a-entity>
-        <a-gltf-model class="raycastable-surface" v-if="props.modelUrl" @model-loaded="onModelLoaded" id="model"
-          ref="modelTag" :src="props.modelUrl" @click.stop="triggerCursorClick" />
-        <a-gltf-model id="navmesh" class="raycastable-surface" ref="navmeshTag" @model-loaded="onNavMeshLoaded"
+        <a-gltf-model :class="{ 'navmesh': !vrSpaceStore.navMeshUrl }" class="raycastable-surface" v-if="props.modelUrl"
+          @model-loaded="onModelLoaded" id="model" ref="modelTag" :src="props.modelUrl"
+          @click.stop="triggerCursorClick" />
+        <a-gltf-model id="navmesh" class="raycastable-surface navmesh" ref="navmeshTag" @model-loaded="onNavMeshLoaded"
           :visible="showNavMesh" :model-opacity="`opacity: ${navMeshOpacity}`"
           :src="props.navmeshUrl ? props.navmeshUrl : props.modelUrl" @click.stop="triggerCursorClick" />
       </a-entity>
