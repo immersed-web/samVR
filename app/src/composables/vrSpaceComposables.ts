@@ -16,8 +16,10 @@ function setCursorIntersection(intersectionData: RayIntersectionData | undefined
   // console.log('currentCursor updated:', intersectionData);
   writableIntersection.value = intersectionData;
 }
-export type CursorMode = `place-${PlacedObject['type'] | 'spawnposition'}` | 'teleport' | 'enterFirstPersonView' | 'hover' | undefined
-export type RaycastSelector = `.${'selectable-object' | 'raycastable-surface' | 'clickable'}`
+export type CursorMode = `place-${PlacedObject['type'] | 'spawnposition'}` | 'teleport' | 'enterFirstPersonView' | 'laser' | 'select-objects' | undefined
+
+const allRaycastSelectors = ['.raycastable-surface', '.editable-object', '.clickable', '.navmesh'] as const;
+export type RaycastSelector = (typeof allRaycastSelectors)[number]
 
 const currentCursorMode = ref<CursorMode>();
 function setCursorMode(mode: CursorMode) {
@@ -29,20 +31,31 @@ const currentCursorTransform = computed(() => {
   return intersectionToTransform(rayIntersectionData.value);
 });
 
-const currentRaycastSelector = computed(() => {
+const pointerOnHover = computed(() => {
+  return currentCursorMode.value !== 'laser';
+});
+
+const currentRaycastSelectorArray = computed<RaycastSelector[]>(() => {
   switch (currentCursorMode.value) {
-    case 'place-spawnposition':
     case 'teleport':
-    case 'enterFirstPersonView':
-    case 'place-asset':
+    case 'place-spawnposition':
     case 'place-vrPortal':
+    case 'enterFirstPersonView':
+      return ['.navmesh'];
+    case 'place-asset':
     case 'place-pointLight':
-      return '.raycastable-surface';
+      return ['.raycastable-surface'];
+    case 'laser':
+      return ['.raycastable-surface'];
+    case 'select-objects':
+      return ['.editable-object', '.clickable']
     default:
-      return '.selectable-object';
-    case 'hover':
-      return '.raycastable-surface, .selectable-object, .clickable';
+      return ['.clickable'];
   }
+});
+
+const currentRaycastSelectorString = computed(() => {
+  return currentRaycastSelectorArray.value.join(', ');
 });
 
 const isCursorOnNavmesh = computed((): boolean => {
@@ -90,7 +103,9 @@ export function useCurrentCursorIntersection() {
     currentCursorTransform,
     setCursorIntersection,
     setCursorMode,
-    currentRaycastSelector,
+    pointerOnHover,
+    currentRaycastSelectorArray,
+    currentRaycastSelectorString,
     currentCursorMode: readonly(currentCursorMode),
     isCursorOnNavmesh,
     onCursorClick: clickHook.on,

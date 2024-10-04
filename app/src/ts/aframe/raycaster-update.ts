@@ -11,6 +11,7 @@ export default function () {
     prev: undefined as THREE.Vector3 | undefined,
     stashedCursorStyle: undefined as string | undefined,
     outsideCanvas: false,
+    utilVector: undefined as unknown as THREE.Vector3,
     onMouseEnter(e: MouseEvent) {
       if (e instanceof MouseEvent) {
         // console.log('cursor entered the canvas', e);
@@ -26,6 +27,7 @@ export default function () {
       }
     },
     init: function () {
+      this.utilVector = new THREE.Vector3();
       this.onMouseEnter = this.onMouseEnter.bind(this);
       this.onMouseLeave = this.onMouseLeave.bind(this);
       console.log('INIT raycaster-update');
@@ -49,7 +51,7 @@ export default function () {
     },
     events: {
       'raycaster-intersection': function (evt: DetailEvent<unknown>) {
-        console.log('intersection');
+        // console.log('intersection', JSON.stringify(evt.detail.intersections[0].normal));
         const canvas = this.el.sceneEl!.canvas;
         const canvasCursor = canvas.style.cursor;
         if (canvasCursor !== '') {
@@ -85,12 +87,19 @@ export default function () {
         if (intersectedEl) {
           const threeRaycaster = raycasterComponent.raycaster;
           const intersection = raycasterComponent.getIntersection(intersectedEl);
+
           const rayDirection = threeRaycaster.ray.direction;
-          const intersectionData: RayIntersectionData = { intersection, rayDirection }
+          let normal = intersection.normal;
+          if (!normal) normal = intersection.face?.normal
+          this.utilVector.copy(normal!)
+          this.utilVector.transformDirection(intersection.object.matrixWorld)
+          // intersection.object.localToWorld(this.utilVector);
+          const worldSpaceNormal = this.utilVector.toArray();
+          const intersectionData: RayIntersectionData = { intersection, rayDirection, worldSpaceNormal };
           
           if (!this.prev || !intersection.point.equals(this.prev)) {
             // console.log('emitting raycast: ', intersectionData);
-            const transform = intersectionToTransform(intersectionData);
+            // const transform = intersectionToTransform(intersectionData);
             // console.log('raycast update', transform);
             this.el.emit('raycast-update', intersectionData);
           }

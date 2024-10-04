@@ -1,11 +1,12 @@
 import { THREE, type Entity } from "aframe";
+import type { Vector3, Vector3Tuple } from "env";
 
 const utilMatrix4 = new THREE.Matrix4();
 const utilVector3 = new THREE.Vector3();
 const utilEuler = new THREE.Euler();
 const utilQuaternion = new THREE.Quaternion();
 
-export type RayIntersectionData = { intersection: THREE.Intersection, rayDirection: THREE.Vector3 };
+export type RayIntersectionData = { intersection: THREE.Intersection, rayDirection: THREE.Vector3, worldSpaceNormal: Vector3Tuple };
 export type AframeClickeventData = {
   // intersectedEl:
   cursorEl: Entity,
@@ -19,19 +20,20 @@ const utilRotation = new THREE.Quaternion();
 const up = new THREE.Vector3(0, 1, 0);
 const origo = new THREE.Vector3(0, 0, 0);
 const zAxis = new THREE.Vector3(0, 0, 1);
-export function intersectionToTransform(intersectionData: RayIntersectionData, normalOffset: number = 0.09) {
+export function intersectionToTransform(intersectionData: RayIntersectionData, normalOffset: number = 0.03) {
   if (!intersectionData) { return; }
   const { intersection, rayDirection } = intersectionData;
   const position = intersection.point.clone();
 
-  if (intersection.normal) {
-    utilNormal.copy(intersection.normal);
-  } else if (intersection.face) {
-    utilNormal.copy(intersection.face.normal);
-  } else {
-      console.error('no normal vector found in intersection object'); return;
-      return;
-    }
+  // if (intersection.normal) {
+  //   utilNormal.copy(intersection.normal);
+  // } else if (intersection.face) {
+  //   utilNormal.copy(intersection.face.normal);
+  // } else {
+  //     console.error('no normal vector found in intersection object'); return;
+  //     return;
+  //   }
+  utilNormal.set(...intersectionData.worldSpaceNormal);
 
   // console.log('normal:', utilNormal.toArray());
 

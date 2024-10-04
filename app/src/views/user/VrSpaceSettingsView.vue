@@ -243,7 +243,7 @@
       <div class="sticky top-2">
         <VrSpacePreview class="border rounded-md overflow-hidden" ref="vrComponentTag"
           :model-url="vrSpaceStore.worldModelUrl" :navmesh-url="vrSpaceStore.navMeshUrl"
-          :raycastSelector="currentRaycastSelector"
+          :raycastSelector="currentRaycastSelectorString"
           :auto-rotate="currentCursorMode === undefined && selectedPlacedObject === undefined">
           <a-entity v-if="!hideGizmos" id="placed-objects">
             <a-entity v-for="placedObject in placedObjectsNotBeingEdited"
@@ -253,7 +253,7 @@
               <VrSpacePortal v-if="placedObject.type === 'vrPortal'" @click.stop="selectedPlacedObject = placedObject"
                 :vr-portal="placedObject.vrPortal" class="selectable-object" :label="placedObject.vrPortal?.name" />
               <PlacedAsset v-else-if="placedObject.type === 'asset' && placedObject.asset"
-                @click="selectedPlacedObject = placedObject" class="selectable-object"
+                @click="selectedPlacedObject = placedObject" class="editable-object"
                 :scale="placedObject.scale ? arrToCoordString(placedObject.scale) : ''" :asset="placedObject.asset" />
             </a-entity>
           </a-entity>
@@ -286,9 +286,9 @@
                 material="shader: flat; side: double;" rotation="-90 0 0">
                 <a-cone color="green" position="0 0 0" scale="0.1 0.2 0.1" rotation="0 0 0" />
               </a-ring> -->
-              <a-box material="shader: flat; side: double;" scale="0.2 0.2 0.2" color="magenta" rotation="90 0 0">
+              <!-- <a-box material="shader: flat; side: double;" scale="0.2 0.2 0.2" color="magenta" rotation="90 0 0">
                 <a-cone color="green" position="0 1 0" scale="0.5 1 0.5" rotation="0 0 0" />
-              </a-box>
+              </a-box> -->
             </a-entity>
             <template v-if="currentlyMovedObject">
               <!-- <VrSpacePortal :key="`selected-${transformedSelectedObject.placedObjectId}`"
@@ -328,23 +328,25 @@
           @click="cancelCursorStuff">
           <span class="material-icons">close</span>
         </button>
-        <button @click="setCursorMode('hover')" class="btn btn-sm">show cursor</button>
+        <button @click="setCursorMode('laser')" class="btn btn-sm">hover</button>
 
-        <pre class="text-xs">currentCursorTransform: {{ currentCursorTransform }}</pre>
-        <pre v-if="currentCursorTransform"
-          class="text-xs">currentCursorTransform aframe rotation: {{ quaternionTupleToAframeRotation(currentCursorTransform.rotation) }}</pre>
-        <pre class="text-xs">nrOfPlacedObjects: {{ placedObjectsNotBeingEdited.length }}</pre>
-        <pre class="text-xs">currentlyMovedObject: {{ currentlyMovedObject }}</pre>
+        <pre class="text-xs whitespace-normal">currentCursorMode: {{ currentCursorMode }}</pre>
+        <pre class="text-xs whitespace-normal">currentRaycastSelectorString: {{ currentRaycastSelectorString }}</pre>
+        <pre class="text-xs whitespace-normal">objectRotation: {{ placedObjectRotation }}</pre>
+        <!-- <pre class="text-xs">currentCursorTransform: {{ currentCursorTransform }}</pre> -->
+        <!-- <pre v-if="currentCursorTransform"
+          class="text-xs">currentCursorTransform aframe rotation: {{ quaternionTupleToAframeRotation(currentCursorTransform.rotation) }}</pre> -->
+        <!-- <pre class="text-xs">nrOfPlacedObjects: {{ placedObjectsNotBeingEdited.length }}</pre>
+        <pre class="text-xs">currentlyMovedObject: {{ currentlyMovedObject }}</pre> -->
         <!-- <pre class="text-xs">composable scale ref: {{ placedObjectScale }}</pre> -->
         <!-- <pre
           class="text-xs">qToAframe(sPo): {{ quaternionTupleToAframeRotation(selectedPlacedObject?.orientation ?? [0, 0, 0, 1]) }}</pre> -->
-        <!-- <pre class="text-xs">composable rotation ref: {{ placedObjectRotation }}</pre>
+        <pre class="text-xs">composable rotation ref: {{ placedObjectRotation }}</pre>
         <pre class="text-xs">sPO orientation: {{ selectedPlacedObject?.orientation }}</pre>
-        <pre class="text-xs">tsPO orientation: {{ transformedSelectedObject?.orientation }}</pre> -->
+        <pre class="text-xs">tsPO orientation: {{ transformedSelectedObject?.orientation }}</pre>
         <!-- 
         <pre>{{ selectedPlacedObject?.position }}</pre>
         <pre>{{ vrSpaceStore.currentVrSpace?.dbData.placedObjects.find(p => p.placedObjectId === selectedPlacedObject?.placedObjectId)?.position }}</pre> -->
-        <!-- <button class="btn btn-accent" @click="isRaycastingActive = !isRaycastingActive;">toggle raycasting</button> -->
         <template v-if="vrSpaceStore.currentVrSpace?.dbData.worldModelAsset">
           <h4>Interagera med VR-scenen</h4>
           <div class="grid grid-cols-2 gap-2">
@@ -434,7 +436,8 @@ onTransformUpdate(spo => {
 })
 
 
-const { setCursorMode, currentCursorMode, currentRaycastSelector, setCursorEntityRef, onCursorClick, currentCursorIntersection, currentCursorTransform, triggerCursorClick } = useCurrentCursorIntersection();
+const { setCursorMode, currentCursorMode, currentRaycastSelectorString, setCursorEntityRef, onCursorClick, currentCursorIntersection, currentCursorTransform, triggerCursorClick } = useCurrentCursorIntersection();
+setCursorMode('select-objects');
 watch(currentCursorIntersection, (intersection) => {
   if (currentCursorMode.value === 'place-spawnposition') {
     uncommitedSpawnPosition.value = intersection?.intersection.point?.toArray() ?? [0, 0, 0];
@@ -442,7 +445,7 @@ watch(currentCursorIntersection, (intersection) => {
 });
 
 function cancelCursorStuff() {
-  setCursorMode(undefined);
+  setCursorMode('select-objects');
   selectedPlacedObject.value = undefined;
   currentlyMovedObject.value = undefined;
 }
@@ -476,10 +479,10 @@ const utilMatrix = new THREE.Matrix4();
 const utilVector = new THREE.Vector3();
 watch(currentCursorIntersection, (intersection) => {
   if (!intersection || !debugConeTag.value || !debugConeTag2.value) return;
-  let normal = intersection.intersection.normal;
+  let normal = intersection.worldSpaceNormal;
   let faceNormal = intersection.intersection.face?.normal
   if (normal) {
-    normal = utilVector.copy(normal);
+    utilVector.set(...normal);
     utilVector.multiplyScalar(2000);
     debugConeTag.value?.object3D.lookAt(utilVector);
     debugConeTag.value.setAttribute('visible', true);
@@ -514,10 +517,7 @@ onCursorClick(async (e) => {
   console.log('raycast click:', e);
   const point = e.detail.intersection.point.toArray();
   const cursorMode = currentCursorMode.value;
-
-  if (currentCursorMode.value !== 'hover') {
-    setCursorMode(undefined);
-  } 
+  setCursorMode('select-objects');
   if (!cursorMode) {
     // const target = e.target;
     // if (!target || !isEntity(target)) return;
@@ -657,7 +657,8 @@ const allowedVrSpaces = ref<RouterOutputs['vr']['listAvailableVrSpaces']>();
 const portalTargetVrSpace = ref<NonNullable<typeof allowedVrSpaces.value>[number]>();
 watch(portalTargetVrSpace, (newVrSpaceId) => {
   if (!newVrSpaceId) {
-    setCursorMode(undefined);
+    // setCursorMode(undefined);
+    cancelCursorStuff();
   } else {
     setCursorMode('place-vrPortal');
   }
@@ -672,26 +673,6 @@ onMounted(async () => {
 
   allowedVrSpaces.value = await backendConnection.client.vr.listAvailableVrSpaces.query();
 });
-
-const skyColor = ref();
-
-// async function onRaycastHover(point: Point) {
-//   hoverPosition.value = point;
-//   switch (currentRaycastReason.value) {
-//     case 'spawnPosition':
-//       uncommitedSpawnPosition.value = point;
-//       break;
-//     // case 'selfPlacement':
-//     //   break;
-//   }
-//   console.log('raycast intersection:', point);
-// }
-
-function cancelRaycasting() {
-  // isRaycastingActive.value = false;
-  setCursorMode(undefined);
-  portalTargetVrSpace.value = undefined;
-}
 
 let abortController: AbortController | undefined = undefined;
 function uploadScreenshot(canvas: ScreenshotPayload) {
