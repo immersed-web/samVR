@@ -15,7 +15,7 @@
         </div>
         <div class="contents" v-if="placedObjectPosition">
           <span class="-mt-1">x</span>
-          <OffsetSlider v-model.number="placedObjectPosition[0]" />
+          <OffsetSlider inverted v-model.number="placedObjectPosition[0]" />
           <span class="-mt-1">y</span>
           <OffsetSlider v-model.number="placedObjectPosition[1]" />
           <span class="-mt-1">z</span>
