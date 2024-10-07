@@ -593,6 +593,9 @@ export const AvatarDesignSchema = z.object({
   })
 });
 export type AvatarDesign = z.TypeOf<typeof AvatarDesignSchema>;
+type PartsWithColor = Omit<AvatarDesign['parts'], SkinPart>
+export type PartKeyWithColor = keyof PartsWithColor
+// export type PartWithColor = PartsWithColor[keyof PartsWithColor]
 
 export const defaultAvatarDesign: AvatarDesign = {
   skinColor: undefined,

@@ -19,7 +19,7 @@ import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue';
 import { Vue3ColorPicker } from '@cyhnkckali/vue3-color-picker';
 import '@cyhnkckali/vue3-color-picker/dist/style.css';
 import WaitForAframe from '@/components/WaitForAframe.vue';
-import { avatarAssets, type AvatarDesign, defaultAvatarDesign } from 'schemas';
+import { avatarAssets, type AvatarDesign, defaultAvatarDesign, type PartKeyWithColor, skinParts } from 'schemas';
 
 import { useConnectionStore } from '@/stores/connectionStore';
 
@@ -29,34 +29,11 @@ onMounted(() => {
   loadAvatarFromStorage();
 });
 
-// const avatarAssets = {
-//   hands: ['hands_basic_left'],
-//   heads: ['heads_basic'],
-//   torsos: ['torsos_basic_male'],
-//   eyes: ['eyes_huge', 'eyes_relaxed', 'eyes_cool', 'eyes_kind', 'eyes_round', 'eyes_npc'],
-//   eyebrows: ['eyebrows_brookie', 'eyebrows_innocent', 'eyebrows_reynolds', 'eyebrows_tyler', 'eyebrows_npc', undefined],
-//   mouths: ['mouth_polite_smile', 'mouth_prettypolite_smile', 'mouth_npc'],
-//   hair: ['hair_ponytail', 'hair_multicolor', 'hair_thick_buzzcut', 'hair_cool', 'hair_kevin', 'hair_wolf', undefined],
-//   facialhair: [undefined, 'facialhair_almond', 'facialhair_bigboi', 'facialhair_curled', 'facialhair_johnny', 'facialhair_laotzu'],
-//   clothes: ['clothes_poloshirt', 'clothes_button_dress', 'clothes_casual_dress', 'clothes_fancy_dress', 'clothes_tshirt', 'clothes_turtleneck', 'clothes_vneck', undefined],
-//   accessories: [undefined, 'accessories_cateye', 'accessories_round', 'accessories_square'],
-//   jewelry: [undefined, 'jewelry_pearl', 'jewelry_diamond', 'jewelry_diamond2', 'jewelry_diamond3', 'jewelry_sparkling_hoopdrop_gold', 'jewelry_sparkling_hoopdrop_silver', 'jewelry_diamond_tripple', 'jewelry_hoopdroop_gold', 'jewelry_hoopdroop_silver', 'jewelry_pearl_tripple', 'jewelry_star_tripple_gold', 'jewelry_star_tripple_silver'],
-//   layer: [undefined, 'layer_lowrider', 'layer_safari']
-// } as const;
-
-// console.log(avatarAssets);
-// console.log(avatarAssetSchemaVersion);
-
-const skinParts = ['hands', 'heads', 'torsos'];
-
-
-// const currentAvatarSettings = reactive<AvatarDesign>({ skinColor: '', parts: Object.fromEntries(Object.entries(avatarAssets).map(([k, p]) => [k as keyof typeof avatarAssets, { model: p[0], colors: [] }])) })
 const currentAvatarSettings = reactive<AvatarDesign>(defaultAvatarDesign);
 
 watch(() => currentAvatarSettings, () => saveAvatarSettingsToStorage(), { deep: true });
 function saveAvatarSettingsToStorage() {
-  console.log('avatarSettings before save:', currentAvatarSettings);
-  // window.localStorage.setItem('avatarSettings', JSON.stringify(currentAvatarSettings));
+  // console.log('avatarSettings before save:', currentAvatarSettings);
   window.localStorage.setItem('avatarSettings', stringify(currentAvatarSettings));
   connectionStore.client.user.updateAvatarDesign.mutate(currentAvatarSettings);
 }
@@ -85,43 +62,40 @@ function loadAvatarFromStorage() {
 
 }
 
-const currentColorSettings = reactive(Object.fromEntries(Object.keys(avatarAssets).map((k) => [k as keyof typeof avatarAssets, []])));
 const customColorsIsActive = reactive(Object.fromEntries(Object.keys(avatarAssets).map(k => [k, [false, false]])));
 const currentSkinColor = ref('');
 const skinColorIsActive = ref(false);
 
-// watch(customColorsIsActive, (newV, oldV) => {
-//   console.log(newV);
-// }, { deep: true });
-
-function onColorPicked(part: string, colorIdx: number, color: string) {
+function onColorPicked(part: PartKeyWithColor, colorIdx: number, color: string) {
   console.log('color picked', part, colorIdx, color);
-  currentAvatarSettings.parts[part].colors[colorIdx] = color;
-  customColorsIsActive[part][colorIdx] = true;
-}
-
-function setDefaultColors(part: string, colors) {
-  if (!currentAvatarSettings.parts[part].colors.length) {
-
+  if (customColorsIsActive[part][colorIdx]) {
+    console.log('setting color', part, colorIdx, color);
+    currentAvatarSettings.parts[part].colors[colorIdx] = color;
   }
+  // customColorsIsActive[part][colorIdx] = true;
 }
 
-watch([skinColorIsActive, currentSkinColor], ([active, newColor]) => {
+watch([skinColorIsActive, currentSkinColor], ([active, newColor], [prevActive, prevColor]) => {
   console.log("Changed skin color", newColor)
-  if (!active || !currentSkinColor.value) {
+  // currentAvatarSettings.skinColor = '';
+
+  if (newColor !== prevColor && prevColor !== '') {
+    skinColorIsActive.value = true
+    currentAvatarSettings.skinColor = newColor;
+  } else if (!active) {
     currentAvatarSettings.skinColor = '';
-  } else {
+  } else if (active !== prevActive && active) {
     currentAvatarSettings.skinColor = newColor;
   }
 });
 
-function onCustomColorActiveChanged(part: string, colorIdx: number, active: boolean) {
-  console.log(avatarAssets);
-  console.log(active, currentAvatarSettings.parts[part].colors[colorIdx]);
-  if (!active || !currentColorSettings[part][colorIdx]) {
+function onCustomColorActiveChanged(part: PartKeyWithColor, colorIdx: number, active: boolean) {
+  // console.log(avatarAssets);
+  // console.log(active, currentAvatarSettings.parts[part].colors[colorIdx]);
+  if (!active) {
     currentAvatarSettings.parts[part].colors[colorIdx] = '';
   } else {
-    currentAvatarSettings.parts[part].colors[colorIdx] = currentColorSettings[part][colorIdx];
+    currentAvatarSettings.parts[part].colors[colorIdx] = currentColorPickerValue.value;
   }
 }
 
@@ -131,16 +105,18 @@ const partsNrOfColors = reactive(Object.fromEntries(Object.keys(avatarAssets).ma
 function setNrOfCustomColors(part: string, evt: CustomEvent) {
   console.log('setNrOfCustomColors', evt, part);
   const entity = evt.target as Entity;
-  const nrOfColors = entity.components['model-color'].nrOfCustomColors;
+  // @ts-ignore
+  const nrOfColors = entity.components['model-color'].nrOfCustomColors as number;
   console.log(part, nrOfColors, entity.components['model-color']);
   partsNrOfColors[part] = nrOfColors;
   for (const [key, value] of Object.entries(currentAvatarSettings.parts)) {
-    console.log(key, value, partsNrOfColors[key]);
-    for (let i = 0; i < partsNrOfColors[key]; i++) {
-      console.log(currentAvatarSettings.parts[key].colors[i])
-      currentColorSettings[key][i] = currentAvatarSettings.parts[key].colors[i]
-      if (currentAvatarSettings.parts[key].colors[i]) {
-        customColorsIsActive[key][i] = true;
+    const keyTyped = key as PartKeyWithColor;
+    console.log(keyTyped, value, partsNrOfColors[key]);
+    for (let i = 0; i < partsNrOfColors[keyTyped]; i++) {
+      console.log(currentAvatarSettings.parts[keyTyped].colors[i])
+      // currentColorSettings[key][i] = currentAvatarSettings.parts[key].colors[i];
+      if (currentAvatarSettings.parts[keyTyped].colors[i]) {
+        customColorsIsActive[keyTyped][i] = true;
       }
     }
   }
@@ -166,13 +142,33 @@ function changeClothingIdx(partType: keyof typeof avatarAssets, offset: number) 
 
 const popupSkin = ref<InstanceType<typeof PopUp> | null>(null);
 const popupParts = ref<InstanceType<typeof PopUp> | null>(null);
-const popupPartsKeys = ref<{ part: string, cIdx: number } | null>(null);
+const popupPartsKeys = ref<{ part: PartKeyWithColor, cIdx: number } | null>(null);
+const currentColorPickerValue = ref('');
 
-function openPopupParts(evt: Event, part: string, cIdx: number) {
-  popupParts.value?.open(evt);
+function openPopupParts(evt: Event, part: PartKeyWithColor, cIdx: number) {
+  console.log('open popup', part, cIdx);
   popupPartsKeys.value = { part, cIdx };
+  const savedColor = currentAvatarSettings.parts[part].colors[cIdx]
+  if (savedColor) {
+    currentColorPickerValue.value = savedColor;
+  }
+  popupParts.value?.open(evt);
 }
 
+watch(currentColorPickerValue, (newColor, prevColor) => {
+  if (prevColor == '') {
+    // console.log('first change of colorPickerValue');
+    return;
+  }
+  if (!popupPartsKeys.value) {
+    return;
+  }
+  const { part, cIdx } = popupPartsKeys.value;
+  currentAvatarSettings.parts[part].colors[popupPartsKeys.value.cIdx] = newColor;
+  customColorsIsActive[part][cIdx] = true
+
+  // console.log('currentColorPickerValue watcher triggered:', newColor, prevColor);
+})
 </script>
 
 <template>
@@ -200,10 +196,9 @@ function openPopupParts(evt: Event, part: string, cIdx: number) {
                   </svg>
                 </button>
                 <PopUp ref="popupSkin" class="bg-white rounded-xl">
-                  <Vue3ColorPicker v-model="currentSkinColor" :show-picker-mode="false"
-                    @update:model-value="skinColorIsActive = true" mode="solid" input-type="RGB" type="HEX"
-                    :show-color-list="false" :show-alpha="false" :show-eye-drop="false" :show-input-menu="false"
-                    :show-input-set="false" />
+                  <Vue3ColorPicker v-model="currentSkinColor" :show-picker-mode="false" mode="solid" input-type="RGB"
+                    type="HEX" :show-color-list="false" :show-alpha="false" :show-eye-drop="false"
+                    :show-input-menu="false" :show-input-set="false" />
                   <label class="label cursor-pointer">
                     <span class="label-text">Color active</span>
                     <input type="checkbox" class="toggle"
@@ -278,7 +273,7 @@ function openPopupParts(evt: Event, part: string, cIdx: number) {
                   <div class="flex gap-2">
                     <template v-for="(_v, cIdx) in partsNrOfColors[key]" :key="cIdx">
                       <button class="btn btn-xs btn-circle btn-outline"
-                        :style="{ 'background': customColorsIsActive[key][cIdx] ? currentColorSettings[key][cIdx] : 'transparent' }"
+                        :style="{ 'background': customColorsIsActive[key][cIdx] ? currentAvatarSettings.parts[key]['colors'][cIdx] : 'transparent' }"
                         @click="openPopupParts($event, key, cIdx)">
                         <svg v-if="!customColorsIsActive[key][cIdx]" xmlns="http://www.w3.org/2000/svg"
                           viewBox="0 0 20 20" fill="currentColor" class="size-5">
@@ -297,16 +292,15 @@ function openPopupParts(evt: Event, part: string, cIdx: number) {
             </template>
           </template>
           <PopUp ref="popupParts" class="bg-white rounded-xl">
-            <Vue3ColorPicker v-model="currentColorSettings[popupPartsKeys!.part][popupPartsKeys!.cIdx]"
-              :show-picker-mode="false"
-              @update:model-value="onColorPicked(popupPartsKeys!.part, popupPartsKeys!.cIdx, currentColorSettings[popupPartsKeys!.part][popupPartsKeys!.cIdx])"
+            <Vue3ColorPicker v-model="currentColorPickerValue" :show-picker-mode="false"
+              @update:model-value="onColorPicked(popupPartsKeys!.part, popupPartsKeys!.cIdx, currentColorPickerValue)"
               mode="solid" input-type="RGB" type="HEX" :show-color-list="false" :show-alpha="false"
               :show-eye-drop="false" :show-input-menu="false" :show-input-set="false" />
 
             <label class="label cursor-pointer">
               <span class="label-text">Color active</span>
               <input type="checkbox" class="toggle"
-                :style="{ 'background-color': customColorsIsActive[popupPartsKeys!.part][popupPartsKeys!.cIdx] ? currentColorSettings[popupPartsKeys!.part][popupPartsKeys!.cIdx] : 'grey' }"
+                :style="{ 'background-color': customColorsIsActive[popupPartsKeys!.part][popupPartsKeys!.cIdx] ? currentColorPickerValue : 'grey' }"
                 v-model="customColorsIsActive[popupPartsKeys!.part][popupPartsKeys!.cIdx]"
                 @change="onCustomColorActiveChanged(popupPartsKeys!.part, popupPartsKeys!.cIdx, customColorsIsActive[popupPartsKeys!.part][popupPartsKeys!.cIdx])">
             </label>
@@ -359,6 +353,12 @@ function openPopupParts(evt: Event, part: string, cIdx: number) {
             </template>
           </a-entity>
         </a-scene>
+        <!-- <div class="p-14">
+
+          <Vue3ColorPicker v-model=testValue @update:model-value="" />
+          <p>{{ testValue }}</p>
+          <button @click="testValue = ''" class="btn btn-primary">test</button>
+        </div> -->
       </div>
     </div>
   </WaitForAframe>
