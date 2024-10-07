@@ -88,14 +88,16 @@ export default function () {
       const h = window.innerHeight;
       console.log(w, h);
 
-      const paddingLeft = 0.05;
-      const paddingLeftPixels = paddingLeft * w;
+      // NOTE: Here is logic to translate the target subject in relation to the camera, still keeping the pivot point.
+      // For now I'v deactivated it.
+      // const paddingLeft = 0.05;
+      // const paddingLeftPixels = paddingLeft * w;
 
-      const wOffset = -paddingLeftPixels;
-      const fullW = w + paddingLeftPixels
-      cam.setViewOffset(fullW, h, wOffset, 0, w, h);
-      // cam.setViewOffset(w, h, 0, 0, w, h);
-      cam.updateProjectionMatrix();
+      // const wOffset = -paddingLeftPixels;
+      // const fullW = w + paddingLeftPixels
+      // cam.setViewOffset(fullW, h, wOffset, 0, w, h);
+      // cam.updateProjectionMatrix();
+
       // @ts-ignore
       this.controls = new CameraControls(cam, el.sceneEl?.renderer.domElement);
       this.controls.setLookAt(0, 0.5, 1, 0, 0.0, 0)
