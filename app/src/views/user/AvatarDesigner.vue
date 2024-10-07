@@ -175,7 +175,8 @@ watch(currentColorPickerValue, (newColor, prevColor) => {
   <WaitForAframe>
     <div class="grid grid-cols-2 gap-2">
       <!-- COLUMN 1 -->
-      <div class="grid grid-cols-3 items-center gap-5 overflow-y-auto capitalize bg-slate-200 p-2 rounded-md">
+      <div
+        class="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-5 overflow-y-auto capitalize bg-slate-200 p-2 rounded-md">
         <span class="col-start-1 label-text font-semibold">Skin color</span>
         <div class="col-start-3">
           <button class="btn btn-xs btn-circle btn-outline material-icons text-lg leading-none"
@@ -202,13 +203,13 @@ watch(currentColorPickerValue, (newColor, prevColor) => {
             <span class="col-start-1 label-text font-semibold">{{ key }}</span>
             <div class=" flex max-w-56 bg-white join join-horizontal items-stretch justify-between gap-1">
               <button @click="changeClothingIdx(key, -1)"
-                class="text-slate-700 material-icons  hover:bg-slate-200 m-0 join-item">
+                class="text-slate-700 material-icons hover:bg-slate-200 join-item px-1">
                 west
               </button>
               <Listbox v-model="currentAvatarSettings.parts[key].model" class="">
                 <div class="relative min-w-8 grow">
                   <ListboxButton
-                    class="cursor-default min-w-0 w-full h-full bg-white text-left focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-orange-300 sm:text-sm">
+                    class="cursor-default min-w-0 w-full h-full py-2 bg-white text-left focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-orange-300 sm:text-sm">
                     <span class="block truncate capitalize">{{
                       currentAvatarSettings.parts[key].model?.split("_").slice(1).join(" ") || "None" }}</span>
                     <!-- <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
@@ -240,8 +241,7 @@ watch(currentColorPickerValue, (newColor, prevColor) => {
                 </div>
               </Listbox>
 
-              <button @click="changeClothingIdx(key, 1)"
-                class="text-slate-700 material-icons hover:bg-slate-200 m-0 join-item">
+              <button @click="changeClothingIdx(key, 1)" class="text-slate-700 px-1 material-icons hover:bg-slate-200">
                 east
               </button>
             </div>
