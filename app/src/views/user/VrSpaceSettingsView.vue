@@ -330,9 +330,10 @@
         </button>
         <button @click="setCursorMode('laser')" class="btn btn-sm">hover</button>
 
-        <pre class="text-xs whitespace-normal">currentCursorMode: {{ currentCursorMode }}</pre>
-        <pre class="text-xs whitespace-normal">currentRaycastSelectorString: {{ currentRaycastSelectorString }}</pre>
-        <pre class="text-xs whitespace-normal">objectRotation: {{ placedObjectRotation }}</pre>
+        <!-- <pre class="text-xs whitespace-normal">tsPO position: {{ transformedSelectedObject?.position }}</pre> -->
+        <!-- <pre class="text-xs whitespace-normal">currentCursorMode: {{ currentCursorMode }}</pre> -->
+        <!-- <pre class="text-xs whitespace-normal">currentRaycastSelectorString: {{ currentRaycastSelectorString }}</pre> -->
+        <!-- <pre class="text-xs whitespace-normal">objectRotation: {{ placedObjectRotation }}</pre> -->
         <!-- <pre class="text-xs">currentCursorTransform: {{ currentCursorTransform }}</pre> -->
         <!-- <pre v-if="currentCursorTransform"
           class="text-xs">currentCursorTransform aframe rotation: {{ quaternionTupleToAframeRotation(currentCursorTransform.rotation) }}</pre> -->
@@ -341,9 +342,9 @@
         <!-- <pre class="text-xs">composable scale ref: {{ placedObjectScale }}</pre> -->
         <!-- <pre
           class="text-xs">qToAframe(sPo): {{ quaternionTupleToAframeRotation(selectedPlacedObject?.orientation ?? [0, 0, 0, 1]) }}</pre> -->
-        <pre class="text-xs">composable rotation ref: {{ placedObjectRotation }}</pre>
+        <!-- <pre class="text-xs">composable rotation ref: {{ placedObjectRotation }}</pre>
         <pre class="text-xs">sPO orientation: {{ selectedPlacedObject?.orientation }}</pre>
-        <pre class="text-xs">tsPO orientation: {{ transformedSelectedObject?.orientation }}</pre>
+        <pre class="text-xs">tsPO orientation: {{ transformedSelectedObject?.orientation }}</pre> -->
         <!-- 
         <pre>{{ selectedPlacedObject?.position }}</pre>
         <pre>{{ vrSpaceStore.currentVrSpace?.dbData.placedObjects.find(p => p.placedObjectId === selectedPlacedObject?.placedObjectId)?.position }}</pre> -->
