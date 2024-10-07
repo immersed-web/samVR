@@ -559,10 +559,10 @@ onCursorClick(async (e) => {
 async function placeMovedObject() {
   console.log('placeMovedObject triggered');
   if (!currentlyMovedObject.value || !currentCursorIntersection.value) {
-    console.warn('no currentlyMovedObject or currentCursorIntersection provided to placeMovedObject');
+    console.warn('no currentlyMovedObject or currentCursorTransform provided to placeMovedObject');
     return;
   }
-  const transform = intersectionToTransform(currentCursorIntersection.value)
+  const transform = currentCursorTransform.value
   if (!transform) {
     console.error('intersectionToTransform gave undefined');
     return;
