@@ -176,7 +176,7 @@ watch(currentColorPickerValue, (newColor, prevColor) => {
     <div class="grid grid-cols-2 gap-2">
       <!-- COLUMN 1 -->
       <div
-        class="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-5 overflow-y-auto capitalize bg-slate-200 p-2 rounded-md">
+        class="grid grid-cols-[minmax(min-content,1fr)_minmax(8rem,1.7fr)_auto] items-center gap-5 overflow-y-auto capitalize bg-slate-200 p-2 rounded-md">
         <span class="col-start-1 label-text font-semibold">Skin color</span>
         <div class="col-start-3">
           <button class="btn btn-xs btn-circle btn-outline material-icons text-lg leading-none"
