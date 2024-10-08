@@ -24,6 +24,7 @@ import canvasMaterial from './canvas-material';
 import cameraControls from './camera-controls';
 import normalsHelper from './normals-helper';
 import axesHelper from './axes-helper';
+import tickCounter from './tick-counter';
 
 let componentsAreRegistered = false;
 
@@ -56,6 +57,7 @@ export default async function () {
   axesHelper();
   laserPointer();
   canvasMaterial();
+  tickCounter();
 
   await import('aframe-atlas-uvs-component');
 
