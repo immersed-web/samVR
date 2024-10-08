@@ -65,6 +65,10 @@ export class VrSpace {
     this.clients.delete(client.connectionId);
     client._setVrSpace(undefined);
     this._notifyStateUpdated('client removed from vrSpace');
+    // If this was the last client in the stream, lets unload it!
+    if (this.clients.size === 0) {
+      this.unload();
+    }
   }
 
   sendPendingTransforms: () => void = throttle(() => {
