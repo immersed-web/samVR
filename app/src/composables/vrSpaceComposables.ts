@@ -8,6 +8,10 @@ import type { PlacedObjectWithIncludes } from 'database';
 
 export type Tuple = [number, number]
 
+const utilQuat = new THREE.Quaternion();
+const utilVector3 = new THREE.Vector3();
+const utilVector3B = new THREE.Vector3();
+
 // #region Raycast & intersection
 const writableIntersection = shallowRef<RayIntersectionData>();
 const rayIntersectionData = shallowReadonly(writableIntersection);
@@ -91,7 +95,7 @@ function setCursorEntityRef(entity: typeof cursorEntity | undefined) {
     const transform = intersectionToTransform(intersectionData, 0);
     if (!transform) return;
     cursor.object3D.position.set(...transform.position);
-    const quat = new THREE.Quaternion().fromArray(transform.rotation);
+    const quat = utilQuat.fromArray(transform.rotation);
     cursor.object3D.rotation.setFromQuaternion(quat);
   })
 }

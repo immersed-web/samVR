@@ -20,10 +20,13 @@ const utilRotation = new THREE.Quaternion();
 const up = new THREE.Vector3(0, 1, 0);
 const origo = new THREE.Vector3(0, 0, 0);
 const zAxis = new THREE.Vector3(0, 0, 1);
+const flatGroundUtilEuler = new THREE.Euler(0, 0, 0, 'YXZ');
+const rayAlongFloor = new THREE.Vector3(0, 0, 0);
+const position = new THREE.Vector3(0, 0, 0);
 export function intersectionToTransform(intersectionData: RayIntersectionData, normalOffset: number = 0.03) {
   if (!intersectionData) { return; }
   const { intersection, rayDirection } = intersectionData;
-  const position = intersection.point.clone();
+  position.copy(intersection.point);
 
   // if (intersection.normal) {
   //   utilNormal.copy(intersection.normal);
@@ -52,14 +55,12 @@ export function intersectionToTransform(intersectionData: RayIntersectionData, n
 
     // console.log('flat placement', utilEuler.x);
 
-    const rayAlongFloor = rayDirection.clone().negate()
+    rayAlongFloor.copy(rayDirection).negate()
     rayAlongFloor.y = 0
     rayAlongFloor.normalize();
-    const quat = new THREE.Quaternion().setFromUnitVectors(zAxis, rayAlongFloor);
-    const eul = new THREE.Euler().reorder('YXZ').setFromQuaternion(quat);
-    const eulerArr = eul.toArray() as [number, number, number];
-    // console.log('flat euler:', radiansEulerTupleToDegreesEulerTuple(eulerArr));
-    utilEuler.y = eul.y;
+    const quat = utilQuaternion.setFromUnitVectors(zAxis, rayAlongFloor);
+    flatGroundUtilEuler.setFromQuaternion(quat);
+    utilEuler.y = flatGroundUtilEuler.y;
   }
   utilRotation.setFromEuler(utilEuler);
 
