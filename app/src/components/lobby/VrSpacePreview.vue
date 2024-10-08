@@ -63,8 +63,8 @@
 
       <!-- The model -->
       <a-entity>
-        <a-gltf-model :class="{ 'navmesh': !vrSpaceStore.navMeshUrl }" class="raycastable-surface" v-if="props.modelUrl"
-          @model-loaded="onModelLoaded" id="model" ref="modelTag" :src="props.modelUrl"
+        <a-gltf-model bvh :class="{ 'navmesh': !vrSpaceStore.navMeshUrl }" class="raycastable-surface"
+          v-if="props.modelUrl" @model-loaded="onModelLoaded" id="model" ref="modelTag" :src="props.modelUrl"
           @click.stop="triggerCursorClick" />
         <a-gltf-model id="navmesh" class="raycastable-surface navmesh" ref="navmeshTag" @model-loaded="onNavMeshLoaded"
           :visible="showNavMesh" :model-opacity="`opacity: ${navMeshOpacity}`"
@@ -223,7 +223,8 @@ function onRenderStart(event: CustomEvent<unknown>) {
   console.log('scene render start:', event);
 }
 
-function onModelLoaded() {
+function onModelLoaded(evt: DetailEvent<{ model: THREE.Object3D, format: string }>) {
+  // console.log('model loaded', evt);
   const target = calculateOrbitTarget();
   if (!target) {
     console.error('calculateOrbitTarget returned undefined');

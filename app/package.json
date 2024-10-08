@@ -43,6 +43,7 @@
     "pinia-plugin-persistedstate": "^3.2.1",
     "schemas": "workspace:^",
     "superjson": "^1.13.3",
+    "three-mesh-bvh": "^0.8.2",
     "three-mesh-ui": "^6.5.4",
     "toolcool-range-slider": "^4.0.28",
     "ts-event-bridge": "^0.0.3",

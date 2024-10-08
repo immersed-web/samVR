@@ -1,4 +1,16 @@
 import 'aframe';
+import { THREE } from 'aframe';
+
+// Add BVH threejs extension for more performant raycasting
+import { acceleratedRaycast, computeBatchedBoundsTree, computeBoundsTree, disposeBatchedBoundsTree, disposeBoundsTree } from 'three-mesh-bvh';
+
+THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
+THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
+THREE.Mesh.prototype.raycast = acceleratedRaycast;
+
+THREE.BatchedMesh.prototype.computeBoundsTree = computeBatchedBoundsTree;
+THREE.BatchedMesh.prototype.disposeBoundsTree = disposeBatchedBoundsTree;
+THREE.BatchedMesh.prototype.raycast = acceleratedRaycast;
 
 import emitMove from './emit-move';
 import rotationControl from './rotation-control';
@@ -25,6 +37,7 @@ import cameraControls from './camera-controls';
 import normalsHelper from './normals-helper';
 import axesHelper from './axes-helper';
 import tickCounter from './tick-counter';
+import bvh from './bvh';
 
 let componentsAreRegistered = false;
 
@@ -58,6 +71,7 @@ export default async function () {
   laserPointer();
   canvasMaterial();
   tickCounter();
+  bvh();
 
   await import('aframe-atlas-uvs-component');
 
