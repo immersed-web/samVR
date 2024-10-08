@@ -30,9 +30,9 @@ watch([laserActive, currentCursor], ([newActive, newIntersection], [oldActive, o
       console.warn('laser intersection was undefined while marked as active');
       return;
     }
-    console.log('laser updated', newIntersection);
+    // console.log('laser updated', newIntersection);
     const rayDirection = newIntersection.rayDirection
-    console.log('rayDirection', rayDirection);
+    // console.log('rayDirection', rayDirection);
     vrSpaceStore.ownClientTransform.laserPointer = { active: newActive, position: newIntersection.intersection.point.toArray(), directionVector: rayDirection.toArray() };
   } else if (!newActive && oldActive !== newActive) {
     vrSpaceStore.ownClientTransform.laserPointer = { active: false };
