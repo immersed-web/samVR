@@ -397,7 +397,7 @@
 <script setup lang="ts">
 import AssetUpload, { type AssetUploadEmitUploadedPayload } from './AssetUpload.vue';
 import VrSpacePreview from '@/components/lobby/VrSpacePreview.vue';
-import { ref, watch, onMounted, computed, type ComponentInstance } from 'vue';
+import { ref, watch, onMounted, computed, type ComponentInstance, onBeforeUnmount } from 'vue';
 // import { throttle } from 'lodash-es';
 import { insertablePermissionHierarchy, type Asset, type VrSpaceId, defaultHeightOverGround, type UserId, type Json } from 'schemas';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
@@ -674,6 +674,9 @@ onMounted(async () => {
 
   allowedVrSpaces.value = await backendConnection.client.vr.listAvailableVrSpaces.query();
 });
+onBeforeUnmount(async () => {
+  await vrSpaceStore.leaveVrSpace();
+})
 
 let abortController: AbortController | undefined = undefined;
 function uploadScreenshot(canvas: ScreenshotPayload) {
