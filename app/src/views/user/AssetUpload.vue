@@ -186,7 +186,7 @@ async function uploadFile() {
 }
 
 // TODO: It's a bit splitted here. The logic for actually deleting the asset is here.
-// But sometimes we'll need to reload DB-data after deletion and thus we emit an event after the deletion so the parent componente can take action if needed.
+// But sometimes we'll need to reload DB-data after deletion and thus we emit an event after the deletion so the parent component can take action if needed.
 // We should probably move out all delete logic and only emit an event from here, making this component more "dumb" and keep less state.
 const removeFile = async () => {
   if (!props.uploadedAssetData) {
