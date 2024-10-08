@@ -6,10 +6,11 @@ export default function () {
     // raycaster: null as null | Entity,
     dependencies: ['raycaster'],
     fields: {
-      prev: new THREE.Vector3(),
+      prev: undefined as unknown as THREE.Vector3,
     },
     init: function () {
       console.log('INIT raycaster-update');
+      this.fields.prev = new THREE.Vector3();
       this.tick = AFRAME.utils.throttleTick(this.tick!, 10, this);
     },
     events: {

@@ -1,12 +1,14 @@
-import type { Entity } from 'aframe';
+import { type Entity, THREE } from 'aframe';
 
 export default () => {
 
   AFRAME.registerComponent('follow-position', {
     schema: {type: 'selector'},
     followedEntity: null as Entity | null,
-    followedWorldPos: new THREE.Vector3(),
-    // worldToLocal: new THREE.Matrix4(),
+    followedWorldPos: undefined as unknown as THREE.Vector3,
+    init: function () {
+      this.followedWorldPos = new THREE.Vector3();
+    },
     update: function () {
       if(!this.data) {
         console.error('copy-position component didnt get an element to read position from');

@@ -1,7 +1,9 @@
+import type { THREE } from "aframe";
+
 export default () => {
 
   AFRAME.registerComponent<{startScale: THREE.Vector3, isResized: boolean}>('hover-highlight', {
-    startScale: new THREE.Vector3(1,1,1),
+    startScale: undefined as unknown as THREE.Vector3,
     isResized: false,
     schema: {
       scaleFactor: {type: 'number', default: 1.1},

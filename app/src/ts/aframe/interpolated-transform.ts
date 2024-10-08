@@ -1,4 +1,4 @@
-import { utils, type Coordinate, type DetailEvent, type Entity } from 'aframe';
+import { THREE, utils, type Coordinate, type DetailEvent, type Entity } from 'aframe';
 import InterpolationBuffer from 'buffered-interpolation';
 import type { MaybeTransform as MaybeTransform } from 'schemas';
 // import type { Vector3 } from 'three';
@@ -23,12 +23,14 @@ export default () => {
     isNearRange: false,
     utilQuat: undefined as unknown as THREE.Quaternion,
     utilVec: undefined as unknown as THREE.Vector3,
+    utilVec2: undefined as unknown as THREE.Vector3,
     oldPosStr: undefined as unknown as string,
     oldRotStr: undefined as unknown as string,
     // distanceDebugEntity: undefined as Entity | undefined,
     init: function () {
       this.utilQuat = new AFRAME.THREE.Quaternion();
       this.utilVec = new AFRAME.THREE.Vector3();
+      this.utilVec2 = new AFRAME.THREE.Vector3();
       this.oldPosStr = '';
       this.oldRotStr = '';
       // console.log('Remote avatar init', this.data.id);
@@ -120,8 +122,8 @@ export default () => {
     distanceToCamera: function () {
       const camera = this.el.sceneEl?.camera;
       if (!camera) return;
-      const camWorldPos = camera.getWorldPosition(new THREE.Vector3());
-      const avatarWorldPos = this.el.object3D.getWorldPosition(new THREE.Vector3());
+      const camWorldPos = camera.getWorldPosition(this.utilVec);
+      const avatarWorldPos = this.el.object3D.getWorldPosition(this.utilVec2);
       this.distance = avatarWorldPos.distanceTo(camWorldPos);
       const threshold = this.data.nearRangeThreshold as number;
       const hysteresis = this.data.nearRangeHysteresis as number;
