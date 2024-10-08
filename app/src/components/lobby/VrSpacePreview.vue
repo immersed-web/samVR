@@ -51,8 +51,8 @@
         <button class="btn btn-xs btn-error" @click="removeSelectedObject">Radera</button>
       </div>
     </div>
-    <a-scene @renderstart="onRenderStart" @loaded="onSceneLoaded" embedded class="min-h-96" ref="sceneTag" id="ascene"
-      xr-mode-ui="enabled: false" @raycast-update="setCursorIntersection($event.detail)">
+    <a-scene tick-counter @renderstart="onRenderStart" @loaded="onSceneLoaded" embedded class="min-h-96" ref="sceneTag"
+      id="ascene" xr-mode-ui="enabled: false" @raycast-update="setCursorIntersection($event.detail)">
       <a-assets timeout="20000">
         <a-asset-item id="icon-font"
           src="https://fonts.gstatic.com/s/materialicons/v70/flUhRq6tzZclQEJ-Vdg-IuiaDsNa.woff" />
@@ -83,6 +83,7 @@ import registerAframeComponents from '@/ts/aframe/components';
 import { defaultHeightOverGround } from 'schemas';
 import { useCurrentCursorIntersection, useSelectedPlacedObject, useCurrentlyMovedObject } from '@/composables/vrSpaceComposables';
 import OffsetSlider from '../OffsetSlider.vue';
+import { ta } from 'date-fns/locale';
 registerAframeComponents();
 
 const vrSpaceStore = useVrSpaceStore();
@@ -287,14 +288,24 @@ async function enterFirstPersonView(point: THREE.Vector3Tuple) {
     return;
   }
   removeOrbitControls();
-  camTag.setAttribute('look-controls', { reverseMouseDrag: false, reverseTouchDrag: false, pointerLockEnabled: true, })
-  camTag.setAttribute('wasd-controls', { fly: false });
+  attachFPSComponents(camTag);
   point[1] += defaultHeightOverGround;
   camTag.object3D.position.set(...point);
-  camTag.setAttribute('simple-navmesh-constraint', `navmesh:#${navmeshId.value}; fall:0.5; height: ${defaultHeightOverGround};`);
   const canvas = sceneTag.value!.canvas
   canvas.addEventListener('mousedown', lockMouseOnCanvas);
   window.addEventListener('mouseup', unlock)
+}
+
+function attachFPSComponents(camTag: Entity) {
+  camTag.setAttribute('look-controls', { reverseMouseDrag: false, reverseTouchDrag: false, pointerLockEnabled: true, })
+  camTag.setAttribute('wasd-controls', { fly: false });
+  camTag.setAttribute('simple-navmesh-constraint', `navmesh:#${navmeshId.value}; fall:0.5; height: ${defaultHeightOverGround};`);
+}
+
+function removeFPSComponents(camTag: Entity) {
+  camTag.removeAttribute('look-controls');
+  camTag.removeAttribute('wasd-controls');
+  camTag.removeAttribute('simple-navmesh-constraint');
 }
 
 async function exitFirstPersonView() {
@@ -304,9 +315,7 @@ async function exitFirstPersonView() {
     console.error('no cameratag provided');
     return;
   }
-  camTag.removeAttribute('look-controls');
-  camTag.removeAttribute('wasd-controls');
-  camTag.removeAttribute('simple-navmesh-constraint');
+  removeFPSComponents(camTag);
   await nextTick();
   const target = calculateOrbitTarget();
   if (target) {
@@ -324,6 +333,12 @@ async function getPanoScreenshotFromPoint(point: THREE.Vector3Tuple) {
     return;
   }
   const navMeshVisibleRestoreState = navmeshTag.value?.getAttribute('visible');
+  if (firstPersonViewActive.value) {
+    removeFPSComponents(camTag);
+  } else {
+    removeOrbitControls();
+  }
+
   navmeshTag.value?.setAttribute('visible', 'false');
   const pointAsVector3 = new THREE.Vector3(...point);
   pointAsVector3.y += defaultHeightOverGround;
@@ -337,7 +352,11 @@ async function getPanoScreenshotFromPoint(point: THREE.Vector3Tuple) {
   camTag.getObject3D('camera').position.set(0, 0, 0);
   camTag.getObject3D('camera').rotation.set(0, 0, 0);
   const screenshotComponent = camTag.sceneEl?.components.screenshot;
-  await nextTick();
+
+  // We need to wait for some components to have their tick called before we take the screenshot.
+  // The look-at component is one of them. It needs to tick once to update its orientation towards the camera.
+  await sceneTag.value?.components['tick-counter'].waitForTicks(1);
+  // await new Promise(resolve => setTimeout(resolve, 0));
   // @ts-ignore
   const canvasScreenshot: HTMLCanvasElement = screenshotComponent.getCanvas();
   camTag.object3D.position.copy(savedEntityPos);
@@ -345,6 +364,14 @@ async function getPanoScreenshotFromPoint(point: THREE.Vector3Tuple) {
   camTag.getObject3D('camera').position.copy(savedCameraPos);
   camTag.getObject3D('camera').rotation.copy(savedCameraRot);
   navmeshTag.value?.setAttribute('visible', navMeshVisibleRestoreState);
+  if (firstPersonViewActive.value) {
+    attachFPSComponents(camTag);
+  } else {
+    const target = calculateOrbitTarget();
+    if (target) {
+      attachOrbitControls(target);
+    }
+  }
   return canvasScreenshot;
 }
 
