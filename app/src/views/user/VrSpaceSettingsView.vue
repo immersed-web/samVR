@@ -290,7 +290,7 @@
                 <a-cone color="green" position="0 1 0" scale="0.5 1 0.5" rotation="0 0 0" />
               </a-box> -->
             </a-entity>
-            <template v-if="currentlyMovedObject">
+            <a-entity position="0 0 0.02" v-if="currentlyMovedObject">
               <!-- <VrSpacePortal :key="`selected-${transformedSelectedObject.placedObjectId}`"
                 v-if="transformedSelectedObject.type === 'vrPortal'" show-box-helper
                 :position="transformedSelectedObject.position?.join(' ')"
@@ -302,7 +302,7 @@
                   :asset="currentlyMovedObject.asset"
                   :scale="currentlyMovedObject.scale ? arrToCoordString(currentlyMovedObject.scale) : ''" />
               </template>
-            </template>
+            </a-entity>
 
             <!-- <a-entity ref="debugConeTag" position="0.3 0 0" axes-helper>
               <a-troika-text look-at-camera value="normal" font-size="0.1" position="0 0.2 0" />
