@@ -106,16 +106,15 @@
               <div class="divider">
                 Himlens färg
               </div>
-              <p class="text-sm mb-2 text-gray-600">
-                Välj den färg som himlen ska ha i VR-scenen.
-              </p>
-              <label class="flex flex-col gap-1">
-                <span class="label-text font-semibold whitespace-nowrap">
-                  Himlens färg
+              <div class="flex gap-2 items-center">
+                <div class="rounded-full outline outline-2 overflow-clip">
+                  <input class="size-10 border-none block cursor-pointer -m-2" type="color"
+                    v-model="vrSpaceStore.writableVrSpaceDbData.skyColor">
+                </div>
+                <span class="label-text text-gray-600">
+                  Välj den färg som himlen ska ha i VR-scenen.
                 </span>
-                <input class="rounded-md border-black border-2" type="color"
-                  v-model="vrSpaceStore.writableVrSpaceDbData.skyColor">
-              </label>
+              </div>
             </div>
             <div class="w-full">
               <div class="divider">
