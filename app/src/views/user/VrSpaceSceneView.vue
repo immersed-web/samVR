@@ -19,7 +19,6 @@
                 radius-inner="0.13" radius-outer="0.17" material="shader: flat;" rotation="0 0 0" color="white" />
             </a-entity>
           </VrAFrame>
-          <!-- <PlacablesTeleport /> -->
         </a-scene>
 
         <!-- Components that render to multiple places in the DOM
@@ -30,6 +29,20 @@
           <EmojiTeleport :uvs="[43, 43]"
             :coords="[[[35, 8], [36, 37], [36, 38], [15, 8], [36, 27]], [[34, 8], [2, 8], [36, 24], [36, 25], [21, 8],], [[28, 26], [28, 20], [28, 38], [3, 16], [2, 1]]]"
             @change="setEmojiSelf" :is-v-r="false" :columns="5" />
+          <Teleport to="#teleport-target-ui-left">
+
+            <button v-if="screenshareStream" class="btn btn-error pointer-events-auto" @click="stopScreenShare"><span
+                class="material-icons">stop_screen_share</span>Sluta dela</button>
+            <button v-else class="btn btn-primary pointer-events-auto" @click="getScreenShare"><span
+                class="material-icons">screen_share</span>Share screen</button>
+            <pre class="text-xs whitespace-normal">{{ screenshareStream }}</pre>
+            <video class="w-36 bg-pink-400" ref="screenVideoTag" id="screen-video-tag" autoplay playsinline
+              webkit-playsinline crossorigin="anonymous" />
+          </Teleport>
+          <Teleport to="#teleport-target-aframe-camera">
+            <a-sphere position="0 0 -2" color="yellow" scale="0.1 0.1 0.1" />
+            <a-video v-if="screenshareStream" position="0 0 -2" src="#screen-video-tag" />
+          </Teleport>
         </template>
       </WaitForAframe>
     </div>
@@ -52,17 +65,21 @@ import UIOverlay from '@/components/UIOverlay.vue';
 import LaserTeleport from '@/components/lobby/LaserTeleport.vue';
 import EmojiTeleport from '@/components/lobby/EmojiTeleport.vue';
 import { useSoupStore } from '@/stores/soupStore';
+import { useDisplayMedia } from '@vueuse/core';
 const { setCursorIntersection, currentCursorMode, setCursorEntityRef, pointerOnHover, currentRaycastSelectorString } = useCurrentCursorIntersection();
 
 const router = useRouter();
 const vrSpaceStore = useVrSpaceStore();
 const soupStore = useSoupStore();
 
+const { stream: screenshareStream, start: startScreenshare, stop: stopScreenShare } = useDisplayMedia();
+
 const props = defineProps<{
   vrSpaceId: VrSpaceId
 }>();
 const sceneTag = ref<Scene>();
 const domOutlet = ref<HTMLDivElement>();
+const screenVideoTag = ref<HTMLVideoElement>();
 const cursorEntity = ref<Entity>();
 setCursorEntityRef(cursorEntity);
 provide(aFrameSceneProvideKey, { sceneTag, domOutlet });
@@ -77,6 +94,26 @@ watch(() => props.vrSpaceId, () => {
 function setEmojiSelf(coords: Tuple, active: boolean) {
   // Send things to server
   console.log('Sending emoji stuff to server', coords, active);
+}
+
+async function getScreenShare() {
+  // const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+  const stream = await startScreenshare();
+  if (!screenVideoTag.value) {
+    console.error('no video tag');
+    return;
+  }
+  if (!stream) {
+    console.error('no stream');
+    return;
+  }
+  screenVideoTag.value.srcObject = stream;
+  const producerId = await soupStore.produce({
+    track: stream.getVideoTracks()[0],
+    producerInfo: {
+      isPaused: false,
+    }
+  });
 }
 
 onBeforeMount(async () => {

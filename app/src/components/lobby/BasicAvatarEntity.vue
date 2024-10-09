@@ -2,11 +2,14 @@
 
   <a-entity interpolated-transform="interpolationTime: 350;" @near-range-entered="onNearRangeEntered"
     @near-range-exited="onNearRangeExited" ref="avatarEntity" mediastream-audio-source @loaded="onAvatarEntityLoaded">
-    <!-- <Teleport to="#teleport-target-ui-right">
-      <pre>{{ username }} {{ distanceColor }} {{ stream }} {{ producers }}</pre>
-    </Teleport> -->
+    <Teleport to="#teleport-target-ui-right">
+      <pre class="text-xs whitespace-normal">videoStream: {{ videoStream }}</pre>
+      <pre class="text-xs whitespace-normal">videoProducerId: {{ videoProducerId }}</pre>
+
+    </Teleport>
     <slot />
     <a-troika-text :color="distanceColor" look-at-camera :value="username" position="0 0.5 0" />
+    <a-video src="#incoming-screen-video" position="0 0 0" />
     <a-entity rotation="0 180 0">
       <a-entity position="0 0 0">
         <AvatarPart v-for="(part, key) in headGroupedParts" :key="key" :part-name="key" :part="part" />
@@ -23,6 +26,8 @@
       </a-entity>
     </a-entity>
     <audio ref="dummyAudioTag" muted autoplay playsinline />
+    <video ref="screenVideoTag" id="incoming-screen-video" autoplay playsinline webkit-playsinline
+      crossorigin="anonymous" />
   </a-entity>
 </template>
 
@@ -32,15 +37,14 @@ import type { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import type { Entity } from 'aframe';
 import type { ProducerId } from 'schemas/mediasoup';
 import { skinParts as skinPartArray, type ConnectionId } from 'schemas'
-import { computed, onBeforeMount, onMounted, ref, shallowRef, watch } from 'vue';
+import { computed, onBeforeMount, onMounted, ref, shallowRef, toRefs, watch } from 'vue';
 import AvatarPart from './AvatarPart.vue';
 import AvatarSkinPart from './AvatarSkinPart.vue';
 import { omit, pick } from 'lodash-es';
 import { useSoupStore } from '@/stores/soupStore';
+import { asyncComputed } from '@vueuse/core';
 
 const soupStore = useSoupStore();
-
-const producerId = computed(() => props.producers.audioProducer?.producerId);
 
 type _ClientInfo = NonNullable<ReturnType<typeof useVrSpaceStore>['currentVrSpace']>['clients'][ConnectionId]
 
@@ -50,6 +54,33 @@ const props = defineProps<{
   avatarDesign: NonNullable<_ClientInfo['avatarDesign']>
   realTimeData: NonNullable<_ClientInfo['clientRealtimeData']>
 }>();
+
+const audioProducerId = computed(() => props.producers.audioProducer?.producerId);
+const videoProducerId = computed(() => {
+  console.log('videoProducerId computed evaluated');
+  // const producers = props.producers;
+  // const videoProducer = producers.videoProducer;
+  const videoProducer = props.producers.videoProducer;
+  if (!videoProducer) return undefined
+  return videoProducer.producerId
+});
+
+const screenVideoTag = ref<HTMLVideoElement>();
+
+const videoStream = asyncComputed(async () => {
+  if (!videoProducerId.value) return undefined;
+  const { track, consumerId } = await soupStore.consume(videoProducerId.value);
+  return new MediaStream([track]);
+}, undefined)
+
+watch(videoStream, (stream) => {
+  if (!stream) return;
+  console.log('videoStream watcher triggered:', stream);
+  const videoTag = screenVideoTag.value;
+  if (!videoTag) return;
+  videoTag.srcObject = stream;
+  videoTag.play();
+})
 
 const headGroupedParts = computed(() => {
   const omittedParts = ['layer', 'clothes', 'mouths', ...skinPartArray] as const;
@@ -86,13 +117,13 @@ async function onNearRangeEntered(e: CustomEvent<number>) {
   // console.log('onNearRangeEntered called', e.detail);
   distanceColor.value = 'green';
   if (stream.value) return;
-  stream.value = await getStreamFromProducerId(producerId.value);
+  stream.value = await getStreamFromProducerId(audioProducerId.value);
 }
 
 function onNearRangeExited(e: CustomEvent<number>) {
   // console.log('onNearRangeExited called', e.detail);
   distanceColor.value = 'white';
-  if (producerId.value && soupStore.consumers.has(producerId.value)) {
+  if (audioProducerId.value && soupStore.consumers.has(audioProducerId.value)) {
     closeConsumer();
   }
   stream.value = undefined;
@@ -130,8 +161,8 @@ async function getStreamFromProducerId(producerId?: ProducerId) {
 }
 
 async function closeConsumer() {
-  if (!producerId.value) return;
-  soupStore.closeConsumer(producerId.value);
+  if (!audioProducerId.value) return;
+  soupStore.closeConsumer(audioProducerId.value);
 }
 
 watch(() => props.realTimeData.head, (headTransform) => {
