@@ -148,6 +148,21 @@
                   :show-in-user-library="false" :uploaded-asset-data="vrSpaceStore.currentVrSpace.dbData.navMeshAsset"
                   @asset-deleted="vrSpaceStore.reloadVrSpaceFromDB" />
               </div>
+              <div class="divider">
+                Storlek
+              </div>
+              <p class="text-sm mb-2 text-gray-600">
+                Justera storleken på 3D-modellen.
+              </p>
+              <div class="flex gap-4 items-center w-full">
+                <span class="label-text font-bold badge badge-outline badge-lg">
+                  {{ vrSpaceStore.writableVrSpaceDbData.worldModelScale.toFixed(5) }}
+                </span>
+                <input class="range grow" type="range" min="0.1" max="5" step="0.00001"
+                  v-model.number="vrSpaceStore.writableVrSpaceDbData.worldModelScale">
+                <button @click="vrSpaceStore.writableVrSpaceDbData.worldModelScale = 1"
+                  class="btn btn-xs btn-circle btn-outline material-icons">replay</button>
+              </div>
 
               <!-- Startplats -->
               <div class="w-full">
@@ -159,7 +174,7 @@
                   Klicka på knappen nedan och sedan i 3D-modellen för att placera startplatsen.
                   Du kan ändra storlek på startplatsen för att slumpa startpositionen inom den gula cirkeln.
                 </p>
-                <div class="grid grid-cols-2 w-full">
+                <div class="flex gap-4 g items-center justify-stretch">
                   <div class="tooltip tooltip-right flex"
                     data-tip="Klicka sedan i 3D-scenen för att välja var besökarna startar">
                     <!-- <input type="radio" value="spawnPosition" aria-label="Placera startplats"
@@ -171,15 +186,13 @@
                       startplats
                     </button>
                   </div>
-                  <div>
-                    <label class="flex flex-col gap-1">
-                      <span class="label-text font-semibold whitespace-nowrap">
-                        Startplatsens storlek
-                      </span>
-                      <input type="range" min="0.5" max="8" step="0.1"
-                        v-model.number="vrSpaceStore.writableVrSpaceDbData.spawnRadius" class="range">
-                    </label>
-                  </div>
+                  <label class="flex grow flex-col gap-1">
+                    <span class="label-text font-semibold whitespace-nowrap">
+                      Startplatsens storlek
+                    </span>
+                    <input type="range" min="0.5" max="8" step="0.1"
+                      v-model.number="vrSpaceStore.writableVrSpaceDbData.spawnRadius" class="range">
+                  </label>
                 </div>
               </div>
 

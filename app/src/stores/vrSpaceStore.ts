@@ -46,6 +46,10 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     return getAssetUrl(fileName);
   });
 
+  const worldModelScaleString = computed(() => {
+    return `${currentVrSpace.value?.dbData.worldModelScale} ${currentVrSpace.value?.dbData.worldModelScale} ${currentVrSpace.value?.dbData.worldModelScale}`
+  })
+
   const panoramicPreviewUrl = computed(() => {
     if (!currentVrSpace.value) return undefined;
     const fileName = currentVrSpace.value.dbData.panoramicPreview?.generatedName;
@@ -190,6 +194,7 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     writableVrSpaceDbData,
     worldModelUrl,
     navMeshUrl,
+    worldModelScaleString,
     panoramicPreviewUrl,
     createVrSpace,
     enterVrSpace,

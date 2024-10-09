@@ -24,8 +24,7 @@
         <template v-if="transformedSelectedObject.type !== 'vrPortal'">
           <div class="col-span-2 justify-self-stretch flex items-center gap-2 justify-between">
             <span class="grow self-center divider divider-start text-xs m-0">Storlek</span>
-            <button class="btn btn-xs btn-circle material-icons"
-              @click="placedObjectScale = undefined">restart_alt</button>
+            <button class="btn btn-xs btn-circle material-icons" @click="placedObjectScale = undefined">replay</button>
           </div>
           <div class="contents">
             <span class=" material-icons">zoom_out_map</span>
@@ -34,7 +33,7 @@
           <div class="col-span-2 justify-self-stretch flex items-center gap-2 justify-between">
             <span class="grow self-center divider divider-start text-xs m-0">Rotation</span>
             <button @click="placedObjectRotation = [0, 0, 0]"
-              class="btn btn-xs btn-circle material-icons">restart_alt</button>
+              class="btn btn-xs btn-circle material-icons">replay</button>
           </div>
           <div class="contents" v-if="placedObjectRotation">
             <span class="material-icons">360</span>
@@ -62,7 +61,7 @@
       <slot />
 
       <!-- The model -->
-      <a-entity>
+      <a-entity :scale="worldModelScaleString">
         <a-gltf-model bvh :class="{ 'navmesh': !vrSpaceStore.navMeshUrl }" class="raycastable-surface"
           v-if="props.modelUrl" @model-loaded="onModelLoaded" id="model" ref="modelTag" :src="props.modelUrl"
           @click.stop="triggerCursorClick" />
@@ -100,6 +99,10 @@ const uniformScale = computed<number>({
     placedObjectScale.value = [newValue, newValue, newValue];
   }
 })
+
+  const worldModelScaleString = computed(() => {
+    return `${vrSpaceStore.writableVrSpaceDbData?.worldModelScale} ${vrSpaceStore.writableVrSpaceDbData?.worldModelScale} ${vrSpaceStore.writableVrSpaceDbData?.worldModelScale}`
+  })
 
 async function removeSelectedObject() {
   if (!selectedPlacedObject.value) { return; }
