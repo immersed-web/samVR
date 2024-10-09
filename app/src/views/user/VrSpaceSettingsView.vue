@@ -14,8 +14,8 @@
         <div class="collapse-title bg-gray-100">
           Grundläggande information
         </div>
-        <div class="collapse-content flex flex-col items-start gap-4">
-          <div class="w-full">
+        <div class="collapse-content flex flex-col items-stretch gap-3">
+          <div class="">
             <div class="divider">
               Scenens namn
             </div>
@@ -37,8 +37,8 @@
         <div class="collapse-title bg-gray-100">
           Användare och rättigheter
         </div>
-        <div class="collapse-content flex flex-col items-start gap-4">
-          <div class="w-full">
+        <div class="collapse-content flex flex-col items-stretch gap-3">
+          <div class="">
             <div class="divider">
               Publik eller privat?
             </div>
@@ -55,7 +55,7 @@
                 v-model="vrSpaceStore.writableVrSpaceDbData.visibility">
             </label>
           </div>
-          <div class="w-full">
+          <div class="">
             <div class="divider">
               Delning
             </div>
@@ -234,20 +234,26 @@
         <div class="collapse-title bg-gray-100">
           Mediabibliotek
         </div>
-        <div class="collapse-content flex flex-col items-start gap-4">
+        <div class="collapse-content flex flex-col items-stretch gap-3">
           <!-- Placera objekt -->
-          <div class="divider">
-            Ladda upp objekt till ditt bibliotek
+          <div>
+
+            <div class="divider">
+              Ladda upp objekt till ditt bibliotek
+            </div>
+            <AssetUpload @uploaded="onAssetUploaded" :accepted-asset-types="['document', 'image', 'video', 'model']"
+              name="object" :show-in-user-library="true" />
           </div>
-          <AssetUpload @uploaded="onAssetUploaded" :accepted-asset-types="['document', 'image', 'video', 'model']"
-            name="object" :show-in-user-library="true" />
           <!-- <p class="text-sm label">
             Placera objekt såsom bilder och PDF i 3D-modellen.
           </p> -->
-          <div class="divider">
-            Placera object i scenen
+          <div>
+
+            <div class="divider">
+              Placera object i scenen
+            </div>
+            <AssetLibrary :assets="libraryAssets" @asset-picked="onAssetPicked" />
           </div>
-          <AssetLibrary :assets="libraryAssets" @asset-picked="onAssetPicked" />
         </div>
       </div>
     </div>
