@@ -4,16 +4,17 @@
     <a-image @materialtextureloaded="onTextureLoaded" v-if="tagName === 'a-image'" :class="$attrs.class" :src="src" />
     <PdfEntity v-else-if="tagName === 'PdfEntity'" v-model:current-page="currentPage" :src="src"
       :class="$attrs.class" />
-    <a-video v-else-if="tagName === 'a-video'" :src="src" :class="$attrs.class"
+    <a-video v-else-if="tagName === 'a-video'" ref="videoTag" :src="src" :class="$attrs.class"
       @materialtextureloaded="onVideoTextureLoaded" @materialvideoloadeddata="onVideoTextureLoaded" />
     <component rotation="90 0 0" v-else :is="tagName" :src="src" :class="$attrs.class" />
   </a-entity>
 </template>
 <script setup lang="ts">
 import { getAssetUrl } from '@/modules/utils';
-import type { ComponentDefinition, ComponentDescriptor, DetailEvent, THREE, components } from 'aframe';
+import type { DetailEvent, Entity, THREE } from 'aframe';
 import { extensionsToAframeTagsMap, type Asset } from 'schemas';
-import { computed, onMounted, onUnmounted, onUpdated, ref, useAttrs } from 'vue';
+import { computed, onMounted, onUnmounted, onUpdated, ref, useAttrs, watch } from 'vue';
+import { userHasInteracted } from '@/composables/userActivation';
 import PdfEntity from './PdfEntity.vue';
 const attrs = useAttrs();
 
@@ -21,15 +22,31 @@ onUpdated(() => {
   // console.log('PlacedAsset updated');
 })
 onMounted(() => {
-  console.log('PlacedAsset mounted');
-  console.log('attrs:', attrs);
-  console.log('props:', props);
+  // console.log('PlacedAsset mounted');
+  // console.log('attrs:', attrs);
+  // console.log('props:', props);
+  // console.log(videoTag.value);
 })
 onUnmounted(() => {
-  console.log('PlacedAsset unmounted');
+  // console.log('PlacedAsset unmounted');
 })
 
 const currentPage = ref(1);
+const videoTag = ref<Entity>();
+
+watch(userHasInteracted, (interacted) => {
+  if (interacted) {
+    if (!videoTag.value) {
+      return;
+    }
+    const videoElement: HTMLVideoElement = videoTag.value.components['material']?.material?.map?.source?.data;
+    if (!videoElement) {
+      console.warn('no videoElement found in a-video');
+      return;
+    };
+    videoElement.play();
+  }
+})
 
 function onVideoTextureLoaded(evt: DetailEvent<{ src: HTMLVideoElement, texture: THREE.VideoTexture }>) {
   // console.log('videoTexture loaded:', evt);
@@ -39,7 +56,9 @@ function onVideoTextureLoaded(evt: DetailEvent<{ src: HTMLVideoElement, texture:
   const { videoWidth, videoHeight } = videoElement;
   const ratio = videoWidth / videoHeight;
   aVideoTag.object3D.scale.set(ratio, 1, 1);
-  videoElement.play();
+  if (userHasInteracted.value) {
+    videoElement.play();
+  }
 }
 
 function onTextureLoaded(event: DetailEvent<{ src: HTMLImageElement, texture: THREE.Texture }>) {
