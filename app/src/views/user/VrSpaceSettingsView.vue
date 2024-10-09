@@ -100,9 +100,9 @@
         <div class="collapse-title bg-gray-100">
           3D-modell
         </div>
-        <div class="collapse-content flex flex-col items-start gap-4">
+        <div class="collapse-content flex flex-col items-stretch gap-3">
           <template v-if="vrSpaceStore.currentVrSpace">
-            <div class="w-full">
+            <div class="">
               <div class="divider">
                 Himlens färg
               </div>
@@ -116,7 +116,7 @@
                 </span>
               </div>
             </div>
-            <div class="w-full">
+            <div class="">
               <div class="divider">
                 3D-modell för miljön
               </div>
@@ -132,7 +132,7 @@
             </div>
 
             <template v-if="vrSpaceStore.currentVrSpace.dbData.worldModelAsset">
-              <div class="w-full">
+              <div class="">
                 <div class="divider">
                   3D-modell för gåbara ytor (navmesh)
                 </div>
@@ -147,24 +147,26 @@
                   :show-in-user-library="false" :uploaded-asset-data="vrSpaceStore.currentVrSpace.dbData.navMeshAsset"
                   @asset-deleted="vrSpaceStore.reloadVrSpaceFromDB" />
               </div>
-              <div class="divider">
-                Storlek
-              </div>
-              <p class="text-sm mb-2 text-gray-600">
-                Justera storleken på 3D-modellen.
-              </p>
-              <div class="flex gap-4 items-center w-full">
-                <span class="label-text font-bold badge badge-outline badge-lg">
-                  {{ vrSpaceStore.writableVrSpaceDbData.worldModelScale.toFixed(5) }}
-                </span>
-                <input class="range grow" type="range" min="0.1" max="5" step="0.00001"
-                  v-model.number="vrSpaceStore.writableVrSpaceDbData.worldModelScale">
-                <button @click="vrSpaceStore.writableVrSpaceDbData.worldModelScale = 1"
-                  class="btn btn-xs btn-circle btn-outline material-icons">replay</button>
+              <div class="">
+                <div class="divider">
+                  Storlek
+                </div>
+                <p class="text-sm mb-2 text-gray-600">
+                  Justera storleken på 3D-modellen.
+                </p>
+                <div class="flex gap-4 items-center w-full">
+                  <span class="label-text font-bold badge badge-outline badge-lg">
+                    {{ vrSpaceStore.writableVrSpaceDbData.worldModelScale.toFixed(5) }}
+                  </span>
+                  <input class="range grow" type="range" min="0.1" max="5" step="0.00001"
+                    v-model.number="vrSpaceStore.writableVrSpaceDbData.worldModelScale">
+                  <button @click="vrSpaceStore.writableVrSpaceDbData.worldModelScale = 1"
+                    class="btn btn-xs btn-circle btn-outline material-icons">replay</button>
+                </div>
               </div>
 
               <!-- Startplats -->
-              <div class="w-full">
+              <div class="">
                 <div class="divider">
                   Startplats för besökare
                 </div>
@@ -173,7 +175,7 @@
                   Klicka på knappen nedan och sedan i 3D-modellen för att placera startplatsen.
                   Du kan ändra storlek på startplatsen för att slumpa startpositionen inom den gula cirkeln.
                 </p>
-                <div class="flex gap-4 g items-center justify-stretch">
+                <div class="flex gap-4 g items-end justify-stretch">
                   <div class="tooltip tooltip-right flex"
                     data-tip="Klicka sedan i 3D-scenen för att välja var besökarna startar">
                     <!-- <input type="radio" value="spawnPosition" aria-label="Placera startplats"
@@ -196,7 +198,7 @@
               </div>
 
               <!-- Portaler -->
-              <div class="w-full">
+              <div class="">
                 <div class="divider">
                   Portaler till andra VR-scener
                 </div>
