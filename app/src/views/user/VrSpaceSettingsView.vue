@@ -1,7 +1,12 @@
 <template>
-  <h1 class=" text-3xl font-bold">
-    Redigera {{ vrSpaceStore.writableVrSpaceDbData?.name }}
-  </h1>
+  <div class="flex gap-8 items-center">
+    <h1 class=" text-3xl font-bold">
+      Redigera {{ vrSpaceStore.writableVrSpaceDbData?.name }}
+    </h1>
+    <RouterLink :to="{ name: 'vrSpace', params: { vrSpaceId: props.vrSpaceId } }">
+      <button class="btn btn-primary btn-sm">besök <span class="material-icons">open_in_new</span></button>
+    </RouterLink>
+  </div>
   <div v-if="!vrSpaceStore.writableVrSpaceDbData">
     Laddar...
   </div>
@@ -435,6 +440,7 @@ import { THREE, type Entity } from 'aframe';
 import { arrToCoordString, intersectionToTransform, quaternionTupleToAframeRotation } from '@/modules/3DUtils';
 import { useArrayFilter, watchDebounced } from '@vueuse/core';
 import PlacedAsset from '@/components/lobby/PlacedAsset.vue';
+import { RouterLink } from 'vue-router';
 
 // TODO: refine/find alternative way to get these types so we get intellisense for the emit key
 type ExtractEmitData<T extends string, emitUnion extends (...args: any[]) => void> = T extends Parameters<emitUnion>[0] ? Parameters<emitUnion>[1] : never
