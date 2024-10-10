@@ -123,7 +123,7 @@ export class UserClient extends BaseClient {
     };
   }
 
-  async loadPrismaDataAndNotifySelf(reason?: string) {
+  async loadDbDataAndNotifySelf(reason?: string) {
     const updatedDbUser = await loadUserDBData(this.userId);
     this.dbData.value = updatedDbUser;
     this._onClientStateUpdated(reason);

@@ -18,12 +18,12 @@ export const adminRouter = router({
     name: z.string()
   })).mutation(async ({input, ctx}) => {
     const streamId = await Stream.createNewStream(input.name, ctx.userId);
-    ctx.client.loadPrismaDataAndNotifySelf('Stream created');
+    ctx.client.loadDbDataAndNotifySelf('Stream created');
     return streamId;
   }),
   updateStream: currentVenueAdminP.input(StreamUpdateSchema).mutation(async ({ input, ctx }) => {
     await ctx.stream.update(input);
-    ctx.client.loadPrismaDataAndNotifySelf('updated stream info/settings');
+    ctx.client.loadDbDataAndNotifySelf('updated stream info/settings');
     ctx.stream._notifyStateUpdated('stream settings/data updated');
   }),
   deleteStream: atLeastModeratorP.use(isUserClientM).input(z.object({ streamId: StreamIdSchema })).mutation(async ({ ctx, input }) => {
@@ -38,7 +38,7 @@ export const adminRouter = router({
     }
 
     const [deletedVenue] = await Stream.deleteStream(streamId);
-    await ctx.client.loadPrismaDataAndNotifySelf('stream deleted');
+    await ctx.client.loadDbDataAndNotifySelf('stream deleted');
     return deletedVenue.streamId;
   }),
   loadStream: atLeastModeratorP.input(z.object({ streamId: StreamIdSchema })).mutation(async ({ input, ctx }) => {
