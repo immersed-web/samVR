@@ -9,7 +9,7 @@
     </Teleport>
     <slot />
     <a-troika-text :color="distanceColor" look-at-camera :value="username" position="0 0.5 0" />
-    <a-video src="#incoming-screen-video" position="0 0 0" />
+    <!-- <a-video src="#incoming-screen-video" position="0 0 0" /> -->
     <a-entity rotation="0 180 0">
       <a-entity position="0 0 0">
         <AvatarPart v-for="(part, key) in headGroupedParts" :key="key" :part-name="key" :part="part" />
@@ -150,13 +150,15 @@ watch(stream, () => {
 
 
 async function getStreamFromProducerId(producerId?: ProducerId) {
-  console.log('getStreamFromProducerId called');
-  if (!producerId) return undefined;
-  let consumerData = soupStore.consumers.get(producerId);
-  if (!consumerData) {
-    await soupStore.consume(producerId);
-    consumerData = soupStore.consumers.get(producerId)!;
-  }
+  // console.log('getStreamFromProducerId called');
+  // if (!producerId) return undefined;
+  // let consumerData = soupStore.consumers.get(producerId);
+  // if (!consumerData) {
+  //   await soupStore.consume(producerId);
+  //   consumerData = soupStore.consumers.get(producerId)!;
+  // }
+  const consumerData = await soupStore.getOrCreateConsumerFromProducerId(producerId);
+  if (!consumerData) return undefined;
   return new MediaStream([consumerData.consumer.track]);
 }
 

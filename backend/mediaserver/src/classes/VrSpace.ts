@@ -1,4 +1,4 @@
-import { ClientsRealtimeData, ConnectionId, UserId, VrSpaceId, VrSpaceUpdate } from 'schemas';
+import { ClientsRealtimeData, ConnectionId, ScreenShare, Transform, UserId, VrSpaceId, VrSpaceUpdate } from 'schemas';
 import { types as soupTypes } from 'mediasoup';
 import { throttle, pick } from 'lodash-es';
 import type { UserClient, Stream } from './InternalClasses.js';
@@ -7,6 +7,7 @@ import { Log } from 'debug-level';
 import { VrSpaceWithIncludes, db, queryVrSpaceWithIncludes, schema } from 'database';
 import { getMediasoupWorker } from 'modules/soupWorkers.js';
 import mediasoupConfig from 'soupConfig.js';
+import { ProducerId } from 'schemas/mediasoup';
 const log = new Log('VR:Space');
 process.env.DEBUG = 'VR:Space*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
@@ -21,12 +22,14 @@ export class VrSpace {
   }
 
   router: soupTypes.Router;
+  screenShares: Map<ProducerId, Transform>;
 
-  pendingTransforms: ClientsRealtimeData = {};
+  pendingRealtimeData: ClientsRealtimeData = {};
   constructor(vrSpace: VrSpaceWithIncludes, router: soupTypes.Router) {
     this.router = router;
     this.dbData = vrSpace;
     this.clients = new Map();
+    this.screenShares = new Map();
   }
 
   // get isOpen(){
@@ -46,12 +49,13 @@ export class VrSpace {
 
   getPublicState() {
     const returnState = this.dbData;
+    const screenShares = Object.fromEntries(this.screenShares.entries()) as Record<ProducerId, Transform>;
     const clientsWithProducers = Array.from(this.clients.entries()).map(([cId, client]) => {
       const cData = pick(client.getPublicState(), ['userId', 'connectionId', 'producers', 'role', 'username', 'clientRealtimeData', 'avatarDesign']);
       return [cId, cData] as const;
     });
     const clientsRecord = Object.fromEntries(clientsWithProducers);
-    return { dbData: returnState, clients: clientsRecord as Record<ConnectionId, (typeof clientsRecord)[string]> };
+    return { dbData: returnState, clients: clientsRecord as Record<ConnectionId, (typeof clientsRecord)[string]>, screenShares };
   }
 
   addClient(client: UserClient) {
@@ -71,9 +75,19 @@ export class VrSpace {
     }
   }
 
-  sendPendingTransforms: () => void = throttle(() => {
-    this.emitTransformsToAllClients();
-    this.pendingTransforms = {};
+  addScreenShare(data: ScreenShare) {
+    this.screenShares.set(data.producerId, data.transform);
+    this._notifyStateUpdated('screenShare added to vrSpace');
+  }
+
+  removeScreenShare(producerId: ProducerId) {
+    this.screenShares.delete(producerId);
+    this._notifyStateUpdated('screenShare removed from vrSpace');
+  }
+
+  sendPendingRealtimeData: () => void = throttle(() => {
+    this.emitRealtimeDataToAllClients();
+    this.pendingRealtimeData = {};
   }, 100, {
     trailing: true
   });
@@ -86,9 +100,9 @@ export class VrSpace {
     });
   }
 
-  emitTransformsToAllClients = () => {
+  emitRealtimeDataToAllClients = () => {
     this.clients.forEach(c => {
-      c.eventSender.vrSpace.clientTransforms(this.pendingTransforms);
+      c.eventSender.vrSpace.clientsRealtimeData(this.pendingRealtimeData);
     });
   };
 

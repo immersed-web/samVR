@@ -57,10 +57,10 @@ function selectEmojiVR(coords: Coords2D) {
 
 function emitChange() {
   if (active.value) {
-    vrSpaceStore.ownClientTransform.emoji = { active: true, coords: selectedCoords.value };
+    vrSpaceStore.ownRealtimeData.emoji = { active: true, coords: selectedCoords.value };
   }
   else {
-    vrSpaceStore.ownClientTransform.emoji = { active: false };
+    vrSpaceStore.ownRealtimeData.emoji = { active: false };
 
   }
   // emit('change', selectedCoords.value, active.value);

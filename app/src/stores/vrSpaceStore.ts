@@ -1,14 +1,15 @@
 import { defineStore } from 'pinia';
 
-import { hasAtLeastPermissionLevel, PlacedObjectInsertSchema, VrSpaceSelectSchema, type ClientRealtimeData, type ClientsRealtimeData, type ConnectionId, type PlacedObjectId, type PlacedObjectInsert, type Prettify, type VrSpaceId, type VrSpaceSelect, type VrSpaceUpdate } from 'schemas';
+import { hasAtLeastPermissionLevel, PlacedObjectInsertSchema, VrSpaceSelectSchema, type ClientRealtimeData, type ConnectionId, type PlacedObjectId, type PlacedObjectInsert, type ScreenShare, type VrSpaceId, type VrSpaceSelect } from 'schemas';
 import { computed, readonly, ref, watch, type DeepReadonly } from 'vue';
 import { useConnectionStore } from './connectionStore';
-import { eventReceiver, type ExtractPayload, type RouterOutputs, type SubscriptionValue } from '@/modules/trpcClient';
+import { eventReceiver, type ExtractPayload } from '@/modules/trpcClient';
 import { useClientStore } from './clientStore';
-import { watchIgnorable, pausableWatch } from '@vueuse/core';
-import { debounce, throttle } from 'lodash-es';
+import { watchIgnorable } from '@vueuse/core';
+import { debounce, isEmpty, omit, remove, throttle } from 'lodash-es';
 import { getAssetUrl } from '@/modules/utils';
 import { reactive } from 'vue';
+import type { ProducerId } from 'schemas/mediasoup';
 
 type _ReceivedVrSpaceState = ExtractPayload<typeof eventReceiver.vrSpace.vrSpaceStateUpdated.subscribe>['data'];
 
@@ -57,6 +58,18 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     return getAssetUrl(fileName);
   });
 
+  const screenShares = computed(() => {
+    const screenShares = currentVrSpace.value?.screenShares;
+    if (!screenShares) return undefined;
+    const ownCId = clientStore.clientState!.connectionId;
+    const pId = currentVrSpace.value?.clients[ownCId].producers.videoProducer?.producerId;
+    if (!pId) return screenShares;
+    const filteredScreenShares = omit(screenShares, [pId])
+    if (isEmpty(filteredScreenShares)) return undefined;
+    return filteredScreenShares;
+    // return currentVrSpace.value?.screenShares ?? {};
+  });
+
   const { ignoreUpdates } = watchIgnorable(() => writableVrSpaceDbData.value, async (newVal, oldVal) => {
     console.log('currentVrSpace watcher triggered', oldVal, newVal);
     if (newVal?.ownerUserId === clientStore.clientState?.userId
@@ -83,10 +96,10 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     console.log('finished setting ignored state update');
   });
 
-  eventReceiver.vrSpace.clientTransforms.subscribe((data) => {
+  eventReceiver.vrSpace.clientsRealtimeData.subscribe((data) => {
     // console.log(`clientTransforms updated:`, data);
     if (!currentVrSpace.value) return;
-    for (const [cId, tsfm] of Object.entries(data)) {
+    for (const [cId, realtimeData] of Object.entries(data)) {
       const cIdTyped = cId as ConnectionId;
       if (clientStore.clientState?.connectionId === cId) {
         // console.log('skipping because is own transform. cId:', cId);
@@ -96,8 +109,7 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
         console.warn('received a clientTransform for a client that isnt listed in vrSpaceState');
         return;
       }
-      // ignoreUpdates(() => writableVrSpaceDbData.value!.clients[cIdTyped].clientRealtimeData = tsfm);
-      currentVrSpace.value!.clients[cIdTyped].clientRealtimeData = tsfm;
+      currentVrSpace.value!.clients[cIdTyped].clientRealtimeData = realtimeData;
     }
   });
 
@@ -123,8 +135,6 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     currentVrSpace.value = undefined;
   }
 
-  // type PlacedObjectInVrSpaceReceivedState = _ReceivedVrSpaceState['dbData']['placedObjects'][number];
-
   type PlacedObjectUpsert = Omit<PlacedObjectInsert, 'reason'>;
   async function upsertPlacedObject(placedObject: PlacedObjectUpsert, reason?: string) {
     if (!currentVrSpace.value) {
@@ -137,13 +147,20 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     return connection.client.vr.upsertPlacedObject.mutate(parsedPlacedObject);
   }
 
+  async function removePlacedObject(placedObjectId: PlacedObjectId) {
+    console.log('gonna remove placedObject', placedObjectId);
+    await connection.client.vr.removePlacedObject.mutate({ placedObjectId });
+  }
+
   async function reloadVrSpaceFromDB() {
     await connection.client.vr.reloadVrSpaceFromDB.query();
   }
 
-  async function removePlacedObject(placedObjectId: PlacedObjectId) {
-    console.log('gonna remove placedObject', placedObjectId);
-    await connection.client.vr.removePlacedObject.mutate({ placedObjectId });
+  async function placeScreenShare(data: ScreenShare) {
+    await connection.client.vr.placeScreenShare.mutate(data);
+  }
+  async function removeScreenShare(producerId: ProducerId) {
+    await connection.client.vr.removeScreenShare.mutate({ producerId });
   }
 
   /**
@@ -157,33 +174,19 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     await connection.client.vr.updateVrSpace.mutate({ ...writableVrSpaceDbData.value, reason });
   }, 700);
 
-  const ownClientTransform = reactive<ClientRealtimeData>({
+  const ownRealtimeData = reactive<ClientRealtimeData>({
     head: {
       active: false,
     },
   });
-  watch(() => ownClientTransform, (newT, oldT) => {
+  watch(() => ownRealtimeData, (newT, oldT) => {
     if (!newT) return;
-    throttledTransformMutation(newT);
+    throttledRealtimeDataUpdate(newT);
   }, { deep: true });
 
-  const throttledTransformMutation = throttle(async (transform: ClientRealtimeData) => {
-    // if(!sceneTag.value?.is('vr-mode')) {
-    //   delete currentTransform.leftHand;
-    //   delete currentTransform.rightHand;
-    // }
-    // console.timeEnd('transformSend');
-    // console.time('transformSend');
-    // if (transform.head.active) {
-    //   console.log('gonna update transform', transform.head.position);
-    // }
-    // console.log('sending transform', transform);
-    await connection.client.vr.transform.updateTransform.mutate(transform);
+  const throttledRealtimeDataUpdate = throttle(async (realtimeData: ClientRealtimeData) => {
+    await connection.client.vr.updateRealtimeData.mutate(realtimeData);
   }, 100, { trailing: true });
-
-  // async function updateTransform(transform: ClientTransform){
-  //   await connection.client.vr.transform.updateTransform.mutate(transform);
-  // }
 
   return {
     // The DeepReadonly type returned from readonly pollutes the typesystem and makes it hard to e.g. use
@@ -202,8 +205,11 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     upsertPlacedObject,
     removePlacedObject,
     reloadVrSpaceFromDB,
-    updateVrSpace,
+    placeScreenShare,
+    removeScreenShare,
+    // updateVrSpace,
     // updateTransform,
-    ownClientTransform,
+    ownRealtimeData,
+    screenShares,
   };
 });

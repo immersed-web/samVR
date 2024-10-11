@@ -133,6 +133,8 @@ export const useSoupStore = defineStore('soup', () =>{
 
   }, 5000);
   
+
+  // TODO: Remove/deprecate userHasInteracted. There is a deicated composable made. Use that instead.
   useIntervalFn(() => {
     // @ts-ignore
     userHasInteracted.value = navigator.userActivation.hasBeenActive;
@@ -410,6 +412,17 @@ export const useSoupStore = defineStore('soup', () =>{
     }
     await connectionStore.client.soup.pauseOrResumeConsumer.mutate({producerId, pause: wasPaused});
   }
+  async function getOrCreateConsumerFromProducerId(producerId?: ProducerId) {
+    console.log('getOrCreateConsumerFromProducerId called');
+    if (!producerId) return undefined;
+    let consumerData = consumers.get(producerId);
+    if (!consumerData) {
+      await consume(producerId);
+      consumerData = consumers.get(producerId)!;
+    }
+    return consumerData;
+    // return new MediaStream([consumerData.consumer.track]);
+  }
 
   async function pauseVideoProducer () {
     pauseResumeProducer('video', true);
@@ -478,5 +491,6 @@ export const useSoupStore = defineStore('soup', () =>{
     resumeConsumer,
     closeConsumer,
     closeAllConsumers,
+    getOrCreateConsumerFromProducerId,
   };
 });

@@ -18,6 +18,16 @@
               <a-ring :visible="currentCursorMode === 'teleport'" transparent opacity="0.3" position="0 0 0.01"
                 radius-inner="0.13" radius-outer="0.17" material="shader: flat;" rotation="0 0 0" color="white" />
             </a-entity>
+            <a-entity>
+              <a-entity v-for="(screenShare, producerId) in vrSpaceStore.currentVrSpace?.screenShares"
+                :key="producerId">
+                <a-entity geometry="primitive: plane; width: 1; height: 1" color="indigo"
+                  :position="arrToCoordString(screenShare.position)"
+                  :rotation="arrToCoordString(quaternionTupleToAframeRotation(screenShare.rotation))" />
+              </a-entity>
+            </a-entity>
+            <!-- <a-entity ref="screenShareAnchorTag" /> -->
+            <a-entity color="magenta" geometry="primitive: plane; width: 1; height: 1" ref="screenShareAVideoTag" />
           </VrAFrame>
         </a-scene>
 
@@ -38,11 +48,11 @@
             <pre class="text-xs whitespace-normal">{{ screenshareStream }}</pre>
             <video class="w-36 bg-pink-400" ref="screenVideoTag" id="screen-video-tag" autoplay playsinline
               webkit-playsinline crossorigin="anonymous" />
+            <pre class="text-xs whitespace-normal max-w-24">screenShares: {{ vrSpaceStore.screenShares }}</pre>
           </Teleport>
-          <Teleport to="#teleport-target-aframe-camera">
+          <!-- <Teleport to="#teleport-target-aframe-camera">
             <a-sphere position="0 0 -2" color="yellow" scale="0.1 0.1 0.1" />
-            <a-video v-if="screenshareStream" position="0 0 -2" src="#screen-video-tag" />
-          </Teleport>
+          </Teleport> -->
         </template>
       </WaitForAframe>
     </div>
@@ -50,29 +60,30 @@
 </template>
 
 <script setup lang="ts">
-// import { onMounted } from 'vue';
 import { aFrameSceneProvideKey } from '@/modules/injectionKeys';
 import VrAFrame from '../../components/lobby/VrAFrame.vue';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import type { VrSpaceId } from 'schemas';
-import { onBeforeMount, provide, ref, watch, getCurrentInstance, onBeforeUnmount } from 'vue';
-import type { Entity, Scene } from 'aframe';
+import { onBeforeMount, provide, ref, watch, getCurrentInstance, onBeforeUnmount, computed, nextTick, onMounted, onUpdated } from 'vue';
+import { type Entity, type Scene, THREE } from 'aframe';
 import WaitForAframe from '@/components/WaitForAframe.vue';
 import { useRouter } from 'vue-router';
 import { useCurrentCursorIntersection, type Tuple } from '@/composables/vrSpaceComposables';
-import { intersectionToTransform, type RayIntersectionData } from '@/modules/3DUtils';
+import { arrToCoordString, intersectionToTransform, quaternionTupleToAframeRotation, type RayIntersectionData } from '@/modules/3DUtils';
 import UIOverlay from '@/components/UIOverlay.vue';
 import LaserTeleport from '@/components/lobby/LaserTeleport.vue';
 import EmojiTeleport from '@/components/lobby/EmojiTeleport.vue';
 import { useSoupStore } from '@/stores/soupStore';
 import { useDisplayMedia } from '@vueuse/core';
+import { omit } from 'lodash-es';
+import type { ProducerId } from 'schemas/mediasoup';
 const { setCursorIntersection, currentCursorMode, setCursorEntityRef, pointerOnHover, currentRaycastSelectorString } = useCurrentCursorIntersection();
 
 const router = useRouter();
 const vrSpaceStore = useVrSpaceStore();
 const soupStore = useSoupStore();
 
-const { stream: screenshareStream, start: startScreenshare, stop: stopScreenShare } = useDisplayMedia();
+const { stream: screenshareStream, start: startScreenshare, stop: stopDisplayMedia } = useDisplayMedia();
 
 const props = defineProps<{
   vrSpaceId: VrSpaceId
@@ -80,6 +91,8 @@ const props = defineProps<{
 const sceneTag = ref<Scene>();
 const domOutlet = ref<HTMLDivElement>();
 const screenVideoTag = ref<HTMLVideoElement>();
+const screenShareAVideoTag = ref<Entity>();
+const screenShareAnchorTag = ref<Entity>();
 const cursorEntity = ref<Entity>();
 setCursorEntityRef(cursorEntity);
 provide(aFrameSceneProvideKey, { sceneTag, domOutlet });
@@ -96,8 +109,22 @@ function setEmojiSelf(coords: Tuple, active: boolean) {
   console.log('Sending emoji stuff to server', coords, active);
 }
 
+async function stopScreenShare() {
+  if (!screenshareStream.value) {
+    console.error('no screenshare stream');
+    return;
+  }
+  const producerId = soupStore.videoProducer.producer?.id as ProducerId;
+  if (!producerId) {
+    console.error('no producer id');
+    return;
+  }
+  await vrSpaceStore.removeScreenShare(producerId);
+  await soupStore.closeVideoProducer();
+  stopDisplayMedia();
+}
+
 async function getScreenShare() {
-  // const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
   const stream = await startScreenshare();
   if (!screenVideoTag.value) {
     console.error('no video tag');
@@ -107,16 +134,44 @@ async function getScreenShare() {
     console.error('no stream');
     return;
   }
-  screenVideoTag.value.srcObject = stream;
+  screenVideoTag.value.srcObject = screenshareStream.value;
+  if (!screenShareAVideoTag.value) {
+    console.error('screenShare a-video tag was undefined');
+    return;
+  }
+  screenShareAVideoTag.value.setAttribute('material', 'src: #screen-video-tag');
+
+  const camPos = sceneTag.value!.camera.getWorldPosition(new THREE.Vector3());
+  const aVideoPos = sceneTag.value!.camera.getWorldDirection(new THREE.Vector3());
+  aVideoPos.y = 0;
+  aVideoPos.setLength(1.5)
+  aVideoPos.add(camPos);
+  const aVideoObj3D = screenShareAVideoTag.value.object3D;
+  aVideoObj3D.position.set(...aVideoPos.toArray());
+  aVideoObj3D.lookAt(camPos)
+  const aVideoQuaternion = aVideoObj3D.getWorldQuaternion(new THREE.Quaternion());
   const producerId = await soupStore.produce({
     track: stream.getVideoTracks()[0],
     producerInfo: {
       isPaused: false,
     }
   });
+
+  await vrSpaceStore.placeScreenShare({
+    producerId,
+    transform: {
+      position: aVideoPos.toArray(),
+      rotation: aVideoQuaternion.toArray() as THREE.Vector4Tuple,
+    }
+  })
 }
 
+onMounted(() => {
+  console.log('sceneView mounted');
+})
+
 onBeforeMount(async () => {
+
 
   await vrSpaceStore.enterVrSpace(props.vrSpaceId);
 
@@ -144,6 +199,10 @@ onBeforeMount(async () => {
 onBeforeUnmount(async () => {
   await soupStore.closeAudioProducer();
 });
+
+onUpdated(() => {
+  console.log('sceneView onUpdated');
+})
 
 </script>
 

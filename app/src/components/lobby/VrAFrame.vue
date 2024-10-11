@@ -103,7 +103,7 @@
 
 <script setup lang="ts">
 import { type Entity, type DetailEvent, utils as aframeUtils, THREE } from 'aframe';
-import { ref, onMounted, onBeforeMount, computed, onBeforeUnmount, inject, watch } from 'vue';
+import { ref, onMounted, onBeforeMount, computed, onBeforeUnmount, inject, watch, onUpdated } from 'vue';
 import Avatar from './AvatarEntity.vue';
 import { defaultAvatarDesign, defaultHeightOverGround, type ClientRealtimeData } from 'schemas';
 // import type { Unsubscribable } from '@trpc/server/observable';
@@ -208,14 +208,18 @@ const skyColor = computed(() => {
 });
 
 onBeforeMount(async () => {
-  // console.log('onBeforeMount');
+  console.log('VrAframe onBeforeMount');
   // console.log('onBeforeMount completed');
 });
 
 onMounted(async () => {
-  // console.log('onMounted');
+  console.log('vrAframe onMounted');
   // console.log('onMounted completed');
 });
+
+onUpdated(() => {
+  console.log('vrAframe onUpdated');
+})
 
 function onCameraLoaded() {
   console.log('camera loaded. attaching scene attributes', navmeshId.value);
@@ -331,18 +335,18 @@ function getRandomSpawnPosition() {
 //   },
 // };
 function onHeadMove(e: DetailEvent<ClientRealtimeData['head']>) {
-  vrSpaceStore.ownClientTransform.head = e.detail;
+  vrSpaceStore.ownRealtimeData.head = e.detail;
   // console.log('head moved', e.detail.position!);
   // console.log(e.detail.position);
   // currentTransform.head = e.detail;
 }
 function onLeftHandMove(e: DetailEvent<ClientRealtimeData['leftHand']>) {
-  vrSpaceStore.ownClientTransform.leftHand = e.detail;
+  vrSpaceStore.ownRealtimeData.leftHand = e.detail;
   // console.log('left hand moved');
   // currentTransform.leftHand = e.detail;
 }
 function onRightHandMove(e: DetailEvent<ClientRealtimeData['rightHand']>) {
-  vrSpaceStore.ownClientTransform.rightHand = e.detail;
+  vrSpaceStore.ownRealtimeData.rightHand = e.detail;
   // console.log('right hand moved');
   // console.log(e.detail?.orientation);
   // console.log(e.detail?.position);

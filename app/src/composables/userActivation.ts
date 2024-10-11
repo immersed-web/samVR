@@ -3,7 +3,7 @@ import { ref } from "vue";
 const userHasInteracted = ref(navigator.userActivation.hasBeenActive);
 const interval = setInterval(() => {
   userHasInteracted.value = navigator.userActivation.hasBeenActive;
-  console.log('checking userActivation:', userHasInteracted.value);
+  // console.log('checking userActivation:', userHasInteracted.value);
 }, 4000);
 
 import.meta.hot?.on('vite:beforeUpdate', () => {

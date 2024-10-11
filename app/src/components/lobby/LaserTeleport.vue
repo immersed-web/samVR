@@ -33,9 +33,9 @@ watch([laserActive, currentCursor], ([newActive, newIntersection], [oldActive, o
     // console.log('laser updated', newIntersection);
     const rayDirection = newIntersection.rayDirection
     // console.log('rayDirection', rayDirection);
-    vrSpaceStore.ownClientTransform.laserPointer = { active: newActive, position: newIntersection.intersection.point.toArray(), directionVector: rayDirection.toArray() };
+    vrSpaceStore.ownRealtimeData.laserPointer = { active: newActive, position: newIntersection.intersection.point.toArray(), directionVector: rayDirection.toArray() };
   } else if (!newActive && oldActive !== newActive) {
-    vrSpaceStore.ownClientTransform.laserPointer = { active: false };
+    vrSpaceStore.ownRealtimeData.laserPointer = { active: false };
   }
 });
 

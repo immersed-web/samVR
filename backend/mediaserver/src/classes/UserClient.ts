@@ -12,7 +12,7 @@ import { MyWebsocketType } from 'index.js';
 type EventMapAdditions = {
   vrSpace: {
     vrSpaceStateUpdated: Payload<DataAndReason<ReturnType<VrSpace['getPublicState']>>>,
-    clientTransforms: Payload<ClientsRealtimeData>
+    clientsRealtimeData: Payload<ClientsRealtimeData>
     vrSpaceWasUnloaded: Payload<{ vrSpaceId: VrSpaceId }>,
   },
   user: {
