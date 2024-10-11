@@ -3,6 +3,7 @@ import type { JwtPayload as JwtShapeFromLib } from 'jsonwebtoken'
 // import { Role, Venue, VirtualSpace3DModel, Visibility, Camera, CameraType as PrismaCameraType, Prisma, ModelFileFormat } from "database";
 import * as schema from 'database/schema';
 import { createInsertSchema, createSelectSchema, jsonSchema } from 'drizzle-zod';
+import { ProducerIdSchema } from './mediasoupSchemas.js';
 
 export type Json = z.TypeOf<typeof jsonSchema>
 
@@ -502,17 +503,25 @@ export type JwtPayload = z.TypeOf<typeof JwtPayloadSchema>;
 
 export const defaultHeightOverGround = 1.7;
 
-const TransformSchema = z.discriminatedUnion('active', [
-  z.object({
-    active: z.literal(true),
-    position: Vector3TupleSchema,
-    rotation: Vector4TupleSchema,
-  }),
+export const TransformSchema = z.object({
+  position: Vector3TupleSchema,
+  rotation: Vector4TupleSchema,
+  scale: z.number().optional(),
+});
+export type Transform = z.TypeOf<typeof TransformSchema>;
+
+const MaybeTransformSchema = z.discriminatedUnion('active', [
+  // z.object({
+  //   active: z.literal(true),
+  //   position: Vector3TupleSchema,
+  //   rotation: Vector4TupleSchema,
+  // }),
+  TransformSchema.merge(z.object({ active: z.literal(true) })),
   z.object({
     active: z.literal(false),
   }),
 ]);
-export type MaybeTransform = z.TypeOf<typeof TransformSchema>;
+export type MaybeTransform = z.TypeOf<typeof MaybeTransformSchema>;
 export type ActiveTransform = Extract<MaybeTransform, { active: true }>;
 
 const LaserPointerSchema = z.discriminatedUnion('active', [
@@ -539,14 +548,17 @@ const EmojiSchema = z.discriminatedUnion('active', [
 ])
 
 export const ClientRealtimeDataSchema = z.object({
-  head: TransformSchema,
-  leftHand: TransformSchema.optional(),
-  rightHand: TransformSchema.optional(),
+  head: MaybeTransformSchema,
+  leftHand: MaybeTransformSchema.optional(),
+  rightHand: MaybeTransformSchema.optional(),
   laserPointer: LaserPointerSchema.optional(),
   emoji: EmojiSchema.optional(),
 })
 export type ClientRealtimeData = z.TypeOf<typeof ClientRealtimeDataSchema>;
 export type ClientsRealtimeData = Record<ConnectionId, ClientRealtimeData>;
+
+export const ScreenShareSchema = z.object({ producerId: ProducerIdSchema, transform: TransformSchema })
+export type ScreenShare = z.TypeOf<typeof ScreenShareSchema>;
 
 // const avatarAssets = {
 //   hands: ['hands_basic_left'],
