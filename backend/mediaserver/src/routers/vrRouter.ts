@@ -120,13 +120,17 @@ export const vrRouter = router({
     if (ctx.client.publicProducers.value.videoProducer?.producerId !== input.producerId) {
       throw new TRPCError({ code: 'UNAUTHORIZED', message: 'You are not allowed to share a producer with that ID.' });
     }
-    ctx.vrSpace.addScreenShare(input)
+    ctx.client.screenShare = input;
+    ctx.vrSpace._notifyStateUpdated('client placed screenShare');
+    // ctx.vrSpace.addScreenShare(input)
   }),
-  removeScreenShare: userInVrSpaceP.input(z.object({ producerId: ProducerIdSchema })).mutation(({ input, ctx }) => {
-    if (ctx.client.publicProducers.value.videoProducer?.producerId !== input.producerId) {
-      throw new TRPCError({ code: 'UNAUTHORIZED', message: 'You are not allowed to remove a screenshare with that producerID.' });
-    }
-    ctx.vrSpace.removeScreenShare(input.producerId)
+  removeScreenShare: userInVrSpaceP.mutation(({ ctx }) => {
+    // if (ctx.client.publicProducers.value.videoProducer?.producerId !== input.producerId) {
+    //   throw new TRPCError({ code: 'UNAUTHORIZED', message: 'You are not allowed to remove a screenshare with that producerID.' });
+    // }
+    ctx.client.screenShare = undefined;
+    ctx.vrSpace._notifyStateUpdated('client removed screenShare');
+  // ctx.vrSpace.removeScreenShare(input.producerId)
   })
   // getClientsRealtimeData: userInVrSpaceP.query(({ input, ctx }) => {
   //   return 'NOT IMPLEMENTED' as const;

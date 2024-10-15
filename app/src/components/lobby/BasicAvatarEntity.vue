@@ -1,33 +1,39 @@
 <template>
 
-  <a-entity interpolated-transform="interpolationTime: 350;" @near-range-entered="onNearRangeEntered"
-    @near-range-exited="onNearRangeExited" ref="avatarEntity" mediastream-audio-source @loaded="onAvatarEntityLoaded">
-    <Teleport to="#teleport-target-ui-right">
-      <pre class="text-xs whitespace-normal">videoStream: {{ videoStream }}</pre>
-      <pre class="text-xs whitespace-normal">videoProducerId: {{ videoProducerId }}</pre>
+  <a-entity>
 
-    </Teleport>
-    <slot />
-    <a-troika-text :color="distanceColor" look-at-camera :value="username" position="0 0.5 0" />
-    <!-- <a-video src="#incoming-screen-video" position="0 0 0" /> -->
-    <a-entity rotation="0 180 0">
-      <a-entity position="0 0 0">
-        <AvatarPart v-for="(part, key) in headGroupedParts" :key="key" :part-name="key" :part="part" />
-        <AvatarSkinPart skin-part-name="heads" :part="avatarDesign.parts.heads" :skin-color="avatarDesign.skinColor" />
-        <a-entity position="0 0 0" class="audio-level">
-          <AvatarPart part-name="mouths" :part="avatarDesign.parts.mouths" />
+    <a-video ref="screenShareAVideoTag" v-if="screenshareStream" src="#incoming-screen-video" side="double"
+      :position="arrToCoordString(clientInfo.screenShare?.transform.position ?? [0, 0, 0])"
+      :rotation="arrToCoordString(quaternionTupleToAframeRotation(clientInfo.screenShare?.transform.rotation ?? [0, 0, 0, 1]))"
+      :scale="screenshareScaleString" />
+    <video @loadedmetadata="onVideoMetaDataLoaded" ref="screenVideoTag" id="incoming-screen-video" autoplay playsinline
+      webkit-playsinline crossorigin="anonymous" />
+    <a-entity interpolated-transform="interpolationTime: 350;" @near-range-entered="onNearRangeEntered"
+      @near-range-exited="onNearRangeExited" ref="avatarEntity" mediastream-audio-source @loaded="onAvatarEntityLoaded">
+      <Teleport to="#teleport-target-ui-right">
+        <pre class="text-xs whitespace-normal">videoStream: {{ screenshareStream }}</pre>
+        <pre class="text-xs whitespace-normal">videoProducerId: {{ videoProducerId }}</pre>
+      </Teleport>
+      <slot />
+      <a-troika-text :color="distanceColor" look-at-camera :value="username" position="0 0.5 0" />
+      <a-entity rotation="0 180 0">
+        <a-entity position="0 0 0">
+          <AvatarPart v-for="(part, key) in headGroupedParts" :key="key" :part-name="key" :part="part" />
+          <AvatarSkinPart skin-part-name="heads" :part="avatarDesign.parts.heads"
+            :skin-color="avatarDesign.skinColor" />
+          <a-entity position="0 0 0" class="audio-level">
+            <AvatarPart part-name="mouths" :part="avatarDesign.parts.mouths" />
+          </a-entity>
+        </a-entity>
+        <a-entity ref="lowerBodyTag" lock-rotation-axis>
+          <AvatarSkinPart skin-part-name="torsos" :part="avatarDesign.parts.torsos"
+            :skin-color="avatarDesign.skinColor" />
+          <AvatarPart part-name="clothes" :part="avatarDesign.parts.clothes" />
+          <AvatarPart part-name="layer" :part="avatarDesign.parts.layer" />
         </a-entity>
       </a-entity>
-      <a-entity ref="lowerBodyTag" lock-rotation-axis>
-        <AvatarSkinPart skin-part-name="torsos" :part="avatarDesign.parts.torsos"
-          :skin-color="avatarDesign.skinColor" />
-        <AvatarPart part-name="clothes" :part="avatarDesign.parts.clothes" />
-        <AvatarPart part-name="layer" :part="avatarDesign.parts.layer" />
-      </a-entity>
+      <audio ref="dummyAudioTag" muted autoplay playsinline />
     </a-entity>
-    <audio ref="dummyAudioTag" muted autoplay playsinline />
-    <video ref="screenVideoTag" id="incoming-screen-video" autoplay playsinline webkit-playsinline
-      crossorigin="anonymous" />
   </a-entity>
 </template>
 
@@ -42,13 +48,15 @@ import AvatarPart from './AvatarPart.vue';
 import AvatarSkinPart from './AvatarSkinPart.vue';
 import { omit, pick } from 'lodash-es';
 import { useSoupStore } from '@/stores/soupStore';
-import { asyncComputed } from '@vueuse/core';
+// import { asyncComputed } from '@vueuse/core';
+import { arrToCoordString, quaternionTupleToAframeRotation } from '@/modules/3DUtils';
 
 const soupStore = useSoupStore();
 
 type _ClientInfo = NonNullable<ReturnType<typeof useVrSpaceStore>['currentVrSpace']>['clients'][ConnectionId]
 
 const props = defineProps<{
+  clientInfo: _ClientInfo,
   username: _ClientInfo['username']
   producers: _ClientInfo['producers']
   avatarDesign: NonNullable<_ClientInfo['avatarDesign']>
@@ -66,19 +74,64 @@ const videoProducerId = computed(() => {
 });
 
 const screenVideoTag = ref<HTMLVideoElement>();
+const screenShareAVideoTag = ref<Entity>();
+const screenshareScaleString = ref<string>('1 1 1');
+function onVideoMetaDataLoaded(e: Event) {
+  console.log('video metadata loaded', e);
+  // console.log('this', this);
+  const vTag = e.target as HTMLVideoElement;
+  const { videoWidth, videoHeight } = vTag;
+  const ratio = videoWidth / videoHeight;
+  const scale = props.clientInfo.screenShare?.transform.scale ?? 1;
+  screenshareScaleString.value = `${scale * ratio} ${scale} -1`;
+}
 
-const videoStream = asyncComputed(async () => {
-  if (!videoProducerId.value) return undefined;
-  const { track, consumerId } = await soupStore.consume(videoProducerId.value);
-  return new MediaStream([track]);
-}, undefined)
+// const screenshareStream = asyncComputed(async () => {
+//   const screenshare = props.clientInfo.screenShare;
+//   if(!screenshare){
+//     return;
+//   } else {
+//     return getStreamFromProducerId(videoProducerId.value);
+//   }
+//   // const consumerData = await soupStore.getOrCreateConsumerFromProducerId(videoProducerId.value);
+//   // const { track, consumerId } = await soupStore.consume(videoProducerId.value);
+//   // return new MediaStream([track]);
+// }, undefined)
+const screenshareStream = shallowRef<MediaStream>();
+// const screenshareScaleString = computed(() => {
+//   if (!screenshareStream.value) return '1 1 1';
+//   const vTrack = screenshareStream.value.getVideoTracks()[0];
+//   console.log('vTrack', vTrack);
+//   const vSettings = vTrack.getSettings();
+//   console.log('vSettings', vSettings);
+//   const ratio = (vSettings.width ?? 1) / (vSettings.height ?? 1);
+//   const scale = props.clientInfo.screenShare?.transform.scale ?? 1;
+//   return `${scale * ratio} ${scale} 1`;
+// })
 
-watch(videoStream, (stream) => {
-  if (!stream) return;
-  console.log('videoStream watcher triggered:', stream);
+watch(() => props.clientInfo.screenShare, async (newScreenShare, prevScreenShare) => {
+  console.log('clientinfo screenshare watcher triggered:', stream);
+  if (!newScreenShare) {
+    if (!prevScreenShare) {
+      console.warn('watcher triggered but both newScreenShare and prevScreenShare was undefined. Should not be possible?');
+      return
+    }
+    await soupStore.closeConsumer(prevScreenShare.producerId)
+    screenshareStream.value = undefined;
+    return;
+  };
+  screenshareStream.value = await getStreamFromProducerId(newScreenShare.producerId);
+  if (!screenshareStream.value) {
+    console.error('failed to get videostream from producer id:', newScreenShare.producerId);
+    return;
+  }
+  // const aVideoTag = screenShareAVideoTag.value;
+  // if (!aVideoTag) return;
+  // aVideoTag.object3D.position.set(...newScreenShare.transform.position)
+  // aVideoTag.object3D.rotation.setFromQuaternion(new THREE.Quaternion().fromArray(newScreenShare.transform.rotation))
   const videoTag = screenVideoTag.value;
   if (!videoTag) return;
-  videoTag.srcObject = stream;
+  videoTag.srcObject = screenshareStream.value;
   videoTag.play();
 })
 

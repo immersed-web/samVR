@@ -159,8 +159,8 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
   async function placeScreenShare(data: ScreenShare) {
     await connection.client.vr.placeScreenShare.mutate(data);
   }
-  async function removeScreenShare(producerId: ProducerId) {
-    await connection.client.vr.removeScreenShare.mutate({ producerId });
+  async function removeScreenShare() {
+    await connection.client.vr.removeScreenShare.mutate();
   }
 
   /**

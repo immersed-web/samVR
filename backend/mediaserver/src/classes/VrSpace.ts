@@ -22,14 +22,14 @@ export class VrSpace {
   }
 
   router: soupTypes.Router;
-  screenShares: Map<ProducerId, Transform>;
+  // screenShares: Map<ProducerId, Transform>;
 
   pendingRealtimeData: ClientsRealtimeData = {};
   constructor(vrSpace: VrSpaceWithIncludes, router: soupTypes.Router) {
     this.router = router;
     this.dbData = vrSpace;
     this.clients = new Map();
-    this.screenShares = new Map();
+    // this.screenShares = new Map();
   }
 
   // get isOpen(){
@@ -49,13 +49,13 @@ export class VrSpace {
 
   getPublicState() {
     const returnState = this.dbData;
-    const screenShares = Object.fromEntries(this.screenShares.entries()) as Record<ProducerId, Transform>;
+    // const screenShares = Object.fromEntries(this.screenShares.entries()) as Record<ProducerId, Transform>;
     const clientsWithProducers = Array.from(this.clients.entries()).map(([cId, client]) => {
-      const cData = pick(client.getPublicState(), ['userId', 'connectionId', 'producers', 'role', 'username', 'clientRealtimeData', 'avatarDesign']);
+      const cData = pick(client.getPublicState(), ['userId', 'connectionId', 'producers', 'role', 'username', 'clientRealtimeData', 'avatarDesign', 'screenShare']);
       return [cId, cData] as const;
     });
     const clientsRecord = Object.fromEntries(clientsWithProducers);
-    return { dbData: returnState, clients: clientsRecord as Record<ConnectionId, (typeof clientsRecord)[string]>, screenShares };
+    return { dbData: returnState, clients: clientsRecord as Record<ConnectionId, (typeof clientsRecord)[string]> };
   }
 
   addClient(client: UserClient) {
@@ -75,15 +75,15 @@ export class VrSpace {
     }
   }
 
-  addScreenShare(data: ScreenShare) {
-    this.screenShares.set(data.producerId, data.transform);
-    this._notifyStateUpdated('screenShare added to vrSpace');
-  }
+  // addScreenShare(data: ScreenShare) {
+  //   this.screenShares.set(data.producerId, data.transform);
+  //   this._notifyStateUpdated('screenShare added to vrSpace');
+  // }
 
-  removeScreenShare(producerId: ProducerId) {
-    this.screenShares.delete(producerId);
-    this._notifyStateUpdated('screenShare removed from vrSpace');
-  }
+  // removeScreenShare(producerId: ProducerId) {
+  //   this.screenShares.delete(producerId);
+  //   this._notifyStateUpdated('screenShare removed from vrSpace');
+  // }
 
   sendPendingRealtimeData: () => void = throttle(() => {
     this.emitRealtimeDataToAllClients();

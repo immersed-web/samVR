@@ -18,16 +18,8 @@
               <a-ring :visible="currentCursorMode === 'teleport'" transparent opacity="0.3" position="0 0 0.01"
                 radius-inner="0.13" radius-outer="0.17" material="shader: flat;" rotation="0 0 0" color="white" />
             </a-entity>
-            <a-entity>
-              <a-entity v-for="(screenShare, producerId) in vrSpaceStore.currentVrSpace?.screenShares"
-                :key="producerId">
-                <a-entity geometry="primitive: plane; width: 1; height: 1" color="indigo"
-                  :position="arrToCoordString(screenShare.position)"
-                  :rotation="arrToCoordString(quaternionTupleToAframeRotation(screenShare.rotation))" />
-              </a-entity>
-            </a-entity>
-            <!-- <a-entity ref="screenShareAnchorTag" /> -->
-            <a-entity color="magenta" geometry="primitive: plane; width: 1; height: 1" ref="screenShareAVideoTag" />
+            <a-entity v-if="screenshareStream" color="magenta" geometry="primitive: plane; width: 1; height: 1"
+              ref="screenShareAVideoTag" />
           </VrAFrame>
         </a-scene>
 
@@ -103,6 +95,10 @@ watch(() => props.vrSpaceId, () => {
   window.location.href = url;
 });
 
+watch(() => vrSpaceStore.screenShares, (newScreenShares) => {
+  console.log('screenshares changed', newScreenShares);
+})
+
 // Emoji stuff
 function setEmojiSelf(coords: Tuple, active: boolean) {
   // Send things to server
@@ -119,7 +115,7 @@ async function stopScreenShare() {
     console.error('no producer id');
     return;
   }
-  await vrSpaceStore.removeScreenShare(producerId);
+  await vrSpaceStore.removeScreenShare();
   await soupStore.closeVideoProducer();
   stopDisplayMedia();
 }
