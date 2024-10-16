@@ -18,8 +18,8 @@
               <a-ring :visible="currentCursorMode === 'teleport'" transparent opacity="0.3" position="0 0 0.01"
                 radius-inner="0.13" radius-outer="0.17" material="shader: flat;" rotation="0 0 0" color="white" />
             </a-entity>
-            <a-entity v-if="screenshareStream" color="magenta" geometry="primitive: plane; width: 1; height: 1"
-              ref="screenShareAVideoTag" />
+            <a-video v-if="screenshareStream" :width="screenShareDimensions.width"
+              :height="screenShareDimensions.height" ref="screenShareAVideoTag" />
           </VrAFrame>
         </a-scene>
 
@@ -38,8 +38,8 @@
             <button v-else class="btn btn-primary pointer-events-auto" @click="getScreenShare"><span
                 class="material-icons">screen_share</span>Share screen</button>
             <pre class="text-xs whitespace-normal">{{ screenshareStream }}</pre>
-            <video class="w-36 bg-pink-400" ref="screenVideoTag" id="screen-video-tag" autoplay playsinline
-              webkit-playsinline crossorigin="anonymous" />
+            <video @resize="onVideoResize" class="w-36 bg-pink-400" ref="screenVideoTag" id="screen-video-tag" autoplay
+              playsinline webkit-playsinline crossorigin="anonymous" />
             <pre class="text-xs whitespace-normal max-w-24">screenShares: {{ vrSpaceStore.screenShares }}</pre>
           </Teleport>
           <!-- <Teleport to="#teleport-target-aframe-camera">
@@ -56,18 +56,16 @@ import { aFrameSceneProvideKey } from '@/modules/injectionKeys';
 import VrAFrame from '../../components/lobby/VrAFrame.vue';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import type { VrSpaceId } from 'schemas';
-import { onBeforeMount, provide, ref, watch, getCurrentInstance, onBeforeUnmount, computed, nextTick, onMounted, onUpdated } from 'vue';
+import { onBeforeMount, provide, ref, watch, getCurrentInstance, onBeforeUnmount, computed, nextTick, onMounted, onUpdated, reactive } from 'vue';
 import { type Entity, type Scene, THREE } from 'aframe';
 import WaitForAframe from '@/components/WaitForAframe.vue';
 import { useRouter } from 'vue-router';
 import { useCurrentCursorIntersection, type Tuple } from '@/composables/vrSpaceComposables';
-import { arrToCoordString, intersectionToTransform, quaternionTupleToAframeRotation, type RayIntersectionData } from '@/modules/3DUtils';
 import UIOverlay from '@/components/UIOverlay.vue';
 import LaserTeleport from '@/components/lobby/LaserTeleport.vue';
 import EmojiTeleport from '@/components/lobby/EmojiTeleport.vue';
 import { useSoupStore } from '@/stores/soupStore';
 import { useDisplayMedia } from '@vueuse/core';
-import { omit } from 'lodash-es';
 import type { ProducerId } from 'schemas/mediasoup';
 const { setCursorIntersection, currentCursorMode, setCursorEntityRef, pointerOnHover, currentRaycastSelectorString } = useCurrentCursorIntersection();
 
@@ -84,7 +82,6 @@ const sceneTag = ref<Scene>();
 const domOutlet = ref<HTMLDivElement>();
 const screenVideoTag = ref<HTMLVideoElement>();
 const screenShareAVideoTag = ref<Entity>();
-const screenShareAnchorTag = ref<Entity>();
 const cursorEntity = ref<Entity>();
 setCursorEntityRef(cursorEntity);
 provide(aFrameSceneProvideKey, { sceneTag, domOutlet });
@@ -120,6 +117,20 @@ async function stopScreenShare() {
   stopDisplayMedia();
 }
 
+const screenShareDimensions = reactive({
+  width: 3,
+  height: 1.75,
+});
+const screenShareScale = ref(3)
+function onVideoResize(e: Event) {
+  console.log('video resize', e);
+  const vTag = e.target as HTMLVideoElement;
+  const { videoWidth, videoHeight } = vTag;
+  const ratio = videoWidth / videoHeight;
+  const scale = screenShareScale.value;
+  screenShareDimensions.width = scale * ratio;
+  screenShareDimensions.height = scale;
+}
 async function getScreenShare() {
   const stream = await startScreenshare();
   if (!screenVideoTag.value) {
@@ -135,7 +146,8 @@ async function getScreenShare() {
     console.error('screenShare a-video tag was undefined');
     return;
   }
-  screenShareAVideoTag.value.setAttribute('material', 'src: #screen-video-tag');
+  screenShareAVideoTag.value.setAttribute('src', '#screen-video-tag');
+  // screenShareAVideoTag.value.setAttribute('material', 'src: #screen-video-tag');
 
   const camPos = sceneTag.value!.camera.getWorldPosition(new THREE.Vector3());
   const aVideoPos = sceneTag.value!.camera.getWorldDirection(new THREE.Vector3());
@@ -158,6 +170,7 @@ async function getScreenShare() {
     transform: {
       position: aVideoPos.toArray(),
       rotation: aVideoQuaternion.toArray() as THREE.Vector4Tuple,
+      scale: screenShareScale.value,
     }
   })
 }

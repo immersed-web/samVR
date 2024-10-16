@@ -5,8 +5,8 @@
     <a-video ref="screenShareAVideoTag" v-if="screenshareStream" src="#incoming-screen-video" side="double"
       :position="arrToCoordString(clientInfo.screenShare?.transform.position ?? [0, 0, 0])"
       :rotation="arrToCoordString(quaternionTupleToAframeRotation(clientInfo.screenShare?.transform.rotation ?? [0, 0, 0, 1]))"
-      :scale="screenshareScaleString" />
-    <video @loadedmetadata="onVideoMetaDataLoaded" ref="screenVideoTag" id="incoming-screen-video" autoplay playsinline
+      :width="screenShareDimensions.width" :height="screenShareDimensions.height" />
+    <video @resize="onVideoResize" ref="screenVideoTag" id="incoming-screen-video" autoplay playsinline
       webkit-playsinline crossorigin="anonymous" />
     <a-entity interpolated-transform="interpolationTime: 350;" @near-range-entered="onNearRangeEntered"
       @near-range-exited="onNearRangeExited" ref="avatarEntity" mediastream-audio-source @loaded="onAvatarEntityLoaded">
@@ -43,7 +43,7 @@ import type { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import type { Entity } from 'aframe';
 import type { ProducerId } from 'schemas/mediasoup';
 import { skinParts as skinPartArray, type ConnectionId } from 'schemas'
-import { computed, onBeforeMount, onMounted, ref, shallowRef, toRefs, watch } from 'vue';
+import { computed, onBeforeMount, onMounted, reactive, ref, shallowRef, toRefs, watch } from 'vue';
 import AvatarPart from './AvatarPart.vue';
 import AvatarSkinPart from './AvatarSkinPart.vue';
 import { omit, pick } from 'lodash-es';
@@ -75,39 +75,21 @@ const videoProducerId = computed(() => {
 
 const screenVideoTag = ref<HTMLVideoElement>();
 const screenShareAVideoTag = ref<Entity>();
-const screenshareScaleString = ref<string>('1 1 1');
-function onVideoMetaDataLoaded(e: Event) {
-  console.log('video metadata loaded', e);
-  // console.log('this', this);
+const screenShareDimensions = reactive({
+  width: 3,
+  height: 1.75,
+});
+function onVideoResize(e: Event) {
+// console.log('video resize', e);
   const vTag = e.target as HTMLVideoElement;
   const { videoWidth, videoHeight } = vTag;
   const ratio = videoWidth / videoHeight;
   const scale = props.clientInfo.screenShare?.transform.scale ?? 1;
-  screenshareScaleString.value = `${scale * ratio} ${scale} -1`;
+  screenShareDimensions.width = scale * ratio;
+  screenShareDimensions.height = scale;
 }
 
-// const screenshareStream = asyncComputed(async () => {
-//   const screenshare = props.clientInfo.screenShare;
-//   if(!screenshare){
-//     return;
-//   } else {
-//     return getStreamFromProducerId(videoProducerId.value);
-//   }
-//   // const consumerData = await soupStore.getOrCreateConsumerFromProducerId(videoProducerId.value);
-//   // const { track, consumerId } = await soupStore.consume(videoProducerId.value);
-//   // return new MediaStream([track]);
-// }, undefined)
 const screenshareStream = shallowRef<MediaStream>();
-// const screenshareScaleString = computed(() => {
-//   if (!screenshareStream.value) return '1 1 1';
-//   const vTrack = screenshareStream.value.getVideoTracks()[0];
-//   console.log('vTrack', vTrack);
-//   const vSettings = vTrack.getSettings();
-//   console.log('vSettings', vSettings);
-//   const ratio = (vSettings.width ?? 1) / (vSettings.height ?? 1);
-//   const scale = props.clientInfo.screenShare?.transform.scale ?? 1;
-//   return `${scale * ratio} ${scale} 1`;
-// })
 
 watch(() => props.clientInfo.screenShare, async (newScreenShare, prevScreenShare) => {
   console.log('clientinfo screenshare watcher triggered:', stream);
