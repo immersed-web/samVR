@@ -30,6 +30,10 @@ const router = createRouter({
       component: () => import('@/views/test/ComboboxTest.vue'),
     },
     {
+      path: '/tabtest',
+      component: () => import('@/views/test/tabsTest.vue'),
+    },
+    {
       path: '/walltest',
       component: () => import('@/views/test/wallTest.vue'),
     },
