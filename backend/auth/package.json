@@ -26,7 +26,6 @@
     "@typescript-eslint/parser": "^5.4.0"
   },
   "dependencies": {
-    "@quixo3/prisma-session-store": "^3.1.10",
     "bcrypt": "^5.0.1",
     "connect-pg-simple": "^9.0.1",
     "cors": "^2.8.5",

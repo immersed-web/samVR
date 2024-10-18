@@ -11,9 +11,6 @@ import session from 'express-session';
 import pg from 'pg';
 const { Pool } = pg;
 import connectPgSimple from "connect-pg-simple";
-// import { PrismaSessionStore } from '@quixo3/prisma-session-store';
-// import prisma from './prismaClient.js';
-// import createApiRouter from './apiRoutes';
 import { JwtUserData, UserIdSchema } from 'schemas';
 
 const haikunator = new Haikunator({
