@@ -1,35 +1,16 @@
 <template>
-  <div>
-    <div role="tablist" class="tabs tabs-boxed">
-      <button v-for="(tab, index) in tabs" :key="'button-' + index" role="tab" :id="'tab-' + index"
-        :aria-controls="'tabpanel-' + index" :aria-selected="localModelValue === index" @click="selectTab(index)"
-        class="tab whitespace-nowrap" :class="{ 'background-small': localModelValue === index }">
-        <span v-if="tab.iconName" class="material-icons">{{ tab.iconName }}</span>
-        <span class="tab-label">{{ tab.label }}</span>
-      </button>
-    </div>
-
-
-    <div class="">
-      <div v-for="(tab, index) in tabs" :key="'content-' + index" role="tabpanel" class="" :id="'tabpanel-' + index"
-        :aria-labelledby="'tab-' + index">
-
-        {{ console.log('Rendering slot:', tab.slotName) }}
-        <slot :name="tab.slotName"></slot>
-        {{ console.log(`Innehållet för flik ${index} visas.`) }}
-      </div>
-    </div>
-
-    <div>
-      <TabGroup>
-        <Tablist class="tabs tabs-boxed">
-          <Tab v-for="(tab, index) in tabs" :key="tab.label" class="tab">{{ tab.label }}</Tab>
-        </Tablist>
-        <TabPanels>
-          <TabPanel v-for="(tab, index) in tabs" :key="tab.label">{{ tab.slotName }}</TabPanel>
-        </TabPanels>
-      </TabGroup>
-    </div>
+  <div class="m-10 resize overflow-hidden">
+    <TabGroup>
+      <TabList class="tabs tabs-lifted collapsible-button-group justify-start">
+        <Tab v-for="tab in tabs" as="div" :key="tab.id" class="tab gap-2 collapsible-button">
+          <span class="material-icons">{{ tab.iconName }}</span>
+          <span class="collapsible-text">{{ tab.label }}</span>
+        </Tab>
+      </TabList>
+      <TabPanels>
+        <slot />
+      </TabPanels>
+    </TabGroup>
   </div>
 </template>
 
@@ -38,8 +19,7 @@ import { ref, watch } from 'vue';
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue';
 
 const props = defineProps<{
-  name: string;
-  tabs: { label: string; slotName: string; iconName: string }[];
+  tabs: { label: string; id: string; iconName: string }[];
   modelValue: number;
 }>();
 
@@ -56,4 +36,21 @@ watch(() => props.modelValue, (newVal) => {
 });
 </script>
 
-<style scoped></style>
+<style scoped>
+.collapsible-button-group {
+  container-type: inline-size;
+}
+
+.collapsible-button {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@container (width < 30rem) {
+  .collapsible-text {
+    display: none;
+
+  }
+}
+</style>
