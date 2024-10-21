@@ -1,13 +1,13 @@
 <template>
-  <div class="m-10 resize overflow-hidden">
+  <div class="m-10 resize overflow-hidden join join-vertical">
     <TabGroup>
-      <TabList class="tabs tabs-lifted collapsible-button-group justify-start">
-        <Tab v-for="tab in tabs" as="div" :key="tab.id" class="tab gap-2 collapsible-button">
+      <TabList class="tabs join-item tabs-boxed collapsible-button-group justify-start">
+        <Tab v-for="tab in tabs" as="div" :key="tab.id" class="tab gap-2 min-w-0 flex-nowrap collapsible-button">
           <span class="material-icons">{{ tab.iconName }}</span>
           <span class="collapsible-text">{{ tab.label }}</span>
         </Tab>
       </TabList>
-      <TabPanels>
+      <TabPanels class="join-item border border-t-0 bg-fuchsia-500 border-sky-700 rounded-bl-lg rounded-br-lg">
         <slot />
       </TabPanels>
     </TabGroup>
@@ -41,13 +41,13 @@ watch(() => props.modelValue, (newVal) => {
   container-type: inline-size;
 }
 
-.collapsible-button {
+.collapsible-text {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-@container (width < 30rem) {
+@container (width < 37rem) {
   .collapsible-text {
     display: none;
 
