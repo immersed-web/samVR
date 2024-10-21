@@ -7,7 +7,7 @@
           <span class="collapsible-text">{{ tab.label }}</span>
         </Tab>
       </TabList>
-      <TabPanels class="join-item border border-t-0 bg-fuchsia-500 border-sky-700 rounded-bl-lg rounded-br-lg">
+      <TabPanels class="join-item p-4 border border-t-0 grow rounded-bl-lg rounded-br-lg">
         <slot />
       </TabPanels>
     </TabGroup>
