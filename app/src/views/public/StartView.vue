@@ -4,7 +4,7 @@
   </h1>
 
   <p class="text-lg italic text-gray-600">
-    Välkommen till OrigoShift! Här kan du utforska och fördjupa dig i fantastiska VR-scener som tar din
+    Välkommen till SamVR! Här kan du utforska och fördjupa dig i fantastiska VR-scener som tar din
     upplevelse till en ny nivå.
   </p>
 

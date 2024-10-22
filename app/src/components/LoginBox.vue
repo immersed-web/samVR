@@ -70,7 +70,7 @@ withDefaults(defineProps<{
   error?: Error,
 }>(), {
   error: undefined,
-  title: 'Välkommen till OrigoShift',
+  title: 'Välkommen till SamVR',
   description: 'Logga in för att delta i kulturevenemang i VR/360',
 });
 </script>
