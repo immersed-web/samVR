@@ -262,7 +262,7 @@ router.beforeEach(async (to, from) => {
   // console.log('from:', from);
   const authStore = useAuthStore();
   const windowTitle = useTitle();
-  windowTitle.value = 'Origoshift';
+  windowTitle.value = 'SamVR';
 
   // if(to.path === '/' && authStore.role){
   //   return { name: hasAtLeastSecurityLevel(authStore.role, 'admin') ? 'adminHome' : 'userHome'};
