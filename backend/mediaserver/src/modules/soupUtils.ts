@@ -23,6 +23,9 @@ export async function createWebRtcTransport(router: soupTypes.Router) {
       log.info('---transport close--- transport with id ' + transport.id + ' closed');
       transport.close();
     }
+    if (dtlsState === 'failed') {
+      log.info('---transport FAILED--- transport with id ' + transport.id + ' failed');
+    }
   });
 
   return transport;
