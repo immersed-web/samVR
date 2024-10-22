@@ -1,8 +1,24 @@
-import type { Scene } from 'aframe';
+import { utils, type Scene } from 'aframe';
 import { computed, ref, toValue, watch, type MaybeRef, type Ref } from 'vue';
 // import { onBeforeRouteLeave } from 'vue-router';
-import { useEventListener, tryOnMounted, whenever } from '@vueuse/core';
+import { useEventListener, tryOnMounted, whenever, computedAsync } from '@vueuse/core';
 
+// export const deviceIsVRHeadset = window.hasNativeWebVRImplementation;
+// export const deviceIsVRHeadset = utils.device.checkHeadsetConnected();
+export const deviceIsVRHeadset = computedAsync(async () => {
+  if (!navigator.xr) return false;
+  return await navigator.xr.isSessionSupported('immersive-vr');
+}, false)
+
+// export let deviceIsVRHeadset = false;
+// export async function queryVRHeadset() {
+//   if (!navigator.xr) {
+//     deviceIsVRHeadset = false;
+//     return;
+//   }
+//   deviceIsVRHeadset = await navigator.xr.isSessionSupported('immersive-vr');
+// }
+// export const deviceIsVRHeadset = navigator.xr?.isSessionSupported('immersive-vr');
 
 let eventListenersAttached = false
 const isImmersed = ref(false);
