@@ -26,35 +26,35 @@
     <!-- <a-sphere :position="vrSpaceStore.currentVrSpace.dbData.spawnPosition?.join(' ')" color="yellow"
       scale="0.1 0.1 0.1" /> -->
 
-    <!-- <a-entity id="camera-rig" ref="playerOriginTag"> -->
-    <a-entity camera @loaded="onCameraLoaded" id="camera" ref="headTag"
-      look-controls="reverseMouseDrag: false; reverseTouchDrag: true; pointerLockEnabled: true;"
-      wasd-controls="acceleration:65;"
-      :simple-navmesh-constraint="`navmesh: #navmesh; fall: 1; height: ${defaultHeightOverGround};`"
-      emit-move="interval: 20;" :position="`0 ${defaultHeightOverGround} 0`">
-      <a-entity id="teleport-target-aframe-camera" />
-      <!-- <a-entity ref="debugConeTag" position="0.5 -0.5 -1">
+    <a-entity id="camera-rig" ref="playerOriginTag">
+      <a-entity camera @loaded="onCameraLoaded" id="camera" ref="headTag"
+        look-controls="reverseMouseDrag: false; reverseTouchDrag: true; pointerLockEnabled: true;"
+        wasd-controls="acceleration:65;"
+        :simple-navmesh-constraint="`navmesh: #navmesh; fall: 1; height: ${defaultHeightOverGround};`"
+        emit-move="interval: 20;" :position="`0 ${defaultHeightOverGround} 0`">
+        <a-entity id="teleport-target-aframe-camera" />
+        <!-- <a-entity ref="debugConeTag" position="0.5 -0.5 -1">
         <a-cone color="orange" scale="0.1 0.1 0.1" rotation="90 0 0" />
       </a-entity>
       <a-entity ref="debugConeTag2" position="0.9 -0.5 -1">
         <a-cone color="pink" scale="0.1 0.1 0.1" rotation="90 0 0" />
       </a-entity> -->
 
-      <!-- <a-entity ref="leftHandTag" id="left-hand" @controllerconnected="leftControllerConnected = true"
+      </a-entity>
+      <a-entity ref="leftHandTag" id="left-hand" @controllerconnected="leftControllerConnected = true"
         @controllerdisconnected="leftControllerConnected = false" laser-controls="hand:left"
         raycaster="objects: .clickable" emit-move="interval: 20; relativeToCamera: true">
-        <a-entity :visible="leftControllerConnected" scale="0.05 0.05 0.05" rotation="20 90 -140"
-          gltf-model="#avatar-hand-1" />
+        <!-- <a-entity :visible="leftControllerConnected" scale="0.05 0.05 0.05" rotation="20 90 -140"
+        gltf-model="#avatar-hand-1" /> -->
       </a-entity>
       <a-entity ref="rightHandTag" id="right-hand" @controllerconnected="rightControllerConnected = true"
         @controllerdisconnected="rightControllerConnected = false" oculus-touch-controls="hand:right"
         blink-controls="cameraRig: #camera-rig; teleportOrigin: #camera; collisionEntities: #navmesh;"
         emit-move="interval: 20; relativeToCamera: true">
-        <a-entity :visible="rightControllerConnected" scale="0.05 0.05 -0.05" rotation="20 90 -140"
-          gltf-model="#avatar-hand-1" />
-      </a-entity> -->
+        <!-- <a-entity :visible="rightControllerConnected" scale="0.05 0.05 -0.05" rotation="20 90 -140"
+        gltf-model="#avatar-hand-1" /> -->
+      </a-entity>
     </a-entity>
-    <!-- </a-entity> -->
 
 
     <Teleport to="#teleport-target-ui-right">
