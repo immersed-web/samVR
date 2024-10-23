@@ -5,7 +5,7 @@
       </div>
       <UIOverlay />
       <WaitForAframe>
-        <a-scene renderer="logarithmicDepthBuffer: false" ref="sceneTag" cursor="fuse:false; rayOrigin:mouse;"
+        <a-scene renderer="logarithmicDepthBuffer: false" ref="aframeScene" cursor="fuse:false; rayOrigin:mouse;"
           :raycaster="`objects: ${currentRaycastSelectorString}; mouseCursorStyleEnabled: ${pointerOnHover}`"
           raycaster-update @raycast-update="setCursorIntersection($event.detail)">
           <a-assets>
@@ -13,8 +13,7 @@
               src="https://fonts.gstatic.com/s/materialicons/v70/flUhRq6tzZclQEJ-Vdg-IuiaDsNa.woff" />
           </a-assets>
           <VrAFrame v-if="vrSpaceStore.worldModelUrl" :show-nav-mesh="false">
-            <a-entity id="teleport-target-aframe-scene" />
-            <a-entity id="teleport-target-aframe-cursor" ref="cursorEntity">
+            <a-entity ref="vrCursor">
               <a-ring :visible="currentCursorMode === 'teleport'" transparent opacity="0.3" position="0 0 0.01"
                 radius-inner="0.13" radius-outer="0.17" material="shader: flat;" rotation="0 0 0" color="white" />
             </a-entity>
@@ -31,7 +30,7 @@
           <EmojiTeleport :uvs="[43, 43]"
             :coords="[[[35, 8], [36, 37], [36, 38], [15, 8], [36, 27]], [[34, 8], [2, 8], [36, 24], [36, 25], [21, 8],], [[28, 26], [28, 20], [28, 38], [3, 16], [2, 1]]]"
             @change="setEmojiSelf" :is-v-r="false" :columns="5" />
-          <Teleport to="#teleport-target-ui-left">
+          <Teleport v-if="overlayGUILeft" :to="overlayGUILeft">
             <p>is VR Headset: {{ deviceIsVRHeadset }}</p>
             <div v-if="!deviceIsVRHeadset">
 
@@ -46,9 +45,6 @@
               <!-- <pre class="text-xs whitespace-normal max-w-24">screenShares: {{ vrSpaceStore.screenShares }}</pre> -->
             </div>
           </Teleport>
-          <!-- <Teleport to="#teleport-target-aframe-camera">
-            <a-sphere position="0 0 -2" color="yellow" scale="0.1 0.1 0.1" />
-          </Teleport> -->
         </template>
       </WaitForAframe>
     </div>
@@ -72,6 +68,7 @@ import EmojiTeleport from '@/components/lobby/EmojiTeleport.vue';
 import { useSoupStore } from '@/stores/soupStore';
 import { useDisplayMedia } from '@vueuse/core';
 import type { ProducerId } from 'schemas/mediasoup';
+import { aframeScene, overlayGUILeft, vrCursor } from '@/composables/teleportTargets';
 const { setCursorIntersection, currentCursorMode, setCursorEntityRef, pointerOnHover, currentRaycastSelectorString } = useCurrentCursorIntersection();
 
 const router = useRouter();
@@ -83,13 +80,11 @@ const { stream: screenshareStream, start: startScreenshare, stop: stopDisplayMed
 const props = defineProps<{
   vrSpaceId: VrSpaceId
 }>();
-const sceneTag = ref<Scene>();
 const domOutlet = ref<HTMLDivElement>();
 const screenVideoTag = ref<HTMLVideoElement>();
 const screenShareAVideoTag = ref<Entity>();
-const cursorEntity = ref<Entity>();
-setCursorEntityRef(cursorEntity);
-provide(aFrameSceneProvideKey, { sceneTag, domOutlet });
+setCursorEntityRef(vrCursor);
+provide(aFrameSceneProvideKey, { sceneTag: aframeScene, domOutlet });
 
 watch(() => props.vrSpaceId, () => {
   console.log('vrSpaceId updated:', props.vrSpaceId);
@@ -154,8 +149,8 @@ async function getScreenShare() {
   screenShareAVideoTag.value.setAttribute('src', '#screen-video-tag');
   // screenShareAVideoTag.value.setAttribute('material', 'src: #screen-video-tag');
 
-  const camPos = sceneTag.value!.camera.getWorldPosition(new THREE.Vector3());
-  const aVideoPos = sceneTag.value!.camera.getWorldDirection(new THREE.Vector3());
+  const camPos = aframeScene.value!.camera.getWorldPosition(new THREE.Vector3());
+  const aVideoPos = aframeScene.value!.camera.getWorldDirection(new THREE.Vector3());
   aVideoPos.y = 0;
   aVideoPos.setLength(1.5)
   aVideoPos.add(camPos);

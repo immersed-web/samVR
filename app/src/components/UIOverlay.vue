@@ -1,16 +1,16 @@
 <script setup lang="ts">
+import { overlayGUILeft, overlayGUICenter, overlayGUIRight } from '@/composables/teleportTargets';
 </script>
 
 <template>
   <div id="ui" class="absolute top-0 left-0 z-10 flex justify-between p-2 pointer-events-none w-svw h-svh">
-    <div id="teleport-target-ui-left" class="flex flex-col gap-1">
+    <div ref="overlayGUILeft" class=" flex flex-col gap-1">
       <slot name="left" />
     </div>
-    <div id="teleport-target-ui-center" class="">
+    <div ref="overlayGUICenter" class="">
       <slot name="center" />
     </div>
-    <div id="teleport-target-ui-right" class="flex flex-col gap-1">
-      <div id="tp-tweakpane" />
+    <div ref="overlayGUIRight" class="flex flex-col gap-1">
       <slot name="right" />
     </div>
   </div>

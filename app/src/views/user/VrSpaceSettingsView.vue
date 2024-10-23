@@ -284,7 +284,7 @@
           </a-entity>
           <a-entity v-if="transformedSelectedObject">
             <VrSpacePortal :key="`selected-${transformedSelectedObject.placedObjectId}`"
-              v-if="transformedSelectedObject.type === 'vrPortal'" show-box-helper
+              v-if="transformedSelectedObject.type === 'vrPortal'"
               :position="transformedSelectedObject.position?.join(' ')" :vr-portal="transformedSelectedObject.vrPortal"
               :label="'markerad'" />
             <PlacedAsset v-else-if="transformedSelectedObject.type === 'asset' && transformedSelectedObject.asset"

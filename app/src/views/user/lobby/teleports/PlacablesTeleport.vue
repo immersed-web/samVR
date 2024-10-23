@@ -9,16 +9,16 @@
   <!-- #endregion -->
 
   <!-- #region Tweakpane UI -->
-  <Teleport to="#teleport-target-ui-right">
+  <!-- <Teleport to="#teleport-target-ui-right">
     <div id="paneContainer" ref="paneContainer" class="flex flex-col gap-1 pointer-events-auto">
       <div id="pane1" />
       <div id="pane2" />
     </div>
-  </Teleport>
+  </Teleport> -->
   <!-- #endregion -->
 
   <template v-if="isAsset(currentlyMovedObject)">
-    <Teleport to="#teleport-target-aframe-cursor">
+    <Teleport v-if="vrCursor" :to="vrCursor">
       <PlacedAsset v-if="currentlyMovedObject" :asset="currentlyMovedObject" />
     </Teleport>
   </template>
@@ -95,6 +95,7 @@ import type { PlacedObjectWithIncludes } from 'database';
 import { useClientStore } from '@/stores/clientStore';
 const clientStore = useClientStore();
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
+import { vrCursor } from '@/composables/teleportTargets';
 const vrSpaceStore = useVrSpaceStore();
 
 const { currentCursorIntersection, onCursorClick, setCursorMode, currentCursorMode } = useCurrentCursorIntersection();

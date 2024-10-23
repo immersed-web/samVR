@@ -16,6 +16,7 @@ import {
   ListboxOptions,
   ListboxOption,
 } from '@headlessui/vue';
+import { cameraAttacher, leftHandVRGui, overlayGUILeft } from '@/composables/teleportTargets';
 
 const vrSpaceStore = useVrSpaceStore();
 
@@ -78,7 +79,7 @@ onMounted(() => {
   <div>
     <!-- #region Emoji picker for monitor -->
     <!-- HeadlessUI Listbox -->
-    <Teleport to="#teleport-target-ui-left">
+    <Teleport v-if="overlayGUILeft" :to="overlayGUILeft">
       <div class="pointer-events-auto">
         <Listbox v-model="selectedCoords" @update:model-value="onEmojiSelected" class="tooltip tooltip-right"
           data-tip="Pick an emoji to display for other users">
@@ -107,7 +108,7 @@ onMounted(() => {
     <!-- #endregion -->
 
     <!-- #region Emoji picker for VR/hand controls -->
-    <Teleport to="#tp-aframe-hand-gui-left">
+    <Teleport v-if="leftHandVRGui" :to="leftHandVRGui">
       <a-entity :visible="oculusButtons.x" position="0 0.1 0"
         mesh-ui-block="backgroundOpacity: 0.2; contentDirection: column; fontSize: 0.03;" class="">
         <a-entity v-for="(coordsGroup, iCg) in coords" :key="iCg"
@@ -128,7 +129,7 @@ onMounted(() => {
     </Teleport>
     <!-- #endregion -->
 
-    <Teleport to="#teleport-target-aframe-camera">
+    <Teleport v-if="cameraAttacher" :to="cameraAttacher">
       <EmojiSelf :sheet-url="emojiSheet" :coords="selectedCoords" :active="active" />
     </Teleport>
   </div>

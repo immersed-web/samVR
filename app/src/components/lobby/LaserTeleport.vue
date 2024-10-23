@@ -3,6 +3,7 @@ import { ref, watch } from 'vue';
 import { useEventListener } from '@vueuse/core';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import { useCurrentCursorIntersection } from '@/composables/vrSpaceComposables';
+import { overlayGUILeft, vrCursor } from '@/composables/teleportTargets';
 
 const vrSpaceStore = useVrSpaceStore();
 const { currentCursorIntersection: currentCursor, setCursorMode } = useCurrentCursorIntersection();
@@ -43,14 +44,14 @@ watch([laserActive, currentCursor], ([newActive, newIntersection], [oldActive, o
 
 <template>
   <!-- Laser pointer, self -->
-  <Teleport to="#teleport-target-aframe-cursor">
+  <Teleport v-if="vrCursor" :to="vrCursor">
     <a-sphere v-if="laserActive" position="0 0 0" scale=".075 .075 .075" color="green" />
   </Teleport>
 
   <!-- For optimization, other avatars' laser pointers are rendered directly in the remote avatar iteration -->
 
   <!-- UI, clickable badge -->
-  <Teleport to="#teleport-target-ui-left">
+  <Teleport v-if="overlayGUILeft" :to="overlayGUILeft">
     <div class="badge cursor-pointer pointer-events-auto tooltip tooltip-right"
       :class="laserActive ? 'badge-success' : ''" @click="toggleLaser"
       data-tip="Klicka eller tryck L för att slå på och av laserpekaren">

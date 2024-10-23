@@ -32,7 +32,7 @@
         wasd-controls="acceleration:65;"
         :simple-navmesh-constraint="`navmesh: #navmesh; fall: 1; height: ${defaultHeightOverGround};`"
         emit-move="interval: 20;" :position="`0 ${defaultHeightOverGround} 0`">
-        <a-entity id="teleport-target-aframe-camera" />
+        <a-entity ref="cameraAttacher" />
         <!-- <a-entity ref="debugConeTag" position="0.5 -0.5 -1">
         <a-cone color="orange" scale="0.1 0.1 0.1" rotation="90 0 0" />
       </a-entity>
@@ -41,28 +41,31 @@
       </a-entity> -->
 
       </a-entity>
-      <a-entity ref="leftHandTag" id="tp-aframe-hand-left" @controllerconnected="leftControllerConnected = true"
+      <a-entity @controllerconnected="leftControllerConnected = true"
         @controllerdisconnected="leftControllerConnected = false" laser-controls="hand:left"
+        :raycaster="`objects: ${currentRaycastSelectorString}; mouseCursorStyleEnabled: ${pointerOnHover}`"
         @xbuttondown="oculusButtons['x'] = true" @xbuttonup="oculusButtons['x'] = false"
-        @ybuttondown="oculusButtons['y'] = true" @ybuttonup="oculusButtons['y'] = false" raycaster="objects: .clickable"
+        @ybuttondown="oculusButtons['y'] = true" @ybuttonup="oculusButtons['y'] = false"
         emit-move="interval: 20; relativeToCamera: true">
-        <a-entity position="0 0 -0.06" rotation="-90 0 0" id="tp-aframe-hand-gui-left"></a-entity>
+        <a-entity ref="leftHandVRGui" position="0 0 -0.06" rotation="-90 0 0"></a-entity>
         <!-- <a-entity :visible="leftControllerConnected" scale="0.05 0.05 0.05" rotation="20 90 -140"
         gltf-model="#avatar-hand-1" /> -->
       </a-entity>
-      <a-entity ref="rightHandTag" id="tp-aframe-hand-right" @controllerconnected="rightControllerConnected = true"
-        @controllerdisconnected="rightControllerConnected = false" oculus-touch-controls="hand:right"
+      <a-entity @controllerconnected="rightControllerConnected = true"
+        @controllerdisconnected="rightControllerConnected = false" laser-controls="hand:right"
+        :raycaster="`objects: ${currentRaycastSelectorString}; mouseCursorStyleEnabled: ${pointerOnHover}`"
         @abuttondown="oculusButtons['a'] = true" @abuttonup="oculusButtons['a'] = false"
         @bbuttondown="oculusButtons['b'] = true" @bbuttonup="oculusButtons['b'] = false"
         blink-controls="cameraRig: #camera-rig; teleportOrigin: #camera; collisionEntities: #navmesh;"
         emit-move="interval: 20; relativeToCamera: true">
         <!-- <a-entity :visible="rightControllerConnected" scale="0.05 0.05 -0.05" rotation="20 90 -140"
         gltf-model="#avatar-hand-1" /> -->
+        <a-entity ref="rightHandVRGui" position="0 0 -0.06" rotation="-90 0 0"></a-entity>
       </a-entity>
     </a-entity>
 
 
-    <Teleport to="#teleport-target-ui-right">
+    <Teleport v-if="overlayGUIRight" :to="overlayGUIRight">
       <div class="card bg-base-200 text-base-content p-4 text-xs pointer-events-auto">
         <!-- <div>
           <pre>normal:{{ currentCursorIntersection?.intersection.normal }}</pre>
@@ -131,7 +134,8 @@ import BasicAvatarEntity from './BasicAvatarEntity.vue';
 import { generateSpawnPosition, arrToCoordString, quaternionTupleToAframeRotation } from '@/modules/3DUtils';
 import PlacedAsset from './PlacedAsset.vue';
 import { usePointerLock } from '@vueuse/core';
-const { currentCursorIntersection, triggerCursorClick, isCursorOnNavmesh } = useCurrentCursorIntersection();
+import { overlayGUIRight, leftHandVRGui, rightHandVRGui, cameraAttacher } from '@/composables/teleportTargets';
+const { currentCursorIntersection, triggerCursorClick, isCursorOnNavmesh, currentRaycastSelectorString, pointerOnHover } = useCurrentCursorIntersection();
 const { lock, unlock, element } = usePointerLock();
 
 const utilMatrix = new THREE.Matrix4();

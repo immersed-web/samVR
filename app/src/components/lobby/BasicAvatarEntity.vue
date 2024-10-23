@@ -10,7 +10,7 @@
       webkit-playsinline crossorigin="anonymous" />
     <a-entity interpolated-transform="interpolationTime: 350;" @near-range-entered="onNearRangeEntered"
       @near-range-exited="onNearRangeExited" ref="avatarEntity" mediastream-audio-source @loaded="onAvatarEntityLoaded">
-      <Teleport to="#teleport-target-ui-right">
+      <Teleport v-if="overlayGUIRight" :to="overlayGUIRight">
         <pre class="text-xs whitespace-normal">videoStream: {{ screenshareStream }}</pre>
         <pre class="text-xs whitespace-normal">videoProducerId: {{ videoProducerId }}</pre>
       </Teleport>
@@ -50,6 +50,7 @@ import { omit, pick } from 'lodash-es';
 import { useSoupStore } from '@/stores/soupStore';
 // import { asyncComputed } from '@vueuse/core';
 import { arrToCoordString, quaternionTupleToAframeRotation } from '@/modules/3DUtils';
+import { overlayGUIRight } from '@/composables/teleportTargets';
 
 const soupStore = useSoupStore();
 

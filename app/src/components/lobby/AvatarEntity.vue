@@ -1,6 +1,6 @@
 <template>
   <a-entity @loaded="onAvatarEntityLoaded" ref="avatarRootTag">
-    <Teleport to="#teleport-target-ui-right">
+    <Teleport v-if="overlayGUIRight" :to="overlayGUIRight">
       <div>{{ clientInfo.clientRealtimeData?.head }}</div>
     </Teleport>
     <!-- <a-entity :id="`head-${props.clientInfo.connectionId}`" ref="remoteAvatar"
@@ -55,6 +55,7 @@ import { ref, computed, watch, onMounted, onBeforeUnmount, shallowRef } from 'vu
 import type { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import type { ProducerId } from 'schemas/mediasoup';
 import { useSoupStore } from '@/stores/soupStore';
+import { overlayGUIRight } from '@/composables/teleportTargets';
 
 // Props & emits
 const props = defineProps<{
