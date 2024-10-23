@@ -280,7 +280,7 @@ export const vrSpaces = pgTable("VrSpaces", {
 	// A bug in drizzle generates invalid SQL migrations for arrays of 
 	// double precision (double precision uses space in sql and this leads to incorrect quoteing).
 	// Workaround for now is to use real
-	spawnPosition: real("spawnPosition").array(),
+	spawnPosition: real("spawnPosition").array().$type<NumberTuble3>(),
 	spawnRadius: doublePrecision("spawnRadius"),
 	skyColor: text("skyColor"),
 	...createdAndUpdatedAt,
