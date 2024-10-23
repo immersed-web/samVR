@@ -32,7 +32,7 @@ export default () => {
           return;
         }
         posAudio.setMediaStreamSource(this.stream);
-        posAudio.play();
+        // posAudio.play();
         if(!this.levelEntity){
           console.error('no level entity!!');
           return;
