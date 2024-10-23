@@ -26,7 +26,7 @@
     <!-- <a-sphere :position="vrSpaceStore.currentVrSpace.dbData.spawnPosition?.join(' ')" color="yellow"
       scale="0.1 0.1 0.1" /> -->
 
-    <a-entity id="camera-rig" ref="playerOriginTag">
+    <a-entity id="camera-rig" ref="camerarigTag">
       <a-entity camera @loaded="onCameraLoaded" id="camera" ref="headTag"
         look-controls="reverseMouseDrag: false; reverseTouchDrag: true; pointerLockEnabled: true;"
         wasd-controls="acceleration:65;"
@@ -41,14 +41,19 @@
       </a-entity> -->
 
       </a-entity>
-      <a-entity ref="leftHandTag" id="left-hand" @controllerconnected="leftControllerConnected = true"
+      <a-entity ref="leftHandTag" id="tp-aframe-hand-left" @controllerconnected="leftControllerConnected = true"
         @controllerdisconnected="leftControllerConnected = false" laser-controls="hand:left"
-        raycaster="objects: .clickable" emit-move="interval: 20; relativeToCamera: true">
+        @xbuttondown="oculusButtons['x'] = true" @xbuttonup="oculusButtons['x'] = false"
+        @ybuttondown="oculusButtons['y'] = true" @ybuttonup="oculusButtons['y'] = false" raycaster="objects: .clickable"
+        emit-move="interval: 20; relativeToCamera: true">
+        <a-entity position="0 0 -0.06" rotation="-90 0 0" id="tp-aframe-hand-gui-left"></a-entity>
         <!-- <a-entity :visible="leftControllerConnected" scale="0.05 0.05 0.05" rotation="20 90 -140"
         gltf-model="#avatar-hand-1" /> -->
       </a-entity>
-      <a-entity ref="rightHandTag" id="right-hand" @controllerconnected="rightControllerConnected = true"
+      <a-entity ref="rightHandTag" id="tp-aframe-hand-right" @controllerconnected="rightControllerConnected = true"
         @controllerdisconnected="rightControllerConnected = false" oculus-touch-controls="hand:right"
+        @abuttondown="oculusButtons['a'] = true" @abuttonup="oculusButtons['a'] = false"
+        @bbuttondown="oculusButtons['b'] = true" @bbuttonup="oculusButtons['b'] = false"
         blink-controls="cameraRig: #camera-rig; teleportOrigin: #camera; collisionEntities: #navmesh;"
         emit-move="interval: 20; relativeToCamera: true">
         <!-- <a-entity :visible="rightControllerConnected" scale="0.05 0.05 -0.05" rotation="20 90 -140"
@@ -113,6 +118,7 @@ import { useStreamStore } from '@/stores/streamStore';
 import { useXRState } from '@/composables/XRState';
 import { throttle, omit } from 'lodash-es';
 // import type { SubscriptionValue, RouterOutputs } from '@/modules/trpcClient';
+import emojiSheet from '@/assets/sprite-128.png';
 import { useSoupStore } from '@/stores/soupStore';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import { aFrameSceneProvideKey } from '@/modules/injectionKeys';
@@ -120,7 +126,7 @@ import { getAssetUrl } from '@/modules/utils';
 import VrSpacePortal from '../entities/VrSpacePortal.vue';
 import EmojiOther from './EmojiOther.vue';
 import LaserPointerOther from './LaserPointerOther.vue';
-import { useCurrentCursorIntersection } from '@/composables/vrSpaceComposables';
+import { useCurrentCursorIntersection, oculusButtons } from '@/composables/vrSpaceComposables';
 import BasicAvatarEntity from './BasicAvatarEntity.vue';
 import { generateSpawnPosition, arrToCoordString, quaternionTupleToAframeRotation } from '@/modules/3DUtils';
 import PlacedAsset from './PlacedAsset.vue';
@@ -171,7 +177,7 @@ const leftControllerConnected = ref(false);
 
 const modelTag = ref<Entity>();
 const headTag = ref<Entity>();
-// const playerOriginTag = ref<Entity>();
+const camerarigTag = ref<Entity>();
 const leftHandTag = ref<Entity>();
 const rightHandTag = ref<Entity>();
 const debugConeTag = ref<Entity>();
@@ -245,7 +251,7 @@ onBeforeUnmount(async () => {
 });
 
 async function onModelLoaded() {
-  if (modelTag.value && headTag.value) {
+  if (modelTag.value) {
     let startPos = getRandomSpawnPosition();
     if (!startPos) {
       console.log('failed to calculate spawnpoint. centering player on model bbox as fallback');
@@ -254,9 +260,10 @@ async function onModelLoaded() {
       startPos = new THREE.Vector3();
       bbox.getCenter(startPos);
     }
-    startPos.y += defaultHeightOverGround + 0.05;
-    console.log('Start position', startPos);
-    headTag.value.object3D.position.set(startPos.x, startPos.y, startPos.z);
+    // startPos.y += defaultHeightOverGround + 0.05;
+    // console.log('Start position', startPos);
+    // headTag.value.object3D.position.set(startPos.x, startPos.y, startPos.z);
+    camerarigTag.value?.object3D.position.set(...startPos.toArray());
 
     // const worldPos = headTag.value!.object3D.getWorldPosition(new THREE.Vector3());
     // const worldRot = headTag.value!.object3D.getWorldQuaternion(new THREE.Quaternion());
@@ -307,7 +314,7 @@ function getRandomSpawnPosition() {
     console.warn('spawnRadius not set. Using 1 as fallback');
     spawnRadius = 1;
   }
-  return generateSpawnPosition(spawnPosition as THREE.Vector3Tuple, spawnRadius);
+  return generateSpawnPosition(spawnPosition, spawnRadius);
 }
 
 // function goToStream() {

@@ -107,9 +107,9 @@ onMounted(() => {
     <!-- #endregion -->
 
     <!-- #region Emoji picker for VR/hand controls -->
-    <Teleport v-if="oculusButtons.x" to="#teleport-target-aframe-hand-left">
-      <a-entity position="0 0.1 0" mesh-ui-block="backgroundOpacity: 0.2; contentDirection: column; fontSize: 0.03;"
-        class="">
+    <Teleport to="#tp-aframe-hand-gui-left">
+      <a-entity :visible="oculusButtons.x" position="0 0.1 0"
+        mesh-ui-block="backgroundOpacity: 0.2; contentDirection: column; fontSize: 0.03;" class="">
         <a-entity v-for="(coordsGroup, iCg) in coords" :key="iCg"
           mesh-ui-block="backgroundOpacity: 0; contentDirection: row; textAlign: left;">
           <template v-for="(coords, iC) in coordsGroup" :key="iC">
