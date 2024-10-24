@@ -10,15 +10,15 @@
 
     <a-sphere v-bind="animationAttributes" :class="[{ 'clickable': (props.clickable && allowed) }, $attrs.class]"
       transparent="true" scale="0.5 0.5 0.5" :opacity="allowed ? 1.0 : 0.5"
-      material="shader: outer-glow; start: 0.3; color: 0.5 0 1;" :position="`0 ${defaultHeightOverGround} 0`"
-      :box-helper="`enabled: ${showBoxHelper}`">
-      <a-icosahedron
+      :material="`shader: vr-portal; start: 0.3; dynamicOpacity: true; warpParams: 2.8 0.5; color: 0.5 0 1; src: url(${panoramicPreviewUrl}); side:back`"
+      :position="`0 ${defaultHeightOverGround} 0`" :box-helper="`enabled: ${showBoxHelper}`">
+      <!-- <a-icosahedron
         :material="`shader: pano-portal; dynamicOpacity: true; warpParams: 2.8 0.5; src: url(${panoramicPreviewUrl}); side: back;`"
         v-if="panoramicPreviewUrl" detail="5" scale="0.98 0.98 0.98" transparent="true" :opacity="allowed ? 1.0 : 0.2">
       </a-icosahedron>
       <a-sphere v-else color="black" transparent="true" opacity="0.9" scale="0.98 0.98 0.98" />
       <a-sphere transparent="true" scale="0.97 0.97 0.97" :opacity="allowed ? 1.0 : 0.5"
-        material="shader: outer-glow; start: 0.3; color: 0.5 0 1; side:back" />
+        material="shader: outer-glow; start: 0.3; color: 0.5 0 1; side:back" /> -->
     </a-sphere>
   </a-entity>
 </template>
