@@ -62,7 +62,7 @@
       </a-entity> -->
 
       </a-entity>
-      <a-entity @controllerconnected="leftControllerConnected = true"
+      <a-entity ref="leftHandTag" @controllerconnected="leftControllerConnected = true"
         @controllerdisconnected="leftControllerConnected = false" laser-controls="hand:left"
         :raycaster="`objects: ${currentRaycastSelectorString}; mouseCursorStyleEnabled: ${pointerOnHover}`"
         @xbuttondown="oculusButtons['x'] = true" @xbuttonup="oculusButtons['x'] = false"
@@ -72,12 +72,11 @@
         <!-- <a-entity :visible="leftControllerConnected" scale="0.05 0.05 0.05" rotation="20 90 -140"
         gltf-model="#avatar-hand-1" /> -->
       </a-entity>
-      <a-entity @controllerconnected="rightControllerConnected = true"
+      <a-entity ref="rightHandTag" @controllerconnected="rightControllerConnected = true"
         @controllerdisconnected="rightControllerConnected = false" laser-controls="hand:right"
         :raycaster="`objects: ${currentRaycastSelectorString}; mouseCursorStyleEnabled: ${pointerOnHover}`"
         @abuttondown="oculusButtons['a'] = true" @abuttonup="oculusButtons['a'] = false"
         @bbuttondown="oculusButtons['b'] = true" @bbuttonup="oculusButtons['b'] = false"
-        blink-controls="cameraRig: #camera-rig; teleportOrigin: #camera; collisionEntities: #navmesh;"
         emit-move="interval: 20; relativeToCamera: true">
         <!-- <a-entity :visible="rightControllerConnected" scale="0.05 0.05 -0.05" rotation="20 90 -140"
         gltf-model="#avatar-hand-1" /> -->
@@ -245,6 +244,8 @@ onBeforeMount(async () => {
 onMounted(async () => {
   console.log('vrAframe onMounted');
   if (sceneTag.value) {
+    sceneTag.value.addEventListener('loaded', onSceneLoaded);
+    sceneTag.value.addEventListener('renderstart', onRenderStart);
     const sceneEl = sceneTag.value;
     sceneEl.camera && onCameraSetActive(sceneEl.camera as THREE.PerspectiveCamera);
     sceneEl.addEventListener('camera-set-active', function (evt: Event) {
@@ -333,6 +334,24 @@ async function onModelLoaded() {
     // @ts-ignore
     rightHandTag.value?.addEventListener('move', onRightHandMove);
   }
+}
+
+function onSceneLoaded(evt: Event) {
+  console.log('scene loaded:', evt);
+  const scene = sceneTag.value
+  if (!scene) {
+    console.error("scene loaded event, but scenetag was undefined");
+    return;
+  };
+  rightHandTag.value?.setAttribute('blink-controls', {
+    cameraRig: '#camera-rig',
+    teleportOrigin: '#camera',
+    collisionEntities: '#navmesh',
+  })
+  // blink-controls="cameraRig: #camera-rig; teleportOrigin: #camera; collisionEntities: #navmesh;"
+}
+function onRenderStart(evt: Event) {
+  console.log('render started:', evt);
 }
 
 // Test function used to make sure we distribute spawn points nicely in the spawn area
