@@ -302,7 +302,7 @@
             <a-icosahedron v-if="vrSpaceStore.panoramicPreviewUrl" detail="5" scale="-0.5 -0.5 -0.5"
               :position="`0 ${defaultHeightOverGround} 0`"
               :opacity="currentCursorMode === 'place-spawnposition' ? 0.5 : 1.0"
-              :material="`shader: pano-portal; warpParams: 3 0.9; src: ${vrSpaceStore.panoramicPreviewUrl};`" />
+              :material="`shader: vr-portal; warpParams: 3 0.9; src: url(${vrSpaceStore.panoramicPreviewUrl}); side: back;`" />
           </a-entity>
           <a-entity id="teleport-target-aframe-cursor" ref="cursorEntity">
 
