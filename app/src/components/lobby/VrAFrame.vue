@@ -46,12 +46,12 @@
       scale="0.1 0.1 0.1" /> -->
 
     <a-entity id="camera-rig" ref="camerarigTag">
-      <a-entity camera @loaded="onCameraLoaded" id="camera" ref="headTag"
+      <a-entity camera id="camera" ref="cameraTag"
         look-controls="reverseMouseDrag: false; reverseTouchDrag: true; pointerLockEnabled: true;"
         wasd-controls="acceleration:35;"
         :simple-navmesh-constraint="`navmesh: #navmesh; fall: 1; height: ${defaultHeightOverGround};`"
         emit-move="interval: 20;" :position="`0 ${defaultHeightOverGround} 0`">
-        <a-entity ref="cameraAttacher">
+        <a-entity ref="cameraAttacher" :position="cameraAttacherPosString">
           <!-- <a-sphere position="0 0 0" color="red" scale="0.1 0.1 0.1" /> -->
         </a-entity>
         <!-- <a-entity ref="debugConeTag" position="0.5 -0.5 -1">
@@ -142,7 +142,7 @@
 
 <script setup lang="ts">
 import { type Entity, type DetailEvent, utils as aframeUtils, THREE } from 'aframe';
-import { ref, onMounted, onBeforeMount, computed, onBeforeUnmount, inject, watch, onUpdated } from 'vue';
+import { ref, onMounted, onBeforeMount, computed, onBeforeUnmount, inject, watch, onUpdated, shallowRef } from 'vue';
 import Avatar from './AvatarEntity.vue';
 import { defaultAvatarDesign, defaultHeightOverGround, type ClientRealtimeData } from 'schemas';
 // import type { Unsubscribable } from '@trpc/server/observable';
@@ -170,7 +170,8 @@ const { currentCursorIntersection, triggerCursorClick, isCursorOnNavmesh, curren
 const { lock, unlock, element } = usePointerLock();
 
 const utilMatrix = new THREE.Matrix4();
-const utilVector = new THREE.Vector3();
+const utilVector2 = new THREE.Vector2();
+const utilVector3 = new THREE.Vector3();
 watch(currentCursorIntersection, (intersection) => {
   // if (!intersection || !debugConeTag.value || !debugConeTag2) return;
   // let normal = intersection.intersection.normal;
@@ -203,7 +204,6 @@ const props = defineProps({
 });
 
 // A-frame
-// const sceneTag = ref<Scene>();
 const { sceneTag } = inject(aFrameSceneProvideKey)!;
 const { isImmersed } = useXRState(sceneTag);
 
@@ -211,26 +211,15 @@ const rightControllerConnected = ref(false);
 const leftControllerConnected = ref(false);
 
 const modelTag = ref<Entity>();
-const headTag = ref<Entity>();
+const cameraTag = ref<Entity>();
+const threeCamera = shallowRef<THREE.PerspectiveCamera>();
 const camerarigTag = ref<Entity>();
 const leftHandTag = ref<Entity>();
 const rightHandTag = ref<Entity>();
-const debugConeTag = ref<Entity>();
-const debugConeTag2 = ref<Entity>();
-
-// const avatarModelFileLoaded = ref(false);
-
-
-// const modelUrl = computed(() => {
-//   return props.modelUrl;
-// });
 
 const navmeshId = computed(() => {
   return vrSpaceStore.navMeshUrl !== undefined ? 'navmesh' : 'model';
 });
-// const navmeshId = computed(() => {
-//   return vrSpaceStore.currentVrSpace?.dbData.navMeshAssetId !== undefined ? 'navmesh' : 'model';
-// });
 
 const otherClients = computed(() => {
   if (!vrSpaceStore.currentVrSpace) {
@@ -255,6 +244,15 @@ onBeforeMount(async () => {
 
 onMounted(async () => {
   console.log('vrAframe onMounted');
+  if (sceneTag.value) {
+    const sceneEl = sceneTag.value;
+    sceneEl.camera && onCameraSetActive(sceneEl.camera as THREE.PerspectiveCamera);
+    sceneEl.addEventListener('camera-set-active', function (evt: Event) {
+      const detailEvt = evt as DetailEvent<{ cameraEl: Entity }>;
+      const camera = detailEvt.detail.cameraEl.getObject3D('camera') as THREE.PerspectiveCamera;
+      onCameraSetActive(camera);
+    });
+  }
   // console.log('onMounted completed');
 });
 
@@ -262,13 +260,10 @@ onUpdated(() => {
   console.log('vrAframe onUpdated');
 })
 
-function onCameraLoaded() {
+function onCameraSetActive(camera: THREE.PerspectiveCamera) {
+  threeCamera.value = camera;
   console.log('camera loaded. attaching scene attributes', navmeshId.value);
-  // sceneTag.value!.setAttribute('cursor', { rayOrigin: 'mouse', fuse: false });
-  // the  raycaster seem to keep a reference to the intersected object which leads to us missing "new" intersection after reattaching raycaster-listen.
-  // This is a hacky work-around to "reset" the raycasting logic
-  // sceneTag.value!.setAttribute('raycaster', { objects: '.clickable' });
-  // headTag.value!.setAttribute('simple-navmesh-constraint', `navmesh:#${navmeshId.value}; fall:2; height: ${defaultHeightOverGround};`);
+
   if (!sceneTag.value) {
     console.error('no sceneTag provided in onCameraLoaded');
     return;
@@ -277,7 +272,6 @@ function onCameraLoaded() {
     lock(sceneTag.value!.canvas);
   });
   window.addEventListener('mouseup', unlock)
-
 }
 
 onBeforeUnmount(async () => {
@@ -286,28 +280,24 @@ onBeforeUnmount(async () => {
   await vrSpaceStore.leaveVrSpace();
 });
 
-/**
- * calculates and sets the position for the "camera attacher", so that it is 
- * positioned exactly at the top edge of the view frustum 1 meters away from the camera
- */
-function positionCameraAttacher() {
-  if (cameraAttacher.value && sceneTag.value) {
-    console.log('positioning the cameraAttacher');
-    const overCamera = new THREE.Vector3(0, 1, 0);
-    const camera = sceneTag.value.camera
-    console.log('camera in cameraloaded callback', camera);
-    overCamera.unproject(camera);
-    // console.log('unprojected vector:', overCamera);
-
-    const attacherTag = cameraAttacher.value
-    camera.worldToLocal(overCamera)
+const cameraAttacherPosString = computed(() => {
+  if (threeCamera.value) {
+    const camera = threeCamera.value;
+    console.log('computing the cameraAttacher position');
+    const overCamera = new THREE.Vector3(0, 0.6, 0);
+    console.log('camera:', camera);
+    // return '0 0.2 -0.2';
+    camera.getViewSize(1, utilVector2);
+    overCamera.set(0, utilVector2.y * 0.5, -1);
     overCamera.setLength(0.3);
+    if (isImmersed.value) {
+      overCamera.y -= 0.05;
+    }
     console.log(overCamera);
-    attacherTag.object3D.position.set(...overCamera.toArray());
-  } else {
-    console.error('either cameraAttacher or sceneTag isnt defined in onMounted');
+    return arrToCoordString(overCamera.toArray());
   }
-}
+  return '0 0.2 -0.2';
+})
 
 async function onModelLoaded() {
   if (modelTag.value) {
@@ -320,7 +310,7 @@ async function onModelLoaded() {
       bbox.getCenter(startPos);
     }
     // startPos.y += defaultHeightOverGround + 0.05;
-    // console.log('Start position', startPos);
+    console.log('placing cameraRig at start position', startPos);
     // headTag.value.object3D.position.set(startPos.x, startPos.y, startPos.z);
     camerarigTag.value?.object3D.position.set(...startPos.toArray());
 
@@ -337,7 +327,7 @@ async function onModelLoaded() {
     // placeRandomSpheres();
 
     // @ts-ignore
-    headTag.value?.addEventListener('move', onHeadMove);
+    cameraTag.value?.addEventListener('move', onHeadMove);
     // @ts-ignore
     leftHandTag.value?.addEventListener('move', onLeftHandMove);
     // @ts-ignore
@@ -431,12 +421,12 @@ function teleportMouseDown(e: Event) {
 }
 
 function teleportSelf(e: Event) {
-  if (!headTag.value || !currentCursorIntersection.value) { return; }
+  if (!cameraTag.value || !currentCursorIntersection.value) { return; }
   if (e.timeStamp - timeMouseDown.value > 150) { return; }
   let posArray = currentCursorIntersection.value?.intersection.point.toArray();
   posArray[1] += defaultHeightOverGround;
   console.log('Click model', e, 'cursor', currentCursorIntersection.value, 'position array', posArray);
-  headTag.value.object3D.position.set(posArray[0], posArray[1], posArray[2]);
+  cameraTag.value.object3D.position.set(posArray[0], posArray[1], posArray[2]);
 }
 
 // const throttledTransformMutation = throttle(async () => {
