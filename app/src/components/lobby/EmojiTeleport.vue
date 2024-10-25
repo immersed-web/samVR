@@ -67,10 +67,7 @@ function emitChange() {
   // emit('change', selectedCoords.value, active.value);
 }
 
-const leftHand = ref<HTMLElement | null>(null);
 onMounted(() => {
-  leftHand.value = document.getElementById('teleport-target-aframe-hand-left');
-  console.log(leftHand.value);
 });
 
 </script>
