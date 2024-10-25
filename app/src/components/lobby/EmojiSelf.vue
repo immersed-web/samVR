@@ -25,15 +25,15 @@ watch(() => props.active, (value) => {
 </script>
 
 <template>
-  <a-entity ref="emoji" position="0 0.2 0"
-    animation__show="property: position; to: 0 -0.2 0; dur: 1000; easing: easeOutQuad; startEvents: show"
-    animation__hide="property: position; to: 0 0.2 0; dur: 1000; easing: easeInQuad; startEvents: hide">
+  <a-entity ref="emoji" position="0 0.06 0"
+    animation__show="property: position; to: 0 -0.06 0; dur: 1000; easing: easeOutQuad; startEvents: show"
+    animation__hide="property: position; to: 0 0.06 0; dur: 1000; easing: easeInQuad; startEvents: hide">
     <a-entity v-if="$props.coords" rotation="0 0 -5"
       animation="property: rotation; to: 0 0 5; loop: true; dir: alternate; dur: 1000; easing: easeInOutQuad">
       <a-entity position="0 0 0"
         :atlas-uvs="'totalRows: 43; totalColumns: 43; column: ' + $props.coords[0] + '; row: ' + $props.coords[1] + ';'"
         :material="`src: ${sheetUrl}; transparent: true; shader: flat; opacity: 0.5`"
-        geometry="primitive: plane; width: 0.3; height: 0.3; buffer: true; skipCache: true" />
+        geometry="primitive: plane; width: 0.1; height: 0.1; buffer: true; skipCache: true" />
     </a-entity>
   </a-entity>
 </template>

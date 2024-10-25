@@ -167,7 +167,7 @@ export default async function () {
     // fontKerning,
     // letterSpacing,
     textAlign: { type: "string", default: "center" },
-    // whiteSpace,
+    whiteSpace: { type: "string", default: "normal" },
     // breakOn,
   }
 

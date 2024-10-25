@@ -21,6 +21,25 @@
         class="navmesh" @mousedown="teleportMouseDown" @click.stop="triggerCursorClick" />
     </a-entity>
 
+    <a-entity v-if="vrSpaceStore.currentVrSpace.dbData.spawnPosition" ref="spawnPoint"
+      :position="arrToCoordString(vrSpaceStore.currentVrSpace.dbData.spawnPosition)">
+      <!-- <a-sphere color="yellow" radius="0.2" /> -->
+      <a-entity :position="`0 ${defaultHeightOverGround} 0`"
+        mesh-ui-block="backgroundOpacity: 0.2; justifyContent: space-evenly; fontSize: 0.03; padding: 0.004" class="">
+        <a-entity mesh-ui-block="margin: 0.01; justifyContent: space-evenly;">
+          <a-entity
+            mesh-ui-block="width: 0.1; height: 0.1; backgroundColor: #0ff; justifyContent: center; bestFit: auto;">
+            <a-entity mesh-ui-text="content: Gunnar är bäst!;"></a-entity>
+          </a-entity>
+          <a-entity
+            mesh-ui-block="width: 0.1; height: 0.1; backgroundColor: #0ff; justifyContent: center; bestFit: auto;">
+            <a-entity :mesh-ui-text="`content: vrState=${isImmersed};`"></a-entity>
+          </a-entity>
+        </a-entity>
+      </a-entity>
+
+    </a-entity>
+
     <slot />
 
     <!-- <a-sphere :position="vrSpaceStore.currentVrSpace.dbData.spawnPosition?.join(' ')" color="yellow"
@@ -29,10 +48,12 @@
     <a-entity id="camera-rig" ref="camerarigTag">
       <a-entity camera @loaded="onCameraLoaded" id="camera" ref="headTag"
         look-controls="reverseMouseDrag: false; reverseTouchDrag: true; pointerLockEnabled: true;"
-        wasd-controls="acceleration:65;"
+        wasd-controls="acceleration:35;"
         :simple-navmesh-constraint="`navmesh: #navmesh; fall: 1; height: ${defaultHeightOverGround};`"
         emit-move="interval: 20;" :position="`0 ${defaultHeightOverGround} 0`">
-        <a-entity ref="cameraAttacher" />
+        <a-entity ref="cameraAttacher">
+          <!-- <a-sphere position="0 0 0" color="red" scale="0.1 0.1 0.1" /> -->
+        </a-entity>
         <!-- <a-entity ref="debugConeTag" position="0.5 -0.5 -1">
         <a-cone color="orange" scale="0.1 0.1 0.1" rotation="90 0 0" />
       </a-entity>
@@ -62,6 +83,7 @@
         gltf-model="#avatar-hand-1" /> -->
         <a-entity ref="rightHandVRGui" position="0 0 -0.06" rotation="-90 0 0"></a-entity>
       </a-entity>
+
     </a-entity>
 
 
@@ -78,7 +100,16 @@
         </p>
       </div>
     </Teleport>
-
+    <Teleport v-if="overlayGUILeft" :to="overlayGUILeft">
+      <button class="btn btn-primary pointer-events-auto" @click="positionCameraAttacher">place camera attacher</button>
+      <div class="font-bold">isPresenting:{{ isImmersed }}</div>
+    </Teleport>
+    <Teleport v-if="rightHandVRGui" :to="rightHandVRGui">
+      <a-entity position="0 0.1 0"
+        mesh-ui-block="width: 0.3; height: 0.1; fontSize: 0.03; bestFit: auto; justifyContent: center" class="">
+        <a-entity :mesh-ui-text="`fontColor: #0ff; content: i vr= ${isImmersed}`" />
+      </a-entity>
+    </Teleport>
 
     <!-- Avatars wrapper element -->
     <a-entity>
@@ -134,7 +165,7 @@ import BasicAvatarEntity from './BasicAvatarEntity.vue';
 import { generateSpawnPosition, arrToCoordString, quaternionTupleToAframeRotation } from '@/modules/3DUtils';
 import PlacedAsset from './PlacedAsset.vue';
 import { usePointerLock } from '@vueuse/core';
-import { overlayGUIRight, leftHandVRGui, rightHandVRGui, cameraAttacher } from '@/composables/teleportTargets';
+import { overlayGUILeft, overlayGUIRight, leftHandVRGui, rightHandVRGui, cameraAttacher } from '@/composables/teleportTargets';
 const { currentCursorIntersection, triggerCursorClick, isCursorOnNavmesh, currentRaycastSelectorString, pointerOnHover } = useCurrentCursorIntersection();
 const { lock, unlock, element } = usePointerLock();
 
@@ -246,6 +277,7 @@ function onCameraLoaded() {
     lock(sceneTag.value!.canvas);
   });
   window.addEventListener('mouseup', unlock)
+
 }
 
 onBeforeUnmount(async () => {
@@ -253,6 +285,29 @@ onBeforeUnmount(async () => {
   // sceneTag.value?.removeAttribute('cursor');
   await vrSpaceStore.leaveVrSpace();
 });
+
+/**
+ * calculates and sets the position for the "camera attacher", so that it is 
+ * positioned exactly at the top edge of the view frustum 1 meters away from the camera
+ */
+function positionCameraAttacher() {
+  if (cameraAttacher.value && sceneTag.value) {
+    console.log('positioning the cameraAttacher');
+    const overCamera = new THREE.Vector3(0, 1, 0);
+    const camera = sceneTag.value.camera
+    console.log('camera in cameraloaded callback', camera);
+    overCamera.unproject(camera);
+    // console.log('unprojected vector:', overCamera);
+
+    const attacherTag = cameraAttacher.value
+    camera.worldToLocal(overCamera)
+    overCamera.setLength(0.3);
+    console.log(overCamera);
+    attacherTag.object3D.position.set(...overCamera.toArray());
+  } else {
+    console.error('either cameraAttacher or sceneTag isnt defined in onMounted');
+  }
+}
 
 async function onModelLoaded() {
   if (modelTag.value) {
