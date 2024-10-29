@@ -249,7 +249,7 @@ function attachOrbitControls(target: THREE.Vector3) {
     return;
   }
   cameraTag.value.setAttribute('position', '0 0 0');
-  let orbitControlSettings = `autoRotate: true; rotateSpeed: 1; initialPosition: ${target.x} ${target.y + 2} ${target.z + 5}; `;
+  let orbitControlSettings = `autoRotate: ${props.autoRotate}; rotateSpeed: 1; initialPosition: ${target.x} ${target.y + 2} ${target.z + 5}; `;
   orbitControlSettings += `target:${target.x} ${target.y} ${target.z};`;
   console.log('attaching orbit-controls to camera:', orbitControlSettings);
   cameraTag.value.setAttribute('orbit-controls', orbitControlSettings);

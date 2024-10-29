@@ -269,7 +269,7 @@
         <VrSpacePreview class="border rounded-md overflow-hidden" ref="vrComponentTag"
           :model-url="vrSpaceStore.worldModelUrl" :navmesh-url="vrSpaceStore.navMeshUrl"
           :raycastSelector="currentRaycastSelectorString"
-          :auto-rotate="currentCursorMode === undefined && selectedPlacedObject === undefined">
+          :auto-rotate="currentCursorMode === 'select-objects' && selectedPlacedObject === undefined">
           <a-entity v-if="true" id="placed-objects">
             <a-entity v-for="placedObject in placedObjectsNotBeingEdited"
               :key="`${placedObject.placedObjectId}_${placedObject.updatedAt}`"
