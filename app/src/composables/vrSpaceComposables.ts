@@ -46,13 +46,15 @@ const currentRaycastSelectorArray = computed<RaycastSelector[]>(() => {
     case 'place-vrPortal':
     case 'enterFirstPersonView':
       return ['.navmesh'];
+
     case 'place-asset':
     case 'place-pointLight':
-      return ['.raycastable-surface'];
     case 'laser':
       return ['.raycastable-surface'];
+
     case 'select-objects':
       return ['.editable-object', '.clickable']
+
     default:
       return ['.clickable'];
   }
