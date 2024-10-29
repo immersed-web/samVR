@@ -217,8 +217,8 @@
                     <span class="label-text font-semibold">Skapa ny portal</span>
                   </label>
                   <!-- <p>{{ portalTargetVrSpace }}</p> -->
-                  <AutoComplete v-if="allowedPortalTargets?.length" v-model="portalTargetVrSpace" :options="allowedPortalTargets"
-                    display-key="name" id-key="vrSpaceId" />
+                  <AutoComplete v-if="allowedPortalTargets?.length" v-model="portalTargetVrSpace"
+                    :options="allowedPortalTargets" display-key="name" id-key="vrSpaceId" />
                   <!-- <select class="select select-sm select-bordered" v-model="portalTargetVrSpace"
                       @change="isRaycastingActive = true">
                       <option v-for="vrSpace in allowedVrSpaces" :key="vrSpace.vrSpaceId" :value="vrSpace.vrSpaceId">
