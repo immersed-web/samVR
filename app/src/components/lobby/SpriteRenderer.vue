@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch, useTemplateRef, reactive } from 'vue';
+
 
 type Tuple = [number, number]
+const imgTag = useTemplateRef('imgTag');
 
 const props = defineProps<{
   sheetUrl: string,
@@ -9,39 +11,50 @@ const props = defineProps<{
   coords: Tuple
 }>();
 
-const canvas = ref<HTMLCanvasElement>();
+// const atlasDimensions = reactive({
+//   width: 0,
+//   height: 0,
+// });
 
-function drawSprite() {
-  const ctx = canvas.value?.getContext('2d');
-  const image = new Image();
-  image.src = props.sheetUrl;
-  image.addEventListener('load', () => {
-    if (canvas.value) {
-      ctx?.clearRect(0, 0, canvas.value.width, canvas.value.height);
-      const spriteWidth = image.width / props.uvs[0];
-      const spriteHeight = image.height / props.uvs[1];
-      ctx?.drawImage(image, (props.coords[0] - 1) * spriteWidth, image.height - props.coords[1] * spriteHeight, spriteWidth, spriteHeight, 0, 0, canvas.value.width, canvas.value.height);
-    }
-  });
-}
+// const imgSizeAttr = computed(() => ({
+//   width: atlasDimensions.width / props.uvs[0],
+//   height: atlasDimensions.height / props.uvs[1],
+// }))
+// function onImgLoaded() {
+//   if (!imgTag.value) return;
+//   atlasDimensions.width = imgTag.value.naturalWidth;
+//   atlasDimensions.height = imgTag.value.naturalHeight;
+// }
 
-onMounted(() => {
-  drawSprite();
-});
+const spriteStyle = computed(() => {
+  // const w = atlasDimensions.width / props.uvs[0];
+  // const h = atlasDimensions.height / props.uvs[1];
+  const normalizedSpriteWidth = 1 / (props.uvs[0] - 1);
+  const normalizedSpriteHeight = 1 / (props.uvs[1] - 1);
+  //origo is left-bottom... 
+  // index starts at 1!! sigh... 
+  const x = (props.coords[0] - 1) * normalizedSpriteWidth * 100;
+  const y = (props.coords[1] - 1) * normalizedSpriteHeight * 100;
 
-watch(() => props.coords, () => {
-  drawSprite();
-});
+  const backgroundScaleFactor = props.uvs[0] * 100;
+  const styleObject = {
+    backgroundImage: `url(${props.sheetUrl})`,
+    backgroundPosition: `left ${x}% bottom ${y}%`,
+    backgroundSize: `${backgroundScaleFactor}%`
+
+    // objectFit: 'none',
+    // objectPosition: `${x}% ${y}%`,
+    // width: `${w}px`,
+    // height: `${h}px`,
+  }
+  console.log(styleObject);
+  return styleObject;
+})
 
 </script>
 
 <template>
-  <canvas ref="canvas" />
+  <div class="aspect-square" ref="imgTag" :style="spriteStyle" :src="sheetUrl" />
 </template>
 
-<style scoped>
-canvas {
-  width: 100%;
-  height: 100%;
-}
-</style>
+<style scoped></style>
