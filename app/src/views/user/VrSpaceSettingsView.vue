@@ -217,7 +217,7 @@
                     <span class="label-text font-semibold">Skapa ny portal</span>
                   </label>
                   <!-- <p>{{ portalTargetVrSpace }}</p> -->
-                  <AutoComplete v-if="allowedVrSpaces?.length" v-model="portalTargetVrSpace" :options="allowedVrSpaces"
+                  <AutoComplete v-if="allowedPortalTargets?.length" v-model="portalTargetVrSpace" :options="allowedPortalTargets"
                     display-key="name" id-key="vrSpaceId" />
                   <!-- <select class="select select-sm select-bordered" v-model="portalTargetVrSpace"
                       @change="isRaycastingActive = true">
@@ -681,6 +681,7 @@ async function removeEditPermission(userId: UserId) {
 }
 
 const allowedVrSpaces = ref<RouterOutputs['vr']['listAvailableVrSpaces']>();
+const allowedPortalTargets = useArrayFilter(allowedVrSpaces, vrSpace => vrSpace.vrSpaceId !== vrSpaceStore.currentVrSpace?.dbData.vrSpaceId)
 const portalTargetVrSpace = ref<NonNullable<typeof allowedVrSpaces.value>[number]>();
 watch(portalTargetVrSpace, (newVrSpaceId) => {
   if (!newVrSpaceId) {
