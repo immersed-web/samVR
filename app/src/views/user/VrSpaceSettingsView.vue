@@ -680,7 +680,7 @@ async function removeEditPermission(userId: UserId) {
   })
 }
 
-const allowedVrSpaces = ref<RouterOutputs['vr']['listAvailableVrSpaces']>();
+const allowedVrSpaces = ref<NonNullable<RouterOutputs['vr']['listAvailableVrSpaces']>>([]);
 const allowedPortalTargets = useArrayFilter(allowedVrSpaces, vrSpace => vrSpace.vrSpaceId !== vrSpaceStore.currentVrSpace?.dbData.vrSpaceId)
 const portalTargetVrSpace = ref<NonNullable<typeof allowedVrSpaces.value>[number]>();
 watch(portalTargetVrSpace, (newVrSpaceId) => {
@@ -699,7 +699,10 @@ onMounted(async () => {
   const sp = vrSpaceStore.currentVrSpace?.dbData.spawnPosition as THREE.Vector3Tuple;
   if (sp) uncommitedSpawnPosition.value = sp;
 
-  allowedVrSpaces.value = await backendConnection.client.vr.listAvailableVrSpaces.query();
+  const vrListResponse = await backendConnection.client.vr.listAvailableVrSpaces.query();
+  if (vrListResponse) {
+    allowedVrSpaces.value = vrListResponse;
+  }
 });
 onBeforeUnmount(async () => {
   await vrSpaceStore.leaveVrSpace();

@@ -1,42 +1,37 @@
 <template>
-  <template v-if="options?.length">
-
-    <Combobox v-model="selected" nullable>
-      <div ref="comboBoxInputTag" :class="$attrs.class" class="input input-bordered input-sm flex gap-2 items-center">
-        <ComboboxInput aria-autocomplete="none" autocomplete="one-time-code" class="grow"
-          :displayValue="option => option ? option[displayKey] : undefined"
-          @change="searchString = $event.target.value; updateDropdownPos()" />
-        <button v-if="searchString !== '' || selected" @click="selected = null; searchString = '';"
-          class="material-icons">close</button>
-        <ComboboxButton @click="updateDropdownPos" popovertarget="options-list" class="material-icons">
-          unfold_more
-        </ComboboxButton>
-      </div>
-      <ComboboxOptions popover id="options-list" :style="comboOptionsStyle" :class="[maxHOptionsListClass]"
-        class="menu z-50 rounded-box flex-nowrap bg-base-200">
-        <ComboboxOption v-for="option in filteredOptions" as="template" :key="option[idKey]" :value="option"
-          v-slot="{ selected, active }">
-          <li class="select-none flex gap-2" :class="{
-            'active': active,
-          }">
-            <a class="grow truncate" :class="{ 'active': selected, 'focus': active }">
-              {{ option[displayKey] }}
-            </a>
-            <!-- <span v-if="selected" class="material-icons" :class="{ 'focus': active }">
+  <Combobox v-if="options?.length" v-bind="attrWithoutCss" v-model="selected" nullable>
+    <div ref="comboBoxInputTag" :style="$attrs.style" :class="$attrs.class"
+      class="input input-bordered input-sm flex gap-2 items-center">
+      <ComboboxInput aria-autocomplete="none" autocomplete="one-time-code" class="grow"
+        :displayValue="option => option ? option[displayKey] : undefined"
+        @change="searchString = $event.target.value; updateDropdownPos()" />
+      <button v-if="searchString !== '' || selected" @click="selected = null; searchString = '';"
+        class="material-icons">close</button>
+      <ComboboxButton @click="updateDropdownPos" popovertarget="options-list" class="material-icons">
+        unfold_more
+      </ComboboxButton>
+    </div>
+    <ComboboxOptions popover id="options-list" :style="comboOptionsStyle" :class="[maxHOptionsListClass]"
+      class="menu z-50 rounded-box flex-nowrap bg-base-200">
+      <ComboboxOption v-for="option in filteredOptions" as="template" :key="option[idKey]" :value="option"
+        v-slot="{ selected, active }">
+        <li class="select-none flex gap-2" :class="{
+          'active': active,
+        }">
+          <a class="grow truncate" :class="{ 'active': selected, 'focus': active }">
+            {{ option[displayKey] }}
+          </a>
+          <!-- <span v-if="selected" class="material-icons" :class="{ 'focus': active }">
                             check
                           </span> -->
-          </li>
-        </ComboboxOption>
-      </ComboboxOptions>
-    </Combobox>
-    <!-- <pre>{{ searchString }}</pre> -->
-    <!-- <pre>{{ selected }}</pre> -->
-    <!-- <pre>{{ bottom }}</pre> -->
-  </template>
+        </li>
+      </ComboboxOption>
+    </ComboboxOptions>
+  </Combobox>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, useAttrs, useCssVars } from 'vue'
 import {
   Combobox,
   ComboboxInput,
@@ -45,6 +40,20 @@ import {
   ComboboxOption,
 } from '@headlessui/vue'
 import { useElementBounding } from '@vueuse/core';
+
+defineOptions({
+  inheritAttrs: false,
+})
+
+const attrs = useAttrs();
+
+const attrWithoutCss = computed(() => {
+  const newAttrs = { ...attrs };
+  delete newAttrs['class'];
+  delete newAttrs['style'];
+  return newAttrs;
+});
+
 
 const comboBoxInputTag = ref<HTMLInputElement>();
 const { bottom, left, width, height, update: updateElementBounding } = useElementBounding(comboBoxInputTag, {
