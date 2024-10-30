@@ -264,10 +264,6 @@ router.beforeEach(async (to, from) => {
   const windowTitle = useTitle();
   windowTitle.value = 'SamVR';
 
-  // if(to.path === '/' && authStore.role){
-  //   return { name: hasAtLeastSecurityLevel(authStore.role, 'admin') ? 'adminHome' : 'userHome'};
-  // }
-
   if (to.meta.requiredRole) {
     // if not logged in we can try to restore from session
     if(!authStore.isAuthenticated && authStore.hasCookie) {
