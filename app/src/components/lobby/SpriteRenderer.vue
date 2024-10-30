@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch, useTemplateRef, reactive } from 'vue';
+import { computed } from 'vue';
 
 
 type Tuple = [number, number]
-const imgTag = useTemplateRef('imgTag');
 
 const props = defineProps<{
   sheetUrl: string,
@@ -54,7 +53,7 @@ const spriteStyle = computed(() => {
 </script>
 
 <template>
-  <div class="aspect-square" ref="imgTag" :style="spriteStyle" :src="sheetUrl" />
+  <div class="aspect-square" :style="spriteStyle" :src="sheetUrl" />
 </template>
 
 <style scoped></style>
