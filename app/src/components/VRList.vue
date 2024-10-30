@@ -16,7 +16,7 @@
         </button>
       </template>
     </div>
-    <div class="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+    <div class="w-full grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-4">
       <div class="flex gap-2 items-center" v-for="space in listedVrSpaces" :key="space.vrSpaceId">
         <div class="card card-compact w-full shadow-xl">
           <figure class="w-full h-32" style="background-size: cover"
