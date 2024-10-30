@@ -30,14 +30,14 @@
               <div>Din rättighetsnivå: {{ space.permissionLevel }}</div>
             </div>
             <div class="card-actions justify-end">
-              <button v-if="space.permissionLevel && hasAtLeastPermissionLevel(space.permissionLevel, 'edit')"
-                @click="goToVrSpaceSettings(space.vrSpaceId)" class="btn btn-sm">
+              <RouterLink tag="button"
+                v-if="space.permissionLevel && hasAtLeastPermissionLevel(space.permissionLevel, 'edit')"
+                :to="{ name: 'vrSpaceSettings', params: { vrSpaceId: space.vrSpaceId } }" class="btn btn-sm">
                 Redigera
-              </button>
-              <RouterLink :to="{ name: 'vrSpace', params: { vrSpaceId: space.vrSpaceId } }">
-                <button class="btn btn-primary btn-sm">
-                  Besök
-                </button>
+              </RouterLink>
+              <RouterLink tag="button" class="btn btn-primary btn-sm"
+                :to="{ name: 'vrSpace', params: { vrSpaceId: space.vrSpaceId } }">
+                Besök
               </RouterLink>
             </div>
           </div>
