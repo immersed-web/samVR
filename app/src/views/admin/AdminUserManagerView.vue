@@ -1,6 +1,6 @@
 <template>
   <MaxWidth7xl>
-    <div class="flex flex-col items-start gap-8">
+    <div class="w-fit mx-auto flex flex-col items-start gap-8">
       <h1 class=" text-3xl font-bold">
         Hantera användare
       </h1>

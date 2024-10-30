@@ -3,6 +3,7 @@ import { ref, type Ref, reactive, onBeforeMount, watch, onMounted } from 'vue';
 import { type Entity } from 'aframe';
 import { stringify, parse } from 'devalue';
 
+import MaxWidth7xl from '@/components/layout/MaxWidth7xl.vue';
 import UIOverlay from '@/components/UIOverlay.vue';
 import PopUp from '@/components/PopUp.vue';
 
@@ -173,7 +174,7 @@ watch(currentColorPickerValue, (newColor, prevColor) => {
 
 <template>
   <WaitForAframe>
-    <div class="grid grid-cols-2 gap-2">
+    <MaxWidth7xl class="grid grid-cols-[5fr_7fr] gap-2">
       <!-- COLUMN 1 -->
       <div
         class="grid grid-cols-[minmax(min-content,1fr)_minmax(8rem,1.7fr)_auto] items-center gap-5 overflow-y-auto capitalize bg-slate-200 p-2 rounded-md">
@@ -326,7 +327,7 @@ watch(currentColorPickerValue, (newColor, prevColor) => {
           <button @click="testValue = ''" class="btn btn-primary">test</button>
         </div> -->
       </div>
-    </div>
+    </MaxWidth7xl>
   </WaitForAframe>
 </template>
 
