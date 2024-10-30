@@ -134,8 +134,9 @@ async function uploadFile() {
       const data = new FormData();
       data.append('file', pickedFile.value, pickedFile.value.name);
       data.set('assetType', derivedAssetType.value);
-      if (props.showInUserLibrary) {
-        data.set('showInUserLibrary', Boolean(props.showInUserLibrary).toString());
+      if (props.showInUserLibrary !== undefined) {
+        const showInLib = props.showInUserLibrary;
+        data.set('showInUserLibrary', `${showInLib}`);
       }
       pickedFile.value = undefined;
 

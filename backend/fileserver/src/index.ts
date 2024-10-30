@@ -97,7 +97,10 @@ const privateRoutes = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
   }).post('/upload', zValidator('form', z.object({
     file: z.instanceof(File),
     assetType: AssetTypeSchema.optional(),
-    showInUserLibrary: z.preprocess(v => v === 'true' ? true : v === 'false' ? false : undefined, z.boolean()).optional(),
+    showInUserLibrary: z.preprocess(v => {
+      // console.log('zod showinlib raw input:', v);
+      return v === 'true' ? true : v === 'false' ? false : undefined
+    }, z.boolean().optional()),
   })), async (c, next) => {
     let { file, assetType, showInUserLibrary } = c.req.valid('form');
     const user = c.get('jwtPayload');
