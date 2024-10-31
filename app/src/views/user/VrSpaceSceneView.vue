@@ -31,7 +31,7 @@
             :coords="[[[35, 8], [36, 37], [36, 38], [15, 8], [36, 27]], [[34, 8], [2, 8], [36, 24], [36, 25], [21, 8],], [[28, 26], [28, 20], [28, 38], [3, 16], [2, 1]]]"
             @change="setEmojiSelf" :is-v-r="false" :columns="5" />
           <Teleport v-if="overlayGUILeft" :to="overlayGUILeft">
-            <p>is VR Headset: {{ deviceIsVRHeadset }}</p>
+            <!-- <p>is VR Headset: {{ deviceIsVRHeadset }}</p> -->
             <div v-if="!deviceIsVRHeadset">
 
               <button v-if="screenshareStream" class="btn btn-error pointer-events-auto" @click="stopScreenShare"><span

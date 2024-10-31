@@ -24,7 +24,7 @@
     <a-entity v-if="vrSpaceStore.currentVrSpace.dbData.spawnPosition" ref="spawnPoint"
       :position="arrToCoordString(vrSpaceStore.currentVrSpace.dbData.spawnPosition)">
       <!-- <a-sphere color="yellow" radius="0.2" /> -->
-      <a-entity :position="`0 ${defaultHeightOverGround} 0`"
+      <!-- <a-entity :position="`0 ${defaultHeightOverGround} 0`"
         mesh-ui-block="backgroundOpacity: 0.2; justifyContent: space-evenly; fontSize: 0.03; padding: 0.004" class="">
         <a-entity mesh-ui-block="margin: 0.01; justifyContent: space-evenly;">
           <a-entity
@@ -36,7 +36,7 @@
             <a-entity :mesh-ui-text="`content: vrState=${isImmersed};`"></a-entity>
           </a-entity>
         </a-entity>
-      </a-entity>
+      </a-entity> -->
 
     </a-entity>
 
@@ -93,21 +93,30 @@
           <pre>faceNormal:{{ currentCursorIntersection?.intersection.face?.normal }}</pre>
         </div> -->
         <p class="label-text font-bold">Personer i rummet</p>
-        <p>Du: {{ clientStore.clientState?.username }}</p>
+        <p v-if="clientStore.clientState">
+          {{ clientStore.clientState.username }}
+          (du)
+          <span
+            v-if="vrSpaceStore.currentVrSpace.dbData.allowedUsers.some(u => u.user.userId === clientStore.clientState?.userId && hasAtLeastPermissionLevel(u.permissionLevel, 'admin'))">(admin)</span>
+          <span v-if="vrSpaceStore.currentVrSpace.dbData.ownerUserId === clientStore.clientState.userId">(ägare)</span>
+        </p>
         <p v-for="(clientInfo, id, idx) in otherClients" :key="id">
-          {{ idx }}: {{ clientInfo.username }}, {{ clientInfo.role }}
+          {{ clientInfo.username }}
+          <span
+            v-if="vrSpaceStore.currentVrSpace.dbData.allowedUsers.some(u => u.user.userId === clientInfo.userId && hasAtLeastPermissionLevel(u.permissionLevel, 'admin'))">(admin)</span>
+          <span v-if="vrSpaceStore.currentVrSpace.dbData.ownerUserId === clientInfo.userId">(ägare)</span>
         </p>
       </div>
     </Teleport>
-    <Teleport v-if="overlayGUILeft" :to="overlayGUILeft">
+    <!-- <Teleport v-if="overlayGUILeft" :to="overlayGUILeft">
       <button class="btn btn-primary pointer-events-auto" @click="positionCameraAttacher">place camera attacher</button>
       <div class="font-bold">isPresenting:{{ isImmersed }}</div>
-    </Teleport>
+    </Teleport> -->
     <Teleport v-if="rightHandVRGui" :to="rightHandVRGui">
-      <a-entity position="0 0.1 0"
+      <!-- <a-entity position="0 0.1 0"
         mesh-ui-block="width: 0.3; height: 0.1; fontSize: 0.03; bestFit: auto; justifyContent: center" class="">
         <a-entity :mesh-ui-text="`fontColor: #0ff; content: i vr= ${isImmersed}`" />
-      </a-entity>
+      </a-entity> -->
     </Teleport>
 
     <!-- Avatars wrapper element -->
@@ -143,7 +152,7 @@
 import { type Entity, type DetailEvent, utils as aframeUtils, THREE } from 'aframe';
 import { ref, onMounted, onBeforeMount, computed, onBeforeUnmount, inject, watch, onUpdated, shallowRef } from 'vue';
 import Avatar from './AvatarEntity.vue';
-import { defaultAvatarDesign, defaultHeightOverGround, type ClientRealtimeData } from 'schemas';
+import { defaultAvatarDesign, defaultHeightOverGround, hasAtLeastPermissionLevel, type ClientRealtimeData } from 'schemas';
 // import type { Unsubscribable } from '@trpc/server/observable';
 import { useClientStore } from '@/stores/clientStore';
 import { useRouter } from 'vue-router';
