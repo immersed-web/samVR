@@ -86,11 +86,8 @@ const canCreateVrSpace = computed(() => {
 
 const spaceName = ref('Min VR-scen');
 async function createVrSpace() {
-  // TODO: return created VR space so we don't need to fetch the full list
-  await vrSpaceStore.createVrSpace(spaceName.value);
-  await fetchVrSpaceList();
-  if (!availableVrSpaces.value) { return; }
-  goToVrSpaceSettings(availableVrSpaces.value.slice(-1)[0].vrSpaceId);
+  const vrSpaceId = await vrSpaceStore.createVrSpace(spaceName.value);
+  goToVrSpaceSettings(vrSpaceId);
 }
 
 async function fetchVrSpaceList() {
