@@ -129,3 +129,27 @@ export const userWithEditRightsToVrSpace = userInVrSpaceP.use(({ ctx, next, path
   }
   return next();
 })
+
+export const userWithAdminRightsToVrSpace = userInVrSpaceP.use(({ ctx, next, path }) => {
+  const vrSpaceDbData = ctx.vrSpace.getPublicState().dbData
+  const isOwner = vrSpaceDbData.ownerUserId === ctx.userId;
+  const isAllowed = vrSpaceDbData.allowedUsers.some(user => {
+    return user.user.userId === ctx.userId && hasAtLeastPermissionLevel(user.permissionLevel, 'admin')
+  })
+  if (!isAllowed && !isOwner) {
+    throw new TRPCError({ code: 'UNAUTHORIZED', message: 'du har inte adminrättigheter till det här vrSpacet' });
+  }
+  return next();
+})
+
+export const userWithOwnerRightsToVrSpace = userInVrSpaceP.use(({ ctx, next, path }) => {
+  const vrSpaceDbData = ctx.vrSpace.getPublicState().dbData
+  const isOwner = vrSpaceDbData.ownerUserId === ctx.userId;
+  const isAllowed = vrSpaceDbData.allowedUsers.some(user => {
+    return user.user.userId === ctx.userId && hasAtLeastPermissionLevel(user.permissionLevel, 'owner')
+  })
+  if (!isAllowed && !isOwner) {
+    throw new TRPCError({ code: 'UNAUTHORIZED', message: 'du har inte ägarrrättigheter till det här vrSpacet' });
+  }
+  return next();
+})
