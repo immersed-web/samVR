@@ -23,6 +23,16 @@
       "**/.hg/store/**": true
     },
     "editor.formatOnSaveMode": "modifications",
+    "todo-tree.general.tags": [
+      "BUG",
+      "HACK",
+      "FIXME",
+      "TODO",
+      "XXX",
+      "[ ]",
+      "[x]",
+      "NOTE"
+    ],
   },
   "extensions": {
     "recommendations": [
@@ -32,7 +42,7 @@
       "hookyqr.beautify",
       "dbaeumer.jshint",
       "ms-vscode.vscode-typescript-tslint-plugin"
-    ]
+    ],
   },
   "tasks": {
     "version": "2.0.0",
