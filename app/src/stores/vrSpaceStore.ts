@@ -1,15 +1,15 @@
 import { defineStore } from 'pinia';
 
-import { hasAtLeastPermissionLevel, PlacedObjectInsertSchema, VrSpaceSelectSchema, type ClientRealtimeData, type ConnectionId, type PlacedObjectId, type PlacedObjectInsert, type ScreenShare, type VrSpaceId, type VrSpaceSelect } from 'schemas';
+import { hasAtLeastPermissionLevel, PlacedObjectInsertSchema, VrSpaceSelectSchema, type AssetId, type ClientRealtimeData, type ConnectionId, type PlacedObjectId, type PlacedObjectInsert, type ScreenShare, type VrSpaceId, type VrSpaceSelect } from 'schemas';
 import { computed, readonly, ref, watch, type DeepReadonly } from 'vue';
 import { useConnectionStore } from './connectionStore';
 import { eventReceiver, type ExtractPayload } from '@/modules/trpcClient';
 import { useClientStore } from './clientStore';
+import { useAuthStore } from './authStore';
 import { watchIgnorable } from '@vueuse/core';
 import { debounce, isEmpty, omit, remove, throttle } from 'lodash-es';
-import { getAssetUrl } from '@/modules/utils';
+import { deleteAsset, getAssetUrl } from '@/modules/utils';
 import { reactive } from 'vue';
-import type { ProducerId } from 'schemas/mediasoup';
 
 type _ReceivedVrSpaceState = ExtractPayload<typeof eventReceiver.vrSpace.vrSpaceStateUpdated.subscribe>['data'];
 
@@ -29,9 +29,15 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
 
   const connection = useConnectionStore();
   const clientStore = useClientStore();
+  const authStore = useAuthStore();
 
   const writableVrSpaceDbData = ref<VrSpaceSelect>()
   const currentVrSpace = ref<_ReceivedVrSpaceState>();
+
+  function clearStore() {
+    ignoreUpdates(() => writableVrSpaceDbData.value = undefined);
+    currentVrSpace.value = undefined;
+  }
 
   const worldModelUrl = computed(() => {
     if (!currentVrSpace.value) return undefined;
@@ -96,6 +102,10 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     console.log('finished setting ignored state update');
   });
 
+  eventReceiver.vrSpace.vrSpaceWasUnloaded.subscribe(({ vrSpaceId }) => {
+    clearStore();
+  })
+
   eventReceiver.vrSpace.clientsRealtimeData.subscribe((data) => {
     // console.log(`clientTransforms updated:`, data);
     if (!currentVrSpace.value) return;
@@ -118,6 +128,32 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     return vrSpaceId;
   }
 
+  async function deleteVrSpace(vrSpaceId?: VrSpaceId) {
+    if (!vrSpaceId) vrSpaceId = currentVrSpace.value?.dbData.vrSpaceId;
+    if (!vrSpaceId) {
+      console.error('deleteVrSpace: no vrspace id provided or no currentvrspace to delete');
+      return;
+    }
+    const deletedVrSpace = await connection.client.vr.deleteVrSpace.mutate({ vrSpaceId });
+
+    const navMeshAssetId = deletedVrSpace.navMeshAssetId as AssetId | null;
+    const worldModelAssetId = deletedVrSpace.worldModelAssetId as AssetId | null;
+    const panoramicPreviewAssetId = deletedVrSpace.panoramicPreviewAssetId as AssetId | null;
+    const authToken = authStore.tokenOrThrow();
+    try {
+      const wasNavmeshDeleted = navMeshAssetId ? await deleteAsset({ assetId: navMeshAssetId, authToken }) : undefined;
+      const wasWorldModelDeleted = worldModelAssetId ? await deleteAsset({ assetId: worldModelAssetId, authToken }) : undefined;
+      const wasPanoramicPreviewDeleted = panoramicPreviewAssetId ? await deleteAsset({ assetId: panoramicPreviewAssetId, authToken }) : undefined;
+      console.log('asset deletion results:', { wasNavmeshDeleted, wasWorldModelDeleted, wasPanoramicPreviewDeleted });
+    } catch (e: unknown) {
+      console.error('deletetion of asset(s) failed');
+      console.error(e);
+    }
+
+    clearStore();
+    return deletedVrSpace;
+  }
+
   async function enterVrSpace(vrSpaceId: VrSpaceId) {
     console.log('gonna enter VrSpace', vrSpaceId);
     const response = await connection.client.vr.enterVrSpace.mutate({ vrSpaceId });
@@ -131,8 +167,7 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
   }
   async function leaveVrSpace() {
     await connection.client.vr.leaveVrSpace.mutate();
-    ignoreUpdates(() => writableVrSpaceDbData.value = undefined);
-    currentVrSpace.value = undefined;
+    clearStore();
   }
 
   type PlacedObjectUpsert = Omit<PlacedObjectInsert, 'reason'>;
@@ -200,6 +235,7 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     worldModelScaleString,
     panoramicPreviewUrl,
     createVrSpace,
+    deleteVrSpace,
     enterVrSpace,
     leaveVrSpace,
     upsertPlacedObject,

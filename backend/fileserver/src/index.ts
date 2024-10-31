@@ -18,7 +18,7 @@ import { hc, InferRequestType, InferResponseType } from 'hono/client'
 
 import { basicUserSelect, db, schema } from 'database'
 import { AssetIdSchema, AssetType, AssetTypeSchema, JwtPayload, UserId, assetTypesToExtensionsMap, createFileExtensionSchema, getAssetTypeFromExtension } from 'schemas'
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import path from 'path';
 import { z } from 'zod';
 
@@ -72,7 +72,7 @@ const privateRoutes = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
   .delete('/delete', zValidator('json', z.object({ assetId: AssetIdSchema })), async (c, next) => {
     const { assetId } = c.req.valid('json');
     const user = c.get('jwtPayload');
-    const result = await db.transaction(async (tx) => {
+    const deleteResponse = await db.transaction(async (tx) => {
       const foundAsset = await tx.query.assets.findFirst({
         where: eq(schema.assets.assetId, assetId),
       })
@@ -89,12 +89,18 @@ const privateRoutes = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
         console.error('no such file found. Apparently filesystem and db arent in sync.');
         throw new HTTPException(HttpStatus.INTERNAL_SERVER_ERROR, { message: 'no such file found' });
       }
-      await tx.delete(schema.assets).where(eq(schema.assets.assetId, assetId));
+
+      // manual cascade here because we have polymorphic relations
+      const placedObjects = await db.delete(schema.placedObjects).where(and(eq(schema.placedObjects.type, 'asset'), eq(schema.placedObjects.objectId, assetId))).returning();
+      console.log('deleted following related placedObjects when deleting asset:', placedObjects);
+      const dbResponse = await tx.delete(schema.assets).where(eq(schema.assets.assetId, assetId)).returning();
       await fs.promises.unlink(filePath);
-      return;
+      return dbResponse;
     })
+    console.log('file deleted:', deleteResponse);
     return c.text('file deleted', HttpStatus.OK);
-  }).post('/upload', zValidator('form', z.object({
+  })
+  .post('/upload', zValidator('form', z.object({
     file: z.instanceof(File),
     assetType: AssetTypeSchema.optional(),
     showInUserLibrary: z.preprocess(v => {
@@ -119,7 +125,6 @@ const privateRoutes = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
         return c.json({ error: 'couldnt match extension to a valid asset type' as const }, HttpStatus.INTERNAL_SERVER_ERROR);
       }
     }
-    console.log(file.name);
     const uuid = randomUUID();
     const generatedName = `${uuid}.${validatedExtension.data}`;
     const fileStream = file.stream();
@@ -155,6 +160,7 @@ const privateRoutes = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
       showInUserLibrary
     }).returning();
 
+    console.log('file uploaded. db entry:', dbResponse);
     return c.json(dbResponse, HttpStatus.OK);
   });
 

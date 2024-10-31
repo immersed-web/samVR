@@ -4,7 +4,7 @@ process.env.DEBUG = 'Router:VR*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
 import { ClientRealtimeDataSchema, PlacedObjectIdSchema, PlacedObjectInsertSchema, ScreenShareSchema, TransformSchema, VrSpaceIdSchema, VrSpaceUpdateSchema } from 'schemas';
-import { procedure as p, router, isUserClientM, userClientP, atLeastUserP, userInVrSpaceP, userWithEditRightsToVrSpace } from '../trpc/trpc.js';
+import { procedure as p, router, isUserClientM, userClientP, atLeastUserP, userInVrSpaceP, userWithEditRightsToVrSpace, userWithAdminRightsToVrSpace } from '../trpc/trpc.js';
 import { VrSpace } from 'classes/VrSpace.js';
 import { z } from 'zod';
 import { db, schema, } from 'database';
@@ -61,6 +61,10 @@ export const vrRouter = router({
   createVrSpace: atLeastUserP.use(isUserClientM).input(z.object({ name: z.string() })).mutation(async ({ ctx, input }) => {
     const vrSpaceId = await VrSpace.createNewVrSpace(input.name, ctx.userId);
     return vrSpaceId
+  }),
+  deleteVrSpace: userWithAdminRightsToVrSpace.input(z.object({ vrSpaceId: VrSpaceIdSchema })).mutation(async ({ ctx, input }) => {
+    const deletedVrSpace = await VrSpace.deleteVrSpace(input.vrSpaceId);
+    return deletedVrSpace;
   }),
   // openVrSpace: currentVenueAdminP.use(isVenueOwnerM).use(currentVenueHasVrSpaceM).mutation(({ctx}) => {
   //   ctx.vrSpace.open();

@@ -8,6 +8,7 @@ import { VrSpaceWithIncludes, db, queryVrSpaceWithIncludes, schema } from 'datab
 import { getMediasoupWorker } from 'modules/soupWorkers.js';
 import mediasoupConfig from 'soupConfig.js';
 import { ProducerId } from 'schemas/mediasoup';
+import { and, eq } from 'drizzle-orm';
 const log = new Log('VR:Space');
 process.env.DEBUG = 'VR:Space*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
@@ -171,6 +172,30 @@ export class VrSpace {
         visibility: 'private'
       }).returning()
       return response.vrSpaceId;
+    } catch (e) {
+      log.error(e);
+      throw e;
+    }
+  }
+
+  // TODO: I would really like to have a way where the server(s) takes responsibility 
+  // for deleting related assets (files) when the vrSpace is deleted. But thats frikkin hard...
+  // It would probably involve interserver communication. mediaserver sending rest req to fileserver...
+  // As of now, We trust the client to delete related assets.
+  static async deleteVrSpace(vrSpaceId: VrSpaceId) {
+    log.info(`deleting vrSpace ${vrSpaceId}`);
+    const vrSpace = VrSpace.getVrSpace(vrSpaceId)
+    if (vrSpace) {
+      vrSpace.unload();
+    }
+    try {
+
+      // manual cascade here because we have polymorphic relations
+      // delete portals targetting this vrSpace
+      const portalDeleteResponse = await db.delete(schema.placedObjects).where(and(eq(schema.placedObjects.type, 'vrPortal'), eq(schema.placedObjects.objectId, vrSpaceId))).returning();
+      log.info('deleted following related portals when deleting vrspace:', portalDeleteResponse);
+      const [response] = await db.delete(schema.vrSpaces).where(eq(schema.vrSpaces.vrSpaceId, vrSpaceId)).returning();
+      return response;
     } catch (e) {
       log.error(e);
       throw e;

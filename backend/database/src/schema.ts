@@ -277,7 +277,7 @@ export const vrSpaces = pgTable("VrSpaces", {
 	panoramicPreviewAssetId: uuid('panoramicPreview').references(() => assets.assetId, { onDelete: 'set null' }).$type<AssetId>(),
 	visibility: VisibilityEnum("visibility").default('public').notNull(),
 	worldModelScale: doublePrecision("worldModelScale").default(1).notNull(),
-	// A bug in drizzle generates invalid SQL migrations for arrays of 
+	// NOTE: A bug in drizzle generates invalid SQL migrations for arrays of 
 	// double precision (double precision uses space in sql and this leads to incorrect quoteing).
 	// Workaround for now is to use real
 	spawnPosition: real("spawnPosition").array().$type<NumberTuble3>(),
@@ -321,6 +321,8 @@ export const placedObjects = pgTable("PlacedObjects", {
 	// vrPortalId: uuid("vrPortalId").references(() => VrPortal.portalId, { onDelete: "cascade", onUpdate: "cascade" }),
 
 	// Lets try polymorphism!!!
+	// NOTE: Because of this design choice, we have to manually handle all delete cascades :-(
+	// In practice. anywhere we delete vrSpace/asset/stream, we need to manually delete all placedObjects targetting it
 	type: PlacedObjectTypeEnum("type").notNull(),
 	objectId: uuid('objectId').$type<AssetId | VrSpaceId | StreamId>(),
 	objectSettings: jsonb("objectSettings"),

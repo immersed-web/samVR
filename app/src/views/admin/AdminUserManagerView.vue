@@ -114,7 +114,8 @@
         </div>
       </div>
       <div v-else>
-        Vad gör du här? Du får inte vara här.
+        <!-- Vad gör du här? Du får inte vara här. -->
+        Du saknar behörighet till den här sidan.
       </div>
     </div>
   </MaxWidth7xl>

@@ -21,19 +21,17 @@
             Grundläggande information
           </div>
           <div class="collapse-content flex flex-col items-stretch gap-3">
-            <div class="">
-              <div class="divider">
-                Scenens namn
-              </div>
-              <p class="text-sm mb-2 text-gray-600">
-                Ange ett namn för VR-scenen som är synligt för andra användare och besökare.
-              </p>
-              <div>
-                <label class="flex flex-col gap-1">
-                  <span class="label-text font-semibold">Scenens namn</span>
-                </label>
-                <input class="input input-bordered input-sm" v-model="vrSpaceStore.writableVrSpaceDbData.name">
-              </div>
+            <div class="flex flex-col">
+              <span class="label-text font-semibold">Scenens namn</span>
+              <input class="input input-bordered input-sm" v-model="vrSpaceStore.writableVrSpaceDbData.name">
+            </div>
+            <div class="flex flex-col">
+              <span class="label-text font-semibold">Beskrivning</span>
+              <textarea rows=5 class="textarea textarea-bordered " placeholder="beskriv din vr-miljö"
+                v-model="vrSpaceStore.writableVrSpaceDbData.description"></textarea>
+            </div>
+            <div>
+              <button @click="deleteThisVrSpace" class="btn btn-error">Radera</button>
             </div>
           </div>
         </div>
@@ -443,7 +441,8 @@ import { THREE, type Entity } from 'aframe';
 import { arrToCoordString, intersectionToTransform, quaternionTupleToAframeRotation } from '@/modules/3DUtils';
 import { useArrayFilter, watchDebounced } from '@vueuse/core';
 import PlacedAsset from '@/components/lobby/PlacedAsset.vue';
-import { RouterLink } from 'vue-router';
+import { RouterLink, useRouter } from 'vue-router';
+const router = useRouter();
 
 // TODO: refine/find alternative way to get these types so we get intellisense for the emit key
 type ExtractEmitData<T extends string, emitUnion extends (...args: any[]) => void> = T extends Parameters<emitUnion>[0] ? Parameters<emitUnion>[1] : never
@@ -736,6 +735,11 @@ function uploadScreenshot(canvas: ScreenshotPayload) {
     }
     vrSpaceStore.writableVrSpaceDbData.panoramicPreviewAssetId = response.assetId;
   });
+}
+
+async function deleteThisVrSpace() {
+  await vrSpaceStore.deleteVrSpace();
+  router.replace({ name: 'vrList' });
 }
 
 // async function setEntrancePosition(point: Point) {
