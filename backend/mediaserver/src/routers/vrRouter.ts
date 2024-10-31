@@ -29,6 +29,7 @@ export const vrRouter = router({
       image: schema.assets.generatedName,
       visibility: schema.vrSpaces.visibility,
       ownerUserId: schema.vrSpaces.ownerUserId,
+      description: schema.vrSpaces.description,
       // permisions: schema.permissions,
       permissionLevel: sql<PermLev>`case
           when ${schema.vrSpaces.ownerUserId} = ${ctx.userId} then 'owner'
