@@ -14,6 +14,27 @@
         <pre class="text-xs whitespace-normal">videoStream: {{ screenshareStream }}</pre>
         <pre class="text-xs whitespace-normal">videoProducerId: {{ videoProducerId }}</pre>
       </Teleport>
+      <a-entity scale="1 1 1">
+        <a-entity :id="`left-hand-${props.clientInfo.connectionId}`" :visible="realTimeData.leftHand?.active"
+          interpolated-transform="interpolationTime: 350;" ref="leftHandTag">
+          <a-entity rotation="-100 110 10">
+            <AvatarSkinPart position="-0.5 0.3 0" skin-part-name="hands" :part="avatarDesign.parts.hands" />
+          </a-entity>
+          <!-- <a-entity scale="0.05 0.05 0.05" rotation="-20 90 -140" gltf-model="#avatar-hand-1" /> -->
+          <a-box width="0.1" height="0.1" depth="0.1" />
+        </a-entity>
+      </a-entity>
+      <a-entity scale="1 1 1">
+        <a-entity :id="`right-hand-${props.clientInfo.connectionId}`" :visible="realTimeData.rightHand?.active"
+          interpolated-transform="interpolationTime: 350;" ref="rightHandTag">
+          <a-entity rotation="-100 110 0">
+            <AvatarSkinPart position="0.5 0.3 0" scale="-1 1 1" skin-part-name="hands"
+              :part="avatarDesign.parts.hands" />
+          </a-entity>
+          <!-- <a-entity scale="0.05 0.05 -0.05" rotation="20 90 -140" gltf-model="#avatar-hand-1" /> -->
+          <a-box width="0.1" height="0.1" depth="0.1" />
+        </a-entity>
+      </a-entity>
       <slot />
       <a-troika-text :color="distanceColor" look-at-camera :value="username" position="0 0.5 0" />
       <a-entity rotation="0 180 0">
@@ -124,6 +145,8 @@ const headGroupedParts = computed(() => {
 })
 
 const avatarEntity = ref<Entity>();
+const leftHandTag = ref<Entity>();
+const rightHandTag = ref<Entity>();
 const dummyAudioTag = ref<HTMLAudioElement>();
 
 async function onAvatarEntityLoaded() {
@@ -208,6 +231,18 @@ watch(() => props.realTimeData.head, (headTransform) => {
   // console.log('updating head', headTransform.position);
   avatarEntity.value?.emit('moveTo', { position: headTransform.position }, false);
   avatarEntity.value?.emit('rotateTo', { rotation: headTransform.rotation }, false);
+}, { immediate: true });
+watch(() => props.realTimeData.leftHand, (leftHandTransform) => {
+  console.log('leftHand updated:', leftHandTransform);
+  if (!leftHandTransform || !leftHandTransform.active) return;
+  leftHandTag.value?.emit('moveTo', { position: leftHandTransform.position }, false);
+  leftHandTag.value?.emit('rotateTo', { rotation: leftHandTransform.rotation }, false);
+}, { immediate: true });
+watch(() => props.realTimeData.rightHand, (rightHandTransform) => {
+  console.log('rightHand updated:', rightHandTransform);
+  if (!rightHandTransform || !rightHandTransform.active) return;
+  rightHandTag.value?.emit('moveTo', { position: rightHandTransform.position }, false);
+  rightHandTag.value?.emit('rotateTo', { rotation: rightHandTransform.rotation }, false);
 }, { immediate: true });
 
 </script>

@@ -71,6 +71,12 @@
         <a-entity ref="leftHandVRGui" position="0 0 -0.06" rotation="-90 0 0"></a-entity>
         <!-- <a-entity :visible="leftControllerConnected" scale="0.05 0.05 0.05" rotation="20 90 -140"
         gltf-model="#avatar-hand-1" /> -->
+        <!-- <a-sphere radius="0.2" /> -->
+        <a-entity>
+          <a-entity axes-helper rotation="-130 0 100">
+            <a-entity position="-0.5 0.36 -0.03" axes-helper gltf-model="url(/avatar/hands/hands_basic_left.glb)" />
+          </a-entity>
+        </a-entity>
       </a-entity>
       <a-entity ref="rightHandTag" @controllerconnected="rightControllerConnected = true"
         @controllerdisconnected="rightControllerConnected = false" laser-controls="hand:right"
@@ -78,6 +84,12 @@
         @abuttondown="oculusButtons['a'] = true" @abuttonup="oculusButtons['a'] = false"
         @bbuttondown="oculusButtons['b'] = true" @bbuttonup="oculusButtons['b'] = false"
         emit-move="interval: 20; relativeToCamera: true">
+        <!-- <a-sphere radius="0.2" /> -->
+        <a-entity axes-helper scale="-1 1 1">
+          <a-entity axes-helper rotation="-130 0 100">
+            <a-entity position="-0.5 0.36 -0.03" axes-helper gltf-model="url(/avatar/hands/hands_basic_left.glb)" />
+          </a-entity>
+        </a-entity>
         <!-- <a-entity :visible="rightControllerConnected" scale="0.05 0.05 -0.05" rotation="20 90 -140"
         gltf-model="#avatar-hand-1" /> -->
         <a-entity ref="rightHandVRGui" position="0 0 -0.06" rotation="-90 0 0"></a-entity>
@@ -425,12 +437,18 @@ function onHeadMove(e: DetailEvent<ClientRealtimeData['head']>) {
   // currentTransform.head = e.detail;
 }
 function onLeftHandMove(e: DetailEvent<ClientRealtimeData['leftHand']>) {
-  vrSpaceStore.ownRealtimeData.leftHand = e.detail;
+  let rtd = e.detail;
+  if (!leftControllerConnected.value)
+    rtd = { active: false };
+  vrSpaceStore.ownRealtimeData.leftHand = rtd;
   // console.log('left hand moved');
   // currentTransform.leftHand = e.detail;
 }
 function onRightHandMove(e: DetailEvent<ClientRealtimeData['rightHand']>) {
-  vrSpaceStore.ownRealtimeData.rightHand = e.detail;
+  let rtd = e.detail;
+  if (!rightControllerConnected.value)
+    rtd = { active: false };
+  vrSpaceStore.ownRealtimeData.rightHand = rtd;
   // console.log('right hand moved');
   // console.log(e.detail?.orientation);
   // console.log(e.detail?.position);
