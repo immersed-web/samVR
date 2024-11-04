@@ -5,8 +5,6 @@
 <script setup lang="ts">
 import type { AvatarDesign, SkinPart } from 'schemas';
 
-
-
 const props = defineProps<{
   skinPartName: SkinPart
   skinColor?: string,
