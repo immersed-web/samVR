@@ -22,8 +22,9 @@
             {{ space.name }}
           </h2>
           <div class="grow">
-            <div>Synlighet: {{ space.visibility }}</div>
-            <div>Din rättighetsnivå: {{ space.permissionLevel }}</div>
+            <div>Synlighet: {{ translateVisibility(space.visibility) }}</div>
+            <div v-if="space.permissionLevel">Din rättighetsnivå: {{
+              translatePermissionLevelAdjective(space.permissionLevel) }}</div>
             <div v-if="space.description">{{ space.description }}</div>
           </div>
           <div class="card-actions justify-end">
@@ -48,7 +49,7 @@ import type { RouterOutputs } from '@/modules/trpcClient';
 import { useConnectionStore } from '@/stores/connectionStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
-import { type VrSpaceId, hasAtLeastPermissionLevel, hasAtLeastSecurityRole } from 'schemas';
+import { type VrSpaceId, hasAtLeastPermissionLevel, hasAtLeastSecurityRole, translatePermissionLevelAdjective, translatePermissionLevelVerb, translateVisibility } from 'schemas';
 import { onBeforeMount, ref, computed } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
 import { getAssetUrl } from '@/modules/utils';

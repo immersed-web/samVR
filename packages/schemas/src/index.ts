@@ -1,6 +1,5 @@
 import { ZodLiteral, ZodObject, ZodSchema, ZodUnion, ZodUnionOptions, z } from 'zod';
 import type { JwtPayload as JwtShapeFromLib } from 'jsonwebtoken'
-// import { Role, Venue, VirtualSpace3DModel, Visibility, Camera, CameraType as PrismaCameraType, Prisma, ModelFileFormat } from "database";
 import * as schema from 'database/schema';
 import { createInsertSchema, createSelectSchema, jsonSchema } from 'drizzle-zod';
 import { ProducerIdSchema } from './mediasoupSchemas.js';
@@ -135,6 +134,52 @@ export function hasAtLeastPermissionLevel(userPermissionLevel: ReturnedPermissio
   const requiredPermissionLevelIdx = returnedPermissionHierarchy.indexOf(requiredPermissionLevel);
   if (requiredPermissionLevelIdx < 0) throw Error('invalid requiredPermissionLevel provided');
   return userPermissionLevelIdx <= requiredPermissionLevelIdx;
+}
+
+export function translatePermissionLevelAdjective(userPermissionLevel: ReturnedPermissionLevel) {
+  switch (userPermissionLevel) {
+    case 'owner':
+      return 'ägare';
+    case 'admin':
+      return 'administratör';
+    case 'edit':
+      return 'redigeringsbehörig';
+    case 'view':
+      return 'läsbehörig';
+    default:
+      console.warn('switch not exhausted when translating permissionLevel');
+      break;
+  }
+}
+
+export function translatePermissionLevelVerb(userPermissionLevel: ReturnedPermissionLevel) {
+  switch (userPermissionLevel) {
+    case 'owner':
+      return 'äga';
+    case 'admin':
+      return 'administrera';
+    case 'edit':
+      return 'redigera';
+    case 'view':
+      return 'se/läsa';
+    default:
+      console.warn('switch not exhausted when translating permissionLevel');
+      break;
+  }
+}
+
+export function translateVisibility(visibitity: Visibility) {
+  switch (visibitity) {
+    case 'private':
+      return 'privat';
+    case 'unlisted':
+      return 'olistad';
+    case 'public':
+      return 'offentlig';
+    default:
+      console.warn('switch not exhausted when translating visibility');
+      break;
+  }
 }
 
 // type RoleSet = Set<Role>;

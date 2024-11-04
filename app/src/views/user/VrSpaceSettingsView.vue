@@ -75,11 +75,11 @@
                 <select v-model="selectedPermission" class="select select-bordered select-sm">
                   <option :value="permissionLevel" v-for="permissionLevel in insertablePermissionHierarchy"
                     :key="permissionLevel">
-                    {{ permissionLevel }}
+                    {{ translatePermissionLevelVerb(permissionLevel) }}
                   </option>
                 </select>
                 <button :disabled="!selectedUser" @click="addEditPermission" class="btn btn-primary btn-sm">
-                  Lägg till {{ selectedUser?.username }}: {{ selectedPermission }}
+                  Lägg till
                 </button>
               </div>
               <!-- <p>{{ selectedUser }}</p> -->
@@ -89,10 +89,15 @@
                 <span class="label-text font-semibold whitespace-nowrap">
                   Personer med tillgång till VR-scenen
                 </span>
-                <div v-for="userPermission in vrSpaceStore.currentVrSpace?.dbData.allowedUsers"
-                  :key="userPermission.user.userId">
-                  {{ userPermission.user.username }}: {{ userPermission.permissionLevel }}
-                  <button @click="removeEditPermission(userPermission.user.userId)">x</button>
+                <div class="grid grid-cols-[0.5fr_1fr_0fr] gap-6 w-fit">
+
+                  <template v-for="userPermission in vrSpaceStore.currentVrSpace?.dbData.allowedUsers"
+                    :key="userPermission.user.userId">
+                    <span>{{ userPermission.user.username }}</span>
+                    <span> {{ translatePermissionLevelAdjective(userPermission.permissionLevel) }}</span>
+                    <button class="btn btn-circle btn-xs material-icons"
+                      @click="removeEditPermission(userPermission.user.userId)">clear</button>
+                  </template>
                 </div>
               </div>
             </div>
@@ -425,7 +430,7 @@ import AssetUpload, { type AssetUploadEmitUploadedPayload } from './AssetUpload.
 import VrSpacePreview from '@/components/lobby/VrSpacePreview.vue';
 import { ref, watch, onMounted, computed, type ComponentInstance, onBeforeUnmount } from 'vue';
 // import { throttle } from 'lodash-es';
-import { insertablePermissionHierarchy, type Asset, type VrSpaceId, defaultHeightOverGround, type UserId, type Json } from 'schemas';
+import { insertablePermissionHierarchy, type Asset, type VrSpaceId, defaultHeightOverGround, type UserId, type Json, translatePermissionLevelAdjective, translatePermissionLevelVerb } from 'schemas';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import { useConnectionStore } from '@/stores/connectionStore';
 import { useAuthStore } from '@/stores/authStore';
