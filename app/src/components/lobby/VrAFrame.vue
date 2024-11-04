@@ -69,15 +69,7 @@
         @ybuttondown="oculusButtons['y'] = true" @ybuttonup="oculusButtons['y'] = false"
         emit-move="interval: 20; relativeToCamera: true">
         <a-entity ref="leftHandVRGui" position="0 0 -0.06" rotation="-90 0 0"></a-entity>
-        <!-- <a-entity :visible="leftControllerConnected" scale="0.05 0.05 0.05" rotation="20 90 -140"
-        gltf-model="#avatar-hand-1" /> -->
-        <!-- <a-sphere radius="0.2" /> -->
         <AvatarHand />
-        <!-- <a-entity>
-          <a-entity axes-helper rotation="-130 0 100">
-            <a-entity position="-0.5 0.36 -0.03" axes-helper gltf-model="url(/avatar/hands/hands_basic_left.glb)" />
-          </a-entity>
-        </a-entity> -->
       </a-entity>
       <a-entity ref="rightHandTag" @controllerconnected="rightControllerConnected = true"
         @controllerdisconnected="rightControllerConnected = false" laser-controls="hand:right"
@@ -85,15 +77,7 @@
         @abuttondown="oculusButtons['a'] = true" @abuttonup="oculusButtons['a'] = false"
         @bbuttondown="oculusButtons['b'] = true" @bbuttonup="oculusButtons['b'] = false"
         emit-move="interval: 20; relativeToCamera: true">
-        <!-- <a-sphere radius="0.2" /> -->
         <AvatarHand side="right" />
-        <!-- <a-entity axes-helper scale="-1 1 1">
-          <a-entity axes-helper rotation="-130 0 100">
-            <a-entity position="-0.5 0.36 -0.03" axes-helper gltf-model="url(/avatar/hands/hands_basic_left.glb)" />
-          </a-entity>
-        </a-entity> -->
-        <!-- <a-entity :visible="rightControllerConnected" scale="0.05 0.05 -0.05" rotation="20 90 -140"
-        gltf-model="#avatar-hand-1" /> -->
         <a-entity ref="rightHandVRGui" position="0 0 -0.06" rotation="-90 0 0"></a-entity>
       </a-entity>
 

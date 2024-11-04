@@ -17,24 +17,13 @@
       <a-entity scale="1 1 1">
         <a-entity :id="`left-hand-${props.clientInfo.connectionId}`" :visible="realTimeData.leftHand?.active"
           interpolated-transform="interpolationTime: 350;" ref="leftHandTag">
-          <!-- <a-entity rotation="-100 110 10">
-            <AvatarSkinPart position="-0.5 0.3 0" skin-part-name="hands" :part="avatarDesign.parts.hands" />
-          </a-entity> -->
           <AvatarHand />
-          <!-- <a-entity scale="0.05 0.05 0.05" rotation="-20 90 -140" gltf-model="#avatar-hand-1" /> -->
-          <a-box width="0.1" height="0.1" depth="0.1" />
         </a-entity>
       </a-entity>
       <a-entity scale="1 1 1">
         <a-entity :id="`right-hand-${props.clientInfo.connectionId}`" :visible="realTimeData.rightHand?.active"
           interpolated-transform="interpolationTime: 350;" ref="rightHandTag">
-          <!-- <a-entity rotation="-100 110 0">
-            <AvatarSkinPart position="0.5 0.3 0" scale="-1 1 1" skin-part-name="hands"
-              :part="avatarDesign.parts.hands" />
-          </a-entity> -->
           <AvatarHand side="right" />
-          <!-- <a-entity scale="0.05 0.05 -0.05" rotation="20 90 -140" gltf-model="#avatar-hand-1" /> -->
-          <a-box width="0.1" height="0.1" depth="0.1" />
         </a-entity>
       </a-entity>
       <slot />
