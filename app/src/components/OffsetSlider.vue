@@ -13,7 +13,7 @@ const props = withDefaults(defineProps<{
   offset?: number
   inverted?: boolean
 }>(), {
-  step: 0.1,
+  step: 0.01,
   offset: 3.0,
   inverted: false
 });
