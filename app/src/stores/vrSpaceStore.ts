@@ -166,8 +166,8 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     currentVrSpace.value = response;
   }
   async function leaveVrSpace() {
-    await connection.client.vr.leaveVrSpace.mutate();
     clearStore();
+    await connection.client.vr.leaveVrSpace.mutate();
   }
 
   type PlacedObjectUpsert = Omit<PlacedObjectInsert, 'reason'>;
@@ -194,6 +194,7 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
   async function placeScreenShare(data: ScreenShare) {
     await connection.client.vr.placeScreenShare.mutate(data);
   }
+
   async function removeScreenShare() {
     await connection.client.vr.removeScreenShare.mutate();
   }
@@ -220,6 +221,7 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
   }, { deep: true });
 
   const throttledRealtimeDataUpdate = throttle(async (realtimeData: ClientRealtimeData) => {
+    if (!currentVrSpace.value) return;
     await connection.client.vr.updateRealtimeData.mutate(realtimeData);
   }, 100, { trailing: true });
 
