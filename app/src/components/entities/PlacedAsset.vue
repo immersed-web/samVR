@@ -1,13 +1,12 @@
 <template>
   <a-entity>
-    <!-- <a-sphere :class="$attrs.class" color="yellow" scale="0.2 0.2 0.2" /> -->
     <a-image @materialtextureloaded="onTextureLoaded" v-if="tagName === 'a-image'" :class="$attrs.class" :src="src" />
     <PdfEntity v-else-if="tagName === 'PdfEntity'" v-model:current-page="currentPage" :src="src"
       :class="$attrs.class" />
     <template v-else-if="tagName === 'a-video'">
-      <a-video ref="aVideoTag" :src="`#${generatedId}`" :class="$attrs.class"
-        @materialtextureloaded="onVideoTextureLoaded" @materialvideoloadeddata="onVideoTextureLoaded" />
-      <video muted ref="videoTag" :id="generatedId" :src="src" />
+      <a-video :positional-audio="`audioSourceElement: #${generatedId}`" ref="aVideoTag" :src="`#${generatedId}`"
+        :class="$attrs.class" @materialvideoloadeddata="onVideoDataLoaded" />
+      <video ref="videoTag" :id="generatedId" :src="src" />
       <!-- <audio ref="audioTag" :id="`${generatedId}-audioTag`" /> -->
     </template>
     <component rotation="90 0 0" v-else :is="tagName" :src="src" :class="$attrs.class" />
@@ -19,7 +18,7 @@ import { THREE, type DetailEvent, type Entity } from 'aframe';
 import { extensionsToAframeTagsMap, type Asset } from 'schemas';
 import { computed, onMounted, onUnmounted, onUpdated, ref, useAttrs, watch } from 'vue';
 import { userHasInteracted } from '@/composables/userActivation';
-import PdfEntity from './PdfEntity.vue';
+import PdfEntity from '@/components/entities/PdfEntity.vue';
 const attrs = useAttrs();
 
 onUpdated(() => {
@@ -74,14 +73,27 @@ watch(userHasInteracted, (interacted) => {
   }
 })
 
-function onVideoTextureLoaded(evt: DetailEvent<{ src: HTMLVideoElement, texture: THREE.VideoTexture }>) {
-  // console.log('videoTexture loaded:', evt);
-  const aVideoTag = evt.target;
-  const videoElement = evt.detail.src;
+function onVideoDataLoaded(evt: DetailEvent<{ src: HTMLVideoElement, texture: THREE.VideoTexture }>) {
+  // console.log('videoDataLoaded! ------------------------------------------', evt);
+  setupVideo(evt.detail.src, evt.target);
+}
+
+// function onVideoTextureLoaded(evt: DetailEvent<{ src: HTMLVideoElement, texture: THREE.VideoTexture }>) {
+//   console.log('videoTexture loaded:', evt);
+// }
+function setupVideo(videoElement: HTMLVideoElement, aVideoTag: Entity) {
+  // console.log('videoElement:', videoElement);
+  // console.log('aVideoTag:', aVideoTag);
   videoElement.loop = true;
   const { videoWidth, videoHeight } = videoElement;
+  // console.log('videoElement dimensions:', videoWidth, videoHeight);
   const ratio = videoWidth / videoHeight;
-  aVideoTag.object3D.scale.set(ratio, 1, 1);
+  // console.log('video ratio', ratio);
+  if (isFinite(ratio)) {
+    aVideoTag.object3D.scale.set(ratio, 1, 1);
+  } else {
+    aVideoTag.object3D.scale.set(1, 1, 1);
+  }
   if (userHasInteracted.value) {
     videoElement.play();
   }
@@ -92,7 +104,11 @@ function onTextureLoaded(event: DetailEvent<{ src: HTMLImageElement, texture: TH
   const aImageTag = event.target;
   const { width, height } = event.detail.src
   const ratio = width / height;
-  aImageTag.object3D.scale.set(ratio, 1, 1);
+  if (isFinite(ratio)) {
+    aImageTag.object3D.scale.set(ratio, 1, 1);
+  } else {
+    aImageTag.object3D.scale.set(1, 1, 1);
+  }
   return
 }
 

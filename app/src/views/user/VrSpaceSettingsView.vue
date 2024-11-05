@@ -445,7 +445,7 @@ import { useCurrentCursorIntersection, useSelectedPlacedObject, useCurrentlyMove
 import { THREE, type Entity } from 'aframe';
 import { arrToCoordString, intersectionToTransform, quaternionTupleToAframeRotation } from '@/modules/3DUtils';
 import { useArrayFilter, watchDebounced } from '@vueuse/core';
-import PlacedAsset from '@/components/lobby/PlacedAsset.vue';
+import PlacedAsset from '@/components/entities/PlacedAsset.vue';
 import { RouterLink, useRouter } from 'vue-router';
 const router = useRouter();
 

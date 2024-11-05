@@ -1,4 +1,5 @@
-import type { DetailEvent, Entity, Scene } from 'aframe';
+import { assertSceneHasAudioListener } from '@/modules/3DUtils';
+import { type DetailEvent, type Entity, type Scene, THREE } from 'aframe';
 
 export default () => {
   AFRAME.registerComponent('mediastream-audio-source', {
@@ -43,18 +44,12 @@ export default () => {
 
     init: function () {
       const el = this.el;
-      const sceneEl: Scene & {audioListener?: THREE.AudioListener} = el.sceneEl!;
-      
       this.tick = AFRAME.utils.throttleTick(this.tick, 20, this);
 
-      //this makes sure we ever only have one audioListener
-      if (!sceneEl.audioListener) {
-        sceneEl['audioListener'] = new THREE.AudioListener();
-        sceneEl.camera && sceneEl.camera.add(sceneEl.audioListener);
-        sceneEl.addEventListener('camera-set-active', function(evt: any) {
-          evt.detail.cameraEl.getObject3D('camera').add(sceneEl.audioListener);
-        });
-      }
+      // TODO: refactor to use audiolistener assert/get util function
+      console.assert(el.sceneEl, 'mediastream-audio-source: sceneEl was undefined in init function ');
+
+      const sceneEl = assertSceneHasAudioListener(el.sceneEl!);
 
       const positionalAudio = new THREE.PositionalAudio(sceneEl.audioListener);
       this.analyzer = new THREE.AudioAnalyser(positionalAudio, 32);

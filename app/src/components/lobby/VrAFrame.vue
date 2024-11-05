@@ -1,16 +1,14 @@
 <template>
   <template v-if="vrSpaceStore.currentVrSpace">
-    <a-entity id="vr-portals">
-      <a-entity v-for="placedObject in vrSpaceStore.currentVrSpace?.dbData.placedObjects"
-        :key="`${placedObject.placedObjectId}_${placedObject.updatedAt}`"
-        :rotation="arrToCoordString(quaternionTupleToAframeRotation(placedObject.orientation ?? [0, 0, 0, 1]))"
-        :position="arrToCoordString(placedObject.position)">
-        <VrSpacePortal v-if="placedObject.type === 'vrPortal'" :vr-portal="placedObject.vrPortal"
+    <a-entity id="placed-objects">
+      <PlacedObject v-for="placedObject in vrSpaceStore.currentVrSpace?.dbData.placedObjects"
+        :key="`${placedObject.placedObjectId}_${placedObject.updatedAt}`" :placed-object="placedObject">
+        <!-- <VrSpacePortal v-if="placedObject.type === 'vrPortal'" :vr-portal="placedObject.vrPortal"
           @click.stop="router.replace({ name: 'vrSpace', params: { vrSpaceId: placedObject.vrPortal?.vrSpaceId } })"
           :label="placedObject.vrPortal?.name" />
         <PlacedAsset class="raycastable-surface" v-else-if="placedObject.type === 'asset' && placedObject.asset"
-          :scale="placedObject.scale ? arrToCoordString(placedObject.scale) : ''" :asset="placedObject.asset" />
-      </a-entity>
+          :scale="placedObject.scale ? arrToCoordString(placedObject.scale) : ''" :asset="placedObject.asset" /> -->
+      </PlacedObject>
     </a-entity>
 
     <a-sky :color="skyColor" />
@@ -163,16 +161,15 @@ import { useSoupStore } from '@/stores/soupStore';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import { aFrameSceneProvideKey } from '@/modules/injectionKeys';
 import { getAssetUrl } from '@/modules/utils';
-import VrSpacePortal from '../entities/VrSpacePortal.vue';
 import EmojiOther from './EmojiOther.vue';
 import LaserPointerOther from './LaserPointerOther.vue';
 import { useCurrentCursorIntersection, oculusButtons } from '@/composables/vrSpaceComposables';
 import BasicAvatarEntity from './BasicAvatarEntity.vue';
 import { generateSpawnPosition, arrToCoordString, quaternionTupleToAframeRotation } from '@/modules/3DUtils';
-import PlacedAsset from './PlacedAsset.vue';
 import { usePointerLock } from '@vueuse/core';
 import { overlayGUILeft, overlayGUIRight, leftHandVRGui, rightHandVRGui, cameraAttacher } from '@/composables/teleportTargets';
 import AvatarHand from '@/components/entities/AvatarHand.vue';
+import PlacedObject from '@/components/entities/PlacedObject.vue';
 const { currentCursorIntersection, triggerCursorClick, isCursorOnNavmesh, currentRaycastSelectorString, pointerOnHover } = useCurrentCursorIntersection();
 const { lock, unlock, element } = usePointerLock();
 
@@ -356,7 +353,6 @@ function onSceneLoaded(evt: Event) {
     teleportOrigin: '#camera',
     collisionEntities: '#navmesh',
   })
-  // blink-controls="cameraRig: #camera-rig; teleportOrigin: #camera; collisionEntities: #navmesh;"
 }
 function onRenderStart(evt: Event) {
   console.log('render started:', evt);
@@ -393,30 +389,6 @@ function getRandomSpawnPosition() {
   return generateSpawnPosition(spawnPosition, spawnRadius);
 }
 
-// function goToStream() {
-//   // router.push({name: 'basicVR'});
-//   // console.log('sphere clicked');
-//   if (!streamStore.currentStream) return;
-//   let mainCameraId = streamStore.currentStream.mainCameraId;
-//   if(!mainCameraId){
-//     console.warn('No maincamera set. Falling back to using any camera');
-//     mainCameraId = Object.values(streamStore.currentStream.cameras)[0].cameraId;
-//   }
-//   router.push({
-//     name: 'userCamera',
-//     params: {
-//       streamId: streamStore.currentStream.streamId,
-//       cameraId: mainCameraId,
-//     },
-//   });
-// }
-
-// const currentTransform: ClientTransform = {
-//   head: {
-//     position: [0,0,0],
-//     rotation: [0, 0, 0, 0],
-//   },
-// };
 function onHeadMove(e: DetailEvent<ClientRealtimeData['head']>) {
   vrSpaceStore.ownRealtimeData.head = e.detail;
   // console.log('head moved', e.detail.position!);
@@ -442,12 +414,6 @@ function onRightHandMove(e: DetailEvent<ClientRealtimeData['rightHand']>) {
   // currentTransform.rightHand = e.detail;
 }
 
-function onNavmeshClicked(e: Event) {
-  // console.log('navmesh clicked', e);
-  // triggerClick(e)
-  // bus.emit({ model: 'navmesh', cursorObject: cursorEntity.value?.object3D });
-}
-
 const timeMouseDown = ref(0);
 function teleportMouseDown(e: Event) {
   timeMouseDown.value = e.timeStamp;
@@ -462,12 +428,4 @@ function teleportSelf(e: Event) {
   cameraTag.value.object3D.position.set(posArray[0], posArray[1], posArray[2]);
 }
 
-// const throttledTransformMutation = throttle(async () => {
-//   if(!sceneTag.value?.is('vr-mode')) {
-//     delete currentTransform.leftHand;
-//     delete currentTransform.rightHand;
-//   }
-//   await vrSpaceStore.updateTransform(currentTransform);
-//   // Unset hands after theyre sent
-// }, 100, { trailing: true });
 </script>

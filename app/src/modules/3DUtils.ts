@@ -1,4 +1,4 @@
-import { THREE, type Entity } from "aframe";
+import { THREE, type Entity, type Scene } from "aframe";
 import type { Vector3, Vector3Tuple } from "env";
 
 const utilMatrix4 = new THREE.Matrix4();
@@ -131,4 +131,19 @@ export function aFrameRotationTupleToQuaternionTuple(eulerTuple: Vector3Tuple) {
   const euler = utilEuler.fromArray(degreesEulerTupleToRadiansEulerTuple(eulerTuple));
   const quaternion = utilQuaternion.setFromEuler(euler);
   return quaternion.toArray() as THREE.Vector4Tuple;
+}
+
+
+export function assertSceneHasAudioListener(scene: Scene) {
+  const sceneEl: Scene & { audioListener?: THREE.AudioListener } = scene;
+
+  if (!sceneEl.audioListener) {
+    console.log('creating audioListener');
+    sceneEl.audioListener = new THREE.AudioListener();
+    sceneEl.camera && sceneEl.camera.add(sceneEl.audioListener);
+    sceneEl.addEventListener('camera-set-active', function (evt: any) {
+      evt.detail.cameraEl.getObject3D('camera').add(sceneEl.audioListener);
+    });
+  }
+  return sceneEl as Scene & { audioListener: THREE.AudioListener };
 }

@@ -39,6 +39,7 @@ import normalsHelper from './normals-helper';
 import axesHelper from './axes-helper';
 import tickCounter from './tick-counter';
 import bvh from './bvh';
+import positionalAudio from './positional-audio';
 
 let componentsAreRegistered = false;
 
@@ -55,6 +56,7 @@ export default async function () {
   rotationControl();
   hoverHighlight();
   mediastreamAudioSource();
+  positionalAudio();
   modelOpacity();
   grid();
   followPosition();

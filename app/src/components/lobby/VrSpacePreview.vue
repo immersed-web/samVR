@@ -81,8 +81,7 @@ import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import registerAframeComponents from '@/ts/aframe/components';
 import { defaultHeightOverGround } from 'schemas';
 import { useCurrentCursorIntersection, useSelectedPlacedObject, useCurrentlyMovedObject } from '@/composables/vrSpaceComposables';
-import OffsetSlider from '../OffsetSlider.vue';
-import { ta } from 'date-fns/locale';
+import OffsetSlider from '@/components/OffsetSlider.vue';
 registerAframeComponents();
 
 const vrSpaceStore = useVrSpaceStore();

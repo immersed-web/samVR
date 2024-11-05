@@ -75,7 +75,7 @@ import { useEventBus } from '@vueuse/core';
 import { useCurrentCursorIntersection, useSelectedPlacedObject } from '@/composables/vrSpaceComposables';
 
 import { type DetailEvent, THREE, type Entity } from 'aframe';
-import PdfEntity from '@/components/lobby/PdfEntity.vue';
+import PdfEntity from '@/components/entities/PdfEntity.vue';
 
 import { useDropZone, useFileDialog } from '@vueuse/core';
 
@@ -90,7 +90,7 @@ import AssetLibrary from '@/components/lobby/AssetLibrary.vue';
 import { extensionsToAframeTagsMap, type Asset, type AssetAframeTagname, type AssetId, type AssetType, type PlacedObject, type PlacedObjectId, type PlacedObjectInsert, type UserId } from 'schemas';
 import { getAssetUrl } from '@/modules/utils';
 import { quaternionToAframeRotation, arrToCoordString, quaternionTupleToAframeRotation, aFrameRotationTupleToQuaternionTuple, intersectionToTransform } from '@/modules/3DUtils';
-import PlacedAsset from '@/components/lobby/PlacedAsset.vue';
+import PlacedAsset from '@/components/entities/PlacedAsset.vue';
 import type { PlacedObjectWithIncludes } from 'database';
 import { useClientStore } from '@/stores/clientStore';
 const clientStore = useClientStore();

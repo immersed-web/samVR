@@ -2,7 +2,7 @@
 import { computed, ref, shallowReactive, shallowRef, watch } from 'vue';
 import sponzaUrl from '@/assets/models/sponza.glb?url'
 import { type DetailEvent, THREE, type Entity, type Scene } from 'aframe';
-import PdfEntity from '@/components/lobby/PdfEntity.vue';
+import PdfEntity from '@/components/entities/PdfEntity.vue';
 import WaitForAframe from '@/components/WaitForAframe.vue';
 
 defineOptions({
