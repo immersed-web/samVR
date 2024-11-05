@@ -1,5 +1,5 @@
 <template>
-  <div class="m-10 resize overflow-hidden join join-vertical">
+  <div class="overflow-hidden join join-vertical">
     <TabGroup>
       <TabList class="tabs join-item tabs-boxed collapsible-button-group justify-start">
         <Tab v-for="tab in tabs" as="div" :key="tab.id" class="tab gap-2 min-w-0 flex-nowrap collapsible-button">
