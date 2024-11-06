@@ -12,61 +12,62 @@
       Laddar...
     </div>
     <div v-else class="grid grid-cols-[clamp(17rem,40%,37rem)_1fr] gap-2">
-      <TabsComponent class="max-w-4xl" :tabs="tabs" v-model="currentTab" breakpoint-adjustment="1.03">
+      <TabsComponent class="max-w-4xl" :tabs="tabs" breakpoint-adjustment.number="1.03">
         <TabPanel>
-          <div class="flex flex-col">
-            <span class="label-text font-semibold">Scenens namn</span>
-            <input class="input input-bordered input-sm" v-model="vrSpaceStore.writableVrSpaceDbData.name">
-          </div>
-          <div class="flex flex-col">
-            <span class="label-text font-semibold">Beskrivning</span>
-            <textarea rows=5 class="textarea textarea-bordered " placeholder="beskriv din vr-miljö"
-              v-model="vrSpaceStore.writableVrSpaceDbData.description"></textarea>
-          </div>
-          <div>
+          <div class="space-y-2">
+            <div class="form-control">
+              <div class="font-semibold">Scenens namn</div>
+              <input class="input input-bordered input-sm" v-model="vrSpaceStore.writableVrSpaceDbData.name">
+            </div>
+            <div class="form-control">
+              <div class="font-semibold">Beskrivning</div>
+              <textarea rows=5 class="textarea textarea-bordered " placeholder="beskriv din vr-miljö"
+                v-model="vrSpaceStore.writableVrSpaceDbData.description"></textarea>
+            </div>
             <button @click="deleteThisVrSpace" class="btn btn-error">Radera</button>
           </div>
         </TabPanel>
         <TabPanel>
-          <div class="">
+          <div class="space-y-2">
             <div class="divider">
               Publik eller privat?
             </div>
-            <p class="text-sm mb-2 text-gray-600">
+            <p class="text-sm text-gray-600">
               Välj ifall VR-scenen ska vara publikt tillgänglig, öppen för vem som helst att besöka. Eller om scenen
               är privat för dig och de
               du har valt att dela den med.
             </p>
-            <label class="max-w-sm label cursor-pointer gap-2 font-semibold">
+            <label class="max-w-xs label cursor-pointer gap-2 font-semibold">
               <span class="label-text">
                 Öppet för alla:
               </span>
               <input type="checkbox" class="toggle toggle-success" true-value="public" false-value="private"
                 v-model="vrSpaceStore.writableVrSpaceDbData.visibility">
             </label>
-          </div>
-          <div class="">
             <div class="divider">
               Delning
             </div>
-            <p class="text-sm mb-2 text-gray-600">
+            <p class="text-sm text-gray-600">
               Välj de användare som ska ha tillgång till scenen, samt på vilken nivå de ska ha tillgång.
             </p>
-            <span class="label-text font-semibold whitespace-nowrap">
-              Dela med en ny person
-            </span>
-            <div class="flex gap-2 justify-between items-center z-10 flex-wrap">
-              <AutoComplete v-if="users?.length" class="grow" v-model="selectedUser" display-key="username"
-                id-key="userId" :options="users" />
-              <select v-model="selectedPermission" class="select select-bordered select-sm">
-                <option :value="permissionLevel" v-for="permissionLevel in insertablePermissionHierarchy"
-                  :key="permissionLevel">
-                  {{ translatePermissionLevelVerb(permissionLevel) }}
-                </option>
-              </select>
-              <button :disabled="!selectedUser" @click="addEditPermission" class="btn btn-primary btn-sm">
-                Lägg till
-              </button>
+
+            <div class="form-control">
+              <span class="font-semibold">
+                Dela med en ny person
+              </span>
+              <div class="flex gap-2 justify-between items-center z-10 flex-wrap">
+                <AutoComplete v-if="users?.length" class="grow" v-model="selectedUser" display-key="username"
+                  id-key="userId" :options="users" />
+                <select v-model="selectedPermission" class="select select-bordered select-sm">
+                  <option :value="permissionLevel" v-for="permissionLevel in insertablePermissionHierarchy"
+                    :key="permissionLevel">
+                    {{ translatePermissionLevelVerb(permissionLevel) }}
+                  </option>
+                </select>
+                <button :disabled="!selectedUser" @click="addEditPermission" class="btn btn-primary btn-sm">
+                  Lägg till
+                </button>
+              </div>
             </div>
             <!-- <p>{{ selectedUser }}</p> -->
             <!-- <p class="overflow-hidden">{{ users }}</p> -->
@@ -782,6 +783,7 @@ async function deleteThisVrSpace() {
 </script>
 
 <style scoped>
+.input-with-label {}
 .activeRaycast {
   animation: framesActiveRaycast 1s ease-in-out infinite alternate;
 }
