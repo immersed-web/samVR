@@ -1,13 +1,23 @@
 <template>
-  <div class="overflow-hidden join join-vertical">
-    <TabGroup>
-      <TabList class="tabs join-item tabs-boxed collapsible-button-group justify-start">
-        <Tab v-for="tab in tabs" as="div" :key="tab.id" class="tab gap-2 min-w-0 flex-nowrap collapsible-button">
+  <div class="overflow-hidden tabs-wrapper">
+    <!-- <div class="debug-box"></div>
+    <div class="flex text-sm">
+      <div class="bg-blue-400 w-3"></div>
+      <div class="bg-blue-800 size-6"></div>
+      <div class="bg-blue-300 w-1"></div>
+      <div class="bg-blue-800 w-[11ch]">Information</div>
+      <div class="bg-blue-200 w-3"></div>
+    </div> -->
+    <TabGroup :selected-index="currentTab" @change="changeTab">
+      <TabList class="tabs tabs-lifted collapsible-button-group">
+        <Tab v-for="tab in tabs" as="div" :key="tab.label"
+          class="tab [--tab-padding:0.8rem] gap-1 min-w-0 flex-nowrap collapsible-button">
           <span class="material-icons">{{ tab.iconName }}</span>
           <span class="collapsible-text">{{ tab.label }}</span>
         </Tab>
+        <div class="tab min-w-0 [--tab-padding:0]"></div>
       </TabList>
-      <TabPanels class="join-item p-4 border border-t-0 grow rounded-bl-lg rounded-br-lg">
+      <TabPanels class="p-4 border border-t-0 grow rounded-b-lg">
         <slot />
       </TabPanels>
     </TabGroup>
@@ -15,28 +25,51 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue';
+import { useStyleTag } from '@vueuse/core';
 
-const props = defineProps<{
-  tabs: { label: string; id: string; iconName: string }[];
-  modelValue: number;
+
+const currentTab = defineModel<number>();
+
+const { tabs, breakpointAdjustment = 1.0 } = defineProps<{
+  tabs: { label: string; iconName: string }[],
+  breakpointAdjustment?: number,
 }>();
 
-const localModelValue = ref(props.modelValue);
-const emit = defineEmits(['update:modelValue']);
+const containerQueryCss = computed(() => {
+  const nrOfChars = tabs.reduce((sum, tab) => {
+    return sum + tab.label.length;
+  }, 0)
+  const nrOfLabels = tabs.length;
+  const breakpoint = `calc(${breakpointAdjustment}*(0.75*${nrOfChars}ch + ${nrOfLabels}*(2*0.8rem + 0.25rem + 1.5rem)))`
+  return `
+    @container (width < ${breakpoint}) {
+      .collapsible-text {
+        display: none;
+      }
+  `;
+})
+const { id, css, load, unload, isLoaded } = useStyleTag(containerQueryCss);
 
-const selectTab = (index: number) => {
-  localModelValue.value = index;
-  emit('update:modelValue', index);
+function changeTab(index: number) {
+  currentTab.value = index;
 };
 
-watch(() => props.modelValue, (newVal) => {
-  localModelValue.value = newVal;
-});
 </script>
 
 <style scoped>
+.debug-box {
+  --count: 4;
+  --chars: 55ch;
+  height: 1rem;
+  background-color: aqua;
+  width: calc(0.75*var(--chars) + var(--count)*(2*0.8rem + 0.25rem + 1.5rem))
+}
+
+.tabs-wrapper {
+  --breakpoint-width: 37rem;
+}
 .collapsible-button-group {
   container-type: inline-size;
 }
@@ -47,10 +80,4 @@ watch(() => props.modelValue, (newVal) => {
   white-space: nowrap;
 }
 
-@container (width < 37rem) {
-  .collapsible-text {
-    display: none;
-
-  }
-}
 </style>

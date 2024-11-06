@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full max-w-[100rem] px-4 py-8 mx-auto">
+  <div class="w-full max-w-[120rem] px-4 py-8 mx-auto">
     <div class="flex gap-8 mb-6 items-center">
       <h1 class=" text-3xl font-bold">
         Redigera {{ vrSpaceStore.writableVrSpaceDbData?.name }}
@@ -11,8 +11,8 @@
     <div v-if="!vrSpaceStore.writableVrSpaceDbData">
       Laddar...
     </div>
-    <div v-else class="grid grid-cols-[2fr_3fr] gap-2">
-      <TabsComponent :tabs="tabs" v-model="currentTab">
+    <div v-else class="grid grid-cols-[clamp(17rem,40%,37rem)_1fr] gap-2">
+      <TabsComponent class="max-w-4xl" :tabs="tabs" v-model="currentTab" breakpoint-adjustment="1.03">
         <TabPanel>
           <div class="flex flex-col">
             <span class="label-text font-semibold">Scenens namn</span>
@@ -439,10 +439,10 @@ onTransformUpdate(spo => {
 })
 
 const tabs = [
-  { label: 'Grundläggande information', id: 'hkhj345', iconName: 'visibility' },
-  { label: 'Användare och rättigheter', id: 'k345', iconName: 'fingerprint' },
-  { label: '3D-modell', id: 'jfs3', iconName: 'search' },
-  { label: 'Mediabibliotek', id: 'jfs3', iconName: 'stop' },
+  { label: 'Information', iconName: 'info' },
+  { label: 'Användare & Synlighet', iconName: 'manage_accounts' },
+  { label: '3D-modell', iconName: 'view_in_ar' },
+  { label: 'Mediabibliotek', iconName: 'collections' },
 ];
 
 const { setCursorMode, currentCursorMode, currentRaycastSelectorString, setCursorEntityRef, onCursorClick, currentCursorIntersection, currentCursorTransform, triggerCursorClick } = useCurrentCursorIntersection();
