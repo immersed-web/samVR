@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.0",
-    "drizzle-kit": "^0.21.2"
+    "drizzle-kit": "^0.28.0"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
