@@ -11,7 +11,7 @@
     <TabGroup :selected-index="currentTab" @change="changeTab">
       <TabList class="tabs tabs-lifted collapsible-button-group">
         <Tab v-for="tab in tabs" as="div" :key="tab.label"
-          class="tab [--tab-padding:0.8rem] gap-1 min-w-0 flex-nowrap collapsible-button">
+          class="tab [--tab-padding:0.4rem] gap-0.5 min-w-0 flex-nowrap collapsible-button">
           <span class="material-icons">{{ tab.iconName }}</span>
           <span class="collapsible-text">{{ tab.label }}</span>
         </Tab>
@@ -42,7 +42,7 @@ const containerQueryCss = computed(() => {
     return sum + tab.label.length;
   }, 0)
   const nrOfLabels = tabs.length;
-  const breakpoint = `calc(${breakpointAdjustment}*(0.75*${nrOfChars}ch + ${nrOfLabels}*(2*0.8rem + 0.25rem + 1.5rem)))`
+  const breakpoint = `calc(${breakpointAdjustment}*(0.75*${nrOfChars}ch + ${nrOfLabels}*(2*0.4rem + 0.25rem + 1.5rem)))`
   return `
     @container (width < ${breakpoint}) {
       .collapsible-text {

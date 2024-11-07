@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full max-w-[120rem] px-4 py-8 mx-auto">
+  <div class="w-full max-w-[125rem] px-4 py-8 mx-auto">
     <div class="flex gap-8 mb-6 items-center">
       <h1 class=" text-3xl font-bold">
         Redigera {{ vrSpaceStore.writableVrSpaceDbData?.name }}
@@ -11,7 +11,7 @@
     <div v-if="!vrSpaceStore.writableVrSpaceDbData">
       Laddar...
     </div>
-    <div v-else class="grid grid-cols-[clamp(17rem,40%,37rem)_1fr] gap-2">
+    <div v-else class="grid grid-cols-[clamp(17rem,45%,47rem)_1fr] gap-2">
       <TabsComponent class="max-w-4xl" :tabs="tabs" breakpoint-adjustment.number="1.03">
         <TabPanel>
           <div class="space-y-2">
@@ -24,7 +24,18 @@
               <textarea rows=5 class="textarea textarea-bordered " placeholder="beskriv din vr-miljö"
                 v-model="vrSpaceStore.writableVrSpaceDbData.description"></textarea>
             </div>
-            <button @click="deleteThisVrSpace" class="btn btn-error">Radera</button>
+            <div class="label gap-6 justify-end">
+              <span class="text-red-600">
+                Varning. Detta tar bort vr-miljön permanent!
+              </span>
+              <button v-if="!isRevealed" @click.stop="triggerDeleteDialog" class="btn btn-error">Radera denna
+                VR-miljö</button>
+              <template v-else>
+                <button @click="confirm" class="btn btn-error">Klicka en gång till för att verifiera</button>
+                <button @click="cancel" class="btn ">Avbryt</button>
+              </template>
+
+            </div>
           </div>
         </TabPanel>
         <TabPanel>
@@ -38,7 +49,7 @@
               du har valt att dela den med.
             </p>
             <label class="max-w-xs label cursor-pointer gap-2 font-semibold">
-              <span class="label-text">
+              <span class="label">
                 Öppet för alla:
               </span>
               <input type="checkbox" class="toggle toggle-success" true-value="public" false-value="private"
@@ -72,8 +83,8 @@
             <!-- <p>{{ selectedUser }}</p> -->
             <!-- <p class="overflow-hidden">{{ users }}</p> -->
 
-            <div class="flex flex-col gap-1 mt-2">
-              <span class="label-text font-semibold whitespace-nowrap">
+            <div class="form-control">
+              <span class="font-semibold">
                 Personer med tillgång till VR-scenen
               </span>
               <div class="grid grid-cols-[0.5fr_1fr_0fr] gap-6 w-fit">
@@ -91,21 +102,7 @@
         </TabPanel>
         <TabPanel>
           <template v-if="vrSpaceStore.currentVrSpace">
-            <div class="">
-              <div class="divider">
-                Himlens färg
-              </div>
-              <div class="flex gap-2 items-center">
-                <div class="rounded-full outline outline-2 overflow-clip">
-                  <input class="size-10 border-none block cursor-pointer -m-2" type="color"
-                    v-model="vrSpaceStore.writableVrSpaceDbData.skyColor">
-                </div>
-                <span class="label-text text-gray-600">
-                  Välj den färg som himlen ska ha i VR-scenen.
-                </span>
-              </div>
-            </div>
-            <div class="">
+            <div class="space-y-2">
               <div class="divider">
                 3D-modell för miljön
               </div>
@@ -121,37 +118,33 @@
             </div>
 
             <template v-if="vrSpaceStore.currentVrSpace.dbData.worldModelAsset">
-              <div class="">
-                <div class="divider">
-                  3D-modell för gåbara ytor (navmesh)
-                </div>
-                <p class="text-sm mb-2 text-gray-600">
-                  Ladda upp en 3D-modell för miljöns navmesh. Modellen anger var besökarna kan röra sig fritt samt
-                  vilka ytor som inte går att beträda. Ifall en navmesh-modell inte laddas upp så försöker programmet
-                  att beräkna detta automatiskt, vilket kan ge upphov till oväntade fel.
-                </p>
-                <pre
-                  class="whitespace-normal">{{ vrSpaceStore.currentVrSpace.dbData.navMeshAsset?.originalFileName }}</pre>
-                <AssetUpload @uploaded="onNavmeshUploaded" accepted-asset-types="navmesh" name="navmesh"
-                  :show-in-user-library="false" :uploaded-asset-data="vrSpaceStore.currentVrSpace.dbData.navMeshAsset"
-                  @asset-deleted="vrSpaceStore.reloadVrSpaceFromDB" />
+              <div class="divider">
+                3D-modell för gåbara ytor (navmesh)
               </div>
-              <div class="">
-                <div class="divider">
-                  Storlek
-                </div>
-                <p class="text-sm mb-2 text-gray-600">
-                  Justera storleken på 3D-modellen.
-                </p>
-                <div class="flex gap-4 items-center w-full">
-                  <span class="label-text font-bold badge badge-outline badge-lg">
-                    {{ vrSpaceStore.writableVrSpaceDbData.worldModelScale.toFixed(5) }}
-                  </span>
-                  <input class="range grow" type="range" min="0.1" max="5" step="0.00001"
-                    v-model.number="vrSpaceStore.writableVrSpaceDbData.worldModelScale">
-                  <button @click="vrSpaceStore.writableVrSpaceDbData.worldModelScale = 1"
-                    class="btn btn-xs btn-circle btn-outline material-icons">replay</button>
-                </div>
+              <p class="text-sm mb-2 text-gray-600">
+                Ladda upp en 3D-modell för miljöns navmesh. Modellen anger var besökarna kan röra sig fritt samt
+                vilka ytor som inte går att beträda. Ifall en navmesh-modell inte laddas upp så försöker programmet
+                att beräkna detta automatiskt, vilket kan ge upphov till oväntade fel.
+              </p>
+              <pre
+                class="whitespace-normal">{{ vrSpaceStore.currentVrSpace.dbData.navMeshAsset?.originalFileName }}</pre>
+              <AssetUpload @uploaded="onNavmeshUploaded" accepted-asset-types="navmesh" name="navmesh"
+                :show-in-user-library="false" :uploaded-asset-data="vrSpaceStore.currentVrSpace.dbData.navMeshAsset"
+                @asset-deleted="vrSpaceStore.reloadVrSpaceFromDB" />
+              <div class="divider">
+                Storlek
+              </div>
+              <p class="text-sm mb-2 text-gray-600">
+                Justera storleken på 3D-modellen.
+              </p>
+              <div class="flex gap-4 items-center w-full">
+                <span class="label-text font-bold badge badge-outline badge-lg">
+                  {{ vrSpaceStore.writableVrSpaceDbData.worldModelScale.toFixed(5) }}
+                </span>
+                <input class="range grow" type="range" min="0.1" max="5" step="0.00001"
+                  v-model.number="vrSpaceStore.writableVrSpaceDbData.worldModelScale">
+                <button @click="vrSpaceStore.writableVrSpaceDbData.worldModelScale = 1"
+                  class="btn btn-xs btn-circle btn-outline material-icons">replay</button>
               </div>
 
               <!-- Startplats -->
@@ -186,34 +179,20 @@
                 </div>
               </div>
 
-              <!-- Portaler -->
-              <div class="">
-                <div class="divider">
-                  Portaler till andra VR-scener
-                </div>
-                <p class="text-sm mb-2 text-gray-600">
-                  Skapa portaler som låter besökarna förflytta sig till andra VR-scener. Välj en scen att förflytta
-                  sig till
-                  och klicka sedan i 3D-modellen för att placera portalen.
-                </p>
-                <div>
-                  <label class="flex flex-col gap-1">
-                    <span class="label-text font-semibold">Skapa ny portal</span>
-                  </label>
-                  <!-- <p>{{ portalTargetVrSpace }}</p> -->
-                  <AutoComplete v-if="allowedPortalTargets?.length" v-model="portalTargetVrSpace"
-                    :options="allowedPortalTargets" display-key="name" id-key="vrSpaceId" />
-                  <!-- <select class="select select-sm select-bordered" v-model="portalTargetVrSpace"
-                      @change="isRaycastingActive = true">
-                      <option v-for="vrSpace in allowedVrSpaces" :key="vrSpace.vrSpaceId" :value="vrSpace.vrSpaceId">
-                        {{
-                        vrSpace.name }}
-                      </option>
-                    </select> -->
-                </div>
-              </div>
-
             </template>
+            <div class="divider">
+              Himlens färg
+            </div>
+            <div class="flex gap-2 items-center">
+              <div class="rounded-full outline outline-2 overflow-clip">
+                <input class="size-10 border-none block cursor-pointer -m-2" type="color"
+                  v-model="vrSpaceStore.writableVrSpaceDbData.skyColor">
+              </div>
+              <span class="label-text text-gray-600">
+                Välj den färg som himlen ska ha i VR-scenen.
+              </span>
+            </div>
+
           </template>
         </TabPanel>
         <TabPanel>
@@ -232,9 +211,36 @@
           <div>
 
             <div class="divider">
-              Placera object i scenen
+              Placera objekt i scenen
             </div>
             <AssetLibrary :assets="libraryAssets" @asset-picked="onAssetPicked" />
+          </div>
+        </TabPanel>
+        <TabPanel>
+          <div class="">
+            <div class="divider">
+              Portaler till andra VR-scener
+            </div>
+            <p class="text-sm mb-2 text-gray-600">
+              Skapa portaler som låter besökarna förflytta sig till andra VR-scener. Välj en scen att förflytta
+              sig till
+              och klicka sedan i 3D-modellen för att placera portalen.
+            </p>
+            <div>
+              <label class="flex flex-col gap-1">
+                <span class="label-text font-semibold">Skapa ny portal</span>
+              </label>
+              <!-- <p>{{ portalTargetVrSpace }}</p> -->
+              <AutoComplete v-if="allowedPortalTargets?.length" v-model="portalTargetVrSpace"
+                :options="allowedPortalTargets" display-key="name" id-key="vrSpaceId" />
+              <!-- <select class="select select-sm select-bordered" v-model="portalTargetVrSpace"
+                      @change="isRaycastingActive = true">
+                      <option v-for="vrSpace in allowedVrSpaces" :key="vrSpace.vrSpaceId" :value="vrSpace.vrSpaceId">
+                        {{
+                        vrSpace.name }}
+                      </option>
+                    </select> -->
+            </div>
           </div>
         </TabPanel>
       </TabsComponent>
@@ -324,11 +330,7 @@
                 rotation="-90 0 0" />
             </a-entity> -->
           </VrSpacePreview>
-          <button v-if="currentCursorMode || selectedPlacedObject" class="btn btn-sm btn-circle"
-            @click="cancelCursorStuff">
-            <span class="material-icons">close</span>
-          </button>
-          <button @click="setCursorMode('laser')" class="btn btn-sm">hover</button>
+          <!-- <button @click="setCursorMode('laser')" class="btn btn-sm">hover</button> -->
 
           <!-- <pre class="text-xs whitespace-normal">tsPO position: {{ transformedSelectedObject?.position }}</pre> -->
           <!-- <pre class="text-xs whitespace-normal">currentCursorMode: {{ currentCursorMode }}</pre> -->
@@ -412,12 +414,13 @@ import AutoComplete from '@/components/AutoComplete.vue';
 import { useCurrentCursorIntersection, useSelectedPlacedObject, useCurrentlyMovedObject, isAsset } from '@/composables/vrSpaceComposables';
 import { THREE, type Entity } from 'aframe';
 import { arrToCoordString, intersectionToTransform, quaternionTupleToAframeRotation } from '@/modules/3DUtils';
-import { useArrayFilter, watchDebounced } from '@vueuse/core';
+import { useArrayFilter, useConfirmDialog } from '@vueuse/core';
 import PlacedAsset from '@/components/entities/PlacedAsset.vue';
 import TabsComponent from '@/views/user/TabsComponent.vue';
 import { TabPanel } from '@headlessui/vue';
 import { RouterLink, useRouter } from 'vue-router';
 const router = useRouter();
+const { isRevealed, reveal, confirm, cancel } = useConfirmDialog();
 
 // TODO: refine/find alternative way to get these types so we get intellisense for the emit key
 type ExtractEmitData<T extends string, emitUnion extends (...args: any[]) => void> = T extends Parameters<emitUnion>[0] ? Parameters<emitUnion>[1] : never
@@ -440,10 +443,11 @@ onTransformUpdate(spo => {
 })
 
 const tabs = [
-  { label: 'Information', iconName: 'info' },
-  { label: 'Användare & Synlighet', iconName: 'manage_accounts' },
-  { label: '3D-modell', iconName: 'view_in_ar' },
-  { label: 'Mediabibliotek', iconName: 'collections' },
+  { label: 'Info', iconName: 'info' },
+  { label: 'Delning', iconName: 'manage_accounts' },
+  { label: 'Miljö', iconName: 'view_in_ar' },
+  { label: 'Filer', iconName: 'collections' },
+  { label: 'Scen', iconName: 'door_front' },
 ];
 
 const { setCursorMode, currentCursorMode, currentRaycastSelectorString, setCursorEntityRef, onCursorClick, currentCursorIntersection, currentCursorTransform, triggerCursorClick } = useCurrentCursorIntersection();
@@ -716,6 +720,13 @@ function uploadScreenshot(canvas: ScreenshotPayload) {
     }
     vrSpaceStore.writableVrSpaceDbData.panoramicPreviewAssetId = response.assetId;
   });
+}
+
+async function triggerDeleteDialog() {
+  const { data, isCanceled } = await reveal();
+  if (!isCanceled) {
+    deleteThisVrSpace();
+  }
 }
 
 async function deleteThisVrSpace() {

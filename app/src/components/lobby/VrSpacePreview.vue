@@ -47,7 +47,10 @@
             <!-- <OffsetSlider :offset="90" v-model.number="placedObjectRotation[2]" /> -->
           </div>
         </template>
-        <button class="btn btn-xs btn-error" @click="removeSelectedObject">Radera</button>
+        <div class="flex justify-end justify-self-end gap-2 col-span-2">
+          <button class="btn btn-xs" @click="cancelCursorStuff">Stäng</button>
+          <button class="btn btn-xs btn-error" @click="removeSelectedObject">Radera</button>
+        </div>
       </div>
     </div>
     <a-scene tick-counter @renderstart="onRenderStart" @loaded="onSceneLoaded" embedded class="min-h-[70svh]"
@@ -116,6 +119,12 @@ function startMovingObject() {
   const selectedObjectInVrSpace = vrSpaceStore.currentVrSpace?.dbData.placedObjects.find(po => po.placedObjectId === placedObjectId)
   currentlyMovedObject.value = selectedObjectInVrSpace;
   setCursorMode('place-asset');
+}
+
+function cancelCursorStuff() {
+  setCursorMode('select-objects');
+  selectedPlacedObject.value = undefined;
+  currentlyMovedObject.value = undefined;
 }
 
 const { lock, unlock, element } = usePointerLock();
