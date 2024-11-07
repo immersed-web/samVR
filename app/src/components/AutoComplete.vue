@@ -2,7 +2,7 @@
   <Combobox v-if="options?.length" v-bind="attrWithoutCss" v-model="selected" nullable>
     <div ref="comboBoxInputTag" :style="$attrs.style" :class="$attrs.class"
       class="input input-bordered input-sm flex gap-1 items-center">
-      <ComboboxInput aria-autocomplete="none" autocomplete="one-time-code" class="grow"
+      <ComboboxInput aria-autocomplete="none" :placeholder="placeholder" autocomplete="one-time-code" class="grow"
         :displayValue="option => option ? option[displayKey] : undefined"
         @change="searchString = $event.target.value; updateDropdownPos()" />
       <button v-if="searchString !== '' || selected" @click="selected = null; searchString = '';"
@@ -115,9 +115,11 @@ const props = withDefaults(defineProps<{
   displayKey?: string,
   idKey?: string,
   options: unknown[],
+  placeholder?: string,
 }>(), {
   displayKey: 'value',
   idKey: 'id',
+  placeholder: 'sök...'
 });
 
 // const options = [

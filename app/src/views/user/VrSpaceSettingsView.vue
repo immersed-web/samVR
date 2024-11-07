@@ -67,8 +67,8 @@
                 Dela med en ny person
               </span>
               <div class="flex gap-2 justify-between items-center z-10 flex-wrap">
-                <AutoComplete v-if="users?.length" class="grow" v-model="selectedUser" display-key="username"
-                  id-key="userId" :options="users" />
+                <AutoComplete v-if="users?.length" class="grow" placeholder="sök efter användare..."
+                  v-model="selectedUser" display-key="username" id-key="userId" :options="users" />
                 <select v-model="selectedPermission" class="select select-bordered select-sm">
                   <option :value="permissionLevel" v-for="permissionLevel in insertablePermissionHierarchy"
                     :key="permissionLevel">
@@ -231,8 +231,8 @@
                 <span class="label-text font-semibold">Skapa ny portal</span>
               </label>
               <!-- <p>{{ portalTargetVrSpace }}</p> -->
-              <AutoComplete v-if="allowedPortalTargets?.length" v-model="portalTargetVrSpace"
-                :options="allowedPortalTargets" display-key="name" id-key="vrSpaceId" />
+              <AutoComplete v-if="allowedPortalTargets?.length" placeholder="Sök efter vr-miljö..."
+                v-model="portalTargetVrSpace" :options="allowedPortalTargets" display-key="name" id-key="vrSpaceId" />
               <!-- <select class="select select-sm select-bordered" v-model="portalTargetVrSpace"
                       @change="isRaycastingActive = true">
                       <option v-for="vrSpace in allowedVrSpaces" :key="vrSpace.vrSpaceId" :value="vrSpace.vrSpaceId">
