@@ -40,6 +40,7 @@ import axesHelper from './axes-helper';
 import tickCounter from './tick-counter';
 import bvh from './bvh';
 import positionalAudio from './positional-audio';
+import sceneCleanup from './scene-cleanup';
 
 let componentsAreRegistered = false;
 
@@ -76,6 +77,7 @@ export default async function () {
   canvasMaterial();
   tickCounter();
   bvh();
+  sceneCleanup();
 
   await import('aframe-atlas-uvs-component');
 
@@ -92,4 +94,3 @@ export default async function () {
   await import('./orbit-controls/orbit-controls');
   componentsAreRegistered = true;
 };
-

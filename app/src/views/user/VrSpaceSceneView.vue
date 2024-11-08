@@ -5,7 +5,8 @@
       </div>
       <UIOverlay />
       <WaitForAframe>
-        <a-scene renderer="logarithmicDepthBuffer: false" ref="aframeScene" cursor="fuse:false; rayOrigin:mouse;"
+        <a-scene renderer="logarithmicDepthBuffer: false" scene-cleanup ref="aframeScene"
+          cursor="fuse:false; rayOrigin:mouse;"
           :raycaster="`objects: ${currentRaycastSelectorString}; mouseCursorStyleEnabled: ${pointerOnHover}`"
           raycaster-update @raycast-update="setCursorIntersection($event.detail)">
           <a-assets>
