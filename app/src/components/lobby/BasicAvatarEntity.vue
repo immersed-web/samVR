@@ -15,19 +15,21 @@
         <pre class="text-xs whitespace-normal">videoProducerId: {{ videoProducerId }}</pre>
       </Teleport>
       <a-entity scale="1 1 1">
-        <a-entity :id="`left-hand-${props.clientInfo.connectionId}`" :visible="realTimeData.leftHand?.active"
-          interpolated-transform="interpolationTime: 350;" ref="leftHandTag">
+        <a-entity :id="`left-hand-${props.clientInfo.connectionId}`"
+          :visible="clientInfo.clientRealtimeData?.leftHand?.active" interpolated-transform="interpolationTime: 350;"
+          ref="leftHandTag">
           <AvatarHand />
         </a-entity>
       </a-entity>
       <a-entity scale="1 1 1">
-        <a-entity :id="`right-hand-${props.clientInfo.connectionId}`" :visible="realTimeData.rightHand?.active"
-          interpolated-transform="interpolationTime: 350;" ref="rightHandTag">
+        <a-entity :id="`right-hand-${props.clientInfo.connectionId}`"
+          :visible="clientInfo.clientRealtimeData?.rightHand?.active" interpolated-transform="interpolationTime: 350;"
+          ref="rightHandTag">
           <AvatarHand side="right" />
         </a-entity>
       </a-entity>
       <slot />
-      <a-troika-text :color="distanceColor" look-at-camera :value="username" position="0 0.5 0" />
+      <a-troika-text :color="distanceColor" look-at-camera :value="clientInfo.username" position="0 0.5 0" />
       <a-entity rotation="0 180 0">
         <a-entity position="0 0 0">
           <AvatarPart v-for="(part, key) in headGroupedParts" :key="key" :part-name="key" :part="part" />
@@ -54,7 +56,7 @@
 import type { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import type { Entity } from 'aframe';
 import type { ProducerId } from 'schemas/mediasoup';
-import { skinParts as skinPartArray, type ConnectionId } from 'schemas'
+import { defaultAvatarDesign, skinParts as skinPartArray, type ConnectionId } from 'schemas'
 import { computed, onBeforeMount, onMounted, reactive, ref, shallowRef, toRefs, watch } from 'vue';
 import AvatarPart from './AvatarPart.vue';
 import AvatarSkinPart from './AvatarSkinPart.vue';
@@ -71,18 +73,18 @@ type _ClientInfo = NonNullable<ReturnType<typeof useVrSpaceStore>['currentVrSpac
 
 const props = defineProps<{
   clientInfo: _ClientInfo,
-  username: _ClientInfo['username']
-  producers: _ClientInfo['producers']
-  avatarDesign: NonNullable<_ClientInfo['avatarDesign']>
-  realTimeData: NonNullable<_ClientInfo['clientRealtimeData']>
+  // username: _ClientInfo['username']
+  // producers: _ClientInfo['producers']
+  // avatarDesign: NonNullable<_ClientInfo['avatarDesign']>
+  // realTimeData: NonNullable<_ClientInfo['clientRealtimeData']>
 }>();
 
-const audioProducerId = computed(() => props.producers.audioProducer?.producerId);
+const audioProducerId = computed(() => props.clientInfo.producers.audioProducer?.producerId);
 const videoProducerId = computed(() => {
   console.log('videoProducerId computed evaluated');
   // const producers = props.producers;
   // const videoProducer = producers.videoProducer;
-  const videoProducer = props.producers.videoProducer;
+  const videoProducer = props.clientInfo.producers.videoProducer;
   if (!videoProducer) return undefined
   return videoProducer.producerId
 });
@@ -131,9 +133,15 @@ watch(() => props.clientInfo.screenShare, async (newScreenShare, prevScreenShare
   videoTag.play();
 })
 
+const avatarDesign = computed(() => {
+  if (props.clientInfo.avatarDesign) return props.clientInfo.avatarDesign;
+  console.warn('No avatardesign provided. Using the default one!!!');
+  return defaultAvatarDesign;
+})
+
 const headGroupedParts = computed(() => {
   const omittedParts = ['layer', 'clothes', 'mouths', ...skinPartArray] as const;
-  return omit(props.avatarDesign.parts, omittedParts);
+  return omit(avatarDesign.value.parts, omittedParts);
 })
 
 const avatarEntity = ref<Entity>();
@@ -147,12 +155,12 @@ async function onAvatarEntityLoaded() {
     console.error('avatarEntity was undefined');
     return;
   }
-  if (props.realTimeData.head.active) {
+  if (props.clientInfo.clientRealtimeData?.head.active) {
     // NOTE: For some reason the event isnt received by interpolated-transform if we dont put it on the event queue.
     // I guess there is something that makes the entity trigger the loaded event before it is _actually_ fully ready.
     await new Promise(res => setTimeout(res, 0));
-    console.log('avatarentity: setting head transform', props.realTimeData.head);
-    avatarEntity.value.emit('setTransform', props.realTimeData.head);
+    console.log('avatarentity: setting head transform', props.clientInfo.clientRealtimeData.head);
+    avatarEntity.value.emit('setTransform', props.clientInfo.clientRealtimeData.head);
   }
   if (!stream.value) {
     console.log('stream is undefined. Will not emit');
@@ -218,21 +226,21 @@ async function closeConsumer() {
   soupStore.closeConsumer(audioProducerId.value);
 }
 
-watch(() => props.realTimeData.head, (headTransform) => {
-  if (!headTransform.active) return;
+watch(() => props.clientInfo.clientRealtimeData?.head, (headTransform) => {
+  if (!headTransform?.active) return;
   // console.log('updating head', headTransform.position);
   avatarEntity.value?.emit('moveTo', { position: headTransform.position }, false);
   avatarEntity.value?.emit('rotateTo', { rotation: headTransform.rotation }, false);
 }, { immediate: true });
-watch(() => props.realTimeData.leftHand, (leftHandTransform) => {
+watch(() => props.clientInfo.clientRealtimeData?.leftHand, (leftHandTransform) => {
   console.log('leftHand updated:', leftHandTransform);
-  if (!leftHandTransform || !leftHandTransform.active) return;
+  if (!leftHandTransform?.active) return;
   leftHandTag.value?.emit('moveTo', { position: leftHandTransform.position }, false);
   leftHandTag.value?.emit('rotateTo', { rotation: leftHandTransform.rotation }, false);
 }, { immediate: true });
-watch(() => props.realTimeData.rightHand, (rightHandTransform) => {
+watch(() => props.clientInfo.clientRealtimeData?.rightHand, (rightHandTransform) => {
   console.log('rightHand updated:', rightHandTransform);
-  if (!rightHandTransform || !rightHandTransform.active) return;
+  if (!rightHandTransform?.active) return;
   rightHandTag.value?.emit('moveTo', { position: rightHandTransform.position }, false);
   rightHandTag.value?.emit('rotateTo', { rotation: rightHandTransform.rotation }, false);
 }, { immediate: true });
