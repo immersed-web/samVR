@@ -197,21 +197,48 @@
         </TabPanel>
         <TabPanel>
           <!-- Placera objekt -->
-          <div>
+          <div class="space-y-2">
 
             <div class="divider">
               Ladda upp objekt till ditt bibliotek
             </div>
             <AssetUpload @uploaded="onAssetUploaded" :accepted-asset-types="['document', 'image', 'video', 'model']"
               name="object" :show-in-user-library="true" />
-          </div>
-          <!-- <p class="text-sm label">
+            <!-- <p class="text-sm label">
             Placera objekt såsom bilder och PDF i 3D-modellen.
           </p> -->
-          <div>
 
             <div class="divider">
               Placera objekt i scenen
+            </div>
+            <div class="flex gap-2">
+              <label class="input input-sm input-bordered flex items-center gap-1 px-1">
+                <span class="material-icons">search</span>
+                <input placeholder="sök..." class="">
+                <span class="material-icons">clear</span>
+              </label>
+              <div class="join">
+                <!-- <input type="radio" class="join-item material-icons btn btn-sm"><span
+                  class="material-icons">view_list</span></input> -->
+                <input type="radio" name="viewmode" aria-label="view_list"
+                  class="join-item btn btn-sm text-2xl font-normal material-icons" />
+                <input type="radio" name="viewmode" aria-label="view_module"
+                  class="join-item btn btn-sm text-2xl font-normal material-icons" />
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <label class="btn btn-xs gap-1 rounded-full has-[:checked]:btn-primary">
+                <input type="checkbox" class="hidden" /><span class="text-sm material-icons">done</span>Bilder
+              </label>
+              <label class="btn btn-xs gap-1 rounded-full has-[:checked]:btn-primary">
+                <input type="checkbox" class="hidden" /><span class="text-sm material-icons">done</span>Videos
+              </label>
+              <label class="btn btn-xs gap-1 rounded-full has-[:checked]:btn-primary">
+                <input type="checkbox" class="hidden" /><span class="text-sm material-icons">done</span>3D-Modeller
+              </label>
+              <label class="btn btn-xs gap-1 rounded-full has-[:checked]:btn-primary">
+                <input type="checkbox" class="hidden" /><span class="text-sm material-icons">done</span>Dokument
+              </label>
             </div>
             <AssetLibrary :assets="libraryAssets" @asset-picked="onAssetPicked" />
           </div>
@@ -446,7 +473,7 @@ const tabs = [
   { label: 'Info', iconName: 'info' },
   { label: 'Delning', iconName: 'manage_accounts' },
   { label: 'Miljö', iconName: 'view_in_ar' },
-  { label: 'Filer', iconName: 'collections' },
+  { label: 'Mediabibliotek', iconName: 'collections' },
   { label: 'Scen', iconName: 'door_front' },
 ];
 
