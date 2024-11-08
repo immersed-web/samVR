@@ -1,5 +1,3 @@
-import { THREE } from "aframe";
-
 type Waiter = {
   promise: Promise<void>;
   resolve: () => void;
