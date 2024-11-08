@@ -23,6 +23,11 @@
           Min avatar
         </button>
       </RouterLink>
+      <RouterLink :to="{ name: 'library' }">
+        <button class="btn btn-ghost">
+          Mina filer
+        </button>
+      </RouterLink>
 
       <!-- <div class="divider divider-horizontal" /> -->
 

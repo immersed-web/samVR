@@ -82,6 +82,12 @@ const router = createRouter({
               component: () => import('@/views/public/VrListView.vue'),
             },
             {
+              path: 'assets',
+              name: 'library',
+              meta: { breadcrumbIgnore: true },
+              component: () => import('@/views/user/AssetsView.vue'),
+            },
+            {
               path: 'avatar',
               name: 'avatarDesigner',
               meta: { breadcrumb: 'Min avatar' },
