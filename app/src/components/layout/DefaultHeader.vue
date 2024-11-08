@@ -18,14 +18,14 @@
           VR-scener
         </button>
       </RouterLink>
+      <RouterLink :to="{ name: 'library' }">
+        <button class="btn btn-ghost">
+          Mediabibliotek
+        </button>
+      </RouterLink>
       <RouterLink :to="{ name: 'avatarDesigner' }">
         <button class="btn btn-ghost">
           Min avatar
-        </button>
-      </RouterLink>
-      <RouterLink :to="{ name: 'library' }">
-        <button class="btn btn-ghost">
-          Mina filer
         </button>
       </RouterLink>
 
