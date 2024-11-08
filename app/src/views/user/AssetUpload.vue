@@ -3,11 +3,13 @@
     <form @submit.prevent="uploadFile">
       <div class="form-control gap-1">
         <div class="flex flex-nowrap items-center gap-2">
-          <input type="file" :accept="extensionAcceptString"
+          <!-- <input type="file" :accept="extensionAcceptString"
             class="file-input file-input-bordered max-w-xs file-input-sm" ref="fileInput" @change="onFilesPicked">
           <button type="submit" class="btn btn-primary btn-sm" :disabled="uploadDisabled">
             Ladda upp {{ props.name }}
-          </button>
+          </button> -->
+          <button @click="() => open()" class="btn btn-sm btn-primary px-2 gap-1"><span
+              class="material-icons">upload</span>Ladda upp</button>
           <div :class="{ 'invisible': uploadProgress === 0 }" class="radial-progress text-primary"
             :style="`--value:${smoothedProgress}; --size:2.5rem`">
             {{ smoothedProgress.toFixed(0) }}%
@@ -36,13 +38,14 @@
 <script setup lang="ts">
 
 import { ref, computed, shallowRef, type DeepReadonly } from 'vue';
-import { autoResetRef, useTransition } from '@vueuse/core';
+import { autoResetRef, useTransition, useFileDialog } from '@vueuse/core';
 import axios from 'axios';
 import type { ExtractSuccessResponse, UploadRequest, UploadResponse } from 'fileserver';
 import { useConnectionStore } from '@/stores/connectionStore';
 import { useAuthStore } from '@/stores/authStore';
 import { type AssetType, maxFileSizeSchema, maxFileSize, createFileExtensionSchema, assetTypeListToExtensionList, getAssetTypeFromExtension, type Asset } from 'schemas';
 import { deleteAsset, uploadFileData } from '@/modules/utils';
+
 
 const props = withDefaults(defineProps<{
   acceptedAssetTypes: AssetType | AssetType[],
@@ -70,6 +73,12 @@ const acceptedExtensions = computed(() => {
 const extensionAcceptString = computed(() => {
   return acceptedExtensions.value.map(ext => `.${ext}`).join(',');
 });
+
+const { files, open, onCancel, onChange, reset } = useFileDialog({
+  accept: extensionAcceptString.value,
+});
+
+onChange((files) => onFilesPicked(files));
 
 const config = {
   url: `https://${import.meta.env.EXPOSED_SERVER_URL}${import.meta.env.EXPOSED_FILESERVER_PATH}`,
