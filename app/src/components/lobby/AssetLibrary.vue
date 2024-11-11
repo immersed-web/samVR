@@ -37,8 +37,9 @@
     </div>
     <div class="grid grid-cols-[repeat(auto-fill,_minmax(6rem,_1fr))] gap-2">
       <!-- <div v-for="asset in assets.filter(a => a.assetType === 'image')" :key="asset.assetId" -->
-      <div v-for="asset in searchedAssetList" :key="asset.assetId" class="cursor-pointer" @click="pickAsset(asset)">
-        <div class="card card-compact bg-base-100 shadow-md">
+      <div v-for="asset in searchedAssetList" :key="asset.assetId" class="">
+        <div @click="pickAsset(asset)" class="card card-compact bg-base-100 shadow-md cursor-pointer"
+          :class="[asset.assetId === pickedAsset?.assetId ? selectedCSSClasses : '']">
           <figure class="">
             <img v-if="asset.assetType === 'image'" :src="assetsUrl + asset.generatedName">
             <embed v-if="asset.assetType === 'document'" :src="assetsUrl + asset.generatedName" type="application/pdf"
@@ -60,7 +61,7 @@
 import { assetsUrl, deleteAsset } from '@/modules/utils';
 import { type Asset, type AssetId, type AssetType } from 'schemas';
 import { useAuthStore } from '@/stores/authStore';
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, shallowRef } from 'vue';
 import { filter } from 'lodash-es';
 const authStore = useAuthStore();
 
@@ -118,10 +119,12 @@ async function onDeleteAsset(assetId: AssetId) {
   await deleteAsset(deleteParams)
 }
 
+const selectedCSSClasses = 'outline outline-2 -outline-offset-2 outline-primary/30';
+
+const pickedAsset = shallowRef<Asset>();
 function pickAsset(asset: Asset) {
+  pickedAsset.value = asset;
   emit('assetPicked', asset);
-  // assetPickerIsOpen.value = false;
-  // createPlaceableObject(type, src);
 }
 
 const emit = defineEmits<{
