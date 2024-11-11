@@ -8,7 +8,7 @@
           <button type="submit" class="btn btn-primary btn-sm" :disabled="uploadDisabled">
             Ladda upp {{ props.name }}
           </button> -->
-          <button @click="() => open()" class="btn btn-sm btn-primary px-2 gap-1"><span
+          <button :disabled="uploadDisabled" @click="() => open()" class="btn btn-sm btn-primary px-2 gap-1"><span
               class="material-icons">upload</span>Ladda upp</button>
           <div :class="{ 'invisible': uploadProgress === 0 }" class="radial-progress text-primary"
             :style="`--value:${smoothedProgress}; --size:2.5rem`">
@@ -19,8 +19,11 @@
             <span class="material-icons">close</span>
           </button>
         </div>
-        <div v-if="error" role="alert" class="alert alert-error text-sm">
-          {{ error }}
+        <div v-if="errorMessage" role="alert" class="alert alert-error text-sm">
+          {{ errorMessage }}
+        </div>
+        <div v-else-if="successMessage" role="alert" class="alert alert-success text-sm">
+          {{ successMessage }}
         </div>
       </div>
     </form>
@@ -37,11 +40,9 @@
 
 <script setup lang="ts">
 
-import { ref, computed, shallowRef, type DeepReadonly } from 'vue';
+import { ref, computed, shallowRef, type DeepReadonly, watch } from 'vue';
 import { autoResetRef, useTransition, useFileDialog } from '@vueuse/core';
-import axios from 'axios';
-import type { ExtractSuccessResponse, UploadRequest, UploadResponse } from 'fileserver';
-import { useConnectionStore } from '@/stores/connectionStore';
+import type { ExtractSuccessResponse, UploadResponse } from 'fileserver';
 import { useAuthStore } from '@/stores/authStore';
 import { type AssetType, maxFileSizeSchema, maxFileSize, createFileExtensionSchema, assetTypeListToExtensionList, getAssetTypeFromExtension, type Asset } from 'schemas';
 import { deleteAsset, uploadFileData } from '@/modules/utils';
@@ -74,25 +75,16 @@ const extensionAcceptString = computed(() => {
   return acceptedExtensions.value.map(ext => `.${ext}`).join(',');
 });
 
-const { files, open, onCancel, onChange, reset } = useFileDialog({
+const { files, open, onCancel, onChange: onFilesPicked, reset: resetPickedFile } = useFileDialog({
   accept: extensionAcceptString.value,
 });
 
-onChange((files) => onFilesPicked(files));
-
-const config = {
-  url: `https://${import.meta.env.EXPOSED_SERVER_URL}${import.meta.env.EXPOSED_FILESERVER_PATH}`,
-  headers: {
-    'Content-Type': 'multipart/form-data',
-  },
-};
-
 const uploadDisabled = computed(() => {
-  return !pickedFile.value || !extensionOfPickedFile.value || uploadProgress.value !== 0;
+  return uploadProgress.value !== 0;
 });
 
-const pickedFile = shallowRef<File>();
-const error = autoResetRef<string | undefined>(undefined, 3000);
+const errorMessage = autoResetRef<string | undefined>(undefined, 3000);
+const successMessage = autoResetRef<'fil uppladdad' | undefined>(undefined, 3000);
 const extensionOfPickedFile = ref<typeof acceptedExtensions.value[number]>();
 const derivedAssetType = computed(() => {
   if (!extensionOfPickedFile.value) {
@@ -107,29 +99,69 @@ const derivedAssetType = computed(() => {
 const uploadProgress = ref(0);
 const smoothedProgress = useTransition(uploadProgress);
 
-function onFilesPicked(evt: Event) {
-  pickedFile.value = undefined;
-  console.log('files picked:', evt);
-  if (!fileInput.value?.files) {
+const pickedFile = computed(() => {
+  if (!files.value) return undefined;
+  return files.value[0];
+})
+
+
+// const fileSizeAllowed = computed(() => {
+//   if(!pickedFile.value) return undefined;
+//   const parseresult = maxFileSizeSchema.safeParse(pickedFile.value.size);
+//   if (parseresult.error) {
+//     // errorMessage.value = `maxstorlek (${maxFileSize / 1024 / 1024}MB) överskriden`;
+//     return false;
+//   }
+//   return true;
+// })
+
+// const extensionOfPickedFile = computed(() => {
+//   if(!pickedFile.value) return undefined;
+//   const ext = pickedFile.value.name.split('.').pop();
+//   const validatedExt = createFileExtensionSchema(props.acceptedAssetTypes).safeParse(ext?.toLowerCase());
+//   if (validatedExt.error) {
+//     // errorMessage.value = 'otillåtet filformat';
+//     return undefined;
+//   }
+//   return validatedExt.data;
+//   // extensionOfPickedFile.value = validatedExt.data;
+// })
+
+// watch([pickedFile, extensionOfPickedFile], ([file, extension]) => {
+//   if(!file){
+//     errorMessage.value = undefined;
+//   }
+//   if(!extension) {
+//     errorMessage.value = 'otillåtet filformat';
+//   }
+// })
+
+onFilesPicked((files) => {
+  console.log('onFilesPicked:', files);
+
+  if (files === null) {
+    console.log('file(s) change event but fileList is null');
     return;
-  }
-  const file = fileInput.value.files[0];
+  };
+
+  const file = files[0];
+
   const parseresult = maxFileSizeSchema.safeParse(file.size);
   if (parseresult.error) {
-    error.value = `maxstorlek (${maxFileSize / 1024 / 1024}MB) överskriden`;
+    errorMessage.value = `maxstorlek (${maxFileSize / 1024 / 1024}MB) överskriden`;
     return;
   }
+
   const ext = file.name.split('.').pop();
   const validatedExt = createFileExtensionSchema(props.acceptedAssetTypes).safeParse(ext?.toLowerCase());
   if (validatedExt.error) {
-    error.value = 'otillåtet filformat';
+    errorMessage.value = 'otillåtet filformat';
     return;
   }
   extensionOfPickedFile.value = validatedExt.data;
-  pickedFile.value = file;
-}
 
-const fileInput = ref<HTMLInputElement>();
+  uploadFile();
+});
 
 let abortController: AbortController | undefined = undefined;
 async function uploadFile() {
@@ -147,27 +179,8 @@ async function uploadFile() {
         const showInLib = props.showInUserLibrary;
         data.set('showInUserLibrary', `${showInLib}`);
       }
-      pickedFile.value = undefined;
+      resetPickedFile();
 
-      // We can apparently receive upload progress after the upload is actually finished.
-      // Perhaps some race condition. We use this flag to mitigate that 👍
-      // let uploadActive = true;
-
-      // const response = await axios.post<UploadResponse>(config.url + '/upload', data, {
-      //   headers: {
-      //     'Content-Type': 'multipart/form-data;',
-      //     'Authorization': `Bearer ${authStore.tokenOrThrow()}`,
-      //   },
-      //   signal: ctl.signal,
-      //   timeout: 4 * 60 * 1000,
-      //   onUploadProgress(progressEvent) {
-      //     if (!uploadActive) return;
-      //     console.log(progressEvent);
-      //     if(!progressEvent.progress) return;
-      //     uploadProgress.value = progressEvent.progress * 100;
-      //   },
-      // });
-      // uploadActive = false;
       const response = await uploadFileData({
         data,
         authToken: authStore.tokenOrThrow(),
@@ -180,19 +193,19 @@ async function uploadFile() {
 
       uploadProgress.value = 0;
       if ('error' in response) {
-        error.value = response['error'];
+        errorMessage.value = response['error'];
       } else {
+        successMessage.value = 'fil uppladdad';
         emit('uploaded', response);
       }
     }
   } catch (err) {
     console.error(err);
-    error.value = 'failed to send file';
+    errorMessage.value = 'failed to send file';
     uploadProgress.value = 0;
     extensionOfPickedFile.value = undefined;
     abortController.abort('failed to send file');
   }
-  fileInput.value!.value = '';
 }
 
 // TODO: It's a bit splitted here. The logic for actually deleting the asset is here.
