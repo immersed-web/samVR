@@ -15,6 +15,8 @@ export function getAssetUrl<T extends string>(generatedName: T) {
 const fileserverUrl = `https://${import.meta.env.EXPOSED_SERVER_URL}${import.meta.env.EXPOSED_FILESERVER_PATH}` as const
 export const assetsUrl = `${fileserverUrl}/file/` as const;
 export async function uploadFileData({ data, authToken, onProgress, abortController }: { data: FormData, authToken: string, onProgress?: (progressEvent: AxiosProgressEvent) => void, abortController?: AbortController }) {
+  // We can apparently receive upload progress after the upload is actually finished.
+  // Perhaps some race condition. We use this flag to mitigate that 👍
   let uploadActive = true;
 
   const response = await axios.post<UploadResponse>(fileserverUrl + '/upload', data, {
