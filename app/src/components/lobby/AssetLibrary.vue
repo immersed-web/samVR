@@ -13,15 +13,18 @@
         </figure>
         <div class="card-body break-words">
           <p class="text-xs">{{ asset.originalFileName }}</p>
+          <button class="btn btn-error btn-circle material-icons" @click="onDeleteAsset(asset.assetId)">delete</button>
         </div>
       </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { assetsUrl } from '@/modules/utils';
+import { assetsUrl, deleteAsset } from '@/modules/utils';
 import { useFileDialog } from '@vueuse/core';
-import { assetTypeListToExtensionList, type Asset, type AssetType } from 'schemas';
+import { assetTypeListToExtensionList, type Asset, type AssetId, type AssetType } from 'schemas';
+import { useAuthStore } from '@/stores/authStore';
+const authStore = useAuthStore();
 
 const acceptedAssetTypesUpload: AssetType[] = ['document', 'image', 'model'];
 const acceptedExtensions = assetTypeListToExtensionList(acceptedAssetTypesUpload);
@@ -37,6 +40,15 @@ const { files, open, reset, onChange } = useFileDialog({
 onChange((files) => {
   console.log('Files selected', files);
 });
+
+async function onDeleteAsset(assetId: AssetId) {
+  const deleteParams = {
+    assetId,
+    authToken: authStore.tokenOrThrow(),
+  };
+
+  await deleteAsset(deleteParams)
+}
 
 function pickAsset(asset: Asset) {
   emit('assetPicked', asset);
