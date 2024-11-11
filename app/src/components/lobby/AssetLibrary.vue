@@ -62,7 +62,14 @@
       </div>
     </div>
     <div v-else>
-      LISTVY!!!
+      <div class="grid grid-cols-[auto_1fr_auto_auto] gap-4">
+        <template v-for="asset in searchedAssetList" :key="asset.assetId">
+          <div>BILD</div>
+          <div class="break-words">{{ asset.originalFileName }}</div>
+          <div>{{ asset.size }}</div>
+          <div>{{ asset.createdAt }}</div>
+        </template>
+      </div>
     </div>
   </div>
 </template>
