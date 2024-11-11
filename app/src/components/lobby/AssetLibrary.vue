@@ -9,9 +9,9 @@
       <div class="join">
         <!-- <input type="radio" class="join-item material-icons btn btn-sm"><span
                   class="material-icons">view_list</span></input> -->
-        <input type="radio" name="viewmode" aria-label="view_list"
+        <input v-model="viewMode" type="radio" name="viewmode" value="thumbnails" aria-label="view_module"
           class="join-item btn btn-sm text-2xl font-normal material-icons" />
-        <input type="radio" name="viewmode" aria-label="view_module"
+        <input v-model="viewMode" type="radio" name="viewmode" value="list" aria-label="view_list"
           class="join-item btn btn-sm text-2xl font-normal material-icons" />
       </div>
     </div>
@@ -35,25 +35,34 @@
       <button v-if="filterActive" @click="clearFilters"
         class="btn btn-neutral btn-circle btn-xs material-icons">clear</button>
     </div>
-    <div class="grid grid-cols-[repeat(auto-fill,_minmax(6rem,_1fr))] gap-2">
+    <div v-if="viewMode === 'thumbnails'" class="grid grid-cols-[repeat(auto-fill,_minmax(6rem,_1fr))] gap-2">
       <!-- <div v-for="asset in assets.filter(a => a.assetType === 'image')" :key="asset.assetId" -->
       <div v-for="asset in searchedAssetList" :key="asset.assetId" class="">
-        <div @click="pickAsset(asset)" class="card card-compact bg-base-100 shadow-md cursor-pointer"
-          :class="[asset.assetId === pickedAsset?.assetId ? selectedCSSClasses : '']">
-          <figure class="">
-            <img v-if="asset.assetType === 'image'" :src="assetsUrl + asset.generatedName">
-            <embed v-if="asset.assetType === 'document'" :src="assetsUrl + asset.generatedName" type="application/pdf"
-              width="100%" height="100%">
-            <span v-if="asset.assetType === 'model' || asset.assetType === 'navmesh'"
-              class="material-icons text-8xl">view_in_ar</span>
-          </figure>
-          <div class="card-body break-words">
-            <p class="text-xs">{{ asset.originalFileName }}</p>
-            <button class="btn btn-error btn-circle material-icons"
-              @click="onDeleteAsset(asset.assetId)">delete</button>
+        <div class="indicator block w-[unset]">
+          <div v-if="asset.assetId === pickedAsset?.assetId" class="indicator-item">
+            <div data-tip="ta bort från biblioteket" class="tooltip">
+              <button class="btn btn-error btn-circle btn-sm" @click="onDeleteAsset(asset.assetId)"><span
+                  class="material-icons">delete</span></button>
+            </div>
+          </div>
+          <div @click="pickAsset(asset)" class="card card-compact bg-base-100 shadow-md cursor-pointer"
+            :class="[asset.assetId === pickedAsset?.assetId ? selectedCSSClasses : '']">
+            <figure class="">
+              <img v-if="asset.assetType === 'image'" :src="assetsUrl + asset.generatedName">
+              <embed v-if="asset.assetType === 'document'" :src="assetsUrl + asset.generatedName" type="application/pdf"
+                width="100%" height="100%">
+              <span v-if="asset.assetType === 'model' || asset.assetType === 'navmesh'"
+                class="material-icons text-8xl">view_in_ar</span>
+            </figure>
+            <div class="card-body break-words">
+              <p class="text-xs">{{ asset.originalFileName }}</p>
+            </div>
           </div>
         </div>
       </div>
+    </div>
+    <div v-else>
+      LISTVY!!!
     </div>
   </div>
 </template>
@@ -109,6 +118,8 @@ const searchedAssetList = computed(() => {
       .includes(searchString.value.toLowerCase().replace(/\s+/g, ''))
   )
 })
+
+const viewMode = ref<'list' | 'thumbnails'>('thumbnails');
 
 async function onDeleteAsset(assetId: AssetId) {
   const deleteParams = {
