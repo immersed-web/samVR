@@ -30,7 +30,7 @@
 		handle_path /socket* {
 			reverse_proxy localhost:{$MEDIASOUP_PORT}
 		}
-		handle_path /assets* {
+		handle_path /files* {
 			reverse_proxy localhost:{$FILESERVER_PORT}
 		}
 
