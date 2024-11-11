@@ -36,13 +36,15 @@ const savePathRelative = './uploads/'
 //   process.exit(1);
 // }
 
-const publicRoutes = new Hono()
-  .get('/file/:filename',
-    // async (c, next) => {
-    //   console.log(savePathRelative);
-    //   console.log(c.req.path);
-    //   await next();
-    // },
+//cache for 4 days
+const maxAge = 4 * 24 * 60 * 60;
+const publicRoutes = new Hono();
+publicRoutes.get('/file/:filename',
+  async (c, next) => {
+
+    c.header('cache-control', `max-age: ${maxAge}, immutable`);
+    await next();
+  },
     serveStatic({
       rewriteRequestPath: (path) => {
         const newPath = path.substring(5);
