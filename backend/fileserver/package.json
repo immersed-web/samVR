@@ -2,6 +2,7 @@
   "name": "fileserver",
   "type": "module",
   "scripts": {
+    "start": "dotenv -e ../../.env tsx src/index.ts",
     "dev": "dotenv -e ../../.env tsx watch src/index.ts"
   },
   "exports": {

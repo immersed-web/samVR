@@ -7,7 +7,7 @@
   "author": "Gunnar Oledal",
   "license": "MIT",
   "scripts": {
-    "start": "dotenv -e ../../.env node ./dist/index.js",
+    "start": "dotenv -e ../../.env tsx ./src/index.ts",
     "dev": "dotenv -v DEVELOPMENT=true -e ../../.env tsx watch ./src/index.ts",
     "build": "tsc --build",
     "clean": "tsc --build --clean",

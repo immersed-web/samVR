@@ -8,7 +8,6 @@ const envVars = dotenv.parse(envString);
 envVars['ENVIRONMNENT'] = 'production';
 if(process.env.DEVELOPMENT){
   console.log('RUNNING IN DEV MODE');
-  // envString = fs.readFileSync(path.join(__dirname, '.env.dev'));
   envVars['DEVELOPMENT'] = true;
   envVars['ENVIRONMENT'] = 'development'
 }
@@ -49,18 +48,21 @@ module.exports = {
       name   : "auth",
       script: scripts.auth,
       cwd    : "./backend/auth/",
+      cron_restart: '0 3 * * *',
       env: envVars
     },
     {
       name: 'file server',
       script: scripts.fileserver,
       cwd: './backend/fileserver/',
+      cron_restart: '2 3 * * *',
       env: envVars
     },
     {
       name   : "mediaserver",
       script: scripts.mediaserver,
       cwd    : "./backend/mediaserver/",
+      cron_restart: '4 3 * * *',
       env: envVars
     },
     {
