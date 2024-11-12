@@ -43,6 +43,7 @@ publicRoutes.get('/file/:filename',
   async (c, next) => {
 
     c.header('cache-control', `max-age: ${maxAge}, immutable`);
+    // c.header('etag', c.req.param('filename'));
     await next();
   },
     serveStatic({
