@@ -47,6 +47,7 @@ publicRoutes.get('/file/:filename',
   },
     serveStatic({
       rewriteRequestPath: (path) => {
+        // strip the "file/"-part of the path as we use that in the root instead.
         const newPath = path.substring(5);
         // console.log(newPath);
         return newPath;
