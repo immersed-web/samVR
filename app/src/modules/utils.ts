@@ -48,3 +48,14 @@ export async function deleteAsset({ assetId, authToken }: { assetId: AssetId, au
   });
   return response.status === 200;
 }
+
+export function stripExtension(filename: string) {
+
+  const idxOfExtStart = filename.lastIndexOf('.');
+  return filename.substring(0, idxOfExtStart);
+}
+
+export function humanFileSize(size: number) {
+  var i = size == 0 ? 0 : Math.floor(Math.log(size) / Math.log(1024));
+  return +((size / Math.pow(1024, i)).toFixed(2)) * 1 + ' ' + ['B', 'kB', 'MB', 'GB', 'TB'][i];
+}

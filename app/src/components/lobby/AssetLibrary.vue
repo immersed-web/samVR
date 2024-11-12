@@ -62,23 +62,36 @@
       </div>
     </div>
     <div v-else>
-      <div class="grid grid-cols-[auto_1fr_auto_auto] gap-4">
+      <div class="grid grid-cols-[auto_minmax(5rem,1fr)_auto_auto] gap-y-1 gap-x-4">
         <template v-for="asset in searchedAssetList" :key="asset.assetId">
-          <div>BILD</div>
-          <div class="break-words">{{ asset.originalFileName }}</div>
-          <div>{{ asset.size }}</div>
-          <div>{{ asset.createdAt }}</div>
+          <div
+            class="border pr-4 overflow-hidden rounded-md items-center auto-rows-[3rem] grid grid-cols-subgrid col-span-4">
+            <figure class="h-full aspect-square grid place-content-center">
+              <img class="aspect-square object-cover border-r" v-if="asset.assetType === 'image'"
+                :src="assetsUrl + asset.generatedName">
+              <span v-if="asset.assetType === 'document'" class="material-icons text-5xl leading-none">article</span>
+              <span v-if="asset.assetType === 'model' || asset.assetType === 'navmesh'"
+                class="material-icons text-5xl leading-none">view_in_ar</span>
+            </figure>
+            <div class="flex">
+              <span class="text-nowrap text-ellipsis overflow-hidden">{{ stripExtension(asset.originalFileName)
+                }}</span>
+              <span>.{{ asset.assetFileExtension }}</span>
+            </div>
+            <div class="justify-self-end">{{ asset.size ? humanFileSize(asset.size) : 'N/A' }}</div>
+            <div>{{ asset.createdAt?.toLocaleDateString() }}</div>
+          </div>
         </template>
       </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { assetsUrl, deleteAsset } from '@/modules/utils';
+import { assetsUrl, deleteAsset, humanFileSize, stripExtension } from '@/modules/utils';
 import { type Asset, type AssetId, type AssetType } from 'schemas';
 import { useAuthStore } from '@/stores/authStore';
 import { computed, reactive, ref, shallowRef } from 'vue';
-import { filter } from 'lodash-es';
+import { useStorage } from '@vueuse/core';
 const authStore = useAuthStore();
 
 const { assets } = defineProps<{
@@ -126,7 +139,8 @@ const searchedAssetList = computed(() => {
   )
 })
 
-const viewMode = ref<'list' | 'thumbnails'>('thumbnails');
+// const viewMode = ref<'list' | 'thumbnails'>('thumbnails');
+const viewMode = useStorage<'list' | 'thumbnails'>('library-view-mode', 'thumbnails');
 
 async function onDeleteAsset(assetId: AssetId) {
   const deleteParams = {
