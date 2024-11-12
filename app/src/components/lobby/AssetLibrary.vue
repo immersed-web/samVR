@@ -65,7 +65,7 @@
       <div class="grid grid-cols-[auto_minmax(5rem,1fr)_auto_auto] gap-y-1 gap-x-4">
         <template v-for="asset in searchedAssetList" :key="asset.assetId">
           <div
-            class="border cursor-pointer hover:border hover:border-primary group pr-4 overflow-hidden rounded-md items-center auto-rows-[3rem] grid grid-cols-subgrid col-span-4">
+            class="border cursor-pointer hover:border hover:border-primary group overflow-hidden rounded-md items-center auto-rows-[3rem] grid grid-cols-subgrid col-span-4">
             <figure class="h-full aspect-square grid place-content-center">
               <img class="aspect-square object-cover border-r" v-if="asset.assetType === 'image'"
                 :src="assetsUrl + asset.generatedName">
@@ -81,9 +81,10 @@
             </div>
             <div class="justify-self-end">{{ asset.size ? humanFileSize(asset.size) : 'N/A' }}</div>
             <div class="relative self-stretch grid place-content-center">
-              <div class="">{{ asset.createdAt?.toLocaleDateString() }} </div>
+              <div class="mr-4">{{ asset.createdAt?.toLocaleDateString() }} </div>
               <div
-                class="group-hover:opacity-100 opacity-0 transition-opacity absolute inset-0 bg-gradient-to-l from-40% from-base-100">
+                class="group-hover:opacity-100 opacity-0 transition-opacity absolute inset-0 bg-gradient-to-l from-50% from-base-100 flex justify-end items-center">
+                <button class="btn btn-error btn-square btn-sm mr-2"><span class="material-icons">delete</span></button>
               </div>
             </div>
           </div>
