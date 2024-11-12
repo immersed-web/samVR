@@ -65,11 +65,12 @@
       <div class="grid grid-cols-[auto_minmax(5rem,1fr)_auto_auto] gap-y-1 gap-x-4">
         <template v-for="asset in searchedAssetList" :key="asset.assetId">
           <div
-            class="border pr-4 overflow-hidden rounded-md items-center auto-rows-[3rem] grid grid-cols-subgrid col-span-4">
+            class="border cursor-pointer hover:border hover:border-primary group pr-4 overflow-hidden rounded-md items-center auto-rows-[3rem] grid grid-cols-subgrid col-span-4">
             <figure class="h-full aspect-square grid place-content-center">
               <img class="aspect-square object-cover border-r" v-if="asset.assetType === 'image'"
                 :src="assetsUrl + asset.generatedName">
               <span v-if="asset.assetType === 'document'" class="material-icons text-5xl leading-none">article</span>
+              <span v-if="asset.assetType === 'video'" class="material-icons text-5xl leading-none">movie</span>
               <span v-if="asset.assetType === 'model' || asset.assetType === 'navmesh'"
                 class="material-icons text-5xl leading-none">view_in_ar</span>
             </figure>
@@ -79,7 +80,12 @@
               <span>.{{ asset.assetFileExtension }}</span>
             </div>
             <div class="justify-self-end">{{ asset.size ? humanFileSize(asset.size) : 'N/A' }}</div>
-            <div>{{ asset.createdAt?.toLocaleDateString() }}</div>
+            <div class="relative self-stretch grid place-content-center">
+              <div class="">{{ asset.createdAt?.toLocaleDateString() }} </div>
+              <div
+                class="group-hover:opacity-100 opacity-0 transition-opacity absolute inset-0 bg-gradient-to-l from-40% from-base-100">
+              </div>
+            </div>
           </div>
         </template>
       </div>
