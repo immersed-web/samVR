@@ -27,6 +27,10 @@ export const useClientStore = defineStore('client', () => {
     clientState.value = data;
   })
 
+  async function reloadDbData() {
+    await connection.client.user.reloadUserDataFromDB.mutate();
+  }
+
   // const fetchClientState = async () => {
   //   const receivedState = await connection.client.user.getClientState.query();
   //   console.log('manually fetched new clientstate:', receivedState);
@@ -49,6 +53,7 @@ export const useClientStore = defineStore('client', () => {
   return {
     clientState,
     initials,
+    reloadDbData,
     // fetchClientState,
   };
 

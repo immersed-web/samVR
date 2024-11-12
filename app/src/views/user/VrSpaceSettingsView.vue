@@ -211,7 +211,8 @@
             <div class="divider">
               Placera objekt i scenen
             </div>
-            <AssetLibrary :assets="libraryAssets" @asset-picked="onAssetPicked" />
+            <AssetLibrary @asset-deleted="vrSpaceStore.reloadVrSpaceFromDB" :assets="libraryAssets"
+              @asset-picked="onAssetPicked" />
           </div>
         </TabPanel>
         <TabPanel>
@@ -511,9 +512,6 @@ watch(currentCursorIntersection, (intersection) => {
   }
 
 })
-
-
-const activeAccordion = ref<string>();
 
 const libraryAssets = computed(() => {
   return clientStore.clientState?.assets.filter(a => a.showInUserLibrary) ?? [];

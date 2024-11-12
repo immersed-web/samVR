@@ -17,6 +17,9 @@ export const userRouter = router({
   //   }
   //   return ctx.client.getPublicState();
   // }),
+  reloadUserDataFromDB: atLeastUserP.use(isUserClientM).mutation(async ({ ctx }) => {
+    await ctx.client.loadDbDataAndNotifySelf();
+  }),
   updateAvatarDesign: p.use(isUserClientM).input(AvatarDesignSchema).mutation(async ({ ctx, input }) => {
     ctx.client.avatarDesign = input;
   }),

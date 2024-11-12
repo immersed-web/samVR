@@ -4,8 +4,7 @@ process.env.DEBUG = 'Router:Admin*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
 import { TRPCError } from '@trpc/server';
-import { observable } from '@trpc/server/observable';
-import { BaseClient, Camera, loadUserDBData, SenderClient, UserClient, Stream } from '../classes/InternalClasses.js';
+import { Stream } from '../classes/InternalClasses.js';
 import { CameraIdSchema, hasAtLeastSecurityRole, SenderIdSchema, StreamId, StreamIdSchema, StreamUpdateSchema, CameraInsertSchema, CameraPortalInsertSchema, CameraUpdateSchema } from 'schemas';
 import { z } from 'zod';
 import { atLeastModeratorP, currentVenueAdminP, isUserClientM, isVenueOwnerM, procedure as p, router } from '../trpc/trpc.js';

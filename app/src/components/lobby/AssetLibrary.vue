@@ -41,7 +41,7 @@
         <div class="indicator block w-[unset]">
           <div v-if="asset.assetId === pickedAsset?.assetId" class="indicator-item">
             <div data-tip="ta bort från biblioteket" class="tooltip">
-              <button class="btn btn-error btn-circle btn-sm" @click="onDeleteAsset(asset.assetId)"><span
+              <button class="btn btn-error btn-circle btn-sm" @click.stop="onDeleteAsset(asset)"><span
                   class="material-icons">delete</span></button>
             </div>
           </div>
@@ -64,8 +64,8 @@
     <div v-else>
       <div class="grid grid-cols-[auto_minmax(5rem,1fr)_auto_auto] gap-y-1 gap-x-4">
         <template v-for="asset in searchedAssetList" :key="asset.assetId">
-          <div
-            class="border cursor-pointer hover:border hover:border-primary group overflow-hidden rounded-md items-center auto-rows-[3rem] grid grid-cols-subgrid col-span-4">
+          <div @click="pickAsset(asset)" :class="[asset.assetId === pickedAsset?.assetId ? selectedCSSClasses : '']"
+            class="border cursor-pointer group overflow-hidden rounded-md items-center auto-rows-[3rem] grid grid-cols-subgrid col-span-4">
             <figure class="h-full aspect-square grid place-content-center">
               <img class="aspect-square object-cover border-r" v-if="asset.assetType === 'image'"
                 :src="assetsUrl + asset.generatedName">
@@ -84,7 +84,8 @@
               <div class="mr-4">{{ asset.createdAt?.toLocaleDateString() }} </div>
               <div
                 class="group-hover:opacity-100 opacity-0 transition-opacity absolute inset-0 bg-gradient-to-l from-50% from-base-100 flex justify-end items-center">
-                <button class="btn btn-error btn-square btn-sm mr-2"><span class="material-icons">delete</span></button>
+                <button @click.stop="onDeleteAsset(asset)" class="btn btn-error btn-square btn-sm mr-2"><span
+                    class="material-icons">delete</span></button>
               </div>
             </div>
           </div>
@@ -97,9 +98,11 @@
 import { assetsUrl, deleteAsset, humanFileSize, stripExtension } from '@/modules/utils';
 import { type Asset, type AssetId, type AssetType } from 'schemas';
 import { useAuthStore } from '@/stores/authStore';
+import { useClientStore } from '@/stores/clientStore';
 import { computed, reactive, ref, shallowRef } from 'vue';
 import { useStorage } from '@vueuse/core';
 const authStore = useAuthStore();
+const clientStore = useClientStore();
 
 const { assets } = defineProps<{
   assets: Asset[]
@@ -149,13 +152,15 @@ const searchedAssetList = computed(() => {
 // const viewMode = ref<'list' | 'thumbnails'>('thumbnails');
 const viewMode = useStorage<'list' | 'thumbnails'>('library-view-mode', 'thumbnails');
 
-async function onDeleteAsset(assetId: AssetId) {
+async function onDeleteAsset(asset: Asset) {
   const deleteParams = {
-    assetId,
+    assetId: asset.assetId,
     authToken: authStore.tokenOrThrow(),
   };
 
   await deleteAsset(deleteParams)
+  await clientStore.reloadDbData();
+  emit('assetDeleted', asset)
 }
 
 const selectedCSSClasses = 'outline outline-2 -outline-offset-2 outline-primary/30';
@@ -167,7 +172,8 @@ function pickAsset(asset: Asset) {
 }
 
 const emit = defineEmits<{
-  assetPicked: [asset: Asset]
+  assetPicked: [asset: Asset],
+  assetDeleted: [asset: Asset],
 }>()
 
 </script>
