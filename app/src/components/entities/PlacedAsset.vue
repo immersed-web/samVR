@@ -9,7 +9,9 @@
       <video ref="videoTag" :id="generatedId" :src="src" />
       <!-- <audio ref="audioTag" :id="`${generatedId}-audioTag`" /> -->
     </template>
-    <component rotation="90 0 0" v-else :is="tagName" :src="src" :class="$attrs.class" />
+    <a-gltf-model v-else-if="tagName === 'a-gltf-model'" rotation="90 0 0" class="navmesh" :src="src"
+      :class="$attrs.class" />
+    <component v-else rotation="90 0 0" :is="tagName" :src="src" :class="$attrs.class" />
   </a-entity>
 </template>
 <script setup lang="ts">

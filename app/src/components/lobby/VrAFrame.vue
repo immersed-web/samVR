@@ -47,7 +47,7 @@
       <a-entity camera id="camera" ref="cameraTag"
         look-controls="reverseMouseDrag: false; reverseTouchDrag: true; pointerLockEnabled: true;"
         wasd-controls="acceleration:35;"
-        :simple-navmesh-constraint="`navmesh: #navmesh; fall: 1; height: ${defaultHeightOverGround};`"
+        :simple-navmesh-constraint="`navmesh: .navmesh; fall: 1; height: ${defaultHeightOverGround};`"
         emit-move="interval: 20;" :position="`0 ${defaultHeightOverGround} 0`">
         <a-entity ref="cameraAttacher" :position="cameraAttacherPosString">
           <!-- <a-sphere position="0 0 0" color="red" scale="0.1 0.1 0.1" /> -->

@@ -311,7 +311,7 @@ async function enterFirstPersonView(point: THREE.Vector3Tuple) {
 function attachFPSComponents(camTag: Entity) {
   camTag.setAttribute('look-controls', { reverseMouseDrag: false, reverseTouchDrag: false, pointerLockEnabled: true, })
   camTag.setAttribute('wasd-controls', { fly: false });
-  camTag.setAttribute('simple-navmesh-constraint', `navmesh:#${navmeshId.value}; fall:0.5; height: ${defaultHeightOverGround};`);
+  camTag.setAttribute('simple-navmesh-constraint', `navmesh:.navmesh; fall:0.5; height: ${defaultHeightOverGround};`);
 }
 
 function removeFPSComponents(camTag: Entity) {
