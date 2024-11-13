@@ -287,11 +287,11 @@
             </a-entity>
             <a-entity id="teleport-target-aframe-cursor" ref="cursorEntity">
 
-              <a-entity :visible="currentCursorMode !== undefined" axes-helper>
-                <!-- <a-ring color="yellow" radius-inner="0.1" radius-outer="0.2"
-                material="shader: flat; side: double;" rotation="-90 0 0">
-                <a-cone color="green" position="0 0 0" scale="0.1 0.2 0.1" rotation="0 0 0" />
-              </a-ring> -->
+              <a-entity :visible="currentCursorMode !== undefined && isCursorHovering">
+                <a-ring position="0 0 0.01" color="yellow" radius-inner="0.1" radius-outer="0.2"
+                  material="shader: flat; side: double;" rotation="0 0 0">
+                  <!-- <a-cone color="green" position="0 0 0" scale="0.1 0.2 0.1" rotation="0 0 0" /> -->
+                </a-ring>
                 <!-- <a-box material="shader: flat; side: double;" scale="0.2 0.2 0.2" color="magenta" rotation="90 0 0">
                 <a-cone color="green" position="0 1 0" scale="0.5 1 0.5" rotation="0 0 0" />
               </a-box> -->
@@ -450,7 +450,7 @@ const tabs = [
   { label: 'Scen', iconName: 'door_front' },
 ];
 
-const { setCursorMode, currentCursorMode, currentRaycastSelectorString, setCursorEntityRef, onCursorClick, currentCursorIntersection, currentCursorTransform, triggerCursorClick } = useCurrentCursorIntersection();
+const { setCursorMode, currentCursorMode, isCursorHovering, currentRaycastSelectorString, setCursorEntityRef, onCursorClick, currentCursorIntersection, currentCursorTransform, triggerCursorClick } = useCurrentCursorIntersection();
 setCursorMode('select-objects');
 watch(currentCursorIntersection, (intersection) => {
   if (currentCursorMode.value === 'place-spawnposition') {

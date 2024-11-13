@@ -64,6 +64,11 @@ const currentRaycastSelectorString = computed(() => {
   return currentRaycastSelectorArray.value.join(', ');
 });
 
+const isCursorHovering = computed(() => {
+  if (!rayIntersectionData.value) { return false; }
+  return true;
+})
+
 const isCursorOnNavmesh = computed((): boolean => {
   if (!rayIntersectionData.value) { return false; }
   // @ts-ignore
@@ -113,6 +118,7 @@ export function useCurrentCursorIntersection() {
     currentRaycastSelectorArray,
     currentRaycastSelectorString,
     currentCursorMode: readonly(currentCursorMode),
+    isCursorHovering,
     isCursorOnNavmesh,
     onCursorClick: clickHook.on,
     triggerCursorClick: clickHook.trigger,
