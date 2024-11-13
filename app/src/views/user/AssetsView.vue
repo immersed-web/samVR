@@ -1,7 +1,7 @@
 <template>
   <MaxWidth7xl>
-    <AssetUpload @uploaded="clientStore.reloadDbData" :accepted-asset-types="['document', 'image', 'video', 'model']"
-      name="fil" :show-in-user-library="true" />
+    <AssetUpload class="mb-4" @uploaded="clientStore.reloadDbData"
+      :accepted-asset-types="['document', 'image', 'video', 'model']" name="fil" :show-in-user-library="true" />
     <AssetLibrary :assets="libraryAssets" />
   </MaxWidth7xl>
 </template>
