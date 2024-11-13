@@ -60,8 +60,9 @@
       </a-entity> -->
 
       </a-entity>
-      <a-entity ref="leftHandTag" @controllerconnected="leftControllerConnected = true"
-        @controllerdisconnected="leftControllerConnected = false" laser-controls="hand:left"
+      <a-entity :visible="leftControllerConnected" ref="leftHandTag"
+        @controllerconnected="leftControllerConnected = true" @controllerdisconnected="leftControllerConnected = false"
+        laser-controls="hand:left"
         :raycaster="`objects: ${currentRaycastSelectorString}; mouseCursorStyleEnabled: ${pointerOnHover}`"
         @xbuttondown="oculusButtons['x'] = true" @xbuttonup="oculusButtons['x'] = false"
         @ybuttondown="oculusButtons['y'] = true" @ybuttonup="oculusButtons['y'] = false"
@@ -69,7 +70,8 @@
         <a-entity ref="leftHandVRGui" position="0 0 -0.06" rotation="-90 0 0"></a-entity>
         <AvatarHand />
       </a-entity>
-      <a-entity ref="rightHandTag" @controllerconnected="rightControllerConnected = true"
+      <a-entity :visible="rightControllerConnected" ref="rightHandTag"
+        @controllerconnected="rightControllerConnected = true"
         @controllerdisconnected="rightControllerConnected = false" laser-controls="hand:right"
         :raycaster="`objects: ${currentRaycastSelectorString}; mouseCursorStyleEnabled: ${pointerOnHover}`"
         @abuttondown="oculusButtons['a'] = true" @abuttonup="oculusButtons['a'] = false"
