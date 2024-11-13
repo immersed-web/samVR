@@ -10,9 +10,9 @@
         <!-- <input type="radio" class="join-item material-icons btn btn-sm"><span
                   class="material-icons">view_list</span></input> -->
         <input v-model="viewMode" type="radio" name="viewmode" value="thumbnails" aria-label="view_module"
-          class="join-item btn btn-sm text-2xl font-normal material-icons" />
+          class="join-item btn btn-sm px-2 text-2xl leading-none font-normal material-icons" />
         <input v-model="viewMode" type="radio" name="viewmode" value="list" aria-label="view_list"
-          class="join-item btn btn-sm text-2xl font-normal material-icons" />
+          class="join-item btn btn-sm px-2 text-2xl leading-none font-normal material-icons" />
       </div>
     </div>
     <div class="flex flex-wrap gap-2">
