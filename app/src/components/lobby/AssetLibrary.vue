@@ -1,9 +1,9 @@
 <template>
   <div class="flex flex-col gap-2">
-    <div class="flex gap-2">
-      <label class="input input-sm input-bordered flex items-center gap-1 px-1">
+    <div class="flex flex-wrap gap-2">
+      <label class="input input-sm input-bordered max-w-64 grow flex items-center gap-1 px-1">
         <span class="material-icons">search</span>
-        <input v-model="searchString" placeholder="sök..." class="">
+        <input v-model="searchString" placeholder="sök..." class="w-20 grow">
         <button @click="searchString = ''" v-if="searchString" class="material-icons">clear</button>
       </label>
       <div class="join">
@@ -15,7 +15,7 @@
           class="join-item btn btn-sm text-2xl font-normal material-icons" />
       </div>
     </div>
-    <div class="flex gap-2">
+    <div class="flex flex-wrap gap-2">
       <label class="btn btn-xs gap-1 rounded-full has-[:checked]:btn-primary">
         <input v-model="filters.image" type="checkbox" class="hidden" /><span
           class="text-sm material-icons">done</span>Bilder
