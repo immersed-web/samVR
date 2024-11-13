@@ -202,8 +202,9 @@
             <div class="divider">
               Ladda upp objekt till ditt bibliotek
             </div>
-            <AssetUpload @uploaded="onAssetUploaded" :accepted-asset-types="['document', 'image', 'video', 'model']"
-              name="object" :show-in-user-library="true" />
+            <AssetUpload @uploaded="clientStore.reloadDbData"
+              :accepted-asset-types="['document', 'image', 'video', 'model']" name="object"
+              :show-in-user-library="true" />
             <!-- <p class="text-sm label">
             Placera objekt såsom bilder och PDF i 3D-modellen.
           </p> -->

@@ -1,4 +1,4 @@
-import axios, { type AxiosProgressEvent } from "axios";
+import axios, { CanceledError, type AxiosProgressEvent } from "axios";
 import type { UploadResponse } from "fileserver";
 import type { AssetId } from "schemas";
 
@@ -19,22 +19,31 @@ export async function uploadFileData({ data, authToken, onProgress, abortControl
   // Perhaps some race condition. We use this flag to mitigate that 👍
   let uploadActive = true;
 
-  const response = await axios.post<UploadResponse>(fileserverUrl + '/upload', data, {
-    headers: {
-      'Content-Type': 'multipart/form-data;',
-      'Authorization': `Bearer ${authToken}`,
-    },
-    signal: abortController?.signal,
-    timeout: 4 * 60 * 1000,
-    onUploadProgress(progressEvent) {
-      if (!uploadActive || !onProgress) return;
-      // console.log(progressEvent);
-      onProgress(progressEvent);
-      // uploadProgress.value = progressEvent.progress * 100;
-    },
-  });
-  uploadActive = false;
-  return response.data
+  try {
+    const response = await axios.post<UploadResponse>(fileserverUrl + '/upload', data, {
+      headers: {
+        'Content-Type': 'multipart/form-data;',
+        'Authorization': `Bearer ${authToken}`,
+      },
+      signal: abortController?.signal,
+      timeout: 4 * 60 * 1000,
+      onUploadProgress(progressEvent) {
+        if (!uploadActive || !onProgress) return;
+        // console.log(progressEvent);
+        onProgress(progressEvent);
+        // uploadProgress.value = progressEvent.progress * 100;
+      },
+    });
+    uploadActive = false;
+    return response.data
+  } catch (e: unknown) {
+    if (e instanceof CanceledError) {
+      return {
+        error: 'uppladdning avbruten',
+      }
+    }
+    throw e;
+  }
 }
 
 // TODO: apparently http DELETE shouldnt have a body according to spec. We should change the API so the assetId is in the url/query string.

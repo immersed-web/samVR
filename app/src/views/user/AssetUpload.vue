@@ -1,29 +1,33 @@
 <template>
-  <div v-if="!uploadedAssetData">
+  <div v-if="!uploadedAssetData" class="border rounded-md">
     <form @submit.prevent="uploadFile">
-      <div class="form-control gap-1">
-        <div class="flex flex-nowrap items-center gap-2">
-          <!-- <input type="file" :accept="extensionAcceptString"
-            class="file-input file-input-bordered max-w-xs file-input-sm" ref="fileInput" @change="onFilesPicked">
-          <button type="submit" class="btn btn-primary btn-sm" :disabled="uploadDisabled">
-            Ladda upp {{ props.name }}
-          </button> -->
-          <button :disabled="uploadDisabled" @click="() => open()" class="btn btn-sm btn-primary px-2 gap-1"><span
-              class="material-icons">upload</span>Ladda upp</button>
-          <div :class="{ 'invisible': uploadProgress === 0 }" class="radial-progress text-primary"
-            :style="`--value:${smoothedProgress}; --size:2.5rem`">
-            {{ smoothedProgress.toFixed(0) }}%
+      <div class="flex items-center gap-2">
+        <div class="relative leading-none">
+          <button :class="[!isUploading ? 'visible' : 'invisible']" :disabled="isUploading" @click="() => open()"
+            class="btn btn-sm btn-primary pr-2 pl-1 gap-1 flex-nowrap text-nowrap"><span
+              class="material-icons">upload</span>Ladda
+            upp</button>
+          <div v-if="isUploading"
+            class="pointer-events-none border-2 absolute rounded-md inset-0 grid place-content-stretch">
+            <div :style="`width: ${smoothedProgress}%;`" class="col-start-1 row-start-1 rounded-md bg-secondary">
+            </div>
+            <div class="self-center justify-self-center col-start-1 row-start-1 leading-none font-bold text-lg">
+              {{ smoothedProgress.toFixed(0) }}%
+            </div>
           </div>
-          <button :class="{ 'invisible': uploadProgress === 0 }" class="btn btn-circle btn-error"
-            @click="abortController?.abort">
-            <span class="material-icons">close</span>
-          </button>
         </div>
-        <div v-if="errorMessage" role="alert" class="alert alert-error text-sm">
-          {{ errorMessage }}
+        <button v-if="isUploading" class="btn btn-circle btn-sm btn-error" @click="abortController?.abort">
+          <span class="material-icons">close</span>
+        </button>
+        <div v-auto-animate v-if="errorMessage" role="alert"
+          class="bg-error text-error-content flex items-center rounded-2xl text-sm p-1 gap-2 leading-none pr-3 ">
+          <span class="material-icons">error</span>
+          <span class="text-ellipsis">{{ errorMessage }}</span>
         </div>
-        <div v-else-if="successMessage" role="alert" class="alert alert-success text-sm">
-          {{ successMessage }}
+        <div v-auto-animate v-if="successMessage" role="alert"
+          class="bg-info text-info-content flex items-center rounded-2xl text-sm p-1 gap-2 leading-none pr-3 ">
+          <span class="material-icons">info</span>
+          <span class="text-ellipsis">{{ successMessage }}</span>
         </div>
       </div>
     </form>
@@ -79,12 +83,10 @@ const { files, open, onCancel, onChange: onFilesPicked, reset: resetPickedFile }
   accept: extensionAcceptString.value,
 });
 
-const uploadDisabled = computed(() => {
-  return uploadProgress.value !== 0;
-});
-
-const errorMessage = autoResetRef<string | undefined>(undefined, 3000);
-const successMessage = autoResetRef<'fil uppladdad' | undefined>(undefined, 3000);
+// const errorMessage = autoResetRef<string | undefined>(undefined, 3000);
+const errorMessage = 'asdasdasdj asdöflkj asd öaslkdgj';
+// const successMessage = autoResetRef<'fil uppladdad' | undefined>(undefined, 3000);
+const successMessage = 'asd very good klart!';
 const extensionOfPickedFile = ref<typeof acceptedExtensions.value[number]>();
 const derivedAssetType = computed(() => {
   if (!extensionOfPickedFile.value) {
@@ -97,6 +99,9 @@ const derivedAssetType = computed(() => {
   return assetType;
 });
 const uploadProgress = ref(0);
+const isUploading = computed(() => {
+  return uploadProgress.value !== 0;
+})
 const smoothedProgress = useTransition(uploadProgress);
 
 const pickedFile = computed(() => {
@@ -201,7 +206,7 @@ async function uploadFile() {
     }
   } catch (err) {
     console.error(err);
-    errorMessage.value = 'failed to send file';
+    errorMessage.value = 'uppladdning misslyckades';
     uploadProgress.value = 0;
     extensionOfPickedFile.value = undefined;
     abortController.abort('failed to send file');
