@@ -43,7 +43,7 @@
     <!-- <a-sphere :position="vrSpaceStore.currentVrSpace.dbData.spawnPosition?.join(' ')" color="yellow"
       scale="0.1 0.1 0.1" /> -->
 
-    <a-entity id="camera-rig" ref="camerarigTag">
+    <a-entity id="camera-rig" ref="camerarigTag" movement-controls="controls: nipple">
       <a-entity camera id="camera" ref="cameraTag"
         look-controls="reverseMouseDrag: false; reverseTouchDrag: true; pointerLockEnabled: true;"
         wasd-controls="acceleration:35;"

@@ -81,6 +81,9 @@ importers:
       aframe-environment-component:
         specifier: ^1.3.7
         version: 1.3.7
+      aframe-extras:
+        specifier: ^7.5.1
+        version: 7.5.1
       aframe-look-at-component:
         specifier: ^1.0.0
         version: 1.0.0
@@ -89,7 +92,7 @@ importers:
         version: 1.3.2
       aframe-troika-text:
         specifier: ^0.11.0
-        version: 0.11.0(aframe@1.6.0)
+        version: 0.11.0(aframe@1.6.0)(three@0.164.1)
       axios:
         specifier: ^1.7.2
         version: 1.7.2
@@ -98,7 +101,7 @@ importers:
         version: link:../packages/buffered-interpolation
       camera-controls:
         specifier: ^2.8.5
-        version: 2.8.5
+        version: 2.8.5(three@0.164.1)
       database:
         specifier: workspace:^
         version: link:../backend/database
@@ -140,10 +143,10 @@ importers:
         version: 1.13.3
       three-mesh-bvh:
         specifier: ^0.8.2
-        version: 0.8.2
+        version: 0.8.2(three@0.164.1)
       three-mesh-ui:
         specifier: ^6.5.4
-        version: 6.5.4
+        version: 6.5.4(three@0.164.1)
       toolcool-range-slider:
         specifier: ^4.0.28
         version: 4.0.28
@@ -1982,6 +1985,9 @@ packages:
 
   aframe-environment-component@1.3.7:
     resolution: {integrity: sha512-iCbjM1sRIycmyIS+r/ygRFH1DF6MIDsDb1sQVJCF2QU4w7l0KElqn16H9a2tytqH7OMOpnhXu5zdXd4+9UZ5TQ==}
+
+  aframe-extras@7.5.1:
+    resolution: {integrity: sha512-RKMGHOJTXCCpeD6fcIFP3G0Bqdij+htafFyDut/onrV7XxvxXgR5S+h4zy8tDIBkvQ0WCU33dD+TwBlDl74XLA==}
 
   aframe-look-at-component@1.0.0:
     resolution: {integrity: sha512-urbsU4qaKg3drIShNDIrNQyuVh+yiFCbP50FMig7uDbVOlMZU3Tcj4oWbjxx3neD07Rn8atjpwBeqc6lceKGTw==}
@@ -4291,6 +4297,9 @@ packages:
     resolution: {integrity: sha512-lL4AjabAAFi313tjrtmgm/bxCRzp4l3vCshojfV/ij3IPdtnRqv6Chcw+SqJUhbe7g3o3BecaqCJYUNLswGBhQ==}
     hasBin: true
 
+  nipplejs@0.10.2:
+    resolution: {integrity: sha512-XGxFY8C2DOtobf1fK+MXINTzkkXJLjZDDpfQhOUZf4TSytbc9s4bmA0lB9eKKM8iDivdr9NQkO7DpIQfsST+9g==}
+
   node-addon-api@5.1.0:
     resolution: {integrity: sha512-eh0GgfEkpnoWDq+VY8OyvYhFEzBk6jIYbRKdIlyTiAXIVJ8PyBaKb0rp7oDtoddbdoHWhq8wwr+XZ81F1rpNdA==}
 
@@ -5341,6 +5350,14 @@ packages:
     engines: {node: x.x.x}
     peerDependencies:
       three: '>=0.144.0'
+
+  three-pathfinding@1.3.0:
+    resolution: {integrity: sha512-LKxMI3/YqdMYvt6AdE2vB6s5ueDFczt/DWoxhtPNgRsH6E0D8LMYQxz+eIrmKo0MQpDvMVzXYUMBk+b86+k97w==}
+    peerDependencies:
+      three: 0.x.x
+
+  three@0.164.1:
+    resolution: {integrity: sha512-iC/hUBbl1vzFny7f5GtqzVXYjMJKaTPxiCxXfrvVdBi1Sf+jhd1CAkitiFwC7mIBFCo3MrDLJG97yisoaWig0w==}
 
   timers-ext@0.1.7:
     resolution: {integrity: sha512-b85NUNzTSdodShTIbky6ZF02e8STtVVfD+fu4aXXShEELpozH+bCpJLYMPZbsABN2wDH7fJpqIoXxJpzbf0NqQ==}
@@ -6647,7 +6664,7 @@ snapshots:
 
   '@types/keyv@3.1.4':
     dependencies:
-      '@types/node': 18.19.33
+      '@types/node': 16.18.97
 
   '@types/lodash-es@4.17.12':
     dependencies:
@@ -6683,7 +6700,7 @@ snapshots:
 
   '@types/responselike@1.0.3':
     dependencies:
-      '@types/node': 18.19.33
+      '@types/node': 16.18.97
 
   '@types/semver@7.5.8': {}
 
@@ -7191,14 +7208,20 @@ snapshots:
 
   aframe-environment-component@1.3.7: {}
 
+  aframe-extras@7.5.1:
+    dependencies:
+      nipplejs: 0.10.2
+      three: 0.164.1
+      three-pathfinding: 1.3.0(three@0.164.1)
+
   aframe-look-at-component@1.0.0: {}
 
   aframe-orbit-controls@1.3.2: {}
 
-  aframe-troika-text@0.11.0(aframe@1.6.0):
+  aframe-troika-text@0.11.0(aframe@1.6.0)(three@0.164.1):
     dependencies:
       aframe: 1.6.0
-      troika-three-text: 0.48.1
+      troika-three-text: 0.48.1(three@0.164.1)
     transitivePeerDependencies:
       - three
 
@@ -8069,7 +8092,9 @@ snapshots:
 
   camelcase@6.3.0: {}
 
-  camera-controls@2.8.5: {}
+  camera-controls@2.8.5(three@0.164.1):
+    dependencies:
+      three: 0.164.1
 
   caniuse-lite@1.0.30001618: {}
 
@@ -10011,6 +10036,8 @@ snapshots:
       minimist: 1.2.8
       new-array: 1.0.0
 
+  nipplejs@0.10.2: {}
+
   node-addon-api@5.1.0: {}
 
   node-domexception@1.0.0: {}
@@ -11030,9 +11057,19 @@ snapshots:
       nice-color-palettes: 3.0.0
       quad-indices: 2.0.1
 
-  three-mesh-bvh@0.8.2: {}
+  three-mesh-bvh@0.8.2(three@0.164.1):
+    dependencies:
+      three: 0.164.1
 
-  three-mesh-ui@6.5.4: {}
+  three-mesh-ui@6.5.4(three@0.164.1):
+    dependencies:
+      three: 0.164.1
+
+  three-pathfinding@1.3.0(three@0.164.1):
+    dependencies:
+      three: 0.164.1
+
+  three@0.164.1: {}
 
   timers-ext@0.1.7:
     dependencies:
@@ -11088,14 +11125,17 @@ snapshots:
 
   trim-right@1.0.1: {}
 
-  troika-three-text@0.48.1:
+  troika-three-text@0.48.1(three@0.164.1):
     dependencies:
       bidi-js: 1.0.3
-      troika-three-utils: 0.48.0
+      three: 0.164.1
+      troika-three-utils: 0.48.0(three@0.164.1)
       troika-worker-utils: 0.48.0
       webgl-sdf-generator: 1.1.1
 
-  troika-three-utils@0.48.0: {}
+  troika-three-utils@0.48.0(three@0.164.1):
+    dependencies:
+      three: 0.164.1
 
   troika-worker-utils@0.48.0: {}
 
