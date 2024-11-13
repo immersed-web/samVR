@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-2">
+  <div class="flex flex-col gap-3">
     <div class="flex flex-wrap gap-2">
       <label class="input input-sm input-bordered max-w-64 grow flex items-center gap-1 px-1">
         <span class="material-icons">search</span>
@@ -63,6 +63,12 @@
     </div>
     <div v-else>
       <div class="grid grid-cols-[auto_minmax(5rem,1fr)_auto_auto] gap-y-1 gap-x-4">
+        <div class="contents text-[0.65rem] uppercase font-bold text-base-content/70">
+          <div class="">Bild</div>
+          <div>Filnamn</div>
+          <div>Filstorlek</div>
+          <div>Datum</div>
+        </div>
         <template v-for="asset in searchedAssetList" :key="asset.assetId">
           <div @click="pickAsset(asset)" :class="[asset.assetId === pickedAsset?.assetId ? selectedCSSClasses : '']"
             class="border cursor-pointer group overflow-hidden rounded-md items-center auto-rows-[3rem] grid grid-cols-subgrid col-span-4">
