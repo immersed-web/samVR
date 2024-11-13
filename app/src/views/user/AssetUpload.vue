@@ -1,5 +1,5 @@
 <template>
-  <div v-if="!uploadedAssetData" class="border rounded-md">
+  <div v-if="!uploadedAssetData" class="">
     <form @submit.prevent="uploadFile">
       <div class="flex items-center gap-2">
         <div class="relative leading-none">
@@ -24,7 +24,7 @@
           <span class="material-icons">error</span>
           <span class="text-ellipsis">{{ errorMessage }}</span>
         </div>
-        <div v-auto-animate v-if="successMessage" role="alert"
+        <div v-auto-animate v-else-if="successMessage" role="alert"
           class="bg-info text-info-content flex items-center rounded-2xl text-sm p-1 gap-2 leading-none pr-3 ">
           <span class="material-icons">info</span>
           <span class="text-ellipsis">{{ successMessage }}</span>
@@ -83,10 +83,10 @@ const { files, open, onCancel, onChange: onFilesPicked, reset: resetPickedFile }
   accept: extensionAcceptString.value,
 });
 
-// const errorMessage = autoResetRef<string | undefined>(undefined, 3000);
-const errorMessage = 'asdasdasdj asdöflkj asd öaslkdgj';
-// const successMessage = autoResetRef<'fil uppladdad' | undefined>(undefined, 3000);
-const successMessage = 'asd very good klart!';
+const errorMessage = autoResetRef<string | undefined>(undefined, 3000);
+// const errorMessage = 'asdasdasdj asdöflkj asd öaslkdgj';
+const successMessage = autoResetRef<'fil uppladdad' | undefined>(undefined, 3000);
+// const successMessage = 'asd very good klart!';
 const extensionOfPickedFile = ref<typeof acceptedExtensions.value[number]>();
 const derivedAssetType = computed(() => {
   if (!extensionOfPickedFile.value) {
