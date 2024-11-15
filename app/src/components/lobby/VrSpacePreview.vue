@@ -85,6 +85,7 @@ import registerAframeComponents from '@/ts/aframe/components';
 import { defaultHeightOverGround } from 'schemas';
 import { useCurrentCursorIntersection, useSelectedPlacedObject, useCurrentlyMovedObject } from '@/composables/vrSpaceComposables';
 import OffsetSlider from '@/components/OffsetSlider.vue';
+import { arrToCoordString, attachOrbitControls } from '@/modules/3DUtils';
 registerAframeComponents();
 
 const vrSpaceStore = useVrSpaceStore();
@@ -187,6 +188,15 @@ watch(() => props.autoRotate, (rotate) => {
   }
 });
 
+watch(selectedPlacedObject, (newSO) => {
+  if (newSO) {
+    const pos = newSO.position;
+    if (cameraTag.value?.getAttribute('orbit-controls')) {
+      cameraTag.value!.setAttribute('orbit-controls', 'target', arrToCoordString(pos));
+    }
+  }
+})
+
 watch(() => props.raycastSelector, (selector) => {
   if (selector) {
     attachRaycaster(selector);
@@ -242,7 +252,12 @@ function onModelLoaded(evt: DetailEvent<{ model: THREE.Object3D, format: string 
     return;
   }
   setTimeout(() => {
-    attachOrbitControls(target);
+    const cam = cameraTag.value
+    if (!cam) {
+      console.error('cameraTag was undefined');
+      return
+    }
+    attachOrbitControls(cam, target, props.autoRotate);
   }, 500);
 }
 
@@ -251,18 +266,6 @@ function onCameraEntityLoaded(evt: CustomEvent<unknown>) {
 
 }
 
-function attachOrbitControls(target: THREE.Vector3) {
-  if (!cameraTag.value) {
-    console.warn('no cameraTag provided to attach orbit-controls to');
-    return;
-  }
-  cameraTag.value.setAttribute('position', '0 0 0');
-  let orbitControlSettings = `autoRotate: ${props.autoRotate}; rotateSpeed: 1; initialPosition: ${target.x} ${target.y + 2} ${target.z + 5}; `;
-  orbitControlSettings += `target:${target.x} ${target.y} ${target.z};`;
-  console.log('attaching orbit-controls to camera:', orbitControlSettings);
-  cameraTag.value.setAttribute('orbit-controls', orbitControlSettings);
-  console.log('cameraTag after attaching orbit-controls:', cameraTag.value);
-}
 
 function removeOrbitControls() {
   if (!cameraTag.value) {
@@ -324,14 +327,14 @@ async function exitFirstPersonView() {
   firstPersonViewActive.value = false;
   const camTag = cameraTag.value;
   if (!camTag) {
-    console.error('no cameratag provided');
+    console.error('cameratag undefined');
     return;
   }
   removeFPSComponents(camTag);
   await nextTick();
   const target = calculateOrbitTarget();
   if (target) {
-    attachOrbitControls(target);
+    attachOrbitControls(camTag, target, props.autoRotate);
   }
   const canvas = sceneTag.value!.canvas
   canvas.removeEventListener('mousedown', lockMouseOnCanvas);
@@ -381,7 +384,7 @@ async function getPanoScreenshotFromPoint(point: THREE.Vector3Tuple) {
   } else {
     const target = calculateOrbitTarget();
     if (target) {
-      attachOrbitControls(target);
+      attachOrbitControls(camTag, target, props.autoRotate);
     }
   }
   return canvasScreenshot;

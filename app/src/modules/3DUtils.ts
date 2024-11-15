@@ -147,3 +147,16 @@ export function assertSceneHasAudioListener(scene: Scene) {
   }
   return sceneEl as Scene & { audioListener: THREE.AudioListener };
 }
+
+export function attachOrbitControls(cameraTag: Entity, target: THREE.Vector3, autoRotate: boolean = true) {
+  if (!cameraTag) {
+    console.warn('no cameraTag provided to attach orbit-controls to');
+    return;
+  }
+  cameraTag.setAttribute('position', '0 0 0');
+  let orbitControlSettings = `autoRotate: ${autoRotate}; rotateSpeed: 1; initialPosition: ${target.x} ${target.y + 2} ${target.z + 5}; `;
+  orbitControlSettings += `target:${target.x} ${target.y} ${target.z};`;
+  console.log('attaching orbit-controls to camera:', orbitControlSettings);
+  cameraTag.setAttribute('orbit-controls', orbitControlSettings);
+  console.log('cameraTag after attaching orbit-controls:', cameraTag);
+}

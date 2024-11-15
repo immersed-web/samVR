@@ -404,7 +404,7 @@ import VrSpacePortal from '@/components/entities/VrSpacePortal.vue';
 import AutoComplete from '@/components/AutoComplete.vue';
 import { useCurrentCursorIntersection, useSelectedPlacedObject, useCurrentlyMovedObject, isAsset } from '@/composables/vrSpaceComposables';
 import { THREE, type Entity } from 'aframe';
-import { arrToCoordString, intersectionToTransform, quaternionTupleToAframeRotation } from '@/modules/3DUtils';
+import { arrToCoordString, quaternionTupleToAframeRotation } from '@/modules/3DUtils';
 import { useArrayFilter, useConfirmDialog } from '@vueuse/core';
 import PlacedAsset from '@/components/entities/PlacedAsset.vue';
 import TabsComponent from '@/views/user/TabsComponent.vue';
@@ -610,16 +610,8 @@ async function onRemoveObjectFromScene(placedObject: PlacedObjectWithIncludes) {
 
 async function onPlacedObjectPicked(placedObject: PlacedObjectWithIncludes) {
   console.log('placedObject picked:', placedObject);
+  // attachOrbitControls(scne)
   selectedPlacedObject.value = placedObject;
-}
-
-function onAssetUploaded(uploadDetails: AssetUploadEmitUploadedPayload) {
-  console.log(uploadDetails);
-  // TODO: We should probalby have the server notify a clientstate update
-  // right now we just do this hack to keep assets in local clientState in sync with db.
-  // This means the server client instance is not updated with the new asset.
-  // @ts-ignore
-  clientStore.clientState?.assets.push(uploadDetails);
 }
 
 function onAssetPicked(asset: Asset) {
