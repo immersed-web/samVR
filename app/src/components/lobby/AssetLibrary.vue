@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-3">
+  <div class="flex flex-col gap-4">
     <div class="flex flex-wrap gap-2">
       <label class="input input-sm input-bordered max-w-64 grow flex items-center gap-1 px-1">
         <span class="material-icons">search</span>

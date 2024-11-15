@@ -8,13 +8,14 @@
         <button class="btn btn-primary btn-sm">besök <span class="material-icons">open_in_new</span></button>
       </RouterLink>
     </div>
-    <div v-if="!vrSpaceStore.writableVrSpaceDbData">
-      Laddar...
+    <div class="grid h-[40vh] place-content-center"
+      v-if="!vrSpaceStore.writableVrSpaceDbData || !vrSpaceStore.currentVrSpace">
+      <span class="loading loading-infinity loading-lg"></span>Laddar
     </div>
     <div v-else class="grid grid-cols-[clamp(17rem,45%,47rem)_1fr] gap-2">
       <TabsComponent class="max-w-4xl" :tabs="tabs" breakpoint-adjustment.number="1.03">
         <TabPanel>
-          <div class="space-y-2">
+          <div class="space-y-4">
             <div class="form-control">
               <div class="font-semibold">Scenens namn</div>
               <input class="input input-bordered input-sm" v-model="vrSpaceStore.writableVrSpaceDbData.name">
@@ -24,23 +25,23 @@
               <textarea rows=5 class="textarea textarea-bordered " placeholder="beskriv din vr-miljö"
                 v-model="vrSpaceStore.writableVrSpaceDbData.description"></textarea>
             </div>
-            <div class="label gap-6 justify-end">
-              <span class="text-red-600">
+            <div class="flex items-center gap-4 justify-end">
+              <span class="text-red-600 text-sm">
                 Varning. Detta tar bort vr-miljön permanent!
               </span>
-              <button v-if="!isRevealed" @click.stop="triggerDeleteDialog" class="btn btn-error">Radera denna
+              <button v-if="!isRevealed" @click.stop="triggerDeleteDialog" class="btn btn-error btn-sm">Radera denna
                 VR-miljö</button>
               <template v-else>
-                <button @click="confirm" class="btn btn-error">Klicka en gång till för att verifiera</button>
-                <button @click="cancel" class="btn ">Avbryt</button>
+                <button @click="confirm" class="btn btn-error btn-sm">Klicka en gång till för att verifiera</button>
+                <button @click="cancel" class="btn btn-sm">Avbryt</button>
               </template>
 
             </div>
           </div>
         </TabPanel>
         <TabPanel>
-          <div class="space-y-2">
-            <div class="divider">
+          <div class="space-y-4">
+            <div class="divider mt-0">
               Publik eller privat?
             </div>
             <p class="text-sm text-gray-600">
@@ -48,8 +49,8 @@
               är privat för dig och de
               du har valt att dela den med.
             </p>
-            <label class="max-w-xs label cursor-pointer gap-2 font-semibold">
-              <span class="label">
+            <label class="max-w-xs label py-0 cursor-pointer gap-2 font-semibold">
+              <span class="label-text">
                 Öppet för alla:
               </span>
               <input type="checkbox" class="toggle toggle-success" true-value="public" false-value="private"
@@ -102,8 +103,8 @@
         </TabPanel>
         <TabPanel>
           <template v-if="vrSpaceStore.currentVrSpace">
-            <div class="space-y-2">
-              <div class="divider">
+            <div class="space-y-4">
+              <div class="divider mt-0">
                 3D-modell för miljön
               </div>
               <p class="text-sm mb-2 text-gray-600">
@@ -197,18 +198,14 @@
         </TabPanel>
         <TabPanel>
           <!-- Placera objekt -->
-          <div class="space-y-2">
+          <div class="space-y-4">
 
-            <div class="divider">
+            <div class="divider mt-0">
               Ladda upp objekt till ditt bibliotek
             </div>
             <AssetUpload @uploaded="clientStore.reloadDbData"
               :accepted-asset-types="['document', 'image', 'video', 'model']" name="object"
               :show-in-user-library="true" />
-            <!-- <p class="text-sm label">
-            Placera objekt såsom bilder och PDF i 3D-modellen.
-          </p> -->
-
             <div class="divider">
               Placera objekt i scenen
             </div>
@@ -217,30 +214,24 @@
           </div>
         </TabPanel>
         <TabPanel>
-          <div class="">
-            <div class="divider">
+          <div class="space-y-4">
+            <div class="divider mt-0">
               Portaler till andra VR-scener
             </div>
-            <p class="text-sm mb-2 text-gray-600">
+            <p class="text-sm text-gray-600">
               Skapa portaler som låter besökarna förflytta sig till andra VR-scener. Välj en scen att förflytta
               sig till
               och klicka sedan i 3D-modellen för att placera portalen.
             </p>
-            <div>
-              <label class="flex flex-col gap-1">
-                <span class="label-text font-semibold">Skapa ny portal</span>
-              </label>
-              <!-- <p>{{ portalTargetVrSpace }}</p> -->
+            <div class="form-control">
+              <div class="font-semibold">Placera ut ny portal</div>
               <AutoComplete v-if="allowedPortalTargets?.length" placeholder="Sök efter vr-miljö..."
                 v-model="portalTargetVrSpace" :options="allowedPortalTargets" display-key="name" id-key="vrSpaceId" />
-              <!-- <select class="select select-sm select-bordered" v-model="portalTargetVrSpace"
-                      @change="isRaycastingActive = true">
-                      <option v-for="vrSpace in allowedVrSpaces" :key="vrSpace.vrSpaceId" :value="vrSpace.vrSpaceId">
-                        {{
-                        vrSpace.name }}
-                      </option>
-                    </select> -->
             </div>
+            <div class="divider">Utplacerade objekt</div>
+            <PlacedObjectsList @removePlacedObject="onRemoveObjectFromScene"
+              @placed-object-picked="onPlacedObjectPicked" v-if="vrSpaceStore.currentVrSpace?.dbData.placedObjects"
+              :placed-objects="vrSpaceStore.currentVrSpace?.dbData.placedObjects" />
           </div>
         </TabPanel>
       </TabsComponent>
@@ -419,6 +410,8 @@ import PlacedAsset from '@/components/entities/PlacedAsset.vue';
 import TabsComponent from '@/views/user/TabsComponent.vue';
 import { TabPanel } from '@headlessui/vue';
 import { RouterLink, useRouter } from 'vue-router';
+import PlacedObjectsList from '@/components/lobby/PlacedObjectsList.vue';
+import type { PlacedObjectWithIncludes } from 'database';
 const router = useRouter();
 const { isRevealed, reveal, confirm, cancel } = useConfirmDialog();
 
@@ -600,6 +593,24 @@ async function placeMovedObject() {
       type: currentlyMovedObject.value.type,
     })
   }
+}
+
+async function onRemoveObjectFromScene(placedObject: PlacedObjectWithIncludes) {
+  console.log('remove of placedObject triggered:', placedObject);
+  await vrSpaceStore.removePlacedObject(placedObject.placedObjectId);
+  if (selectedPlacedObject.value?.placedObjectId === placedObject.placedObjectId) {
+    selectedPlacedObject.value = undefined;
+  }
+  if (currentlyMovedObject.value
+    && !isAsset(currentlyMovedObject.value)
+    && currentlyMovedObject.value.placedObjectId === placedObject.placedObjectId) {
+    currentlyMovedObject.value = undefined;
+  }
+}
+
+async function onPlacedObjectPicked(placedObject: PlacedObjectWithIncludes) {
+  console.log('placedObject picked:', placedObject);
+  selectedPlacedObject.value = placedObject;
 }
 
 function onAssetUploaded(uploadDetails: AssetUploadEmitUploadedPayload) {
