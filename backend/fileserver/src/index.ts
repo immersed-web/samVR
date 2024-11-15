@@ -3,24 +3,28 @@ import { HttpStatus } from 'http-status-ts';
 import { serveStatic } from '@hono/node-server/serve-static'
 import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono'
-import { logger } from 'hono/logger';
-import { createMiddleware } from 'hono/factory'
+// import { logger } from 'hono/logger';
+// import { createMiddleware } from 'hono/factory'
 import { HTTPException } from 'hono/http-exception'
-import { basicAuth } from 'hono/basic-auth'
-import { jwt, verify } from 'hono/jwt';
+// import { basicAuth } from 'hono/basic-auth'
+import { jwt } from 'hono/jwt';
 import { env } from 'hono/adapter';
 import { randomUUID } from 'crypto'
-import { Stream } from 'node:stream';
+import { Stream, pipeline } from 'node:stream';
+import type { ReadableStream } from 'node:stream/web';
 import fs from 'fs'
 
 import { hc, InferRequestType, InferResponseType } from 'hono/client'
 
 
-import { basicUserSelect, db, schema } from 'database'
+import { db, schema } from 'database'
 import { AssetIdSchema, AssetType, AssetTypeSchema, JwtPayload, UserId, assetTypesToExtensionsMap, createFileExtensionSchema, getAssetTypeFromExtension } from 'schemas'
 import { and, eq } from 'drizzle-orm';
 import path from 'path';
 import { z } from 'zod';
+import { compress } from 'hono/compress';
+// import { createBrotliCompress } from 'node:zlib';
+// const brotli = createBrotliCompress();
 
 const savePathAbsolute = path.resolve('.', 'uploads')
 const savePathRelative = './uploads/'
@@ -40,21 +44,20 @@ const savePathRelative = './uploads/'
 const maxAge = 4 * 24 * 60 * 60;
 const publicRoutes = new Hono();
 publicRoutes.get('/file/:filename',
-  async (c, next) => {
-
-    c.header('cache-control', `max-age: ${maxAge}, immutable`);
-    // c.header('etag', c.req.param('filename'));
-    await next();
-  },
-    serveStatic({
-      rewriteRequestPath: (path) => {
-        // strip the "file/"-part of the path as we use that in the root instead.
-        const newPath = path.substring(5);
-        // console.log(newPath);
-        return newPath;
-      },
-      root: savePathRelative,
-    })
+  serveStatic({
+    // precompressed: true,
+    onFound: (_path, c) => {
+      c.header('Cache-Control', `public, immutable, max-age=${maxAge}`)
+    },
+    rewriteRequestPath: (path) => {
+      // strip the "file/"-part of the path as we use that in the root instead.
+      const newPath = path.substring(5);
+      // console.log(newPath);
+      return newPath;
+    },
+    root: savePathRelative,
+  }),
+  // compress(),
   )
 
 const privateRoutes = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
@@ -131,11 +134,17 @@ const privateRoutes = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
     }
     const uuid = randomUUID();
     const generatedName = `${uuid}.${validatedExtension.data}`;
-    const fileStream = file.stream();
+    const fileStream = file.stream() as ReadableStream<any>;
 
-    // @ts-ignore
+
     const nodeReadStream = Stream.Readable.fromWeb(fileStream);
     const writeStream = fs.createWriteStream(`${savePathAbsolute}/${generatedName}`);
+    // pipeline(nodeReadStream, brotli, writeStream, (err) => {
+    //   if (err) {
+    //     console.error(err);
+    //     return c.json({ error: 'stream pipeline failed' as const }, HttpStatus.INTERNAL_SERVER_ERROR);
+    //   }
+    // });
     nodeReadStream.pipe(writeStream);
 
     let resolve: Parameters<ConstructorParameters<typeof Promise<void>>[0]>[0];
@@ -149,7 +158,8 @@ const privateRoutes = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
     });
     writeStream.on('error', (err) => {
       console.error(err);
-      c.text('upload failed', HttpStatus.INTERNAL_SERVER_ERROR);
+      // c.text('upload failed', HttpStatus.INTERNAL_SERVER_ERROR);
+      c.json({ error: 'upload failed' as const }, HttpStatus.INTERNAL_SERVER_ERROR);
       reject(err);
     });
     await fileWritePromise;
