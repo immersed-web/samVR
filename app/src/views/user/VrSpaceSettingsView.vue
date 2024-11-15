@@ -445,9 +445,9 @@ onTransformUpdate(spo => {
 const tabs = [
   { label: 'Info', iconName: 'info' },
   { label: 'Delning', iconName: 'manage_accounts' },
-  { label: 'Miljö', iconName: 'view_in_ar' },
+  { label: 'Scen', iconName: 'landscape' },
   { label: 'Mediabibliotek', iconName: 'collections' },
-  { label: 'Scen', iconName: 'door_front' },
+  { label: 'Objekt', iconName: 'view_in_ar' },
 ];
 
 const { setCursorMode, currentCursorMode, isCursorHovering, currentRaycastSelectorString, setCursorEntityRef, onCursorClick, currentCursorIntersection, currentCursorTransform, triggerCursorClick } = useCurrentCursorIntersection();
