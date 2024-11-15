@@ -40,7 +40,6 @@
           </div>
         </div>
       </div>
-      <!-- <pre>{{ space }}</pre> -->
     </div>
   </div>
 </template>
