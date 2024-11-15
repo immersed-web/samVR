@@ -44,6 +44,7 @@ const savePathRelative = './uploads/'
 const maxAge = 4 * 24 * 60 * 60;
 const publicRoutes = new Hono();
 publicRoutes.get('/file/:filename',
+  compress(),
   serveStatic({
     // precompressed: true,
     onFound: (_path, c) => {
@@ -57,7 +58,6 @@ publicRoutes.get('/file/:filename',
     },
     root: savePathRelative,
   }),
-  // compress(),
   )
 
 const privateRoutes = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
