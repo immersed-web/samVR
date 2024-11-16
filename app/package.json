@@ -63,7 +63,7 @@
     "@vue/tsconfig": "^0.5.1",
     "autoprefixer": "^10.4.19",
     "daisyui": "^4.11.1",
-    "eslint": "^8.57.0",
+    "eslint": "^9.14.0",
     "eslint-plugin-vue": "^9.26.0",
     "mediaserver": "workspace:*",
     "npm-run-all2": "^6.2.0",
