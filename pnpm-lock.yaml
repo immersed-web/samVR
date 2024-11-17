@@ -316,17 +316,17 @@ importers:
   backend/fileserver:
     dependencies:
       '@hono/node-server':
-        specifier: ^1.11.2
-        version: 1.11.2
+        specifier: ^1.13.7
+        version: 1.13.7(hono@4.6.10)
       '@hono/zod-validator':
         specifier: ^0.2.2
-        version: 0.2.2(hono@4.4.2)(zod@3.23.8)
+        version: 0.2.2(hono@4.6.10)(zod@3.23.8)
       database:
         specifier: workspace:^
         version: link:../database
       hono:
-        specifier: ^4.4.2
-        version: 4.4.2
+        specifier: ^4.6.10
+        version: 4.6.10
       http-status-ts:
         specifier: ^2.0.1
         version: 2.0.1
@@ -1262,9 +1262,11 @@ packages:
     peerDependencies:
       vue: ^3.2.0
 
-  '@hono/node-server@1.11.2':
-    resolution: {integrity: sha512-JhX0nUC66GeDxpIdMKWDRMEwtQBa64CY907iAF1sYqb4m2p2PdSU7zkbnNhAZLg/6IjSlTuj6CF307JlBXVvpg==}
+  '@hono/node-server@1.13.7':
+    resolution: {integrity: sha512-kTfUMsoloVKtRA2fLiGSd9qBddmru9KadNyhJCwgKBxTiNkaAJEwkVN9KV/rS4HtmmNRtUh6P+YpmjRMl0d9vQ==}
     engines: {node: '>=18.14.1'}
+    peerDependencies:
+      hono: ^4
 
   '@hono/zod-validator@0.2.2':
     resolution: {integrity: sha512-dSDxaPV70Py8wuIU2QNpoVEIOSzSXZ/6/B/h4xA7eOMz7+AarKTSGV8E6QwrdcCbBLkpqfJ4Q2TmBO0eP1tCBQ==}
@@ -3393,7 +3395,7 @@ packages:
     resolution: {integrity: sha512-oWb1Z6mkHIskLzEJ/XWX0srkpkTQ7vaopMQkyaEIoq0fmtFVxOthb8cCxeT+p3ynTdkk/RZwbgG4brR5BeWECw==}
     engines: {node: '>= 4.0'}
     os: [darwin]
-    deprecated: The v1 package contains DANGEROUS / INSECURE binaries. Upgrade to safe fsevents v2
+    deprecated: Upgrade to fsevents v2 to mitigate potential security issues
 
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
@@ -3587,9 +3589,9 @@ packages:
     resolution: {integrity: sha512-ycURW7oUxE2sNiPVw1HVEFsW+ecOpJ5zaj7eC0RlwhibhRBod20muUN8qu/gzx956YrLolVvs1MTXwKgC2rVEg==}
     engines: {node: '>=0.10.0'}
 
-  hono@4.4.2:
-    resolution: {integrity: sha512-bRhZ+BM9r04lRN2i9wiZ18yQNbZxHsmmRIItoAb43nRkHnIDsFhFh4mJ0seEs06FvenibpAgSVNHQ8ZzcDQx2A==}
-    engines: {node: '>=16.0.0'}
+  hono@4.6.10:
+    resolution: {integrity: sha512-IXXNfRAZEahFnWBhUUlqKEGF9upeE6hZoRZszvNkyAz/CYp+iVbxm3viMvStlagRJohjlBRGOQ7f4jfcV0XMGg==}
+    engines: {node: '>=16.9.0'}
 
   hookable@5.5.3:
     resolution: {integrity: sha512-Yc+BQe8SvoXH1643Qez1zqLRmbA5rCL+sSmk6TVos0LWVfNIB7PGncdlId77WzLGSIB5KaWgTaNTs2lNVEI6VQ==}
@@ -6374,11 +6376,13 @@ snapshots:
       '@tanstack/vue-virtual': 3.5.1(vue@3.5.12(typescript@5.2.2))
       vue: 3.5.12(typescript@5.2.2)
 
-  '@hono/node-server@1.11.2': {}
-
-  '@hono/zod-validator@0.2.2(hono@4.4.2)(zod@3.23.8)':
+  '@hono/node-server@1.13.7(hono@4.6.10)':
     dependencies:
-      hono: 4.4.2
+      hono: 4.6.10
+
+  '@hono/zod-validator@0.2.2(hono@4.6.10)(zod@3.23.8)':
+    dependencies:
+      hono: 4.6.10
       zod: 3.23.8
 
   '@humanwhocodes/config-array@0.11.14':
@@ -9341,7 +9345,7 @@ snapshots:
       os-homedir: 1.0.2
       os-tmpdir: 1.0.2
 
-  hono@4.4.2: {}
+  hono@4.6.10: {}
 
   hookable@5.5.3: {}
 
