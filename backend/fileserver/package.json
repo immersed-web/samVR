@@ -9,10 +9,10 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@hono/node-server": "^1.13.7",
+    "@hono/node-server": "^1.11.2",
     "@hono/zod-validator": "^0.2.2",
     "database": "workspace:^",
-    "hono": "^4.6.10",
+    "hono": "^4.4.2",
     "http-status-ts": "^2.0.1",
     "schemas": "workspace:^"
   },
