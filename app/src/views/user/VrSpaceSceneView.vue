@@ -211,6 +211,7 @@ onBeforeMount(async () => {
 
 onBeforeUnmount(async () => {
   await soupStore.closeAudioProducer();
+  await vrSpaceStore.leaveVrSpace();
 });
 
 onUpdated(() => {
