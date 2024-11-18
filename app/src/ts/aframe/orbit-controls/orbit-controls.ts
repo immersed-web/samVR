@@ -210,8 +210,9 @@ export default () => {
       if (this.rotateTimer) clearTimeout(this.rotateTimer);
       this.controls.reset();
       this.controls.dispose();
-      this.el.getObject3D('camera').position.set(0, 0, 0);
-      this.el.getObject3D('camera').rotation.set(0, 0, 0);
+      const camera = this.el.getObject3D('camera');
+      camera?.position.set(0, 0, 0);
+      camera?.rotation.set(0, 0, 0);
     // this.el.object3D.position.set(0, 0, 0);
     // this.el.object3D.rotation.set(0, 0, 0);
 
