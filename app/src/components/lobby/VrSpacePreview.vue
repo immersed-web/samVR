@@ -53,8 +53,9 @@
         </div>
       </div>
     </div>
-    <a-scene tick-counter @renderstart="onRenderStart" @loaded="onSceneLoaded" embedded class="min-h-[70svh]"
-      ref="sceneTag" id="ascene" xr-mode-ui="enabled: false" @raycast-update="setCursorIntersection($event.detail)">
+    <a-scene tick-counter @renderstart="onRenderStart" @loaded="onSceneLoaded" @camera-set-active="onCameraSetActive"
+      embedded class="min-h-[70svh]" ref="sceneTag" id="ascene" xr-mode-ui="enabled: false"
+      @raycast-update="setCursorIntersection($event.detail)">
       <a-assets timeout="20000">
         <a-asset-item id="icon-font"
           src="https://fonts.gstatic.com/s/materialicons/v70/flUhRq6tzZclQEJ-Vdg-IuiaDsNa.woff" />
@@ -218,26 +219,29 @@ const skyColor = computed(() => {
   return storeSkyColor;
 });
 
-function calculateOrbitTarget() {
-  if (!modelTag.value || !cameraTag.value) {
-    console.warn('no modelTag or cameraTag provided to calculateOrbitTarget');
-    return;
+const orbitTarget = computed(() => {
+  if (!modelTag.value) {
+    console.warn('no modelTag provided to orbitTarget computed');
+    return undefined;
   }
   const spawnPoint = vrSpaceStore.currentVrSpace?.dbData.spawnPosition;
   if (spawnPoint) {
     return new THREE.Vector3(...spawnPoint);
   }
-  console.log('centering camera on model bbox');
+  console.log('no spawnpoint. Setting orbitTarget on model bbox center');
   const obj3D = modelTag.value.getObject3D('mesh');
 
   const bbox = new THREE.Box3().setFromObject(obj3D);
   const modelCenter = new THREE.Vector3();
   bbox.getCenter(modelCenter);
   return modelCenter;
-}
+});
 
-function onSceneLoaded(event: CustomEvent<unknown>) {
+
+async function onSceneLoaded(event: CustomEvent<unknown>) {
   console.log('scene loaded:', event);
+  // console.log(sceneTag.value?.components['tick-counter']);
+  // console.log(JSON.stringify(sceneTag.value?.components['tick-counter'].waiters));
 }
 
 function onRenderStart(event: CustomEvent<unknown>) {
@@ -245,27 +249,21 @@ function onRenderStart(event: CustomEvent<unknown>) {
 }
 
 function onModelLoaded(evt: DetailEvent<{ model: THREE.Object3D, format: string }>) {
-  // console.log('model loaded', evt);
-  const target = calculateOrbitTarget();
-  if (!target) {
-    console.error('calculateOrbitTarget returned undefined');
-    return;
+  console.log('model loaded', evt);
+  if (!cameraTag.value || !orbitTarget.value) {
+    console.error('cameraTag or orbitTarget was undefined');
+    return
   }
-  setTimeout(() => {
-    const cam = cameraTag.value
-    if (!cam) {
-      console.error('cameraTag was undefined');
-      return
-    }
-    attachOrbitControls(cam, target, props.autoRotate);
-  }, 500);
+  attachOrbitControls(cameraTag.value, orbitTarget.value, props.autoRotate);
+}
+
+async function onCameraSetActive(event: CustomEvent<unknown>) {
+  console.log('camera set active:', event.detail);
 }
 
 function onCameraEntityLoaded(evt: CustomEvent<unknown>) {
   console.log('camera entity loaded', evt);
-
 }
-
 
 function removeOrbitControls() {
   if (!cameraTag.value) {
@@ -332,7 +330,7 @@ async function exitFirstPersonView() {
   }
   removeFPSComponents(camTag);
   await nextTick();
-  const target = calculateOrbitTarget();
+  const target = orbitTarget.value;
   if (target) {
     attachOrbitControls(camTag, target, props.autoRotate);
   }
@@ -382,7 +380,7 @@ async function getPanoScreenshotFromPoint(point: THREE.Vector3Tuple) {
   if (firstPersonViewActive.value) {
     attachFPSComponents(camTag);
   } else {
-    const target = calculateOrbitTarget();
+    const target = orbitTarget.value;
     if (target) {
       attachOrbitControls(camTag, target, props.autoRotate);
     }

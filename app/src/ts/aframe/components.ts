@@ -41,6 +41,7 @@ import tickCounter from './tick-counter';
 import bvh from './bvh';
 import positionalAudio from './positional-audio';
 import sceneCleanup from './scene-cleanup';
+import orbitControls from './orbit-controls/orbit-controls';
 
 let componentsAreRegistered = false;
 
@@ -79,6 +80,11 @@ export default async function () {
   bvh();
   sceneCleanup();
 
+  // import('aframe-orbit-controls');
+  // We had to tweak the orbit controls to avoid grab cursor leaking outside canvas element. Pull request is submitted to superframe.
+  orbitControls();
+  cameraControls();
+
   await import('aframe-atlas-uvs-component');
 
 
@@ -86,13 +92,6 @@ export default async function () {
 
   // TODO: Find out why rig and camera seems to be a few decimeter of in horizontal position. Only in real VR though. Not in browser as it seems at least.
   await import('aframe-blink-controls');
-
   await import('aframe-extras/controls/index.js');
-
-  cameraControls();
-  // // @ts-ignore
-  // import('aframe-orbit-controls');
-  // We had to tweak the orbit controls to avoid grab cursor leaking outside canvas element. Pull request is submitted to superframe.
-  await import('./orbit-controls/orbit-controls');
   componentsAreRegistered = true;
 };
