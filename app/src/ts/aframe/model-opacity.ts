@@ -5,6 +5,7 @@ export default () => {
       opacity: {type: 'number', default: 1.0},
     },
     init: function () {
+      console.log('model-opacity: init');
       this.el.addEventListener('model-loaded', this.update.bind(this));
       this.update();
     },
