@@ -3,26 +3,13 @@
     <h2>
       <slot>Välkommen&nbsp;</slot>
     </h2>
-    <template v-if="authStore.role && hasAtLeastSecurityRole(authStore.role, 'admin')">
+    <div class="flex gap-2 items-center" v-if="!isEditingUsername">
       <h2 class="inline">
         <span class="underline decoration-dashed decoration-accent">
           {{ authStore.username }}!
         </span>
       </h2>
-      <RouterLink :to="{ name: 'adminHome' }">
-        <button class="btn btn-sm btn-outline btn-primary ml-4">
-          Admininställningar
-          <span class="material-icons">arrow_right</span>
-        </button>
-      </RouterLink>
-    </template>
-    <div class="flex gap-2 items-center" v-else-if="!isEditingUsername">
-      <h2 class="inline">
-        <span class="underline decoration-dashed decoration-accent">
-          {{ authStore.username }}!
-        </span>
-      </h2>
-      <button @click="isEditingUsername = true" class="btn btn-sm btn-square">
+      <button v-if="!isAtLeastUser" @click="isEditingUsername = true" class="btn btn-sm btn-square">
         <span class="material-icons">edit</span>
       </button>
     </div>
@@ -37,11 +24,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { hasAtLeastSecurityRole } from 'schemas';
 import { useAuthStore } from '@/stores/authStore';
 
 const authStore = useAuthStore();
+const isAtLeastUser = computed(() => authStore.role ? hasAtLeastSecurityRole(authStore.role, 'user') : false);
 const username = ref(authStore.username);
 const isEditingUsername = ref(false);
 async function updateUsername() {
