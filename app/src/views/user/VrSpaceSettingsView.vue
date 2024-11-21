@@ -731,7 +731,7 @@ async function triggerDeleteDialog() {
 
 async function deleteThisVrSpace() {
   await vrSpaceStore.deleteVrSpace();
-  router.replace({ name: 'vrList' });
+  router.replace({ name: 'start' });
 }
 
 // async function setEntrancePosition(point: Point) {

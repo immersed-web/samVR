@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col gap-4">
-    <div class="flex gap-2">
+    <!-- <div class="flex gap-2">
       <template v-if="showAllButton">
         <button class="btn btn-primary self-start" @click="goToVRListView">
           Visa alla {{ availableVrSpaces?.length }} scener
@@ -12,7 +12,7 @@
           Skapa ny VR-scen
         </button>
       </template>
-    </div>
+    </div> -->
     <div class="w-full grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-4 items-stretch">
       <div v-for="space in listedVrSpaces" :key="space.vrSpaceId" class="card card-compact w-full shadow-xl">
         <figure class="w-full h-32" style="background-size: cover"
@@ -46,18 +46,14 @@
 <script setup lang="ts">
 import type { RouterOutputs } from '@/modules/trpcClient';
 import { useConnectionStore } from '@/stores/connectionStore';
-import { useAuthStore } from '@/stores/authStore';
-import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import { type VrSpaceId, hasAtLeastPermissionLevel, hasAtLeastSecurityRole, translatePermissionLevelAdjective, translatePermissionLevelVerb, translateVisibility } from 'schemas';
 import { onBeforeMount, ref, computed } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
 import { getAssetUrl } from '@/modules/utils';
 
-const router = useRouter();
-
 const connection = useConnectionStore();
-const authStore = useAuthStore();
-const vrSpaceStore = useVrSpaceStore();
+// const authStore = useAuthStore();
+// const vrSpaceStore = useVrSpaceStore();
 
 const props = defineProps({
   max: { type: Number, default: -1 },
@@ -71,36 +67,8 @@ onBeforeMount(async () => {
   fetchVrSpaceList();
 });
 
-const showAllButton = computed(() => {
-  if (!availableVrSpaces.value || !listedVrSpaces.value) { return false; }
-  return availableVrSpaces.value.length > listedVrSpaces.value.length;
-});
-
-const canCreateVrSpace = computed(() => {
-  if (!authStore.role) { return false; }
-  return hasAtLeastSecurityRole(authStore.role, 'user');
-});
-
-const spaceName = ref('Min VR-scen');
-async function createVrSpace() {
-  const vrSpaceId = await vrSpaceStore.createVrSpace(spaceName.value);
-  goToVrSpaceSettings(vrSpaceId);
-}
-
 async function fetchVrSpaceList() {
   availableVrSpaces.value = await connection.client.vr.listAvailableVrSpaces.query();
-}
-
-function goToVRListView() {
-  // console.log(vrSpaceId);
-  router.push({ name: 'vrList' });
-  // console.log(route);
-}
-
-function goToVrSpaceSettings(vrSpaceId: VrSpaceId) {
-  // console.log(vrSpaceId);
-  router.push({ name: 'vrSpaceSettings', params: { vrSpaceId } });
-  // console.log(route);
 }
 
 </script>

@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-wrap items-center">
-    <h2>
+    <h2 class="leading-none">
       <slot>Välkommen&nbsp;</slot>
     </h2>
     <div class="flex gap-2 items-center" v-if="!isEditingUsername">
@@ -14,10 +14,10 @@
       </button>
     </div>
     <div class="join" v-else>
-      <input @keypress.enter="updateUsername" v-model="username" class="input join-item input-bordered">
-      <button @click="updateUsername" class="join-item btn btn-primary "><span
+      <input @keypress.enter="updateUsername" v-model="username" class="input input-sm join-item input-bordered">
+      <button @click="updateUsername" class="join-item btn btn-sm btn-primary "><span
           class="material-icons">save</span></button>
-      <button @click="isEditingUsername = false" class="join-item btn btn-error"><span
+      <button @click="isEditingUsername = false" class="join-item btn btn-sm btn-error"><span
           class="material-icons">cancel</span></button>
     </div>
   </div>
@@ -33,10 +33,7 @@ const isAtLeastUser = computed(() => authStore.role ? hasAtLeastSecurityRole(aut
 const username = ref(authStore.username);
 const isEditingUsername = ref(false);
 async function updateUsername() {
-  // await connection.close();
-  // await authStore.logout()
   await authStore.autoGuest(username.value);
-  // await connection.createUserClient();
   isEditingUsername.value = false;
 }
 </script>

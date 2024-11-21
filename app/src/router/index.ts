@@ -75,12 +75,12 @@ const router = createRouter({
           name: '',
           meta: { requiredRole: 'guest', requiredConnectionType: 'client', breadcrumb: 'VR-scener' },
           children: [
-            {
-              path: '',
-              name: 'vrList',
-              meta: { breadcrumbIgnore: true },
-              component: () => import('@/views/public/VrListView.vue'),
-            },
+            // {
+            //   path: '',
+            //   name: 'vrList',
+            //   meta: { breadcrumbIgnore: true },
+            //   component: () => import('@/views/public/VrListView.vue'),
+            // },
             {
               path: 'assets',
               name: 'library',
