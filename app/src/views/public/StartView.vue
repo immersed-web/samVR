@@ -13,7 +13,7 @@
       <h2 class="text-2xl font-bold">
         VR-scener
       </h2>
-      <VRList :max="6" />
+      <VRList />
     </div>
   </MaxWidth7xl>
 </template>
