@@ -9,7 +9,7 @@
         <div class="card">
           <div class="card-body">
             <h1 class="mb-2">
-              SamVR
+              Sam<span class="bg-clip-text text-transparent bg-gradient-to-b from-primary to-secondary">VR</span>
             </h1>
             <div>
               <p class="font-bold mb-2">

@@ -1,9 +1,10 @@
 <template>
-  <div class="navbar justify-between bg-base-200 px-4 xl:px-8">
+  <div data-theme="dark" :style="`background-image: url(${unsplashBackground});`"
+    class="navbar justify-between px-4 xl:px-8">
     <div class="">
       <!-- <div class="flex flex-col m-1"> -->
       <!-- <a class="btn btn-ghost btn-sm text-xl w-28" @click="goHome">SamVR</a> -->
-      <RouterLink :to="{ path: '/' }" class="text-xl font-bold text-base-content/90">
+      <RouterLink :to="{ path: '/' }" class="text-xl font-bold text-white">
         Sam<span class="bg-clip-text text-transparent bg-gradient-to-b from-primary to-secondary">VR</span>
       </RouterLink>
       <!-- <Breadcrumbs /> -->
@@ -48,6 +49,7 @@ import { useRouter, onBeforeRouteUpdate, onBeforeRouteLeave } from 'vue-router';
 import { useAuthStore } from '@/stores/authStore';
 import { hasAtLeastSecurityRole } from 'schemas';
 import { computed, ref } from 'vue';
+import unsplashBackground from '@/assets/milad-fakurian-DX7pT_guAyE-unsplash.jpg';
 
 const router = useRouter();
 const authStore = useAuthStore();
