@@ -37,26 +37,24 @@
     </div>
     <div v-if="viewMode === 'thumbnails'" class="grid grid-cols-[repeat(auto-fill,_minmax(6rem,_1fr))] gap-2">
       <!-- <div v-for="asset in assets.filter(a => a.assetType === 'image')" :key="asset.assetId" -->
-      <div v-for="asset in searchedAssetList" :key="asset.assetId" class="">
-        <div class="indicator block w-[unset]">
-          <div v-if="asset.assetId === pickedAsset?.assetId" class="indicator-item">
-            <div data-tip="ta bort från biblioteket" class="tooltip">
-              <button class="btn btn-error btn-circle btn-sm" @click.stop="onDeleteAsset(asset)"><span
-                  class="material-icons">delete</span></button>
-            </div>
+      <div v-for="asset in searchedAssetList" :key="asset.assetId" class="relative">
+        <div v-if="asset.assetId === pickedAsset?.assetId" class="absolute top-2 right-2 z-20">
+          <div data-tip="ta bort från biblioteket" class="tooltip">
+            <button class="btn btn-error btn-circle btn-sm shadow-xl" @click.stop="onDeleteAsset(asset)"><span
+                class="material-icons">delete</span></button>
           </div>
-          <div @click="pickAsset(asset)" class="card card-compact bg-base-100 shadow-md cursor-pointer"
-            :class="[asset.assetId === pickedAsset?.assetId ? selectedCSSClasses : '']">
-            <figure class="">
-              <img v-if="asset.assetType === 'image'" :src="assetsUrl + asset.generatedName">
-              <embed v-if="asset.assetType === 'document'" :src="assetsUrl + asset.generatedName" type="application/pdf"
-                width="100%" height="100%">
-              <span v-if="asset.assetType === 'model' || asset.assetType === 'navmesh'"
-                class="material-icons text-8xl">view_in_ar</span>
-            </figure>
-            <div class="card-body break-words">
-              <p class="text-xs">{{ asset.originalFileName }}</p>
-            </div>
+        </div>
+        <div @click="pickAsset(asset)" class="card card-compact rounded-lg bg-base-100 shadow-md cursor-pointer"
+          :class="[asset.assetId === pickedAsset?.assetId ? selectedCSSClasses : '']">
+          <figure class="">
+            <img v-if="asset.assetType === 'image'" :src="assetsUrl + asset.generatedName">
+            <embed v-if="asset.assetType === 'document'" :src="assetsUrl + asset.generatedName" type="application/pdf"
+              width="100%" height="100%">
+            <span v-if="asset.assetType === 'model' || asset.assetType === 'navmesh'"
+              class="material-icons text-8xl">view_in_ar</span>
+          </figure>
+          <div class="card-body break-words">
+            <p class="text-xs">{{ asset.originalFileName }}</p>
           </div>
         </div>
       </div>
