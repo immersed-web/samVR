@@ -1,7 +1,7 @@
 <template>
   <div class="w-full max-w-sm shadow-2xl card bg-base-100">
     <form class="card-body" @submit.prevent="emit('submit', username, password)">
-      <h2>
+      <h2 class="text-lg">
         {{ title }}
       </h2>
       <div class="form-control">

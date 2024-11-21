@@ -1,11 +1,11 @@
 <template>
   <div>
     <!-- <div class="min-h-screen hero bg-base-200"> -->
-    <div class="flex flex-col lg:flex-row min-h-screen">
+    <div class="flex flex-col md:flex-row min-h-screen" :style="`background-image: url(${unsplashBackground});`">
       <!-- <div class="flex-row lg:flex-row gap-10 "> -->
 
       <!-- Info text -->
-      <div class="flex-1 hero">
+      <div class="flex-1 hero text-neutral-content">
         <div class="card">
           <div class="card-body">
             <h1 class="mb-2">
@@ -26,8 +26,16 @@
       </div>
 
       <!-- Login -->
-      <div class="flex-1 hero" :style="`background-image: url(${unsplashBackground});`">
-        <div class="hero-content max-w-md p-8">
+      <div class="flex-1 hero">
+        <div class="hero-content max-w-md p-8 flex-col">
+          <div class="card w-full bg-base-100 shadow-2xl">
+            <div class="card-body">
+
+              <h2 class="text-lg">Fortsätt som gäst</h2>
+              <GuestBox />
+            </div>
+          </div>
+          <div class="divider my-2 divider-secondary text-neutral-content">eller</div>
           <LoginBox @submit="login" description="aslkasdjf" :error="error" title="Logga in" />
         </div>
         <p class="z-30 self-end text-base-300/40 justify-self-end text-xs m-2">Bakgrundsbild skapad av <a class="link"
@@ -53,6 +61,7 @@ import { hasAtLeastSecurityRole, type UserRole } from 'schemas';
 import { useConnectionStore } from '@/stores/connectionStore';
 import LoginBox from '@/components/LoginBox.vue';
 import { autoResetRef } from '@vueuse/core';
+import GuestBox from '@/components/GuestBox.vue';
 // import StreamListView from '@/views/public/StreamListView.vue';
 
 const showDevLoginButtons = import.meta.env.DEV;

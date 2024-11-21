@@ -50,7 +50,7 @@ const router = createRouter({
     {
       path: '/enter',
       name: 'enter',
-      component: () => import('@/views/public/EnterView.vue'),
+      component: () => import('@/components/GuestBox.vue'),
     },
     // HeaderLayout routes
     {
