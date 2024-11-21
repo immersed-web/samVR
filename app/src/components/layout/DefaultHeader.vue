@@ -18,8 +18,13 @@
         {{ route.label }}
       </RouterLink>
     </div>
-    <div class=" sm:hidden">
-      <div class="dropdown dropdown-end " :class="{ 'dropdown-open': menuIsOpen }">
+    <div class="">
+      <button @click="logout" class="btn-ghost text-error btn-error btn btn-sm hidden sm:block ">
+        <span class="material-icons">
+          logout
+        </span>
+      </button>
+      <div class="dropdown dropdown-end sm:hidden">
         <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
           <span class="material-icons">menu</span>
         </div>
@@ -30,7 +35,7 @@
             </RouterLink>
           </li>
           <li class="text-error">
-            <a @click="logout">Logga ut</a>
+            <a @click="logout">{{ isAtLeastUser ? 'Logga ut' : 'Avsluta' }}</a>
           </li>
         </ul>
       </div>
@@ -47,13 +52,16 @@ import { computed, ref } from 'vue';
 const router = useRouter();
 const authStore = useAuthStore();
 
+const isAtLeastUser = computed(() => {
+  return hasAtLeastSecurityRole(authStore.role, 'user');
+})
+
 const mainMenu = computed(() => {
   let routes = [
     { name: 'start', label: 'Start' },
     { name: 'avatarDesigner', label: 'Min avatar' },
   ]
-  const isAtLeastUser = hasAtLeastSecurityRole(authStore.role, 'user');
-  if (isAtLeastUser) {
+  if (isAtLeastUser.value) {
     routes.push(
       { name: 'library', label: 'Mediabibliotek' },
     );
