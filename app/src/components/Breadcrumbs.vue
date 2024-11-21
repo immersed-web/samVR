@@ -36,7 +36,7 @@ const crumbs = computed(() => {
             />
           </svg>
         </RouterLink> -->
-        <RouterLink :to="{ path: '/' }" class="text-xl">
+        <RouterLink :to="{ path: '/' }" class="text-lg">
           SamVR
         </RouterLink>
       </li>

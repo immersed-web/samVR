@@ -3,19 +3,19 @@
     <div class="navbar-start">
       <!-- <div class="flex flex-col m-1"> -->
       <!-- <a class="btn btn-ghost btn-sm text-xl w-28" @click="goHome">SamVR</a> -->
-      <!-- <RouterLink :to="{ path: '/' }" class="text-xl">
-        SamVR
-      </RouterLink> -->
-      <Breadcrumbs />
+      <RouterLink :to="{ path: '/' }" class="text-xl font-bold text-base-content/90">
+        Sam<span class="bg-clip-text text-transparent bg-gradient-to-b from-primary to-secondary">VR</span>
+      </RouterLink>
+      <!-- <Breadcrumbs /> -->
       <!-- </div> -->
     </div>
     <div class="navbar-center hidden lg:flex">
       <!-- <div class="text-xs">
         {{ authStore.username }}: {{ authStore.userId }}
       </div> -->
-      <RouterLink :to="{ name: 'vrList' }">
+      <RouterLink :to="{ name: 'start' }">
         <button class="btn btn-ghost">
-          VR-scener
+          Start
         </button>
       </RouterLink>
       <RouterLink :to="{ name: 'library' }">
