@@ -5,7 +5,7 @@
         Redigera {{ vrSpaceStore.writableVrSpaceDbData?.name }}
       </h1>
       <RouterLink :to="{ name: 'vrSpace', params: { vrSpaceId: props.vrSpaceId } }">
-        <button class="btn btn-primary btn-sm">besök <span class="material-icons">open_in_new</span></button>
+        <button class="btn btn-primary btn-sm">Besök <span class="material-icons">open_in_new</span></button>
       </RouterLink>
     </div>
     <div class="grid h-[40vh] place-content-center"
