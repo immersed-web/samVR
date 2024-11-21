@@ -77,6 +77,7 @@ const showAllButton = computed(() => {
 });
 
 const canCreateVrSpace = computed(() => {
+  if (!authStore.role) { return false; }
   return hasAtLeastSecurityRole(authStore.role, 'user');
 });
 

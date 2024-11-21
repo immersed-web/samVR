@@ -53,7 +53,7 @@ const router = useRouter();
 const authStore = useAuthStore();
 
 const isAtLeastUser = computed(() => {
-  return hasAtLeastSecurityRole(authStore.role, 'user');
+  return authStore.role ? hasAtLeastSecurityRole(authStore.role, 'user') : false;
 })
 
 const mainMenu = computed(() => {
@@ -66,7 +66,7 @@ const mainMenu = computed(() => {
       { name: 'library', label: 'Mediabibliotek' },
     );
   }
-  const hasAdminRole = hasAtLeastSecurityRole(authStore.role, 'admin');
+  const hasAdminRole = authStore.role ? hasAtLeastSecurityRole(authStore.role, 'admin') : false;
   if (hasAdminRole) {
     routes.push(
       { name: 'adminUserManager', label: 'Hantera användare' },
