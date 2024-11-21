@@ -1,5 +1,5 @@
 <template>
-  <div class="flex items-center">
+  <div class="flex flex-wrap items-center">
     <h2>
       <slot>Välkommen&nbsp;</slot>
     </h2>
