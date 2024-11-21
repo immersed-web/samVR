@@ -70,13 +70,6 @@ if (!process.env.SESSION_KEY) {
   throw new Error('no session key provided when starting api server');
 }
 
-
-// const prismaSessionStore = new PrismaSessionStore(prisma, {
-//   checkPeriod: 2 * 60 * 1000,
-//   dbRecordIdIsSessionId: true,
-//   dbRecordIdFunction: undefined,
-// });
-
 // TODO: use a store for persisting sessions, preferably compatible with drizzle
 const sessionDBAccess = new Pool({
   user: 'postgres',
