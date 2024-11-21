@@ -43,10 +43,10 @@ const canCreateVrSpace = computed(() => {
   return hasAtLeastSecurityRole(authStore.role, 'user');
 });
 async function createVrSpace() {
-  const prefix = authStore.username ? authStore.username + 's ' : '';
+  const prefix = authStore.username ? authStore.username + 's' : '';
   const name = 'plats'
   const suffix = crypto.randomUUID().substring(0, 5);
-  const vrSpaceId = await vrSpaceStore.createVrSpace(`${prefix}${name}${suffix}`);
+  const vrSpaceId = await vrSpaceStore.createVrSpace(`${prefix} ${name} ${suffix}`);
   router.push({ name: 'vrSpaceSettings', params: { vrSpaceId } });
 }
 </script>
