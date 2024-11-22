@@ -3,9 +3,9 @@ import bcrypt from 'bcrypt';
 import { createJwt } from 'shared-modules/jwtUtils';
 import { exclude, extractMessageFromCatch } from 'shared-modules/utilFns';
 import { isLoggedIn } from './utils.js';
-import { StreamId, UserId, UserRole, hasAtLeastSecurityRole, roleHierarchy, throwIfUnauthorized } from 'schemas';
+import { StreamId, UserId, UserRole, allRolesBelow, hasAtLeastSecurityRole, roleHierarchy, throwIfUnauthorized } from 'schemas';
 import { basicUserSelect, db, schema, userSelectExcludePassword } from 'database';
-import { and, eq, getTableColumns } from 'drizzle-orm';
+import { and, inArray, eq, getTableColumns } from 'drizzle-orm';
 import * as _ from 'lodash-es'
 
 const index: RequestHandler = (req, res) => {
@@ -246,6 +246,40 @@ const deleteUser: RequestHandler = async (req: DeleteUserRequest, res) => {
 //   }
 // }
 
+const getUsers: RequestHandler = async (req, res) => {
+  const userData = req.session.user;
+  try {
+    if (!userData) {
+      throw new Error('no client userdata. unauthorized!');
+    }
+    if (!userData.role) {
+      throw new Error('you have no role! Thus you are not authorized!');
+    }
+  } catch (e) {
+    const msg = extractMessageFromCatch(e, 'You give bad data!!!!');
+    res.status(400).send(msg);
+    return;
+  }
+  try {
+    if (!hasAtLeastSecurityRole(userData.role, 'admin')) {
+      throw new Error('Too low security clearance! No good!');
+    }
+  } catch (e) {
+    const msg = extractMessageFromCatch(e, 'Go away. Not authorized');
+    res.status(401).send(msg);
+    return;
+  }
+
+  const rolesBelowCaller = allRolesBelow(userData.role);
+
+  const dbResponse = await db.query.users.findMany({
+    columns: userSelectExcludePassword,
+    where: inArray(schema.users.role, rolesBelowCaller),
+  })
+
+  res.send(dbResponse);
+}
+
 const getAdmins: RequestHandler = async (req, res) => {
   const userData = req.session.user;
 
@@ -435,6 +469,7 @@ export default function createUserRouter(): Router {
   userRouter.post('/create', isLoggedIn, createUser);
   userRouter.post('/update', isLoggedIn, updateUser);
   userRouter.post('/delete', isLoggedIn, deleteUser);
+  userRouter.get('/get-users', isLoggedIn, getUsers);
   userRouter.get('/get-admins', isLoggedIn, getAdmins);
   userRouter.post('/get-sender', isLoggedIn, getAllowedUsersForStream);
   userRouter.post('/create-sender', isLoggedIn, createSenderForVenue);

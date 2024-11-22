@@ -16,13 +16,13 @@ export function createUser(username: string, password: string, role: UserRole) {
   }));
 }
 
-export function createAdmin(username: string, password: string) {
-  return handleResponse(() => authEndpoint.post('/user/create', {
-    role: 'admin',
-    username,
-    password,
-  }));
-}
+// export function createAdmin(username: string, password: string) {
+//   return handleResponse(() => authEndpoint.post('/user/create', {
+//     role: 'admin',
+//     username,
+//     password,
+//   }));
+// }
 
 export function createSender(username: string, password: string, streamId: string) {
   return handleResponse<FetchedUsers>(() => authEndpoint.post('/user/create-sender', {
@@ -41,6 +41,10 @@ export function deleteUser(userId: string) {
 }
 
 type FetchedUsers = Omit<User, 'password'>[]
+export function getUsers() {
+  return handleResponse<FetchedUsers>(() => authEndpoint.get('/user/get-users'));
+}
+
 export function getAdmins() {
   return handleResponse<FetchedUsers>(() => authEndpoint.get('/user/get-admins'));
 }

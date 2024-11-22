@@ -89,10 +89,10 @@ const jwtDefaultPayload = implement<JWTDefaultPayload>().with({
 })
 
 export const roleHierarchy = schema.RoleEnum.enumValues;
-// TODO: I would really prefer to infer a const literal tuple from the prisma enum.
-// That is. Could we in some way convert/extract a literal tuple from the prisma type and then use z.enum() on it directly
-// Then we could use that extracted literal tuple from prisma instead of defining it manually here. This is redundant and we need to keep them in sync
-// export const roleHierarchy = (['gunnar', 'superadmin', 'admin', 'moderator', 'sender', 'user', 'guest'] as const) satisfies Readonly<Role[]>;
+export function allRolesBelow(role: UserRole) {
+  const clientSecurityLevel = roleHierarchy.indexOf(role);
+  return roleHierarchy.slice(clientSecurityLevel + 1, roleHierarchy.length);
+} 
 
 export function throwIfUnauthorized(role: UserRole, minimumUserRole: UserRole) {
   if (!hasAtLeastSecurityRole(role, minimumUserRole)) {
@@ -102,8 +102,9 @@ export function throwIfUnauthorized(role: UserRole, minimumUserRole: UserRole) {
 
 export function hasAtLeastSecurityRole(role: UserRole | undefined, minimumUserRole: UserRole) {
   if(!role){
-    // return false;
-    throw new Error('no userRole provided for auth check!');
+    console.warn('no userRole parameter provided for role check!');
+    return false;
+    // throw new Error('no userRole provided for auth check!');
   }
   if(!minimumUserRole) {
     throw new Error('no minimum userRole provided for auth check!');
@@ -134,6 +135,26 @@ export function hasAtLeastPermissionLevel(userPermissionLevel: ReturnedPermissio
   const requiredPermissionLevelIdx = returnedPermissionHierarchy.indexOf(requiredPermissionLevel);
   if (requiredPermissionLevelIdx < 0) throw Error('invalid requiredPermissionLevel provided');
   return userPermissionLevelIdx <= requiredPermissionLevelIdx;
+}
+
+export function translateUserRole(userRole: UserRole) {
+  switch (userRole) {
+    case 'guest':
+      return 'gäst';
+    case 'user':
+      return 'användare';
+    case 'moderator':
+      return 'moderator';
+    case 'admin':
+      return 'administratör';
+    case 'superadmin':
+      return 'huvudadministratör';
+    case 'gunnar':
+      return 'överchef';
+    default:
+      console.warn('switch not exhausted when translating permissionLevel');
+      break;
+  }
 }
 
 export function translatePermissionLevelAdjective(userPermissionLevel: ReturnedPermissionLevel) {
