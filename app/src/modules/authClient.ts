@@ -1,14 +1,14 @@
 import axios, { type AxiosResponse } from 'axios';
 
-import type {JwtPayload, JwtUserData } from 'schemas';
-import type { User, RoleEnum } from 'database/schema';
+import type { JwtPayload, JwtUserData, UserRole } from 'schemas';
+import type { User } from 'database/schema';
 import decodeJwt from 'jwt-decode';
 
 const completeAuthUrl = `https://${import.meta.env.EXPOSED_SERVER_URL}${import.meta.env.EXPOSED_AUTH_PATH}`;
 console.log('authUrl: ', completeAuthUrl);
 const authEndpoint = axios.create({ baseURL: completeAuthUrl, withCredentials: true });
 
-export function createUser(username: string, password: string, role: typeof RoleEnum) {
+export function createUser(username: string, password: string, role: UserRole) {
   return handleResponse(() => authEndpoint.post('/user/create', {
     role: role.toString(),
     username,
@@ -25,7 +25,7 @@ export function createAdmin(username: string, password: string) {
 }
 
 export function createSender(username: string, password: string, streamId: string) {
-  return handleResponse<FetchedSenders>(() => authEndpoint.post('/user/create-sender', {
+  return handleResponse<FetchedUsers>(() => authEndpoint.post('/user/create-sender', {
     streamId,
     username,
     password,

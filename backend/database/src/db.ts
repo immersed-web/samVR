@@ -1,5 +1,4 @@
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
+import { drizzle } from "drizzle-orm/node-postgres";
 import { sql, eq, InferSelectModel, InferModelFromColumns, and } from "drizzle-orm";
 import * as schema from "./schema.js";
 import { Prettify, StreamId, UserId, VrSpaceId } from "schemas";
@@ -8,8 +7,14 @@ if (!process.env.DATABASE_URL) {
   throw new Error('Missing DATABASE_URL env var');
 }
 
-export const client = postgres(process.env.DATABASE_URL);
-export const db = drizzle(client, { schema });
+// export const client = postgres(process.env.DATABASE_URL);
+// export const db = drizzle(client, { schema });
+export const db = drizzle({
+  connection: {
+    connectionString: process.env.DATABASE_URL,
+  },
+  schema,
+});
 
 type UserQueryInput = NonNullable<Required<Parameters<typeof db.query.users.findFirst>[0]>>;
 type userQueryColumnInput = UserQueryInput['columns'];
