@@ -344,8 +344,8 @@ importers:
   backend/mediaserver:
     dependencies:
       '@vue/reactivity':
-        specifier: ^3.2.47
-        version: 3.5.13
+        specifier: 3.2.47
+        version: 3.2.47
       database:
         specifier: workspace:*
         version: link:../database
@@ -2111,6 +2111,9 @@ packages:
       typescript:
         optional: true
 
+  '@vue/reactivity@3.2.47':
+    resolution: {integrity: sha512-7khqQ/75oyyg+N/e+iwV6lpy1f5wq759NdlS1fpAhFXa8VeAIKGgk2E/C4VF59lx5b+Ezs5fpp/5WsRYXQiKxQ==}
+
   '@vue/reactivity@3.5.13':
     resolution: {integrity: sha512-NaCwtw8o48B9I6L1zl2p41OHo/2Z4wqYGGIK1Khu5T7yxrn+ATOixn/Udn2m+6kZKB/J7cuT9DbWWhRxqixACg==}
 
@@ -2124,6 +2127,9 @@ packages:
     resolution: {integrity: sha512-wAi4IRJV/2SAW3htkTlB+dHeRmpTiVIK1OGLWV1yeStVSebSQQOwGwIq0D3ZIoBj2C2qpgz5+vX9iEBkTdk5YA==}
     peerDependencies:
       vue: 3.5.13
+
+  '@vue/shared@3.2.47':
+    resolution: {integrity: sha512-BHGyyGN3Q97EZx0taMQ+OLNuZcW3d37ZEVmEAyeoA9ERdGvm9Irc/0Fua8SNyOtV1w6BS4q25wbMzJujO9HIfQ==}
 
   '@vue/shared@3.5.13':
     resolution: {integrity: sha512-/hnE/qP5ZoGpol0a5mDi45bOd7t3tjYJBjsgCsivow7D48cJeV5l05RD82lPqi7gRiphZM37rnhW1l6ZoCNNnQ==}
@@ -7446,6 +7452,10 @@ snapshots:
     optionalDependencies:
       typescript: 5.2.2
 
+  '@vue/reactivity@3.2.47':
+    dependencies:
+      '@vue/shared': 3.2.47
+
   '@vue/reactivity@3.5.13':
     dependencies:
       '@vue/shared': 3.5.13
@@ -7467,6 +7477,8 @@ snapshots:
       '@vue/compiler-ssr': 3.5.13
       '@vue/shared': 3.5.13
       vue: 3.5.13(typescript@5.2.2)
+
+  '@vue/shared@3.2.47': {}
 
   '@vue/shared@3.5.13': {}
 
