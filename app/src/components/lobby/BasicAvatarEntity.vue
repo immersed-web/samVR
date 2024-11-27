@@ -89,6 +89,14 @@ const videoProducerId = computed(() => {
   return videoProducer.producerId
 });
 
+watch(audioProducerId, async (newAudioProducerId) => {
+  console.log('audioProducer was updated. new:', newAudioProducerId);
+  if (newAudioProducerId && isNear.value) {
+    if (stream.value) return;
+    stream.value = await getStreamFromProducerId(audioProducerId.value);
+  }
+})
+
 const screenVideoTag = ref<HTMLVideoElement>();
 const screenShareAVideoTag = ref<Entity>();
 const screenShareDimensions = reactive({
@@ -108,7 +116,7 @@ function onVideoResize(e: Event) {
 const screenshareStream = shallowRef<MediaStream>();
 
 watch(() => props.clientInfo.screenShare, async (newScreenShare, prevScreenShare) => {
-  console.log('clientinfo screenshare watcher triggered:', stream);
+  console.log('clientinfo screenshare watcher triggered:', newScreenShare);
   if (!newScreenShare) {
     if (!prevScreenShare) {
       console.warn('watcher triggered but both newScreenShare and prevScreenShare was undefined. Should not be possible?');
@@ -172,8 +180,10 @@ async function onAvatarEntityLoaded() {
 
 // Distance to client camera callbacks
 const distanceColor = ref('white');
+const isNear = ref(false);
 async function onNearRangeEntered(e: CustomEvent<number>) {
   // console.log('onNearRangeEntered called', e.detail);
+  isNear.value = true;
   distanceColor.value = 'green';
   if (stream.value) return;
   stream.value = await getStreamFromProducerId(audioProducerId.value);
@@ -181,6 +191,7 @@ async function onNearRangeEntered(e: CustomEvent<number>) {
 
 function onNearRangeExited(e: CustomEvent<number>) {
   // console.log('onNearRangeExited called', e.detail);
+  isNear.value = false;
   distanceColor.value = 'white';
   if (audioProducerId.value && soupStore.consumers.has(audioProducerId.value)) {
     closeConsumer();
