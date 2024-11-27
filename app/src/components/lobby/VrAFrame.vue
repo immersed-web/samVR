@@ -248,6 +248,7 @@ onBeforeMount(async () => {
   // console.log('onBeforeMount completed');
 });
 
+let spawnPointPicked = false;
 onMounted(async () => {
   console.log('vrAframe onMounted');
   if (sceneTag.value) {
@@ -260,8 +261,16 @@ onMounted(async () => {
       const camera = detailEvt.detail.cameraEl.getObject3D('camera') as THREE.PerspectiveCamera;
       onCameraSetActive(camera);
     });
+
   }
-  // console.log('onMounted completed');
+  if (camerarigTag.value) {
+    let startPos = getRandomSpawnPosition();
+    if (startPos) {
+      console.log('placing cameraRig at start position', startPos);
+      camerarigTag.value.object3D.position.set(...startPos.toArray());
+      spawnPointPicked = true;
+    }
+  }
 });
 
 onUpdated(() => {
@@ -309,18 +318,16 @@ const cameraAttacherPosString = computed(() => {
 
 async function onModelLoaded() {
   if (modelTag.value) {
-    let startPos = getRandomSpawnPosition();
-    if (!startPos) {
-      console.log('failed to calculate spawnpoint. centering player on model bbox as fallback');
+    if (!spawnPointPicked) {
+      console.warn('spawnpoint wasnt picked. Generating from bbox now.');
       const obj3D = modelTag.value.getObject3D('mesh') as THREE.Object3D;
       const bbox = new THREE.Box3().setFromObject(obj3D);
-      startPos = new THREE.Vector3();
+      const startPos = new THREE.Vector3();
       bbox.getCenter(startPos);
+      camerarigTag.value?.object3D.position.set(...startPos.toArray());
     }
     // startPos.y += defaultHeightOverGround + 0.05;
-    console.log('placing cameraRig at start position', startPos);
     // headTag.value.object3D.position.set(startPos.x, startPos.y, startPos.z);
-    camerarigTag.value?.object3D.position.set(...startPos.toArray());
 
     // const worldPos = headTag.value!.object3D.getWorldPosition(new THREE.Vector3());
     // const worldRot = headTag.value!.object3D.getWorldQuaternion(new THREE.Quaternion());
