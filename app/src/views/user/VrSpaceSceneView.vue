@@ -206,6 +206,7 @@ onBeforeMount(async () => {
     });
   } catch (e) {
     console.error('failed to setup the mediasoup stuff');
+    console.error(e);
   }
 });
 
