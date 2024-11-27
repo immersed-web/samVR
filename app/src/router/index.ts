@@ -47,11 +47,6 @@ const router = createRouter({
       name: 'logout',
       component: () => import('@/views/LogoutView.vue'),
     },
-    {
-      path: '/enter',
-      name: 'enter',
-      component: () => import('@/components/GuestBox.vue'),
-    },
     // HeaderLayout routes
     {
       path: '/',
@@ -281,7 +276,7 @@ router.beforeEach(async (to, from) => {
         console.log('Found a persisted username. Creating a guest with that username');
         await authStore.autoGuest(authStore.persistedUsername);
       } else {
-        return {name: 'enter'};
+        return { name: 'login' };
       }
     }
 
