@@ -75,7 +75,12 @@ if(stdin && stdin.isTTY){
 
 
 
-const {onSocketOpen, onSocketMessage, onSocketClose} = applyWSHandler<AppRouter, Context>({router: appRouter});
+const { onSocketOpen, onSocketMessage, onSocketClose } = applyWSHandler<AppRouter, Context>({
+  router: appRouter,
+  // onError: (err) => {
+  //   console.error('error handling request', err);
+  // }
+});
 
 
 const app = uWebSockets.App();
