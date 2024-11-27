@@ -10,10 +10,10 @@
       webkit-playsinline crossorigin="anonymous" />
     <a-entity interpolated-transform="interpolationTime: 350;" @near-range-entered="onNearRangeEntered"
       @near-range-exited="onNearRangeExited" ref="avatarEntity" mediastream-audio-source @loaded="onAvatarEntityLoaded">
-      <Teleport v-if="overlayGUIRight" :to="overlayGUIRight">
+      <!-- <Teleport v-if="overlayGUIRight" :to="overlayGUIRight">
         <pre class="text-xs whitespace-normal">videoStream: {{ screenshareStream }}</pre>
         <pre class="text-xs whitespace-normal">videoProducerId: {{ videoProducerId }}</pre>
-      </Teleport>
+      </Teleport> -->
       <a-entity scale="1 1 1">
         <a-entity :id="`left-hand-${props.clientInfo.connectionId}`"
           :visible="clientInfo.clientRealtimeData?.leftHand?.active" interpolated-transform="interpolationTime: 350;"
