@@ -205,9 +205,14 @@ const clientStore = useClientStore();
 const props = defineProps({
   // modelUrl: {type: String, required: true},
   // navmeshUrl: {type: String, default: ''},
-  showNavMesh: { type: Boolean, default: false },
+  // showNavMesh: { type: Boolean, default: false },
   // modelScale: {type: Number, default: 1},
 });
+
+const worldModelLoaded = ref(false);
+const showNavMesh = computed(() => {
+  return !worldModelLoaded.value
+})
 
 // A-frame
 const { sceneTag } = inject(aFrameSceneProvideKey)!;
@@ -317,6 +322,7 @@ const cameraAttacherPosString = computed(() => {
 })
 
 async function onModelLoaded() {
+  worldModelLoaded.value = true;
   if (modelTag.value) {
     if (!spawnPointPicked) {
       console.warn('spawnpoint wasnt picked. Generating from bbox now.');
