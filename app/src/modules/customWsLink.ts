@@ -1,6 +1,7 @@
 import type { AnyRouter, ProcedureType, inferRouterError } from '@trpc/server';
-import { type Operation, type TRPCLink, TRPCClientError, type TRPCClientRuntime } from '@trpc/client';
-import { type Observer, type UnsubscribeFn, observable } from '@trpc/server/observable';
+import type { Observer, UnsubscribeFn } from '@trpc/server/observable';
+import { observable } from '@trpc/server/observable';
+import { type Operation, type TRPCLink, type TRPCClientRuntime, TRPCClientError } from '@trpc/client';
 import type {
   TRPCClientIncomingMessage,
   TRPCClientIncomingRequest,
@@ -12,7 +13,19 @@ import type {
 } from '@trpc/server/rpc';
 // import { retryDelay } from '../internals/retryDelay';
 // import { transformResult } from './internals/transformResult';
+
 // import { Operation, TRPCLink } from './types';
+
+type WSCallbackResult<TRouter extends AnyRouter, TOutput> = TRPCResponseMessage<
+  TOutput,
+  inferRouterError<TRouter>
+>;
+
+type WSCallbackObserver<TRouter extends AnyRouter, TOutput> = Observer<
+  WSCallbackResult<TRouter, TOutput>,
+  TRPCClientError<TRouter>
+>;
+
 
 export interface WebSocketClientOptions {
   url: string | (() => string);
@@ -114,6 +127,14 @@ export function createWSClient(opts: WebSocketClientOptions) {
     }
   }
 
+  function closeActiveSubscriptions() {
+    Object.values(pendingRequests).forEach((req) => {
+      if (req.type === 'subscription') {
+        req.callbacks.complete();
+      }
+    });
+  }
+
   function resumeSubscriptionOnReconnect(req: TRequest) {
     if (outgoing.some((r) => r.id === req.op.id)) {
       return;
@@ -184,6 +205,8 @@ export function createWSClient(opts: WebSocketClientOptions) {
 
       if ('method' in msg) {
         handleIncomingRequest(msg);
+
+        // Custom code to be able to redirect nontrpc messages to registered handler
       } else if ('result' in msg || 'error' in msg) {
         handleIncomingResponse(msg);
       } else {
@@ -279,6 +302,7 @@ export function createWSClient(opts: WebSocketClientOptions) {
     close: () => {
       state = 'closed';
       onClose?.();
+      closeActiveSubscriptions();
       closeIfNoPending(activeConnection);
       clearTimeout(connectTimer as any);
       connectTimer = null;
@@ -302,13 +326,13 @@ class TRPCWebSocketClosedError extends Error {
   }
 }
 
-class TRPCSubscriptionEndedError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'TRPCSubscriptionEndedError';
-    Object.setPrototypeOf(this, TRPCSubscriptionEndedError.prototype);
-  }
-}
+// class TRPCSubscriptionEndedError extends Error {
+//   constructor(message: string) {
+//     super(message);
+//     this.name = 'TRPCSubscriptionEndedError';
+//     Object.setPrototypeOf(this, TRPCSubscriptionEndedError.prototype);
+//   }
+// }
 
 export function wsLink<TRouter extends AnyRouter>(
   opts: WebSocketLinkOptions,
@@ -321,28 +345,28 @@ export function wsLink<TRouter extends AnyRouter>(
 
         const input = runtime.transformer.serialize(op.input);
 
-        let isDone = false;
+        // let isDone = false;
         const unsub = client.request(
           { type, path, input, id, context },
           {
             error(err) {
-              isDone = true;
+              // isDone = true;
               observer.error(err as TRPCClientError<any>);
               unsub();
             },
             complete() {
-              if (!isDone) {
-                isDone = true;
-                observer.error(
-                  TRPCClientError.from(
-                    new TRPCSubscriptionEndedError(
-                      'Operation ended prematurely',
-                    ),
-                  ),
-                );
-              } else {
+              // if (!isDone) {
+              //   isDone = true;
+              //   observer.error(
+              //     TRPCClientError.from(
+              //       new TRPCSubscriptionEndedError(
+              //         'Operation ended prematurely',
+              //       ),
+              //     ),
+              //   );
+              // } else {
                 observer.complete();
-              }
+              // }
             },
             next(message) {
               const transformed = transformResult(message, runtime);
@@ -358,7 +382,7 @@ export function wsLink<TRouter extends AnyRouter>(
               if (op.type !== 'subscription') {
                 // if it isn't a subscription we don't care about next response
 
-                isDone = true;
+                // isDone = true;
                 unsub();
                 observer.complete();
               }
@@ -366,7 +390,7 @@ export function wsLink<TRouter extends AnyRouter>(
           },
         );
         return () => {
-          isDone = true;
+          // isDone = true;
           unsub();
         };
       });
@@ -403,9 +427,10 @@ function transformResultInner<TRouter extends AnyRouter, TOutput>(
   return { ok: true, result } as const;
 }
 
-function isObject(value: unknown): value is Record<string, unknown> {
-  // check that value is object
-  return !!value && !Array.isArray(value) && typeof value === 'object';
+class TransformResultError extends Error {
+  constructor() {
+    super('Unable to transform response from server');
+  }
 }
 
 /**
@@ -414,8 +439,8 @@ function isObject(value: unknown): value is Record<string, unknown> {
  */
 function transformResult<TRouter extends AnyRouter, TOutput>(
   response:
-  | TRPCResponseMessage<TOutput, inferRouterError<TRouter>>
-  | TRPCResponse<TOutput, inferRouterError<TRouter>>,
+    | TRPCResponse<TOutput, inferRouterError<TRouter>>
+    | TRPCResponseMessage<TOutput, inferRouterError<TRouter>>,
   runtime: TRPCClientRuntime,
 ): ReturnType<typeof transformResultInner> {
   let result: ReturnType<typeof transformResultInner>;
@@ -423,7 +448,7 @@ function transformResult<TRouter extends AnyRouter, TOutput>(
     // Use the data transformers on the JSON-response
     result = transformResultInner(response, runtime);
   } catch (err) {
-    throw new TRPCClientError('Unable to transform response from server');
+    throw new TransformResultError();
   }
 
   // check that output of the transformers is a valid TRPCResponse
@@ -432,24 +457,18 @@ function transformResult<TRouter extends AnyRouter, TOutput>(
     (!isObject(result.error.error) ||
       typeof result.error.error.code !== 'number')
   ) {
-    throw new TRPCClientError('Badly formatted response from server');
+    throw new TransformResultError();
   }
   if (result.ok && !isObject(result.result)) {
-    throw new TRPCClientError('Badly formatted response from server');
+    throw new TransformResultError();
   }
   return result;
 }
 
-
 const retryDelay = (attemptIndex: number) =>
   attemptIndex === 0 ? 0 : Math.min(1000 * 2 ** attemptIndex, 30000);
 
-type WSCallbackResult<TRouter extends AnyRouter, TOutput> = TRPCResponseMessage<
-TOutput,
-inferRouterError<TRouter>
->;
-
-type WSCallbackObserver<TRouter extends AnyRouter, TOutput> = Observer<
-WSCallbackResult<TRouter, TOutput>,
-TRPCClientError<TRouter>
->;
+function isObject(value: unknown): value is Record<string, unknown> {
+  // check that value is object
+  return !!value && !Array.isArray(value) && typeof value === 'object';
+}

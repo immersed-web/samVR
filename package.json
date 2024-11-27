@@ -3,8 +3,8 @@
     "madge": "madge ./app/"
   },
   "dependencies": {
-    "@trpc/client": "^10.12.0",
-    "@trpc/server": "^10.12.0",
+    "@trpc/client": "10.45.2",
+    "@trpc/server": "10.45.2",
     "@types/lodash-es": "^4.17.12",
     "drizzle-orm": "^0.30.10",
     "lodash-es": "^4.17.21",

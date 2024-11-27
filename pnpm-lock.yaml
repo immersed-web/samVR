@@ -9,10 +9,10 @@ importers:
   .:
     dependencies:
       '@trpc/client':
-        specifier: ^10.12.0
+        specifier: 10.45.2
         version: 10.45.2(@trpc/server@10.45.2)
       '@trpc/server':
-        specifier: ^10.12.0
+        specifier: 10.45.2
         version: 10.45.2
       '@types/lodash-es':
         specifier: ^4.17.12
