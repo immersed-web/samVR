@@ -3,7 +3,6 @@
 module.exports = {
   content: [
     './index.html',
-    './**/*.vue',
     './src/**/*.{vue,js,ts,jsx,tsx}',
   ],
   plugins: [
