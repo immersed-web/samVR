@@ -23,6 +23,7 @@ import { and, eq } from 'drizzle-orm';
 import path from 'path';
 import { z } from 'zod';
 import { compress } from 'hono/compress';
+import sharp from 'sharp';
 // import { createBrotliCompress } from 'node:zlib';
 // const brotli = createBrotliCompress();
 
@@ -47,8 +48,31 @@ publicRoutes.get('/file/:filename',
   compress(),
   serveStatic({
     // precompressed: true,
-    onFound: (_path, c) => {
+    onFound: async (path, c) => {
       c.header('Cache-Control', `public, immutable, max-age=${maxAge}`)
+
+      const scaledownString = c.req.query('scaledown')
+      if (!scaledownString) return;
+      const scaledown = Number.parseInt(scaledownString);
+
+      if (!scaledown || scaledown === 0) return;
+      // do downscaling here
+      const scaleFactor = 1.0 / scaledown;
+      // console.log('downscaled version requested. scaleFactor: ', scaleFactor);
+      const imgHandler = sharp(path);
+      const metadata = (await imgHandler.metadata());
+      // console.log('image metadata:', metadata);
+      const originalWidth = metadata.width;
+      if (!originalWidth) return;
+      const newWidth = originalWidth * scaleFactor;
+      // console.log('newWidth:', newWidth);
+      const newImg = await imgHandler.resize({ withoutEnlargement: true, width: newWidth }).toBuffer();
+      // console.log('successfully scaled down the image!');
+      c.res = new Response(newImg, {
+        status: 200, headers: {
+          'Cache-Control': `public, immutable, max-age=${maxAge}`,
+        }
+      });
     },
     rewriteRequestPath: (path) => {
       // strip the "file/"-part of the path as we use that in the root instead.
