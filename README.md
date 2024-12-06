@@ -1,11 +1,11 @@
 # SamVR 
-SamVR is a system for letting users create and share 3D environments. Users can enter the created 3D-environments as avatars and interact with each other.
+SamVR is a system for letting users create and share 3D environments. Users can enter the created 3D environments as avatars and interact with each other.
 The system is implemented using web technologies. The client side consists of a website running in a browser.
 
 Some of the key features:
 - Visitors can use VR headset or desktop computer
-- Creators can upload a 3D-model (.glb) to be used as VR/3D environment
-- Creators can upload assets in the form of 3D-models, images, videos and documents and place them in the 3D-environment.
+- Creators can upload a 3D model (.glb) to be used as VR/3D environment
+- Creators can upload assets in the form of 3D models, images, videos and documents and place them in the 3D environment.
 - Visitors can enter the 3D evironment, where they can move around and talk to each other.
 - Avatars in 3D evironment uses spatial audio so visitors can hear each other better when their avatars are standing close.
 
