@@ -14,7 +14,7 @@ onBeforeMount(async () => {
 
 <template>
   <slot name="loading" v-if="!aframeIsLoaded">
-    <div class="flex items-center justify-center">
+    <div class="flex items-center justify-center p-24">
       <span class="loading loading-infinity loading-lg"></span>Laddar coola 3D-grejer
     </div>
   </slot>
