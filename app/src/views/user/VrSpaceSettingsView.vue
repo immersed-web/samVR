@@ -238,70 +238,73 @@
 
       <div>
         <div class="sticky top-2">
-          <VrSpacePreview class="border rounded-md overflow-hidden" ref="vrComponentTag"
-            :model-url="vrSpaceStore.worldModelUrl" :navmesh-url="vrSpaceStore.navMeshUrl"
-            :raycastSelector="currentRaycastSelectorString"
-            :auto-rotate="currentCursorMode === 'select-objects' && selectedPlacedObject === undefined">
-            <a-entity v-if="true" id="placed-objects">
-              <a-entity v-for="placedObject in placedObjectsNotBeingEdited"
-                :key="`${placedObject.placedObjectId}_${placedObject.updatedAt}`"
-                :rotation="arrToCoordString(quaternionTupleToAframeRotation(placedObject.orientation ?? [0, 0, 0, 1]))"
-                :position="arrToCoordString(placedObject.position)">
-                <VrSpacePortal v-if="placedObject.type === 'vrPortal'" @click.stop="selectedPlacedObject = placedObject"
-                  :vr-portal="placedObject.vrPortal" class="selectable-object" :label="placedObject.vrPortal?.name" />
-                <PlacedAsset v-else-if="placedObject.type === 'asset' && placedObject.asset"
-                  @click="selectedPlacedObject = placedObject" class="editable-object"
-                  :scale="placedObject.scale ? arrToCoordString(placedObject.scale) : ''" :asset="placedObject.asset" />
+          <WaitForAframe>
+            <VrSpacePreview class="border rounded-md overflow-hidden" ref="vrComponentTag"
+              :model-url="vrSpaceStore.worldModelUrl" :navmesh-url="vrSpaceStore.navMeshUrl"
+              :raycastSelector="currentRaycastSelectorString"
+              :auto-rotate="currentCursorMode === 'select-objects' && selectedPlacedObject === undefined">
+              <a-entity v-if="true" id="placed-objects">
+                <a-entity v-for="placedObject in placedObjectsNotBeingEdited"
+                  :key="`${placedObject.placedObjectId}_${placedObject.updatedAt}`"
+                  :rotation="arrToCoordString(quaternionTupleToAframeRotation(placedObject.orientation ?? [0, 0, 0, 1]))"
+                  :position="arrToCoordString(placedObject.position)">
+                  <VrSpacePortal v-if="placedObject.type === 'vrPortal'"
+                    @click.stop="selectedPlacedObject = placedObject" :vr-portal="placedObject.vrPortal"
+                    class="selectable-object" :label="placedObject.vrPortal?.name" />
+                  <PlacedAsset v-else-if="placedObject.type === 'asset' && placedObject.asset"
+                    @click="selectedPlacedObject = placedObject" class="editable-object"
+                    :scale="placedObject.scale ? arrToCoordString(placedObject.scale) : ''"
+                    :asset="placedObject.asset" />
+                </a-entity>
               </a-entity>
-            </a-entity>
-            <a-entity v-if="transformedSelectedObject">
-              <VrSpacePortal :key="`selected-${transformedSelectedObject.placedObjectId}`"
-                v-if="transformedSelectedObject.type === 'vrPortal'"
-                :position="transformedSelectedObject.position?.join(' ')"
-                :vr-portal="transformedSelectedObject.vrPortal" :label="'markerad'" />
-              <PlacedAsset v-else-if="transformedSelectedObject.type === 'asset' && transformedSelectedObject.asset"
-                :key="`transformed-${transformedSelectedObject.placedObjectId}`" box-helper
-                :rotation="arrToCoordString(quaternionTupleToAframeRotation(transformedSelectedObject.orientation ?? [0, 0, 0, 1]))"
-                :position="arrToCoordString(transformedSelectedObject.position)" class="selectable-object"
-                :scale="transformedSelectedObject.scale ? arrToCoordString(transformedSelectedObject.scale) : ''"
-                :asset="transformedSelectedObject.asset" />
-            </a-entity>
+              <a-entity v-if="transformedSelectedObject">
+                <VrSpacePortal :key="`selected-${transformedSelectedObject.placedObjectId}`"
+                  v-if="transformedSelectedObject.type === 'vrPortal'"
+                  :position="transformedSelectedObject.position?.join(' ')"
+                  :vr-portal="transformedSelectedObject.vrPortal" :label="'markerad'" />
+                <PlacedAsset v-else-if="transformedSelectedObject.type === 'asset' && transformedSelectedObject.asset"
+                  :key="`transformed-${transformedSelectedObject.placedObjectId}`" box-helper
+                  :rotation="arrToCoordString(quaternionTupleToAframeRotation(transformedSelectedObject.orientation ?? [0, 0, 0, 1]))"
+                  :position="arrToCoordString(transformedSelectedObject.position)" class="selectable-object"
+                  :scale="transformedSelectedObject.scale ? arrToCoordString(transformedSelectedObject.scale) : ''"
+                  :asset="transformedSelectedObject.asset" />
+              </a-entity>
 
-            <a-entity ref="spawnPosTag" v-if="spawnPosString" :position="spawnPosString">
-              <a-circle color="yellow" transparent="true" rotation="-90 0 0" position="0 0.05 0"
-                :opacity="currentCursorMode === 'place-spawnposition' ? 0.2 : 0.5"
-                :radius="vrSpaceStore.writableVrSpaceDbData.spawnRadius" />
-              <a-icosahedron v-if="vrSpaceStore.panoramicPreviewUrl" detail="5" scale="-0.5 -0.5 -0.5"
-                :position="`0 ${defaultHeightOverGround} 0`"
-                :opacity="currentCursorMode === 'place-spawnposition' ? 0.5 : 1.0"
-                :material="`shader: vr-portal; warpParams: 3 0.9; src: url(${vrSpaceStore.panoramicPreviewUrl}); side: back;`" />
-            </a-entity>
-            <a-entity id="teleport-target-aframe-cursor" ref="cursorEntity">
+              <a-entity ref="spawnPosTag" v-if="spawnPosString" :position="spawnPosString">
+                <a-circle color="yellow" transparent="true" rotation="-90 0 0" position="0 0.05 0"
+                  :opacity="currentCursorMode === 'place-spawnposition' ? 0.2 : 0.5"
+                  :radius="vrSpaceStore.writableVrSpaceDbData.spawnRadius" />
+                <a-icosahedron v-if="vrSpaceStore.panoramicPreviewUrl" detail="5" scale="-0.5 -0.5 -0.5"
+                  :position="`0 ${defaultHeightOverGround} 0`"
+                  :opacity="currentCursorMode === 'place-spawnposition' ? 0.5 : 1.0"
+                  :material="`shader: vr-portal; warpParams: 3 0.9; src: url(${vrSpaceStore.panoramicPreviewUrl}); side: back;`" />
+              </a-entity>
+              <a-entity id="teleport-target-aframe-cursor" ref="cursorEntity">
 
-              <a-entity :visible="currentCursorMode !== undefined && isCursorHovering">
-                <a-ring position="0 0 0.01" color="yellow" radius-inner="0.1" radius-outer="0.2"
-                  material="shader: flat; side: double;" rotation="0 0 0">
-                  <!-- <a-cone color="green" position="0 0 0" scale="0.1 0.2 0.1" rotation="0 0 0" /> -->
-                </a-ring>
-                <!-- <a-box material="shader: flat; side: double;" scale="0.2 0.2 0.2" color="magenta" rotation="90 0 0">
+                <a-entity :visible="currentCursorMode !== undefined && isCursorHovering">
+                  <a-ring position="0 0 0.01" color="yellow" radius-inner="0.1" radius-outer="0.2"
+                    material="shader: flat; side: double;" rotation="0 0 0">
+                    <!-- <a-cone color="green" position="0 0 0" scale="0.1 0.2 0.1" rotation="0 0 0" /> -->
+                  </a-ring>
+                  <!-- <a-box material="shader: flat; side: double;" scale="0.2 0.2 0.2" color="magenta" rotation="90 0 0">
                 <a-cone color="green" position="0 1 0" scale="0.5 1 0.5" rotation="0 0 0" />
               </a-box> -->
-              </a-entity>
-              <a-entity position="0 0 0.02" v-if="currentlyMovedObject">
-                <!-- <VrSpacePortal :key="`selected-${transformedSelectedObject.placedObjectId}`"
+                </a-entity>
+                <a-entity position="0 0 0.02" v-if="currentlyMovedObject">
+                  <!-- <VrSpacePortal :key="`selected-${transformedSelectedObject.placedObjectId}`"
                 v-if="transformedSelectedObject.type === 'vrPortal'" show-box-helper
                 :position="transformedSelectedObject.position?.join(' ')"
                 :vr-portal="transformedSelectedObject.vrPortal" :label="'markerad'" /> -->
-                <PlacedAsset v-if="isAsset(currentlyMovedObject)" :key="currentlyMovedObject.assetId"
-                  :asset="currentlyMovedObject" />
-                <template v-else>
-                  <PlacedAsset v-if="currentlyMovedObject.type === 'asset' && currentlyMovedObject.asset"
-                    :asset="currentlyMovedObject.asset"
-                    :scale="currentlyMovedObject.scale ? arrToCoordString(currentlyMovedObject.scale) : ''" />
-                </template>
-              </a-entity>
+                  <PlacedAsset v-if="isAsset(currentlyMovedObject)" :key="currentlyMovedObject.assetId"
+                    :asset="currentlyMovedObject" />
+                  <template v-else>
+                    <PlacedAsset v-if="currentlyMovedObject.type === 'asset' && currentlyMovedObject.asset"
+                      :asset="currentlyMovedObject.asset"
+                      :scale="currentlyMovedObject.scale ? arrToCoordString(currentlyMovedObject.scale) : ''" />
+                  </template>
+                </a-entity>
 
-              <!-- <a-entity ref="debugConeTag" position="0.3 0 0" axes-helper>
+                <!-- <a-entity ref="debugConeTag" position="0.3 0 0" axes-helper>
               <a-troika-text look-at-camera value="normal" font-size="0.1" position="0 0.2 0" />
               <a-cone color="orange" position="-0.2 0 0" scale="0.1 0.2 0.1" rotation="90 0 0" />
             </a-entity>
@@ -309,18 +312,19 @@
               <a-troika-text look-at-camera value="facenormal" font-size="0.1" position="0 0.2 0" />
               <a-cone color="pink" position="0.2 0 0" scale="0.1 0.2 0.1" rotation="90 0 0" />
             </a-entity> -->
-            </a-entity>
+              </a-entity>
 
-            <!-- <a-box material="shader: flat; side: double;" scale="0.2 0.2 0.2" color="magenta" rotation="0 0 0"
+              <!-- <a-box material="shader: flat; side: double;" scale="0.2 0.2 0.2" color="magenta" rotation="0 0 0"
             position="5 0.7 3">
             <a-cone color="green" position="0 1 0" scale="0.5 1 0.5" rotation="0 0 0" />
           </a-box> -->
-            <!-- <PlacablesTeleport /> -->
-            <!-- <a-entity :position="hoverPosString" :visible="hoverPosString !== undefined">
+              <!-- <PlacablesTeleport /> -->
+              <!-- <a-entity :position="hoverPosString" :visible="hoverPosString !== undefined">
               <a-ring color="yellow" radius-inner="0.1" radius-outer="0.2" material="shader: flat;"
                 rotation="-90 0 0" />
             </a-entity> -->
-          </VrSpacePreview>
+            </VrSpacePreview>
+          </WaitForAframe>
           <!-- <button @click="setCursorMode('laser')" class="btn btn-sm">hover</button> -->
 
           <!-- <pre class="text-xs whitespace-normal">tsPO position: {{ transformedSelectedObject?.position }}</pre> -->
@@ -391,6 +395,7 @@
 <script setup lang="ts">
 import AssetUpload, { type AssetUploadEmitUploadedPayload } from './AssetUpload.vue';
 import VrSpacePreview from '@/components/lobby/VrSpacePreview.vue';
+import WaitForAframe from '@/components/WaitForAframe.vue'
 import { ref, watch, onMounted, computed, type ComponentInstance, onBeforeUnmount } from 'vue';
 import { insertablePermissionHierarchy, type Asset, type VrSpaceId, defaultHeightOverGround, type UserId, type Json, translatePermissionLevelAdjective, translatePermissionLevelVerb } from 'schemas';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';

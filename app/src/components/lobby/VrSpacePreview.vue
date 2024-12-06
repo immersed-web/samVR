@@ -82,12 +82,10 @@ import { type Scene, type Entity, type DetailEvent, THREE } from 'aframe';
 import { ref, watch, computed, onMounted, nextTick } from 'vue';
 import { useTimeoutFn, usePointerLock } from '@vueuse/core';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
-import registerAframeComponents from '@/ts/aframe/components';
 import { defaultHeightOverGround } from 'schemas';
 import { useCurrentCursorIntersection, useSelectedPlacedObject, useCurrentlyMovedObject } from '@/composables/vrSpaceComposables';
 import OffsetSlider from '@/components/OffsetSlider.vue';
 import { arrToCoordString, attachOrbitControls } from '@/modules/3DUtils';
-registerAframeComponents();
 
 const vrSpaceStore = useVrSpaceStore();
 

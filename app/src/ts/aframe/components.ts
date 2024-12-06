@@ -93,5 +93,6 @@ export default async function () {
   // TODO: Find out why rig and camera seems to be a few decimeter of in horizontal position. Only in real VR though. Not in browser as it seems at least.
   await import('aframe-blink-controls');
   await import('aframe-extras/controls/index.js');
+  // console.log('registered and imported all aframe components!!! ------------------------');
   componentsAreRegistered = true;
 };
