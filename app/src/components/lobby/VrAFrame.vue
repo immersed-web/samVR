@@ -43,13 +43,18 @@
     <!-- <a-sphere :position="vrSpaceStore.currentVrSpace.dbData.spawnPosition?.join(' ')" color="yellow"
       scale="0.1 0.1 0.1" /> -->
 
-    <a-entity id="camera-rig" ref="camerarigTag" movement-controls="controls: nipple">
+    <a-entity id="camera-rig" ref="camerarigTag">
+      <a-sphere radius="0.3" />
       <a-entity camera id="camera" ref="cameraTag"
         look-controls="reverseMouseDrag: false; reverseTouchDrag: true; pointerLockEnabled: true;"
         wasd-controls="acceleration:35;"
         :simple-navmesh-constraint="`navmesh: .navmesh; fall: 1; height: ${defaultHeightOverGround};`"
         emit-move="interval: 20;" :position="`0 ${defaultHeightOverGround} 0`">
         <a-entity ref="cameraAttacher" :position="cameraAttacherPosString">
+          <a-troika-text :value="cameraRigLocalPos" position="0 0.5 -3" />
+          <a-troika-text :value="cameraEntityLocalPos" position="0 0.2 -3" />
+          <a-troika-text :value="cameraLocalPos" position="0 -0.1 -3" />
+
           <!-- <a-sphere position="0 0 0" color="red" scale="0.1 0.1 0.1" /> -->
         </a-entity>
         <!-- <a-entity ref="debugConeTag" position="0.5 -0.5 -1">
@@ -71,6 +76,7 @@
         <AvatarHand />
       </a-entity>
       <a-entity :visible="rightControllerConnected" ref="rightHandTag"
+        blink-controls="cameraRig: #camera-rig; teleportOrigin: #camera; collisionEntities: #navmesh;"
         @controllerconnected="rightControllerConnected = true"
         @controllerdisconnected="rightControllerConnected = false" laser-controls="hand:right"
         :raycaster="`objects: ${currentRaycastSelectorString}; mouseCursorStyleEnabled: ${pointerOnHover}`"
@@ -363,11 +369,11 @@ function onSceneLoaded(evt: Event) {
     console.error("scene loaded event, but scenetag was undefined");
     return;
   };
-  rightHandTag.value?.setAttribute('blink-controls', {
-    cameraRig: '#camera-rig',
-    teleportOrigin: '#camera',
-    collisionEntities: '#navmesh',
-  })
+  // rightHandTag.value?.setAttribute('blink-controls', {
+  //   cameraRig: '#camera-rig',
+  //   teleportOrigin: '#camera',
+  //   collisionEntities: '#navmesh',
+  // })
 }
 function onRenderStart(evt: Event) {
   console.log('render started:', evt);
@@ -404,11 +410,39 @@ function getRandomSpawnPosition() {
   return generateSpawnPosition(spawnPosition, spawnRadius);
 }
 
+const cameraRigLocalPos = ref<string>('');
+const cameraEntityLocalPos = ref<string>('');
+const cameraLocalPos = ref<string>('');
 function onHeadMove(e: DetailEvent<ClientRealtimeData['head']>) {
   vrSpaceStore.ownRealtimeData.head = e.detail;
   // console.log('head moved', e.detail.position!);
   // console.log(e.detail.position);
   // currentTransform.head = e.detail;
+
+  // Update refs for live debugging camera pos stuff
+  const rigPosArr = camerarigTag.value.object3D.position.toArray();
+  const rigPosStr = rigPosArr.reduce((str, v) => {
+    const trimmed = `${v.toFixed(2)}; `;
+    return str += trimmed;
+  }, '')
+  cameraRigLocalPos.value = rigPosStr;
+  console.log(cameraRigLocalPos.value);
+
+  const camEntityPosArr = cameraTag.value.object3D.position.toArray();
+  const camEntityPosStr = camEntityPosArr.reduce((str, v) => {
+    const trimmed = `${v.toFixed(2)}; `;
+    return str += trimmed;
+  }, '')
+  cameraEntityLocalPos.value = camEntityPosStr;
+  console.log(cameraEntityLocalPos.value);
+
+  const camPosArr = threeCamera.value.position.toArray();
+  const camPosStr = camPosArr.reduce((str, v) => {
+    const trimmed = `${v.toFixed(2)}; `;
+    return str += trimmed;
+  }, '')
+  cameraLocalPos.value = camPosStr;
+  console.log(cameraLocalPos.value);
 }
 function onLeftHandMove(e: DetailEvent<ClientRealtimeData['leftHand']>) {
   let rtd = e.detail;
@@ -434,13 +468,13 @@ function teleportMouseDown(e: Event) {
   timeMouseDown.value = e.timeStamp;
 }
 
-function teleportSelf(e: Event) {
-  if (!cameraTag.value || !currentCursorIntersection.value) { return; }
-  if (e.timeStamp - timeMouseDown.value > 150) { return; }
-  let posArray = currentCursorIntersection.value?.intersection.point.toArray();
-  posArray[1] += defaultHeightOverGround;
-  console.log('Click model', e, 'cursor', currentCursorIntersection.value, 'position array', posArray);
-  cameraTag.value.object3D.position.set(posArray[0], posArray[1], posArray[2]);
-}
+// function teleportSelf(e: Event) {
+//   if (!cameraTag.value || !currentCursorIntersection.value) { return; }
+//   if (e.timeStamp - timeMouseDown.value > 150) { return; }
+//   let posArray = currentCursorIntersection.value?.intersection.point.toArray();
+//   posArray[1] += defaultHeightOverGround;
+//   console.log('Click model', e, 'cursor', currentCursorIntersection.value, 'position array', posArray);
+//   cameraTag.value.object3D.position.set(posArray[0], posArray[1], posArray[2]);
+// }
 
 </script>
