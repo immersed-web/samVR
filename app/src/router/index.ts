@@ -137,24 +137,6 @@ const router = createRouter({
               component: () => import('@/views/user/UserStreamView.vue'),
               props: true,
             },
-            {
-              path: '',
-              component: () => import('@/components/AFrameScene.vue'),
-              children: [
-                {
-                  path: ':cameraId',
-                  name: 'userCamera',
-                  props: route => route.params,
-                  component: () => import('@/components/CameraView.vue'),
-
-                },
-                {
-                  path: 'lobby',
-                  name: 'userLobby',
-                  component:  () => import('@/components/lobby/VrAFrame.vue'),
-                },
-              ],
-            },
           ],
         },
         {
@@ -166,22 +148,6 @@ const router = createRouter({
         {
           path: 'vr-test',
           component: () => import('@/views/user/lobby/VRScene.vue'),
-        },
-        {
-          path: 'vr',
-          component:  () => import('@/components/AFrameScene.vue'),
-          children: [
-            {
-              path: 'basic',
-              name: 'basicVR',
-              component: () => import('@/components/lobby/BasicAFrameScene.vue'),
-            },
-            {
-              path: 'basic-2',
-              name: 'basicVR2',
-              component: () => import('@/components/lobby/BasicAFrameScene2.vue'),
-            },
-          ],
         },
         {
           path: 'vrmain',
