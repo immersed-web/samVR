@@ -1,28 +1,30 @@
 <template>
-  <template v-if="vrSpaceStore.currentVrSpace">
-    <a-entity id="placed-objects">
-      <PlacedObject v-for="placedObject in vrSpaceStore.currentVrSpace?.dbData.placedObjects"
-        :key="`${placedObject.placedObjectId}_${placedObject.updatedAt}`" :placed-object="placedObject">
-        <!-- <VrSpacePortal v-if="placedObject.type === 'vrPortal'" :vr-portal="placedObject.vrPortal"
+  <a-entity id="placed-objects">
+    <PlacedObject v-for="placedObject in vrSpaceStore.currentVrSpace?.dbData.placedObjects"
+      :key="`${placedObject.placedObjectId}_${placedObject.updatedAt}`" :placed-object="placedObject">
+      <!-- <VrSpacePortal v-if="placedObject.type === 'vrPortal'" :vr-portal="placedObject.vrPortal"
           @click.stop="router.replace({ name: 'vrSpace', params: { vrSpaceId: placedObject.vrPortal?.vrSpaceId } })"
           :label="placedObject.vrPortal?.name" />
         <PlacedAsset class="raycastable-surface" v-else-if="placedObject.type === 'asset' && placedObject.asset"
           :scale="placedObject.scale ? arrToCoordString(placedObject.scale) : ''" :asset="placedObject.asset" /> -->
-      </PlacedObject>
-    </a-entity>
+    </PlacedObject>
+  </a-entity>
 
-    <a-sky :color="skyColor" />
-    <a-entity :scale="vrSpaceStore.worldModelScaleString">
-      <a-gltf-model bvh @model-loaded="onModelLoaded" id="model" ref="modelTag" :src="vrSpaceStore.worldModelUrl"
-        class="raycastable-surface" :class="{ 'navmesh': !vrSpaceStore.navMeshUrl }" @click.stop="triggerCursorClick" />
-      <a-gltf-model v-if="vrSpaceStore.navMeshUrl" id="navmesh" :src="vrSpaceStore.navMeshUrl" :visible="showNavMesh"
-        class="navmesh" @mousedown="teleportMouseDown" @click.stop="triggerCursorClick" />
-    </a-entity>
+  <a-sky :color="skyColor" />
+  <a-entity :scale="vrSpaceStore.worldModelScaleString">
+    <a-gltf-model bvh @model-loaded="onModelLoaded" id="model" ref="modelTag" :src="vrSpaceStore.worldModelUrl"
+      class="raycastable-surface" :class="{ 'navmesh': !vrSpaceStore.navMeshUrl }" @click.stop="triggerCursorClick" />
+    <a-gltf-model v-if="vrSpaceStore.navMeshUrl" id="navmesh" :src="vrSpaceStore.navMeshUrl" :visible="showNavMesh"
+      class="navmesh" @mousedown="teleportMouseDown" @click.stop="triggerCursorClick" />
+  </a-entity>
 
-    <a-entity v-if="vrSpaceStore.currentVrSpace.dbData.spawnPosition" ref="spawnPoint"
-      :position="arrToCoordString(vrSpaceStore.currentVrSpace.dbData.spawnPosition)">
-      <!-- <a-sphere color="yellow" radius="0.2" /> -->
-      <!-- <a-entity :position="`0 ${defaultHeightOverGround} 0`"
+  <!-- <a-sphere radius="0.1" v-if="pickedSpawnPoint" :position="arrToCoordString(pickedSpawnPoint)" /> -->
+
+  <a-entity v-if="vrSpaceStore.currentVrSpace.dbData.spawnPosition" ref="spawnPoint"
+    :position="arrToCoordString(vrSpaceStore.currentVrSpace.dbData.spawnPosition)">
+    <a-circle opacity="0.2" color="fuchsia" rotation="-90 0 0"
+      :radius="vrSpaceStore.currentVrSpace.dbData.spawnRadius" />
+    <!-- <a-entity :position="`0 ${defaultHeightOverGround} 0`"
         mesh-ui-block="backgroundOpacity: 0.2; justifyContent: space-evenly; fontSize: 0.03; padding: 0.004" class="">
         <a-entity mesh-ui-block="margin: 0.01; justifyContent: space-evenly;">
           <a-entity
@@ -36,120 +38,124 @@
         </a-entity>
       </a-entity> -->
 
-    </a-entity>
+  </a-entity>
 
-    <slot />
+  <slot />
 
-    <!-- <a-sphere :position="vrSpaceStore.currentVrSpace.dbData.spawnPosition?.join(' ')" color="yellow"
+  <!-- <a-sphere :position="vrSpaceStore.currentVrSpace.dbData.spawnPosition?.join(' ')" color="yellow"
       scale="0.1 0.1 0.1" /> -->
 
-    <a-entity id="camera-rig" ref="camerarigTag">
-      <a-sphere radius="0.3" />
-      <a-entity camera id="camera" ref="cameraTag"
-        look-controls="reverseMouseDrag: false; reverseTouchDrag: true; pointerLockEnabled: true;"
-        wasd-controls="acceleration:35;"
-        :simple-navmesh-constraint="`navmesh: .navmesh; fall: 1; height: ${defaultHeightOverGround};`"
-        emit-move="interval: 20;" :position="`0 ${defaultHeightOverGround} 0`">
-        <a-entity ref="cameraAttacher" :position="cameraAttacherPosString">
-          <a-troika-text :value="cameraRigLocalPos" position="0 0.5 -3" />
-          <a-troika-text :value="cameraEntityLocalPos" position="0 0.2 -3" />
-          <a-troika-text :value="cameraLocalPos" position="0 -0.1 -3" />
+  <a-entity id="camera-rig" ref="camerarigTag">
+    <!-- <a-sphere radius="0.3" /> -->
+    <a-entity camera id="camera" ref="cameraTag"
+      look-controls="reverseMouseDrag: false; reverseTouchDrag: true; pointerLockEnabled: true;"
+      wasd-controls="acceleration:35;"
+      :simple-navmesh-constraint="`navmesh: .navmesh; fall: 1; height: ${defaultHeightOverGround};`"
+      emit-move="interval: 20;" :position="`0 ${defaultHeightOverGround} 0`">
+      <a-entity ref="cameraAttacher" :position="cameraAttacherPosString">
+        <!-- <a-troika-text :value="cameraRigLocalPos" position="0 0.5 -3" />
+        <a-troika-text :value="cameraEntityLocalPos" position="0 0.2 -3" />
+        <a-troika-text :value="cameraLocalPos" position="0 -0.1 -3" /> -->
 
-          <!-- <a-sphere position="0 0 0" color="red" scale="0.1 0.1 0.1" /> -->
-        </a-entity>
-        <!-- <a-entity ref="debugConeTag" position="0.5 -0.5 -1">
+        <!-- <a-sphere position="0 0 0" color="red" scale="0.1 0.1 0.1" /> -->
+      </a-entity>
+      <!-- <a-entity ref="debugConeTag" position="0.5 -0.5 -1">
         <a-cone color="orange" scale="0.1 0.1 0.1" rotation="90 0 0" />
       </a-entity>
       <a-entity ref="debugConeTag2" position="0.9 -0.5 -1">
         <a-cone color="pink" scale="0.1 0.1 0.1" rotation="90 0 0" />
       </a-entity> -->
 
-      </a-entity>
-      <a-entity :visible="leftControllerConnected" ref="leftHandTag"
-        @controllerconnected="leftControllerConnected = true" @controllerdisconnected="leftControllerConnected = false"
-        laser-controls="hand:left"
-        :raycaster="`objects: ${currentRaycastSelectorString}; mouseCursorStyleEnabled: ${pointerOnHover}`"
-        @xbuttondown="oculusButtons['x'] = true" @xbuttonup="oculusButtons['x'] = false"
-        @ybuttondown="oculusButtons['y'] = true" @ybuttonup="oculusButtons['y'] = false"
-        emit-move="interval: 20; relativeToCamera: true">
-        <a-entity ref="leftHandVRGui" position="0 0 -0.06" rotation="-90 0 0"></a-entity>
-        <AvatarHand />
-      </a-entity>
-      <a-entity :visible="rightControllerConnected" ref="rightHandTag"
-        blink-controls="cameraRig: #camera-rig; teleportOrigin: #camera; collisionEntities: #navmesh;"
-        @controllerconnected="rightControllerConnected = true"
-        @controllerdisconnected="rightControllerConnected = false" laser-controls="hand:right"
-        :raycaster="`objects: ${currentRaycastSelectorString}; mouseCursorStyleEnabled: ${pointerOnHover}`"
-        @abuttondown="oculusButtons['a'] = true" @abuttonup="oculusButtons['a'] = false"
-        @bbuttondown="oculusButtons['b'] = true" @bbuttonup="oculusButtons['b'] = false"
-        emit-move="interval: 20; relativeToCamera: true">
-        <AvatarHand side="right" />
-        <a-entity ref="rightHandVRGui" position="0 0 -0.06" rotation="-90 0 0"></a-entity>
-      </a-entity>
-
+    </a-entity>
+    <a-entity :visible="leftControllerConnected" ref="leftHandTag" @controllerconnected="leftControllerConnected = true"
+      @controllerdisconnected="leftControllerConnected = false" laser-controls="hand:left"
+      :raycaster="`objects: ${currentRaycastSelectorString}; mouseCursorStyleEnabled: ${pointerOnHover}`"
+      @xbuttondown="oculusButtons['x'] = true" @xbuttonup="oculusButtons['x'] = false"
+      @ybuttondown="oculusButtons['y'] = true" @ybuttonup="oculusButtons['y'] = false"
+      emit-move="interval: 20; relativeToCamera: true">
+      <a-entity ref="leftHandVRGui" position="0 0 -0.06" rotation="-90 0 0"></a-entity>
+      <AvatarHand />
+    </a-entity>
+    <a-entity :visible="rightControllerConnected" ref="rightHandTag"
+      blink-controls="cameraRig: #camera-rig; teleportOrigin: #camera; collisionEntities: #navmesh;"
+      @controllerconnected="rightControllerConnected = true" @controllerdisconnected="rightControllerConnected = false"
+      laser-controls="hand:right"
+      :raycaster="`objects: ${currentRaycastSelectorString}; mouseCursorStyleEnabled: ${pointerOnHover}`"
+      @abuttondown="oculusButtons['a'] = true" @abuttonup="oculusButtons['a'] = false"
+      @bbuttondown="oculusButtons['b'] = true" @bbuttonup="oculusButtons['b'] = false"
+      emit-move="interval: 20; relativeToCamera: true">
+      <AvatarHand side="right" />
+      <a-entity ref="rightHandVRGui" position="0 0 -0.06" rotation="-90 0 0"></a-entity>
     </a-entity>
 
+  </a-entity>
 
-    <Teleport v-if="overlayGUIRight" :to="overlayGUIRight">
-      <div class="card bg-base-200 text-base-content p-4 text-xs pointer-events-auto">
-        <!-- <div>
+  <!-- <Teleport v-if="overlayGUILeft" :to="overlayGUILeft">
+    <div class="pointer-events-auto">
+      <button @click="pickSpawnPoint" class="btn btn-accent">spawn</button>
+    </div>
+  </Teleport> -->
+
+
+  <Teleport v-if="overlayGUIRight" :to="overlayGUIRight">
+    <div class="card bg-base-200 text-base-content p-4 text-xs pointer-events-auto">
+      <!-- <div>
           <pre>normal:{{ currentCursorIntersection?.intersection.normal }}</pre>
           <pre>faceNormal:{{ currentCursorIntersection?.intersection.face?.normal }}</pre>
         </div> -->
-        <p class="label-text font-bold">Personer i rummet</p>
-        <p v-if="clientStore.clientState">
-          {{ clientStore.clientState.username }}
-          (du)
-          <span
-            v-if="vrSpaceStore.currentVrSpace.dbData.allowedUsers.some(u => u.user.userId === clientStore.clientState?.userId && hasAtLeastPermissionLevel(u.permissionLevel, 'admin'))">(admin)</span>
-          <span v-if="vrSpaceStore.currentVrSpace.dbData.ownerUserId === clientStore.clientState.userId">(ägare)</span>
-        </p>
-        <p v-for="(clientInfo, id, idx) in otherClients" :key="id">
-          {{ clientInfo.username }}
-          <span
-            v-if="vrSpaceStore.currentVrSpace.dbData.allowedUsers.some(u => u.user.userId === clientInfo.userId && hasAtLeastPermissionLevel(u.permissionLevel, 'admin'))">(admin)</span>
-          <span v-if="vrSpaceStore.currentVrSpace.dbData.ownerUserId === clientInfo.userId">(ägare)</span>
-        </p>
-      </div>
-    </Teleport>
-    <!-- <Teleport v-if="overlayGUILeft" :to="overlayGUILeft">
+      <p class="label-text font-bold">Personer i rummet</p>
+      <p v-if="clientStore.clientState">
+        {{ clientStore.clientState.username }}
+        (du)
+        <span
+          v-if="vrSpaceStore.currentVrSpace.dbData.allowedUsers.some(u => u.user.userId === clientStore.clientState?.userId && hasAtLeastPermissionLevel(u.permissionLevel, 'admin'))">(admin)</span>
+        <span v-if="vrSpaceStore.currentVrSpace.dbData.ownerUserId === clientStore.clientState.userId">(ägare)</span>
+      </p>
+      <p v-for="(clientInfo, id, idx) in otherClients" :key="id">
+        {{ clientInfo.username }}
+        <span
+          v-if="vrSpaceStore.currentVrSpace.dbData.allowedUsers.some(u => u.user.userId === clientInfo.userId && hasAtLeastPermissionLevel(u.permissionLevel, 'admin'))">(admin)</span>
+        <span v-if="vrSpaceStore.currentVrSpace.dbData.ownerUserId === clientInfo.userId">(ägare)</span>
+      </p>
+    </div>
+  </Teleport>
+  <!-- <Teleport v-if="overlayGUILeft" :to="overlayGUILeft">
       <button class="btn btn-primary pointer-events-auto" @click="positionCameraAttacher">place camera attacher</button>
       <div class="font-bold">isPresenting:{{ isImmersed }}</div>
     </Teleport> -->
-    <Teleport v-if="rightHandVRGui" :to="rightHandVRGui">
-      <!-- <a-entity position="0 0.1 0"
+  <Teleport v-if="rightHandVRGui" :to="rightHandVRGui">
+    <!-- <a-entity position="0 0.1 0"
         mesh-ui-block="width: 0.3; height: 0.1; fontSize: 0.03; bestFit: auto; justifyContent: center" class="">
         <a-entity :mesh-ui-text="`fontColor: #0ff; content: i vr= ${isImmersed}`" />
       </a-entity> -->
-    </Teleport>
+  </Teleport>
 
-    <!-- Avatars wrapper element -->
-    <a-entity>
-      <!-- The avatars -->
-      <template v-for="(clientInfo, id) in otherClients" :key="id">
-        <!-- <a-entity
+  <!-- Avatars wrapper element -->
+  <a-entity>
+    <!-- The avatars -->
+    <template v-for="(clientInfo, id) in otherClients" :key="id">
+      <!-- <a-entity
           interpolated-transform="interpolationTime: 350;" ref="remoteAvatarHead">
           <a-sphere v-if="clientInfo.transform?.head?.active" color="red" scale="0.2 0.3 0.3 " />
           <a-troika-text look-at-camera :value="clientInfo.username" position="0 1.4 0" />
         </a-entity> -->
-        <LaserPointerOther
-          v-if="clientInfo.clientRealtimeData?.head?.active && clientInfo.clientRealtimeData?.laserPointer?.active"
-          :position="clientInfo.clientRealtimeData.laserPointer.position"
-          :position-source="clientInfo.clientRealtimeData?.head?.position" />
-        <BasicAvatarEntity :client-info="clientInfo" v-if="clientInfo.clientRealtimeData?.head?.active"
-          :username="clientInfo.username" :producers="clientInfo.producers"
-          :real-time-data="clientInfo.clientRealtimeData"
-          :avatar-design="clientInfo.avatarDesign ? clientInfo.avatarDesign : defaultAvatarDesign">
+      <LaserPointerOther
+        v-if="clientInfo.clientRealtimeData?.head?.active && clientInfo.clientRealtimeData?.laserPointer?.active"
+        :position="clientInfo.clientRealtimeData.laserPointer.position"
+        :position-source="clientInfo.clientRealtimeData?.head?.position" />
+      <BasicAvatarEntity :client-info="clientInfo" v-if="clientInfo.clientRealtimeData?.head?.active"
+        :username="clientInfo.username" :producers="clientInfo.producers"
+        :real-time-data="clientInfo.clientRealtimeData"
+        :avatar-design="clientInfo.avatarDesign ? clientInfo.avatarDesign : defaultAvatarDesign">
 
-          <EmojiOther :active="clientInfo.clientRealtimeData?.emoji?.active"
-            :coords="clientInfo.clientRealtimeData?.emoji?.active ? clientInfo.clientRealtimeData?.emoji?.coords : undefined" />
-        </BasicAvatarEntity>
+        <EmojiOther :active="clientInfo.clientRealtimeData?.emoji?.active"
+          :coords="clientInfo.clientRealtimeData?.emoji?.active ? clientInfo.clientRealtimeData?.emoji?.coords : undefined" />
+      </BasicAvatarEntity>
 
-        <!-- <Avatar v-if="clientInfo.connectionId !== clientStore.clientState?.connectionId && clientInfo.transform"
+      <!-- <Avatar v-if="clientInfo.connectionId !== clientStore.clientState?.connectionId && clientInfo.transform"
           :id="'avatar-' + id" :client-info="clientInfo" /> -->
-      </template>
-    </a-entity>
-  </template>
+    </template>
+  </a-entity>
 </template>
 
 <script setup lang="ts">
@@ -160,7 +166,6 @@ import { defaultAvatarDesign, defaultHeightOverGround, hasAtLeastPermissionLevel
 // import type { Unsubscribable } from '@trpc/server/observable';
 import { useClientStore } from '@/stores/clientStore';
 import { useRouter } from 'vue-router';
-import { useStreamStore } from '@/stores/streamStore';
 import { useXRState } from '@/composables/XRState';
 import { throttle, omit } from 'lodash-es';
 // import type { SubscriptionValue, RouterOutputs } from '@/modules/trpcClient';
@@ -260,6 +265,7 @@ onBeforeMount(async () => {
 });
 
 let spawnPointPicked = false;
+const pickedSpawnPoint = ref<THREE.Vector3Tuple>();
 onMounted(async () => {
   console.log('vrAframe onMounted');
   if (sceneTag.value) {
@@ -268,21 +274,23 @@ onMounted(async () => {
     const sceneEl = sceneTag.value;
     sceneEl.camera && onCameraSetActive(sceneEl.camera as THREE.PerspectiveCamera);
     sceneEl.addEventListener('camera-set-active', function (evt: Event) {
+      console.log('camera set active!!!!!!!!!!!!!');
       const detailEvt = evt as DetailEvent<{ cameraEl: Entity }>;
       const camera = detailEvt.detail.cameraEl.getObject3D('camera') as THREE.PerspectiveCamera;
       onCameraSetActive(camera);
     });
 
   }
-  if (camerarigTag.value) {
-    let startPos = getRandomSpawnPosition();
-    if (startPos) {
-      console.log('placing cameraRig at start position', startPos);
-      camerarigTag.value.object3D.position.set(...startPos.toArray());
-      spawnPointPicked = true;
-    }
-  }
+  pickSpawnPoint();
+
+  // @ts-ignore
+  cameraTag.value?.addEventListener('move', onHeadMove);
+  // @ts-ignore
+  leftHandTag.value?.addEventListener('move', onLeftHandMove);
+  // @ts-ignore
+  rightHandTag.value?.addEventListener('move', onRightHandMove);
 });
+
 
 onUpdated(() => {
   console.log('vrAframe onUpdated');
@@ -353,12 +361,6 @@ async function onModelLoaded() {
     // vrSpaceStore.updateTransform(trsfm);
     // placeRandomSpheres();
 
-    // @ts-ignore
-    cameraTag.value?.addEventListener('move', onHeadMove);
-    // @ts-ignore
-    leftHandTag.value?.addEventListener('move', onLeftHandMove);
-    // @ts-ignore
-    rightHandTag.value?.addEventListener('move', onRightHandMove);
   }
 }
 
@@ -396,6 +398,12 @@ function placeRandomSpheres() {
   }
 }
 
+// watch(() => oculusButtons.value.a, (btnState) => {
+//   if (btnState) {
+//     pickSpawnPoint();
+//   }
+// })
+
 function getRandomSpawnPosition() {
   const spawnPosition = vrSpaceStore.currentVrSpace?.dbData.spawnPosition;
   if (!spawnPosition) {
@@ -410,9 +418,24 @@ function getRandomSpawnPosition() {
   return generateSpawnPosition(spawnPosition, spawnRadius);
 }
 
-const cameraRigLocalPos = ref<string>('');
-const cameraEntityLocalPos = ref<string>('');
-const cameraLocalPos = ref<string>('');
+function pickSpawnPoint() {
+  if (!camerarigTag.value) {
+    console.error('no cameraRigTag when trying to pick spawnPos');
+    return;
+  }
+  let startPos = getRandomSpawnPosition();
+  if (startPos) {
+    const startPosArr = startPos.toArray();
+    console.log('placing cameraRig at start position', startPos);
+    camerarigTag.value.object3D.position.set(...startPosArr);
+    spawnPointPicked = true;
+    pickedSpawnPoint.value = startPosArr;
+  }
+}
+
+// const cameraRigLocalPos = ref<string>('');
+// const cameraEntityLocalPos = ref<string>('');
+// const cameraLocalPos = ref<string>('');
 function onHeadMove(e: DetailEvent<ClientRealtimeData['head']>) {
   vrSpaceStore.ownRealtimeData.head = e.detail;
   // console.log('head moved', e.detail.position!);
@@ -420,29 +443,29 @@ function onHeadMove(e: DetailEvent<ClientRealtimeData['head']>) {
   // currentTransform.head = e.detail;
 
   // Update refs for live debugging camera pos stuff
-  const rigPosArr = camerarigTag.value.object3D.position.toArray();
-  const rigPosStr = rigPosArr.reduce((str, v) => {
-    const trimmed = `${v.toFixed(2)}; `;
-    return str += trimmed;
-  }, '')
-  cameraRigLocalPos.value = rigPosStr;
-  console.log(cameraRigLocalPos.value);
+  // const rigPosArr = camerarigTag.value.object3D.position.toArray();
+  // const rigPosStr = rigPosArr.reduce((str, v) => {
+  //   const trimmed = `${v.toFixed(2)}; `;
+  //   return str += trimmed;
+  // }, '')
+  // cameraRigLocalPos.value = rigPosStr;
+  // console.log(cameraRigLocalPos.value);
 
-  const camEntityPosArr = cameraTag.value.object3D.position.toArray();
-  const camEntityPosStr = camEntityPosArr.reduce((str, v) => {
-    const trimmed = `${v.toFixed(2)}; `;
-    return str += trimmed;
-  }, '')
-  cameraEntityLocalPos.value = camEntityPosStr;
-  console.log(cameraEntityLocalPos.value);
+  // const camEntityPosArr = cameraTag.value.object3D.position.toArray();
+  // const camEntityPosStr = camEntityPosArr.reduce((str, v) => {
+  //   const trimmed = `${v.toFixed(2)}; `;
+  //   return str += trimmed;
+  // }, '')
+  // cameraEntityLocalPos.value = camEntityPosStr;
+  // console.log(cameraEntityLocalPos.value);
 
-  const camPosArr = threeCamera.value.position.toArray();
-  const camPosStr = camPosArr.reduce((str, v) => {
-    const trimmed = `${v.toFixed(2)}; `;
-    return str += trimmed;
-  }, '')
-  cameraLocalPos.value = camPosStr;
-  console.log(cameraLocalPos.value);
+  // const camPosArr = threeCamera.value.position.toArray();
+  // const camPosStr = camPosArr.reduce((str, v) => {
+  //   const trimmed = `${v.toFixed(2)}; `;
+  //   return str += trimmed;
+  // }, '')
+  // cameraLocalPos.value = camPosStr;
+  // console.log(cameraLocalPos.value);
 }
 function onLeftHandMove(e: DetailEvent<ClientRealtimeData['leftHand']>) {
   let rtd = e.detail;

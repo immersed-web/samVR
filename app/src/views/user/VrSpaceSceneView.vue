@@ -5,47 +5,51 @@
       </div>
       <UIOverlay />
       <WaitForAframe>
-        <a-scene renderer="logarithmicDepthBuffer: false" scene-cleanup ref="aframeScene"
-          cursor="fuse:false; rayOrigin:mouse;"
-          :raycaster="`objects: ${currentRaycastSelectorString}; mouseCursorStyleEnabled: ${pointerOnHover}`"
-          raycaster-update @raycast-update="setCursorIntersection($event.detail)">
-          <a-assets>
-            <a-asset-item id="icon-font"
-              src="https://fonts.gstatic.com/s/materialicons/v70/flUhRq6tzZclQEJ-Vdg-IuiaDsNa.woff" />
-          </a-assets>
-          <VrAFrame v-if="vrSpaceStore.worldModelUrl">
-            <a-entity ref="vrCursor">
-              <a-ring :visible="currentCursorMode === 'teleport'" transparent opacity="0.3" position="0 0 0.01"
-                radius-inner="0.13" radius-outer="0.17" material="shader: flat;" rotation="0 0 0" color="white" />
-            </a-entity>
-            <a-video v-if="screenshareStream" :width="screenShareDimensions.width"
-              :height="screenShareDimensions.height" ref="screenShareAVideoTag" />
-          </VrAFrame>
-        </a-scene>
+        <template v-if="vrSpaceStore.currentVrSpace">
 
-        <!-- Components that render to multiple places in the DOM
+          <a-scene renderer="logarithmicDepthBuffer: false" scene-cleanup ref="aframeScene"
+            cursor="fuse:false; rayOrigin:mouse;"
+            :raycaster="`objects: ${currentRaycastSelectorString}; mouseCursorStyleEnabled: ${pointerOnHover}`"
+            raycaster-update @raycast-update="setCursorIntersection($event.detail)">
+            <a-assets>
+              <a-asset-item id="icon-font"
+                src="https://fonts.gstatic.com/s/materialicons/v70/flUhRq6tzZclQEJ-Vdg-IuiaDsNa.woff" />
+            </a-assets>
+            <VrAFrame>
+              <a-entity ref="vrCursor">
+                <a-ring :visible="currentCursorMode === 'teleport'" transparent opacity="0.3" position="0 0 0.01"
+                  radius-inner="0.13" radius-outer="0.17" material="shader: flat;" rotation="0 0 0" color="white" />
+              </a-entity>
+              <a-video v-if="screenshareStream" :width="screenShareDimensions.width"
+                :height="screenShareDimensions.height" ref="screenShareAVideoTag" />
+            </VrAFrame>
+          </a-scene>
+
+          <!-- Components that render to multiple places in the DOM
          (for example both to UI and multiple places in the AFrame scene)
          while having all logic in one and the same component -->
-        <template>
-          <LaserTeleport />
-          <EmojiTeleport :uvs="[43, 43]"
-            :coords="[[[35, 8], [36, 37], [36, 38], [15, 8], [36, 27]], [[34, 8], [2, 8], [36, 24], [36, 25], [21, 8],], [[28, 26], [28, 20], [28, 38], [3, 16], [2, 1]]]"
-            @change="setEmojiSelf" :is-v-r="false" :columns="5" />
-          <Teleport v-if="overlayGUILeft" :to="overlayGUILeft">
-            <!-- <p>is VR Headset: {{ deviceIsVRHeadset }}</p> -->
-            <div v-if="!deviceIsVRHeadset">
+          <template>
+            <LaserTeleport />
+            <EmojiTeleport :uvs="[43, 43]"
+              :coords="[[[35, 8], [36, 37], [36, 38], [15, 8], [36, 27]], [[34, 8], [2, 8], [36, 24], [36, 25], [21, 8],], [[28, 26], [28, 20], [28, 38], [3, 16], [2, 1]]]"
+              @change="setEmojiSelf" :is-v-r="false" :columns="5" />
+            <Teleport v-if="overlayGUILeft" :to="overlayGUILeft">
+              <!-- <p>is VR Headset: {{ deviceIsVRHeadset }}</p> -->
+              <div v-if="!deviceIsVRHeadset">
 
-              <button v-if="screenshareStream" class="btn btn-error pointer-events-auto" @click="stopScreenShare"><span
-                  class="material-icons">stop_screen_share</span>Sluta dela</button>
-              <button v-else class="btn btn-primary pointer-events-auto" @click="getScreenShare"><span
-                  class="material-icons">screen_share</span>Share screen</button>
-              <pre class="text-xs whitespace-normal">{{ screenshareStream }}</pre>
-              <video @resize="onVideoResize" :class="{ 'hidden': !screenshareStream }" class="w-36 bg-pink-400"
-                ref="screenVideoTag" id="screen-video-tag" autoplay playsinline webkit-playsinline
-                crossorigin="anonymous" />
-              <!-- <pre class="text-xs whitespace-normal max-w-24">screenShares: {{ vrSpaceStore.screenShares }}</pre> -->
-            </div>
-          </Teleport>
+                <button v-if="screenshareStream" class="btn btn-error pointer-events-auto"
+                  @click="stopScreenShare"><span class="material-icons">stop_screen_share</span>Sluta dela</button>
+                <button v-else class="btn btn-primary pointer-events-auto" @click="getScreenShare"><span
+                    class="material-icons">screen_share</span>Share screen</button>
+                <pre class="text-xs whitespace-normal">{{ screenshareStream }}</pre>
+                <video @resize="onVideoResize" :class="{ 'hidden': !screenshareStream }" class="w-36 bg-pink-400"
+                  ref="screenVideoTag" id="screen-video-tag" autoplay playsinline webkit-playsinline
+                  crossorigin="anonymous" />
+
+                <!-- <pre class="text-xs whitespace-normal max-w-24">screenShares: {{ vrSpaceStore.screenShares }}</pre> -->
+              </div>
+            </Teleport>
+          </template>
         </template>
       </WaitForAframe>
     </div>
