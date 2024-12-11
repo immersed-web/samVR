@@ -6,7 +6,7 @@
     "@trpc/client": "10.45.2",
     "@trpc/server": "10.45.2",
     "@types/lodash-es": "^4.17.12",
-    "drizzle-orm": "^0.30.10",
+    "drizzle-orm": "^0.38.0",
     "lodash-es": "^4.17.21",
     "mediasoup": "^3.13.16",
     "mediasoup-client": "^3.7.2",
