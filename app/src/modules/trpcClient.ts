@@ -106,16 +106,16 @@ export const createTrpcClient = (getToken: () => string, clientType: ClientType 
     ],
   });
 
-  // (async () => {
-  //   console.log('###### testing endpoint of new client');
-  //   console.log('client is: ', trpcClient.value);
-  //   try {
-  //     const response = await trpcClient.value?.greeting.query();
-  //     console.log('response:', response);
-  //   } catch(e) {
-  //     console.error(e);
-  //   }
-  // })();
+  (async () => {
+    console.log('###### testing endpoint of new client');
+    console.log('client is: ', trpcClient.value);
+    try {
+      const response = await trpcClient.value?.greeting.query();
+      console.log('response:', response);
+    } catch (e) {
+      console.error(e);
+    }
+  })();
   currentClientType = clientType;
   // return trpcClient.value;
 };
