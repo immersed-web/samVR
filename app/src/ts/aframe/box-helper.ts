@@ -16,7 +16,7 @@ export default function () {
     currentScale: undefined as unknown as THREE.Vector3,
     prevScale: undefined as unknown as THREE.Vector3,
     init: function () {
-      console.log('box-helper init');
+      // console.log('box-helper init');
       this.currentColor = new THREE.Color();
       this.currentPosition = new THREE.Vector3();
       this.prevPosition = new THREE.Vector3();
@@ -43,7 +43,7 @@ export default function () {
       },
     },
     createAndAddBoxHelper: function () {
-      console.log('creating and adding box helper');
+      // console.log('creating and adding box helper');
       this.boxHelper = new THREE.BoxHelper(this.el.object3D)
 
       const scene = this.el.sceneEl?.object3D

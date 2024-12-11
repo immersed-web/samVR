@@ -37,12 +37,12 @@ const {sceneTag} = inject(aFrameSceneProvideKey)!;
 const router = useRouter();
 
 onMounted(() => {
-  console.log(sceneTag.value);
+  // console.log(sceneTag.value);
   sceneTag.value?.setAttribute('cursor', {fuse: false, rayOrigin: 'mouse'});
 });
 
 function goToOtherScene() {
-  console.log('sphere clicked');
+  // console.log('sphere clicked');
   router.push({name: 'basicVR2'});
 }
 function goToLobby() {

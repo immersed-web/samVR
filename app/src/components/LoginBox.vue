@@ -5,16 +5,16 @@
         {{ title }}
       </h2>
       <div class="form-control">
-        <label class="label">
+        <!-- <label class="label">
           <span class="label-text">Användarnamn</span>
-        </label>
-        <input v-model="username" type="text" placeholder="E-post" class="input input-bordered">
+        </label> -->
+        <input v-model="username" type="text" placeholder="Användarnamn" class="input input-bordered">
       </div>
       <div class="form-control">
-        <label class="label">
+        <!-- <label class="label">
           <span class="label-text">Lösenord</span>
-        </label>
-        <input v-model="password" type="password" placeholder="Löesnord" class="input input-bordered">
+        </label> -->
+        <input v-model="password" type="password" placeholder="Lösenord" class="input input-bordered">
       </div>
       <div v-if="error" class="alert bg-error rounded-md mt-2">
         {{ error.message }}

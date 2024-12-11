@@ -92,14 +92,14 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
   });
 
   eventReceiver.vrSpace.vrSpaceStateUpdated.subscribe(({ data, reason }) => {
-    console.log(`vrSpaceState updated. ${reason}:`, data);
+    console.log(`vrSpaceState updated %c[${reason}]:`, 'color: yellow;', data);
     ignoreUpdates(() => {
       const parsedVrSpaceDbData = VrSpaceSelectSchema.parse(data.dbData);
-      console.log('parsedVrSpaceDbData', parsedVrSpaceDbData);
+      // console.log('parsedVrSpaceDbData', parsedVrSpaceDbData);
       writableVrSpaceDbData.value = parsedVrSpaceDbData;
     });
     currentVrSpace.value = data;
-    console.log('finished setting ignored state update');
+    // console.log('finished setting ignored state update');
   });
 
   eventReceiver.vrSpace.vrSpaceWasUnloaded.subscribe(({ vrSpaceId }) => {
@@ -159,7 +159,7 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
     const response = await connection.client.vr.enterVrSpace.mutate({ vrSpaceId });
 
     ignoreUpdates(() => {
-      console.log('setting ignored enter response');
+      // console.log('setting ignored enter response');
       const parsedVrSpaceDbData = VrSpaceSelectSchema.parse(response.dbData);
       writableVrSpaceDbData.value = parsedVrSpaceDbData;
     });

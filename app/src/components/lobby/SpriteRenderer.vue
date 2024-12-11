@@ -46,7 +46,7 @@ const spriteStyle = computed(() => {
     // width: `${w}px`,
     // height: `${h}px`,
   }
-  console.log(styleObject);
+  // console.log(styleObject);
   return styleObject;
 })
 

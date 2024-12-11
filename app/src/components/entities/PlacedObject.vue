@@ -41,9 +41,9 @@ const positionString = computed(() => {
 
 const scaleString = computed(() => {
   if (!placedObject.scale) {
-    if (placedObject.type === 'asset') {
-      console.warn('placedObject of types asset scale was undefined defaulting to [1 1 1]');
-    }
+    // if (placedObject.type === 'asset') {
+    //   console.warn('placedObject (type: asset) scale was undefined defaulting to [1 1 1]');
+    // }
     return "1 1 1";
   }
   return arrToCoordString(placedObject.scale)

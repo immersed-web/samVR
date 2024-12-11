@@ -50,7 +50,7 @@ export default async function () {
     console.info('aframe components are already registered. skipping');
     return;
   }
-  console.log('Registering a-frame components');
+  // console.log('Registering a-frame components');
   emitMove();
   interpolatedTransform();
   navmesh();

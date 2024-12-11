@@ -143,7 +143,7 @@ watch(() => props.clientInfo.screenShare, async (newScreenShare, prevScreenShare
 
 const avatarDesign = computed(() => {
   if (props.clientInfo.avatarDesign) return props.clientInfo.avatarDesign;
-  console.warn('No avatardesign provided. Using the default one!!!');
+  console.warn('No avatardesign provided. Using the default one.');
   return defaultAvatarDesign;
 })
 
@@ -194,7 +194,7 @@ function onNearRangeExited(e: CustomEvent<number>) {
   isNear.value = false;
   distanceColor.value = 'white';
   if (audioProducerId.value && soupStore.consumers.has(audioProducerId.value)) {
-    closeConsumer();
+    closeAudioConsumer();
   }
   stream.value = undefined;
 }
@@ -232,7 +232,7 @@ async function getStreamFromProducerId(producerId?: ProducerId) {
   return new MediaStream([consumerData.consumer.track]);
 }
 
-async function closeConsumer() {
+async function closeAudioConsumer() {
   if (!audioProducerId.value) return;
   soupStore.closeConsumer(audioProducerId.value);
 }
@@ -244,13 +244,13 @@ watch(() => props.clientInfo.clientRealtimeData?.head, (headTransform) => {
   avatarEntity.value?.emit('rotateTo', { rotation: headTransform.rotation }, false);
 }, { immediate: true });
 watch(() => props.clientInfo.clientRealtimeData?.leftHand, (leftHandTransform) => {
-  console.log('leftHand updated:', leftHandTransform);
+  // console.log('leftHand updated:', leftHandTransform);
   if (!leftHandTransform?.active) return;
   leftHandTag.value?.emit('moveTo', { position: leftHandTransform.position }, false);
   leftHandTag.value?.emit('rotateTo', { rotation: leftHandTransform.rotation }, false);
 }, { immediate: true });
 watch(() => props.clientInfo.clientRealtimeData?.rightHand, (rightHandTransform) => {
-  console.log('rightHand updated:', rightHandTransform);
+  // console.log('rightHand updated:', rightHandTransform);
   if (!rightHandTransform?.active) return;
   rightHandTag.value?.emit('moveTo', { position: rightHandTransform.position }, false);
   rightHandTag.value?.emit('rotateTo', { rotation: rightHandTransform.rotation }, false);

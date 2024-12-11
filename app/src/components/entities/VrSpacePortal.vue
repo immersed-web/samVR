@@ -49,10 +49,10 @@ onUpdated(() => {
   // console.log('VrSpacePortal updated');
 })
 onMounted(() => {
-  console.log('VrSpacePortal mounted');
+  // console.log('VrSpacePortal mounted');
 })
 onUnmounted(() => {
-  console.log('VrSpacePortal unmounted');
+  // console.log('VrSpacePortal unmounted');
 })
 
 defineOptions({

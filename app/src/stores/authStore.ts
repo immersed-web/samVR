@@ -22,7 +22,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const token = ref<string>();
   const tokenOrThrow = () => {
-    console.log('accessing tokenOrThrow');
+    // console.log('accessing tokenOrThrow');
     if(!token.value) {
       throw Error('token was undefined when trying to access it from authstore');
     }

@@ -24,7 +24,7 @@ const appName = import.meta.env.EXPOSED_PROJECT_NAME;
 
 const router = useRouter();
 const fromRoute = router.currentRoute.value.redirectedFrom;
-console.log('fromRoute:', fromRoute);
+// console.log('fromRoute:', fromRoute);
 const authStore = useAuthStore();
 
 const guestUsername = ref<string>();
@@ -40,7 +40,7 @@ const guestContinue = async () => {
   // const connectionStore = useConnectionStore();
   // connectionStore.createUserClient();
   if (fromRoute?.name === 'userStream') {
-    console.log('routing back to the stream');
+    // console.log('routing back to the stream');
     router.push(fromRoute);
     return;
   }

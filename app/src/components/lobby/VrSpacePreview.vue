@@ -323,7 +323,7 @@ async function exitFirstPersonView() {
   firstPersonViewActive.value = false;
   const camTag = cameraTag.value;
   if (!camTag) {
-    console.error('cameratag undefined');
+    console.error('cameratag undefined when exiting first person view');
     return;
   }
   removeFPSComponents(camTag);
@@ -340,7 +340,7 @@ async function exitFirstPersonView() {
 async function getPanoScreenshotFromPoint(point: THREE.Vector3Tuple) {
   const camTag = cameraTag.value;
   if (!camTag || !point) {
-    console.error('no cameraEntity or point provided');
+    console.error('no cameraEntity or point provided when getting pano screenshot');
     return;
   }
   const navMeshVisibleRestoreState = navmeshTag.value?.getAttribute('visible');

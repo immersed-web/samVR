@@ -260,7 +260,7 @@ router.beforeEach(async (to, from) => {
       throw Error('Eeeeh. You are not logged but you shouldnt even reach this code without being logged in. Something is wrooong');
     }
     if(!connectionStore.clientExists){
-      console.log('Connection required. Creating one');
+      // console.log('Connection required. Creating one');
       if (to.meta.requiredConnectionType === 'client') {
         connectionStore.createUserClient();
         const clientStore = useClientStore();

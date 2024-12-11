@@ -78,7 +78,7 @@ function onNearRangeExited(e: CustomEvent<number>) {
     closeConsumer();
   }
   stream.value = undefined;
-  console.log('Went away', e.detail);
+  // console.log('Went away', e.detail);
 }
 onMounted(async () => {
   console.log('remoteAvatar mounted');
@@ -89,10 +89,15 @@ onMounted(async () => {
 });
 onBeforeUnmount(async () => {
   console.log('remoteAvatar will unmount');
-  const pId = props.clientInfo.producers.audioProducer?.producerId;
-  if (pId && soupStore.consumers.has(pId)) {
-    console.log('gonna closeConsumer with producerId:', pId);
-    await soupStore.closeConsumer(pId);
+  const videoPId = props.clientInfo.producers.videoProducer?.producerId;
+  if (videoPId && soupStore.consumers.has(videoPId)) {
+    console.log('gonna close (video)consumer with producerId:', videoPId);
+    await soupStore.closeConsumer(videoPId);
+  }
+  const audioPId = props.clientInfo.producers.audioProducer?.producerId;
+  if (audioPId && soupStore.consumers.has(audioPId)) {
+    console.log('gonna close (audio)consumer with producerId:', audioPId);
+    await soupStore.closeConsumer(audioPId);
   }
 });
 
@@ -104,7 +109,7 @@ const rightHandTag = ref<Entity>();
 const dummyAudioTag = ref<HTMLAudioElement>();
 watch(() => props.clientInfo, (n, o) => console.log('remoteAvatar prop updated. new:', n, ' old:', o));
 watch(() => props.clientInfo.clientRealtimeData?.head, (newTransform) => {
-  console.log('head updated: ', newTransform?.position);
+  // console.log('head updated: ', newTransform?.position);
   // console.log('remote avatar transform updated!');
   if (!remoteAvatar.value) {
     console.error('couldnt update avatar transform cause entityRef was undefined');
@@ -162,7 +167,7 @@ function handleReceivedHandTransform(newTransform: MaybeTransform | undefined, o
 let stream = shallowRef<MediaStream>();
 watch(stream, () => {
   if (!stream.value) {
-    // console.error('stream became undefined');
+    console.error('stream became undefined');
     return;
   }
   if (!dummyAudioTag.value) {
@@ -190,7 +195,7 @@ const producerId = computed(() => props.clientInfo.producers.audioProducer?.prod
 // }, {immediate: false});
 
 async function onAvatarEntityLoaded(e: DetailEvent<any>) {
-  console.log('avatar a-entity loaded!');
+  // console.log('avatar a-entity loaded!');
   // NOTE: For some reason the event isnt received by the entity if we dont put it on the event queue.
   // I guess there is something that makes the entity trigger the loaded event before it is _actually_ fully ready.
   await new Promise(res => setTimeout(res, 0));
@@ -208,7 +213,7 @@ async function onAvatarEntityLoaded(e: DetailEvent<any>) {
 }
 
 function onBodyLoaded() {
-  console.log('body entity was loaded!');
+  // console.log('body entity was loaded!');
   // const lockRotationString = `#head-${props.clientInfo.connectionId}`
   lowerBodyTag.value?.setAttribute('lock-rotation-axis', true);
 }

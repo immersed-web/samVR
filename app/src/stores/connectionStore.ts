@@ -8,7 +8,7 @@ import { useAuthStore } from './authStore';
 import { parse } from 'devalue';
 
 export const useConnectionStore = defineStore('connection', () => {
-  console.log('connection store initializing!!');
+  // console.log('connection store initializing!!');
   const authStore = useAuthStore();
   const connected = ref(false);
   const connectionType = ref<ClientType>();

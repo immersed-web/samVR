@@ -247,11 +247,11 @@ const navmeshId = computed(() => {
 
 const otherClients = computed(() => {
   if (!vrSpaceStore.currentVrSpace) {
-    console.warn('no current space, cant derived computed otherClients');
+    console.warn('no current space, cant derive computed otherClients');
     return undefined;
   }
   if (!clientStore.clientState) {
-    console.warn('no clientState, cant derived computed otherClients');
+    console.warn('no clientState, cant derive computed otherClients');
     return undefined;
   }
   return omit(vrSpaceStore.currentVrSpace.clients, [clientStore.clientState.connectionId]) as typeof vrSpaceStore.currentVrSpace.clients;
@@ -263,7 +263,7 @@ const skyColor = computed(() => {
 
 const isTouchDevice = ref(false);
 onBeforeMount(async () => {
-  console.log('VrAframe onBeforeMount');
+  // console.log('VrAframe onBeforeMount');
   isTouchDevice.value = aframeUtils.device.isTablet() || aframeUtils.device.isMobile();
   // console.log('onBeforeMount completed');
 });
@@ -278,7 +278,7 @@ onMounted(async () => {
     const sceneEl = sceneTag.value;
     sceneEl.camera && onCameraSetActive(sceneEl.camera as THREE.PerspectiveCamera);
     sceneEl.addEventListener('camera-set-active', function (evt: Event) {
-      console.log('camera set active!!!!!!!!!!!!!');
+      console.log('camera set active event.');
       const detailEvt = evt as DetailEvent<{ cameraEl: Entity }>;
       const camera = detailEvt.detail.cameraEl.getObject3D('camera') as THREE.PerspectiveCamera;
       onCameraSetActive(camera);
@@ -297,21 +297,27 @@ onMounted(async () => {
 
 
 onUpdated(() => {
-  console.log('vrAframe onUpdated');
+  // console.log('vrAframe onUpdated');
 })
 
 function onCameraSetActive(camera: THREE.PerspectiveCamera) {
   threeCamera.value = camera;
-  console.log('camera loaded. attaching scene attributes', navmeshId.value);
+  // console.log('camera loaded');
 
   if (!sceneTag.value) {
-    console.error('no sceneTag provided in onCameraLoaded');
+    console.error('no sceneTag provided in onCameaSetActive');
     return;
   }
   sceneTag.value.sceneEl?.canvas.addEventListener('mousedown', () => {
     lock(sceneTag.value!.canvas);
   });
-  window.addEventListener('mouseup', unlock)
+  window.addEventListener('mouseup', unlock);
+
+  // just a hand wavy attempt at fixing the bug where mouselock gets "locked" in locked state.
+  document.addEventListener('mouseleave', () => {
+    console.log('mouse left document');
+    unlock();
+  })
 }
 
 onBeforeUnmount(async () => {
@@ -323,9 +329,9 @@ onBeforeUnmount(async () => {
 const cameraAttacherPosString = computed(() => {
   if (threeCamera.value) {
     const camera = threeCamera.value;
-    console.log('computing the cameraAttacher position');
+    // console.log('computing the cameraAttacher position');
     const overCamera = new THREE.Vector3(0, 0.6, 0);
-    console.log('camera:', camera);
+    // console.log('camera:', camera);
     // return '0 0.2 -0.2';
     camera.getViewSize(1, utilVector2);
     overCamera.set(0, utilVector2.y * 0.5, -1);
@@ -333,7 +339,7 @@ const cameraAttacherPosString = computed(() => {
     if (isImmersed.value) {
       overCamera.y -= 0.05;
     }
-    console.log(overCamera);
+    // console.log(overCamera);
     return arrToCoordString(overCamera.toArray());
   }
   return '0 0.2 -0.2';
@@ -435,7 +441,7 @@ function pickSpawnPoint() {
   let startPos = getRandomSpawnPosition();
   if (startPos) {
     const startPosArr = startPos.toArray();
-    console.log('placing cameraRig at start position', startPos);
+    // console.log('placing cameraRig at start position', startPos);
     camerarigTag.value.object3D.position.set(...startPosArr);
     spawnPointPicked = true;
     pickedSpawnPoint.value = startPosArr;
