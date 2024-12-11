@@ -117,9 +117,10 @@ const autoFetchJwt = async (assignFn: (receivedToken: string) => void, fetchFn: 
     nrOfRetries = 0;
     const expUnixStamp = new Date(decodedToken.exp * 1000);
     const expInMillis = expUnixStamp.valueOf() - Date.now();
-    // console.log('jwtToken expires in (millis):', expInMillis);
+    console.log('jwtToken expires in (millis):', expInMillis);
+    console.log('jwtToken expires in (seconds):', expInMillis * 0.001);
     // console.log('UTC now is:', new Date().toUTCString());
-    const refetchIn = expInMillis > 2000 ? expInMillis - 1000 : expInMillis * 0.8;
+    const refetchIn = expInMillis > 2000 ? expInMillis - 1500 : expInMillis * 0.7;
     activeTimeout = setTimeout(() => {
       autoFetchJwt(assignFn, fetchFn, failRecoveryFn);
     }, refetchIn);

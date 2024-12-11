@@ -453,7 +453,7 @@ const getJwt: RequestHandler = async (req, res) => {
     res.status(403).send('no user in req obj! Seems you are not logged in!');
     return;
   }
-  const token = createJwt(req.session.user, 10);
+  const token = createJwt(req.session.user, 50);
   res.send(token);
 };
 
