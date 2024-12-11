@@ -8,6 +8,7 @@ import { loadUserDBData, SenderClient, Stream, VrSpace, BaseClient, DataAndReaso
 import { effect } from '@vue/reactivity';
 import { EventSender, Payload } from 'ts-event-bridge/sender';
 import { MyWebsocketType } from 'index.js';
+import { pick } from 'lodash-es';
 
 type EventMapAdditions = {
   vrSpace: {
@@ -106,8 +107,9 @@ export class UserClient extends BaseClient {
 
   getPrivateState() {
     const publicState = this.getPublicState();
+    const pickedPublicState = pick(publicState, ['userId', 'connectionId', 'username', 'ownedStreams']);
     const privateState = {
-      ...publicState,
+      ...pickedPublicState,
       assets: this.dbData.value?.assets ?? []
     }
     return privateState;
@@ -136,7 +138,8 @@ export class UserClient extends BaseClient {
       log.info('skipped emitting to client because socket was undefined');
       return;
     }
-    log.info(`notyfying myStateUpdated for ${this.username} (${this.connectionId}) to itself`);
+    if (!reason) reason = 'unknown reason';
+    log.info(`notyfying myStateUpdated [${reason}] for ${this.username} (${this.connectionId}) to itself`);
     // we emit the new clientstate to the client itself.
     this.eventSender.user.myStateUpdated({ data: this.getPrivateState(), reason });
   }
