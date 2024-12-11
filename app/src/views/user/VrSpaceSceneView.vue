@@ -5,7 +5,7 @@
       </div>
       <UIOverlay />
       <WaitForAframe>
-        <template v-if="vrSpaceStore.currentVrSpace">
+        <template v-if="vrSpaceStore.currentVrSpace && mediasoupInitialized">
           <a-scene renderer="logarithmicDepthBuffer: false" scene-cleanup ref="aframeScene"
             cursor="fuse:false; rayOrigin:mouse;"
             :raycaster="`objects: ${currentRaycastSelectorString}; mouseCursorStyleEnabled: ${pointerOnHover}`"
@@ -70,7 +70,7 @@ import UIOverlay from '@/components/UIOverlay.vue';
 import LaserTeleport from '@/components/lobby/LaserTeleport.vue';
 import EmojiTeleport from '@/components/lobby/EmojiTeleport.vue';
 import { useSoupStore } from '@/stores/soupStore';
-import { useDisplayMedia } from '@vueuse/core';
+import { useAsyncState, useDisplayMedia } from '@vueuse/core';
 import type { ProducerId } from 'schemas/mediasoup';
 import { aframeScene, overlayGUILeft, vrCursor } from '@/composables/teleportTargets';
 const { setCursorIntersection, currentCursorMode, setCursorEntityRef, pointerOnHover, currentRaycastSelectorString } = useCurrentCursorIntersection();
@@ -188,13 +188,16 @@ onMounted(() => {
 
 onBeforeMount(async () => {
 
+});
 
+const { isReady: mediasoupInitialized } = useAsyncState(async () => {
   await vrSpaceStore.enterVrSpace(props.vrSpaceId);
 
   if (!soupStore.deviceLoaded) {
     await soupStore.loadDevice();
   }
   await soupStore.createReceiveTransport();
+  // console.log('create receive transport resolved');
   try {
     await soupStore.createSendTransport();
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -211,7 +214,7 @@ onBeforeMount(async () => {
     console.error('failed to setup the mediasoup stuff');
     console.error(e);
   }
-});
+}, undefined, {});
 
 onBeforeUnmount(async () => {
   await soupStore.closeAudioProducer();

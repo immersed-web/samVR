@@ -245,7 +245,7 @@ export class BaseClient {
       throw new Error('failed to create transport!!');
     }
     transport.addListener('routerclose', () => {
-      log.info('transport event: router closed');
+      log.info(`${direction} transport event: router closed`);
       this.eventSender.soup.soupObjectClosed({ data: { type: 'transport', id: transport.id as TransportId }, reason: 'router was closed' });
       if(direction == 'receive'){
         this.receiveTransport = undefined;
@@ -254,10 +254,10 @@ export class BaseClient {
       }
     });
     transport.addListener('iceselectedtuplechange', (iceSelectedTuple) => {
-      log.info('transport event: iceselectedchange', iceSelectedTuple);
+      log.info(`${direction} transport event: iceselectedchange`, iceSelectedTuple);
     });
     transport.addListener('icestatechange', (iceState) => {
-      log.info('transport event: icestatechange', iceState);
+      log.info(`${direction} transport event: icestatechange`, iceState);
     });
     if(direction == 'receive'){
       if(this.receiveTransport){
@@ -321,6 +321,7 @@ export class BaseClient {
 
   async createConsumer(consumerOptions: {producerId: ProducerId, paused?: boolean}): Promise<CreateConsumerResponse>{
     if(!this.receiveTransport){
+      log.error('failed to create consumer. A transport is required to create a consumer');
       throw Error('A transport is required to create a consumer');
     }
     if (!this.currentRouter) {

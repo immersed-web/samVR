@@ -39,7 +39,7 @@ export class UserClient extends BaseClient {
         // log.debug('no vrSpace. skipping publicProducers effect: ', this.publicProducers.value);
         return
       };
-      log.debug('publicProducers was updated', this.publicProducers);
+      log.debug('publicProducers was updated', this.publicProducers.value);
       this.vrSpace._notifyStateUpdated('a client updated producers');
     });
 

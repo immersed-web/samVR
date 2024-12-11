@@ -25,14 +25,17 @@ export const soupRouter = router({
   }),
   setRTPCapabilities: p.input(z.object({ rtpCapabilities: RtpCapabilitiesSchema })).mutation(({ input, ctx }) => {
     ctx.client.rtpCapabilities = input.rtpCapabilities;
-    log.debug(`clint ${ctx.username} (${ctx.connectionId}) changed rtpCapabilities to: `, input.rtpCapabilities);
+    log.debug(`client ${ctx.username} (${ctx.connectionId}) updated rtpCapabilities`);
+    // log.debug(`client ${ctx.username} (${ctx.connectionId}) changed rtpCapabilities to: `, input.rtpCapabilities);
     // return 'Not implemented yet' as const;
   }),
   createSendTransport: p.mutation(async ({ ctx }) => {
     return await ctx.client.createWebRtcTransport('send');
   }),
   createReceiveTransport: p.mutation(async ({ ctx }) => {
-    return await ctx.client.createWebRtcTransport('receive');
+    const transportOptions = await ctx.client.createWebRtcTransport('receive');
+    console.log('receive transport created. transportOptions:', transportOptions);
+    return transportOptions;
   }),
   connectTransport: p.input(ConnectTransportPayloadSchema).mutation(async ({ ctx, input }) => {
     const client = ctx.client;
@@ -84,6 +87,7 @@ export const soupRouter = router({
     log.info(`received createConsumer request from ${ctx.username} (${ctx.connectionId}) for producer:`, input.producerId);
     const client = ctx.client;
     if(!client.receiveTransport){
+      log.error('Failed to create consumer. A transport is required to create a consumer');
       throw new TRPCError({code:'PRECONDITION_FAILED', message:'A transport is required to create a consumer'});
     }
 
