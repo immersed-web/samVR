@@ -113,7 +113,7 @@ app.ws<WSUserData>('/*', {
   // },
 
   message: (ws, message) => {
-    logUws.info('received message size:', message.byteLength)
+    // logUws.info('received message size:', message.byteLength)
     const asString = Buffer.from(message).toString();
     onSocketMessage(ws, asString);
   },
@@ -137,7 +137,7 @@ app.ws<WSUserData>('/*', {
       // logUws.debug('upgrade request provided this token:', receivedToken);
       const validJwt = verifyJwtToken(receivedToken);
 
-      logUws.debug('decoded jwt:', validJwt);
+      // logUws.debug('decoded jwt:', validJwt);
 
       const userDataOnly = JwtUserDataSchema.parse(validJwt);
 
@@ -195,7 +195,7 @@ app.ws<WSUserData>('/*', {
     const userData = ws.getUserData();
     const connectionType = userData.clientType;
     const userId = UserIdSchema.parse(userData.jwtUserData.userId);
-    logUws.info('socket opened');
+    // logUws.info('socket opened');
 
     let client: UserClient | SenderClient;
     if(connectionType === 'sender'){
@@ -226,7 +226,7 @@ app.ws<WSUserData>('/*', {
     const userData = ws.getUserData();
     logUws.info(`socket diconnected ${userData.jwtUserData.username} (${userData.jwtUserData.userId})`);
     const msgString = Buffer.from(msg).toString();
-    logUws.info('closing info. code:', code, 'msg:', msgString);
+    logUws.info('closing info -> code:', code, 'msg:', msgString);
     const client = clientConnections.get(ws);
     client?.removeWSInstance();
     if(!client){
