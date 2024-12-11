@@ -6,7 +6,6 @@
       <UIOverlay />
       <WaitForAframe>
         <template v-if="vrSpaceStore.currentVrSpace">
-
           <a-scene renderer="logarithmicDepthBuffer: false" scene-cleanup ref="aframeScene"
             cursor="fuse:false; rayOrigin:mouse;"
             :raycaster="`objects: ${currentRaycastSelectorString}; mouseCursorStyleEnabled: ${pointerOnHover}`"

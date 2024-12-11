@@ -45,8 +45,10 @@
   <!-- <a-sphere :position="vrSpaceStore.currentVrSpace.dbData.spawnPosition?.join(' ')" color="yellow"
       scale="0.1 0.1 0.1" /> -->
 
-  <a-entity id="camera-rig" ref="camerarigTag">
-    <!-- <a-sphere radius="0.3" /> -->
+  <a-entity id="camera-rig" ref="camerarigTag"
+    :movement-controls="`enabled: ${isTouchDevice}; controls: nipple; speed: 0.5;`"
+    :nipple-controls="`enabled: ${isTouchDevice}; lookJoystickEnabled: false; moveJostickPosition: left;`">
+    <a-sphere radius="0.3" />
     <a-entity camera id="camera" ref="cameraTag"
       look-controls="reverseMouseDrag: false; reverseTouchDrag: true; pointerLockEnabled: true;"
       wasd-controls="acceleration:35;"
@@ -77,7 +79,7 @@
       <AvatarHand />
     </a-entity>
     <a-entity :visible="rightControllerConnected" ref="rightHandTag"
-      blink-controls="cameraRig: #camera-rig; teleportOrigin: #camera; collisionEntities: #navmesh;"
+      blink-controls="cameraRig: #camera-rig; teleportOrigin: #camera; collisionEntities: .navmesh;"
       @controllerconnected="rightControllerConnected = true" @controllerdisconnected="rightControllerConnected = false"
       laser-controls="hand:right"
       :raycaster="`objects: ${currentRaycastSelectorString}; mouseCursorStyleEnabled: ${pointerOnHover}`"
@@ -259,8 +261,10 @@ const skyColor = computed(() => {
   return vrSpaceStore.currentVrSpace?.dbData.skyColor ?? 'lightskyblue';
 });
 
+const isTouchDevice = ref(false);
 onBeforeMount(async () => {
   console.log('VrAframe onBeforeMount');
+  isTouchDevice.value = aframeUtils.device.isTablet() || aframeUtils.device.isMobile();
   // console.log('onBeforeMount completed');
 });
 
