@@ -46,11 +46,11 @@
       scale="0.1 0.1 0.1" /> -->
 
   <a-entity id="camera-rig" ref="camerarigTag"
-    :movement-controls="`enabled: ${isTouchDevice}; controls: nipple; speed: 0.5;`"
-    :nipple-controls="`enabled: ${isTouchDevice}; lookJoystickEnabled: false; moveJostickPosition: left;`">
+    :movement-controls="`enabled: ${isTouchDevice}; controls: nipple; speed: 0.7;`"
+    :nipple-controls="`enabled: ${isTouchDevice};mode: static; rotationSensitivity: 2.0; bottomMargin: 70px; sideMargin: 30px;`">
     <a-sphere radius="0.3" />
     <a-entity camera id="camera" ref="cameraTag"
-      look-controls="reverseMouseDrag: false; reverseTouchDrag: true; pointerLockEnabled: true;"
+      look-controls="touchEnabled: true; reverseMouseDrag: false; reverseTouchDrag: true; pointerLockEnabled: true;"
       wasd-controls="acceleration:35;"
       :simple-navmesh-constraint="`navmesh: .navmesh; fall: 1; height: ${defaultHeightOverGround};`"
       emit-move="interval: 20;" :position="`0 ${defaultHeightOverGround} 0`">
