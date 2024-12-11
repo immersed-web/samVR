@@ -384,7 +384,8 @@ function onSceneLoaded(evt: Event) {
 function onRenderStart(evt: Event) {
   console.log('render started:', evt);
 
-  // fixes a bug in nipplejs where joystick touch is offset. Cause seem to be instatntiating nipplejs before relevant parts of dom is visible/rendered.
+  // fixes a bug in nipplejs where joystick touch is offset. Cause seem to be instantiating nipplejs before relevant parts of dom is visible/rendered.
+  // a resize event will trigger nipplejs to recalculate it's measurements.
   // reference: https://github.com/yoannmoinet/nipplejs/issues/39#issuecomment-401884728
   window.dispatchEvent(new Event('resize'));
 }
