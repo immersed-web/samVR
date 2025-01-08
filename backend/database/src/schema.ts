@@ -3,7 +3,7 @@ import { pgTable, pgEnum, varchar, timestamp, text, integer, uniqueIndex, uuid, 
 import { sql } from "drizzle-orm"
 import { relations } from "drizzle-orm/relations";
 
-import type { StreamId, UserId, VrSpaceId, AssetId, CameraId, PlacedObjectId, SenderId, AllFileExtensions } from 'schemas';
+import type { StreamId, UserId, VrSpaceId, AssetId, CameraId, PlacedObjectId, SenderId, AllFileExtensions, AvatarDesign } from 'schemas';
 
 export const CameraTypeEnum = pgEnum("CameraType", ['panoramic360', 'normal'])
 // export const AssetFileFormat = pgEnum("AssetFileFormat", ['glb', 'png', 'jpg', 'jpeg', 'pdf',])
@@ -75,6 +75,7 @@ export const users = pgTable("Users", {
 	username: text("username").notNull(),
 	password: text("password").notNull(),
 	role: RoleEnum("role").default('user').notNull(),
+	avatarDesign: json("avatarDesign").$type<AvatarDesign>(),
 },
 	(table) => {
 		return {

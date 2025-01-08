@@ -43,6 +43,8 @@ export class UserClient extends BaseClient {
       this.vrSpace._notifyStateUpdated('a client updated producers');
     });
 
+    this.avatarDesign = this.dbData.value?.avatarDesign ?? undefined;
+
     this._onClientStateUpdated('client instance was created on server')
   }
   readonly clientType = 'client' as const satisfies ClientType;
@@ -107,7 +109,7 @@ export class UserClient extends BaseClient {
 
   getPrivateState() {
     const publicState = this.getPublicState();
-    const pickedPublicState = pick(publicState, ['userId', 'connectionId', 'username', 'ownedStreams']);
+    const pickedPublicState = pick(publicState, ['userId', 'connectionId', 'username', 'ownedStreams', 'avatarDesign']);
     const privateState = {
       ...pickedPublicState,
       assets: this.dbData.value?.assets ?? []

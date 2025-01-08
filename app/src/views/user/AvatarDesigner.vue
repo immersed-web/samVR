@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { ref, type Ref, reactive, onBeforeMount, watch, onMounted } from 'vue';
+import { ref, type Ref, reactive, watch, onMounted } from 'vue';
 import { type Entity } from 'aframe';
 import { stringify, parse } from 'devalue';
 
 import MaxWidth7xl from '@/components/layout/MaxWidth7xl.vue';
-import UIOverlay from '@/components/UIOverlay.vue';
 import PopUp from '@/components/PopUp.vue';
 
 import {
@@ -23,43 +22,53 @@ import WaitForAframe from '@/components/WaitForAframe.vue';
 import { avatarAssets, type AvatarDesign, defaultAvatarDesign, type PartKeyWithColor, skinParts } from 'schemas';
 
 import { useConnectionStore } from '@/stores/connectionStore';
+import { useClientStore } from '@/stores/clientStore';
 
 const connectionStore = useConnectionStore();
+const clientStore = useClientStore()
 
 onMounted(() => {
-  loadAvatarFromStorage();
+  const wasLoaded = loadAvatarFromClientState();
+  if (!wasLoaded) {
+    loadAvatarFromStorage();
+  }
+  // we only start watching after loading the (maybe) saved avatardesign
+  watch(() => currentAvatarSettings, () => saveAvatarSettingsToStorage(), { deep: true });
 });
 
 const currentAvatarSettings = reactive<AvatarDesign>(defaultAvatarDesign);
 
-watch(() => currentAvatarSettings, () => saveAvatarSettingsToStorage(), { deep: true });
 function saveAvatarSettingsToStorage() {
   // console.log('avatarSettings before save:', currentAvatarSettings);
   window.localStorage.setItem('avatarSettings', stringify(currentAvatarSettings));
   connectionStore.client.user.updateAvatarDesign.mutate(currentAvatarSettings);
 }
 
+function loadAvatarFromClientState() {
+  const avatarDesign = clientStore.clientState?.avatarDesign;
+  if (avatarDesign) {
+    currentAvatarSettings.parts = avatarDesign.parts;
+    currentAvatarSettings.skinColor = avatarDesign.skinColor;
+    return true;
+  }
+  return false;
+}
+
 function loadAvatarFromStorage() {
   const loadedString = localStorage.getItem('avatarSettings');
   if (!loadedString) {
-    console.error('failed to load from localstorage');
-    return;
+    console.error('no saved avatardesign in localstorage');
+  } else {
+    const parsedAvatarSettings = parse(loadedString);
+    currentAvatarSettings.parts = parsedAvatarSettings.parts;
+    currentAvatarSettings.skinColor = parsedAvatarSettings.skinColor;
+    console.log("Loaded skin color", parsedAvatarSettings.skinColor);
+    if (parsedAvatarSettings.skinColor) {
+      skinColorIsActive.value = true
+      currentSkinColor.value = parsedAvatarSettings.skinColor
+    }
+    console.log("Loaded parts", parsedAvatarSettings.parts)
   }
-  const parsedAvatarSettings = parse(loadedString);
-  currentAvatarSettings.parts = parsedAvatarSettings.parts;
-  currentAvatarSettings.skinColor = parsedAvatarSettings.skinColor;
-  console.log("Loaded skin color", parsedAvatarSettings.skinColor);
-  if (parsedAvatarSettings.skinColor) {
-    skinColorIsActive.value = true
-    currentSkinColor.value = parsedAvatarSettings.skinColor
-  }
-  console.log("Loaded parts", parsedAvatarSettings.parts)
-  // parsedAvatarSettings.parts.forEach(part => {
-  //   console.log(part, part.colors)
-  // });
-  // for (const [key, value] of Object.entries(parsedAvatarSettings.parts)) {
-  //   console.log(key, value, partsNrOfColors[key]);
-  // }
 
 }
 

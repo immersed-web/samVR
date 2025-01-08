@@ -6,7 +6,7 @@ log.enable(process.env.DEBUG);
 import { db, getPermissionLevelForTarget, groupUserPermissions, queryUserWithIncludes, schema } from 'database';
 import { procedure as p, router, atLeastUserP, isUserClientM } from '../trpc/trpc.js';
 import { z } from 'zod';
-import { AvatarDesignSchema, LocalClientInitDataSchema, PermissionDeleteSchema, PermissionInsertSchema, UuidSchema, hasAtLeastPermissionLevel, isStreamPermission, isVrSpacePermission } from 'schemas';
+import { AvatarDesignSchema, LocalClientInitDataSchema, PermissionDeleteSchema, PermissionInsertSchema, UuidSchema, hasAtLeastPermissionLevel, hasAtLeastSecurityRole, isStreamPermission, isVrSpacePermission } from 'schemas';
 import { Stream, VrSpace } from 'classes/InternalClasses.js';
 import { and, eq } from 'drizzle-orm';
 
@@ -22,8 +22,15 @@ export const userRouter = router({
   }),
   updateAvatarDesign: p.use(isUserClientM).input(AvatarDesignSchema).mutation(async ({ ctx, input }) => {
     ctx.client.avatarDesign = input;
+    if (hasAtLeastSecurityRole(ctx.client.role, 'user')) {
+      const updateResponse = await db.update(schema.users).set({
+        avatarDesign: input,
+      }).where(eq(schema.users.userId, ctx.userId)).returning();
+      ctx.client.loadDbDataAndNotifySelf('avatar design updated');
+    }
   }),
   initLocalClientData: p.use(isUserClientM).input(LocalClientInitDataSchema).mutation(async ({ ctx, input }) => {
+    log.debug('initLocalClientData triggered');
     // log.debug('initLocalClientData', input);
     ctx.client.avatarDesign = input.avatarDesign;
   }),
