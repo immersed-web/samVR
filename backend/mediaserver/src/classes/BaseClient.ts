@@ -345,7 +345,8 @@ export class BaseClient {
     }
     const canConsume = this.currentRouter.canConsume({ producerId, rtpCapabilities: this.rtpCapabilities });
     if( !canConsume){
-      throw Error('Client is not capable of consuming the producer according to provided rtpCapabilities');
+      throw Error(`Client is not capable of consuming the producer according to provided rtpCapabilities.
+        Provided rtpCapabilities: ${this.rtpCapabilities}`);
     }
 
     const consumer = await this.receiveTransport.consume({

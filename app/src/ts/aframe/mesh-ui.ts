@@ -107,7 +107,7 @@ export default async function () {
 
       this.el.addEventListener('child-detached', (evt) => {
         evt.stopPropagation(); // We only care about direct children
-        console.log('child detached:',evt.detail);
+        // console.log('child detached:',evt.detail);
         const childEntity = evt.detail.el as Entity
         // Dont know why we need to do this. Thought "normal" entities would also be removed by the .clear() in rebuildChildren
         if (!hasMeshUIComponent(childEntity)) {
@@ -122,7 +122,7 @@ export default async function () {
       // I tried to change the children order manually but doesnt seem to have any impact.
       // Thus we take the brute force way and remove all the children and rebuild it.
       const rebuildChildren = () => {
-        console.log('rebuilding childList');
+        // console.log('rebuilding childList');
         this.block.clear();
         const children = this.el.children;
         for (const child of children) {

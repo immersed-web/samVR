@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia';
 import { eventReceiver, type RouterOutputs } from '@/modules/trpcClient';
-import { soupDevice, attachTransportEvents, type ProduceAppData } from '@/modules/mediasoup';
-import type {types as soupTypes } from 'mediasoup-client';
-import { reactive, ref, shallowReactive, shallowRef, markRaw, type Raw } from 'vue';
+import { attachTransportEvents, type ProduceAppData } from '@/modules/mediasoup';
+import { Device, type types as soupTypes } from 'mediasoup-client';
+import { reactive, ref, shallowReactive, shallowRef, markRaw, type Raw, computed } from 'vue';
 import { useIntervalFn, useEventListener } from '@vueuse/core';
 import { useConnectionStore } from './connectionStore';
 import type { ConsumerId, ProducerId, ProducerInfo } from 'schemas/mediasoup';
@@ -91,7 +91,9 @@ function extractConsumerStats(newRtcStats: RTCStatsReport, prevConsumerStats?: C
   return newConsumerStat;
 }
 export const useSoupStore = defineStore('soup', () =>{
+  // dont fall in to the trap to make this a computed. the loaded state of Device is not reactive.
   const deviceLoaded = ref(false);
+  let soupDevice: Device | undefined; 
   const sendTransport = shallowRef<soupTypes.Transport>();
   const receiveTransport = shallowRef<soupTypes.Transport>();
   const userHasInteracted = ref(navigator.userActivation.hasBeenActive);
@@ -200,24 +202,42 @@ export const useSoupStore = defineStore('soup', () =>{
   // });
 
   async function loadDevice() {
-    if(soupDevice.loaded){
-      throw Error('mediasoup device already loaded!');
+    if (soupDevice !== undefined) {
+      if (soupDevice.loaded) {
+        throw Error('mediasoup device already loaded!');
+      } else {
+        throw Error('mediasoup device defined but not loaded. Invalid state!');
+      }
     }
+    soupDevice = new Device();
     const routerRtpCapabilities = await connectionStore.client.soup.getRouterRTPCapabilities.query();
     console.log('received routerRtpCapabilities', routerRtpCapabilities);
-    await soupDevice.load({ routerRtpCapabilities});
+    await soupDevice.load({ routerRtpCapabilities });
     deviceLoaded.value = soupDevice.loaded;
-    connectionStore.client.soup.setRTPCapabilities.mutate({
+    await connectionStore.client.soup.setRTPCapabilities.mutate({
       rtpCapabilities: soupDevice.rtpCapabilities,
     });
+    console.log('soupDevice loaded!');
   }
 
-  // TODO: implement this. It will be needed if user jumps betweeen events.
-  // Every event has separate medisoup router and each router needs separate client side device (I think)
   async function unloadDevice(){
+    if (!deviceLoaded.value) {
+      console.log('No need to unload device. Device is already unloaded or undefined');
+      return;
+    }
+    soupDevice = undefined;
+    deviceLoaded.value = false;
+    console.log('soupDevice unloaded!');
+  }
+
+  function isDeviceLoaded(soupDevice: Device | undefined): soupDevice is Device {
+    return soupDevice?.loaded ?? false;
   }
 
   async function createSendTransport(){
+    if (!isDeviceLoaded(soupDevice)) {
+      throw Error('tried to create sendTransport but device was not loaded');
+    };
     if(sendTransport.value){
       // throw Error('local sendTransport already exists. Wont create a new one!');
       console.warn('local sendTransport already exists. Wont create a new one!');
@@ -237,6 +257,9 @@ export const useSoupStore = defineStore('soup', () =>{
   }
 
   async function createReceiveTransport(){
+    if (!isDeviceLoaded(soupDevice)) {
+      throw Error('tried to create receiveTransport but device was not loaded');
+    }
     if(receiveTransport.value){
       // throw Error('local receiveTransport already exists. Wont create a new one!');
       console.warn('local receiveTransport already exists. Wont create a new one!');
@@ -468,6 +491,7 @@ export const useSoupStore = defineStore('soup', () =>{
   return {
     userHasInteracted,
     loadDevice,
+    unloadDevice,
     deviceLoaded,
     createSendTransport,
     createReceiveTransport,

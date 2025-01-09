@@ -92,6 +92,7 @@ provide(aFrameSceneProvideKey, { sceneTag: aframeScene, domOutlet });
 
 watch(() => props.vrSpaceId, () => {
   console.log('vrSpaceId updated:', props.vrSpaceId);
+  // Here we force refresh for simplicity. Better throw away all client state and start fresh.
   const url = router.resolve({ name: 'vrSpace', params: { vrSpaceId: props.vrSpaceId } }).href;
   window.location.href = url;
 });
@@ -219,6 +220,7 @@ const { isReady: mediasoupInitialized } = useAsyncState(async () => {
 onBeforeUnmount(async () => {
   await soupStore.closeAudioProducer();
   await vrSpaceStore.leaveVrSpace();
+  await soupStore.unloadDevice();
 });
 
 onUpdated(() => {

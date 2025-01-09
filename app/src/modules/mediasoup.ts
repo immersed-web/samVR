@@ -1,6 +1,5 @@
 import {Device, types as soupTypes} from 'mediasoup-client';
 import type { ProducerId, TransportId, CreateProducerPayload } from 'schemas/mediasoup';
-export const soupDevice = new Device();
 
 import { clientOrThrow } from './trpcClient';
 
