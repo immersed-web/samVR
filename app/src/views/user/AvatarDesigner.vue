@@ -23,9 +23,13 @@ import { avatarAssets, type AvatarDesign, defaultAvatarDesign, type PartKeyWithC
 
 import { useConnectionStore } from '@/stores/connectionStore';
 import { useClientStore } from '@/stores/clientStore';
+import { useAuthStore } from '@/stores/authStore';
 
 const connectionStore = useConnectionStore();
 const clientStore = useClientStore()
+const authStore = useAuthStore();
+
+const currentAvatarSettings = reactive<AvatarDesign>(defaultAvatarDesign);
 
 onMounted(() => {
   const wasLoaded = loadAvatarFromClientState();
@@ -33,15 +37,17 @@ onMounted(() => {
     loadAvatarFromStorage();
   }
   // we only start watching after loading the (maybe) saved avatardesign
-  watch(() => currentAvatarSettings, () => saveAvatarSettingsToStorage(), { deep: true });
+  watch(() => currentAvatarSettings, () => {
+    if (authStore.role === 'guest') {
+      saveAvatarSettingsToStorage();
+    }
+    connectionStore.client.user.updateAvatarDesign.mutate(currentAvatarSettings);
+  }, { deep: true });
 });
-
-const currentAvatarSettings = reactive<AvatarDesign>(defaultAvatarDesign);
 
 function saveAvatarSettingsToStorage() {
   // console.log('avatarSettings before save:', currentAvatarSettings);
   window.localStorage.setItem('avatarSettings', stringify(currentAvatarSettings));
-  connectionStore.client.user.updateAvatarDesign.mutate(currentAvatarSettings);
 }
 
 function loadAvatarFromClientState() {
@@ -77,9 +83,9 @@ const currentSkinColor = ref('');
 const skinColorIsActive = ref(false);
 
 function onColorPicked(part: PartKeyWithColor, colorIdx: number, color: string) {
-  console.log('color picked', part, colorIdx, color);
+  // console.log('color picked', part, colorIdx, color);
   if (customColorsIsActive[part][colorIdx]) {
-    console.log('setting color', part, colorIdx, color);
+    // console.log('setting color', part, colorIdx, color);
     currentAvatarSettings.parts[part].colors[colorIdx] = color;
   }
   // customColorsIsActive[part][colorIdx] = true;
@@ -113,17 +119,17 @@ const mouthFlipAssets = ref(['flip_a_e_i', 'flip_b_m_p', 'flip_c_d_n_s_t_x_y_z',
 
 const partsNrOfColors = reactive(Object.fromEntries(Object.keys(avatarAssets).map(k => [k, 0])));
 function setNrOfCustomColors(part: string, evt: CustomEvent) {
-  console.log('setNrOfCustomColors', evt, part);
+  // console.log('setNrOfCustomColors', evt, part);
   const entity = evt.target as Entity;
   // @ts-ignore
   const nrOfColors = entity.components['model-color'].nrOfCustomColors as number;
-  console.log(part, nrOfColors, entity.components['model-color']);
+  // console.log(part, nrOfColors, entity.components['model-color']);
   partsNrOfColors[part] = nrOfColors;
   for (const [key, value] of Object.entries(currentAvatarSettings.parts)) {
     const keyTyped = key as PartKeyWithColor;
-    console.log(keyTyped, value, partsNrOfColors[key]);
+    // console.log(keyTyped, value, partsNrOfColors[key]);
     for (let i = 0; i < partsNrOfColors[keyTyped]; i++) {
-      console.log(currentAvatarSettings.parts[keyTyped].colors[i])
+      // console.log(currentAvatarSettings.parts[keyTyped].colors[i])
       // currentColorSettings[key][i] = currentAvatarSettings.parts[key].colors[i];
       if (currentAvatarSettings.parts[keyTyped].colors[i]) {
         customColorsIsActive[keyTyped][i] = true;
@@ -142,11 +148,11 @@ function changeClothingIdx(partType: keyof typeof avatarAssets, offset: number) 
     console.warn('no idx for that modelName');
     idx = 0;
   }
-  console.log(idx);
+  // console.log(idx);
   const newIdx = (idx + offset + l) % l;
-  console.log(newIdx);
+  // console.log(newIdx);
   const newModelName = partList[newIdx];
-  console.log(newModelName);
+  // console.log(newModelName);
   currentAvatarSettings.parts[partType].model = newModelName;
 }
 
@@ -156,7 +162,7 @@ const popupPartsKeys = ref<{ part: PartKeyWithColor, cIdx: number } | null>(null
 const currentColorPickerValue = ref('');
 
 function openPopupParts(evt: Event, part: PartKeyWithColor, cIdx: number) {
-  console.log('open popup', part, cIdx);
+  // console.log('open popup', part, cIdx);
   popupPartsKeys.value = { part, cIdx };
   const savedColor = currentAvatarSettings.parts[part].colors[cIdx]
   if (savedColor) {

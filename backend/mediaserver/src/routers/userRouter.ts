@@ -21,6 +21,7 @@ export const userRouter = router({
     await ctx.client.loadDbDataAndNotifySelf();
   }),
   updateAvatarDesign: p.use(isUserClientM).input(AvatarDesignSchema).mutation(async ({ ctx, input }) => {
+    log.info('updateAvatarDesign triggered');
     ctx.client.avatarDesign = input;
     if (hasAtLeastSecurityRole(ctx.client.role, 'user')) {
       const updateResponse = await db.update(schema.users).set({

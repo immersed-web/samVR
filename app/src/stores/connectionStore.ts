@@ -13,9 +13,9 @@ export const useConnectionStore = defineStore('connection', () => {
   const connected = ref(false);
   const connectionType = ref<ClientType>();
 
-  watch(connected, async (newConnected) => {
+  watch(connected, async (newConnectedState) => {
     console.log('connection state changed');
-    if (newConnected) {
+    if (newConnectedState) {
       const avatarString = localStorage.getItem('avatarSettings');
       if (typeof avatarString === 'string') {
         {
