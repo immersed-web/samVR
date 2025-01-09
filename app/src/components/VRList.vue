@@ -33,6 +33,10 @@
               :to="{ name: 'vrSpaceSettings', params: { vrSpaceId: space.vrSpaceId } }" class="btn btn-sm">
               Redigera
             </RouterLink>
+            <RouterLink tag="button" v-else-if="hasAtLeastSecurityRole(authStore.role, 'superadmin')"
+              :to="{ name: 'vrSpaceSettings', params: { vrSpaceId: space.vrSpaceId } }" class="btn btn-sm btn-error">
+              Redigera (admin)
+            </RouterLink>
             <RouterLink tag="button" class="btn btn-primary btn-sm"
               :to="{ name: 'vrSpace', params: { vrSpaceId: space.vrSpaceId } }">
               Besök
@@ -50,9 +54,10 @@ import { type VrSpaceId, hasAtLeastPermissionLevel, hasAtLeastSecurityRole, tran
 import { onBeforeMount, ref, computed } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
 import { getAssetUrl } from '@/modules/utils';
+import { useAuthStore } from '@/stores/authStore';
 
 const connection = useConnectionStore();
-// const authStore = useAuthStore();
+const authStore = useAuthStore();
 // const vrSpaceStore = useVrSpaceStore();
 
 const props = defineProps({

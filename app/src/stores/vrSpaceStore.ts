@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 
-import { hasAtLeastPermissionLevel, PlacedObjectInsertSchema, VrSpaceSelectSchema, type AssetId, type ClientRealtimeData, type ConnectionId, type PlacedObjectId, type PlacedObjectInsert, type ScreenShare, type VrSpaceId, type VrSpaceSelect } from 'schemas';
+import { hasAtLeastPermissionLevel, hasAtLeastSecurityRole, PlacedObjectInsertSchema, VrSpaceSelectSchema, type AssetId, type ClientRealtimeData, type ConnectionId, type PlacedObjectId, type PlacedObjectInsert, type ScreenShare, type VrSpaceId, type VrSpaceSelect } from 'schemas';
 import { computed, readonly, ref, watch, type DeepReadonly } from 'vue';
 import { useConnectionStore } from './connectionStore';
 import { eventReceiver, type ExtractPayload } from '@/modules/trpcClient';
@@ -79,6 +79,7 @@ export const useVrSpaceStore = defineStore('vrSpace', () => {
   const { ignoreUpdates } = watchIgnorable(() => writableVrSpaceDbData.value, async (newVal, oldVal) => {
     console.log('currentVrSpace watcher triggered', oldVal, newVal);
     if (newVal?.ownerUserId === clientStore.clientState?.userId
+      || hasAtLeastSecurityRole(authStore.role, 'superadmin')
       || currentVrSpace.value?.dbData.allowedUsers.some(p => {
         const permissionMatched = p.user.userId === clientStore.clientState?.userId;
         const isAtLeastEditor = hasAtLeastPermissionLevel(p.permissionLevel, 'edit');

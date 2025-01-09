@@ -121,10 +121,11 @@ export const userInVrSpaceP = userClientP.use(({ ctx, next, path }) => {
 export const userWithEditRightsToVrSpace = userInVrSpaceP.use(({ ctx, next, path }) => {
   const vrSpaceDbData = ctx.vrSpace.getPublicState().dbData
   const isOwner = vrSpaceDbData.ownerUserId === ctx.userId;
+  const isSuperAdmin = hasAtLeastSecurityRole(ctx.role, 'superadmin');
   const isAllowed = vrSpaceDbData.allowedUsers.some(user => {
     return user.user.userId === ctx.userId && hasAtLeastPermissionLevel(user.permissionLevel, 'edit')
   })
-  if (!isAllowed && !isOwner) {
+  if (!isAllowed && !isOwner && !isSuperAdmin) {
     throw new TRPCError({ code: 'UNAUTHORIZED', message: 'du har inte skrivrättigheter till det här vrSpacet' });
   }
   return next();
@@ -133,10 +134,11 @@ export const userWithEditRightsToVrSpace = userInVrSpaceP.use(({ ctx, next, path
 export const userWithAdminRightsToVrSpace = userInVrSpaceP.use(({ ctx, next, path }) => {
   const vrSpaceDbData = ctx.vrSpace.getPublicState().dbData
   const isOwner = vrSpaceDbData.ownerUserId === ctx.userId;
+  const isSuperAdmin = hasAtLeastSecurityRole(ctx.role, 'superadmin');
   const isAllowed = vrSpaceDbData.allowedUsers.some(user => {
     return user.user.userId === ctx.userId && hasAtLeastPermissionLevel(user.permissionLevel, 'admin')
   })
-  if (!isAllowed && !isOwner) {
+  if (!isAllowed && !isOwner && !isSuperAdmin) {
     throw new TRPCError({ code: 'UNAUTHORIZED', message: 'du har inte adminrättigheter till det här vrSpacet' });
   }
   return next();
