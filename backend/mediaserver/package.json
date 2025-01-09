@@ -38,7 +38,7 @@
     "superjson": "^1.13.3",
     "tozod": "^3.0.0",
     "ts-event-bridge": "^0.0.3",
-    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.43.0"
+    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.51.0"
   },
   "devDependencies": {
     "@types/ip": "^1.1.0",
