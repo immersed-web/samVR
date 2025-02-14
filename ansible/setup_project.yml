@@ -18,14 +18,14 @@
     PNPM_HOME: "{{ pnpm_home }}"
     PATH: "{{pnpm_home}}:{{ansible_env.PATH}}"
   tasks:
-    - name: Generate prisma client
-      ansible.builtin.command:
-        argv:
-          - pnpm
-          - --filter
-          - database
-          - generate
-      changed_when: true
+    # - name: Generate prisma client
+    #   ansible.builtin.command:
+    #     argv:
+    #       - pnpm
+    #       - --filter
+    #       - database
+    #       - generate
+    #   changed_when: true
     - name: Create/Start postgres DB
       ansible.builtin.command:
         chdir: "{{ playbook_dir }}/.."
