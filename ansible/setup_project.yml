@@ -6,7 +6,7 @@
   tasks:
     - name: Install
       community.general.pnpm:
-        path: "{{ ansible_env.HOME }}/origoshift"
+        path: "{{ ansible_env.HOME }}/samvr"
 - name: Setup database
   hosts: localhost
   vars:
@@ -38,7 +38,7 @@
         sleep: 2
         active_connection_states: "ESTABLISHED"
     - name: Migrate database
-      ansible.builtin.command: pnpm --filter database migrate:deploy
+      ansible.builtin.command: pnpm --filter database migrate
       register: migration_output
       changed_when: "not 'No pending migrations' in migration_output.stdout"
     - name: Seed database
