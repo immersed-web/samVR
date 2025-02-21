@@ -33,10 +33,9 @@
     #   changed_when: false
     #   register: node_version
     - name: Install nodejs
-      hosts: all
+      become: no
       block:
         - name: Install nvm
-          become: no
           ansible.builtin.shell: >
             curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
           args:
@@ -45,7 +44,6 @@
             creates: "$HOME/.nvm/nvm.sh"
 
         - name: Install node
-          become: no
           shell: >
             . {{ ansible_env.HOME }}/.nvm/nvm.sh && nvm install {{ item }}
           args:
