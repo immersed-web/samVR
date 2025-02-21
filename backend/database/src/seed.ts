@@ -24,47 +24,17 @@ const db = drizzle(queryClient, { schema });
 // async function createWithIncludes<T extends (typeof schema)[keyof typeof schema]>(includes: T) {
 
 // }
-const hashedPassword = bcrypt.hashSync('123', 10);
+const hashedPassword = bcrypt.hashSync(process.env.ADMIN_PASSWORD, 10);
 
 try {
   await db.transaction(async (tx) => {
     const createdUsers = [];
     let newUser = await tx.insert(schema.users).values({
       password: hashedPassword,
-      username: 'klas',
-      role: 'gunnar',
+      username: 'superadmin',
+      role: 'superadmin',
     }).returning();
     createdUsers.push(newUser[0]);
-    newUser = await tx.insert(schema.users).values({
-      password: hashedPassword,
-      username: 'göran',
-      role: 'user',
-    }).returning();
-    createdUsers.push(newUser[0]);
-    newUser = await tx.insert(schema.users).values({
-      password: hashedPassword,
-      username: 'fia',
-      role: 'user',
-    }).returning();
-    createdUsers.push(newUser[0]);
-    console.log(createdUsers);
-    // const cameraUuid = randomUUID();
-    // console.log(cameraUuid);
-    const newStream = await tx.insert(schema.streams).values({
-      name: 'cool stream',
-      ownerUserId: newUser[0].userId,
-      visibility: 'public',
-    }).returning();
-    console.log(newStream);
-    const newCamera = await tx.insert(schema.cameras).values({
-      name: 'cool camera',
-      orientation: 0,
-      fovStart: 0,
-      streamId: newStream[0].streamId,
-    }).returning();
-    console.log(newCamera);
-    const updatedStream = await tx.update(schema.streams).set({ mainCameraId: newCamera[0].cameraId }).where(eq(schema.streams.streamId, newStream[0].streamId)).returning();
-    console.log(updatedStream);
   });
 } catch (e: unknown) {
   console.error('failed to seed', e);
