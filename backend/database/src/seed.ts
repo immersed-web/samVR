@@ -7,6 +7,9 @@ import bcrypt from 'bcrypt'
 if (!process.env.DATABASE_URL) {
   throw new Error('Missing DATABASE_URL env var');
 }
+if (!process.env.ADMIN_PASSWORD) {
+  throw new Error('Missing ADMIN_PASSWORD env var');
+}
 // const migrationClient = postgres(process.env.DATABASE_URL, { max: 1 });
 
 const queryClient = postgres(process.env.DATABASE_URL);
