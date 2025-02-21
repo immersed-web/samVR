@@ -17,7 +17,7 @@ To install ansible follow these instructions:
 https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html
 
 ### 1. Download the repository from github
-To install Origoshift and run it on your own server, you first need to retrieve the repository from github.
+To install SamVR and run it on your own server, you first need to retrieve the repository from github.
 Using the terminal, go to your home folder on the server:
 ```
 cd ~
@@ -25,7 +25,7 @@ cd ~
 Clone the repository from github and then go into the root directory of the project:
 ```
 git clone https://github.com/immersed-web/samvr.git --recurse-submodules
-cd origoshift
+cd samvr
 ```
 
 ### 2. Configure _.env_ file

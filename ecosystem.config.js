@@ -82,7 +82,7 @@ module.exports = {
         PGPASSWORD: envVars['DATABASE_PASSWORD']
       },
       cwd: './db_backups/',
-      script: 'pg_dump -Fc -h localhost -d origoshift -p 5432 -U postgres > $(date +%F_%H-%M).dump;'
+      script: 'pg_dump -Fc -h localhost -d samvr -p 5432 -U postgres > $(date +%F_%H-%M).dump;'
     }
   ]
 }

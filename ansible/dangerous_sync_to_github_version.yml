@@ -11,7 +11,7 @@
   #   ansible.builtin.git:
   #     clone: false
   #     update: true
-  #     repo: "https://github.com/inclubit/origoshift.git"
+  #     repo: "https://github.com/immersed-web/samvr.git"
   #     version: main
   # - name: Pull latest version from github
   #   ansible.builtin.command: git pull 
