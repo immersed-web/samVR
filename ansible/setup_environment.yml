@@ -32,22 +32,29 @@
     #   ignore_errors: true
     #   changed_when: false
     #   register: node_version
-    - name: Setup nodejs
-      become: true
-      # when: node_version.stdout == 'NONODE'
+    - name: Install nodejs
+      hosts: all
       block:
-        - name: Add nodejs apt key
-          ansible.builtin.apt_key:
-            url: https://deb.nodesource.com/gpgkey/nodesource.gpg.key
-        - name: Add node repo to apt
-          ansible.builtin.apt_repository:
-            repo: deb https://deb.nodesource.com/node_18.x {{ ansible_distribution_release }} main
-            update_cache: true
-        - name: Install Node 18
-          ansible.builtin.apt:
-            name: nodejs
-        # Since this will be run from witihn the project, the "packageManager" field in
-        # the root package.json will be used and that version of pnpm will be installed automatically
+        - name: Install nvm
+          become: no
+          ansible.builtin.shell: >
+            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+          args:
+            executable: /bin/bash
+            chdir: "$HOME"
+            creates: "$HOME/.nvm/nvm.sh"
+
+        - name: Install node
+          become: no
+          shell: >
+            . {{ ansible_env.HOME }}/.nvm/nvm.sh && nvm install {{ item }}
+          args:
+            executable: /bin/bash
+            chdir: "{{ ansible_env.HOME }}"
+            creates: "{{ ansible_env.HOME }}/.nvm/versions/{{ item }}"
+          loop:
+            - 22
+        # I dont think this will work if switching node versions, as corepack is enabled/disabled per node install (I think)
         - name: Enable corepack
           ansible.builtin.shell:
             cmd: "touch {{ ansible_env['HOME'] }}/corepack_enabled_flag && corepack enable"
@@ -56,8 +63,32 @@
         - name: Print corepack enable
           ansible.builtin.debug:
             var: corepack_enable
+    # - name: Setup nodejs
+    #   become: true
+    #   # when: node_version.stdout == 'NONODE'
+    #   block:
+    #     - name: Add nodejs apt key
+    #       ansible.builtin.apt_key:
+    #         url: https://deb.nodesource.com/gpgkey/nodesource.gpg.key
+    #     - name: Add node repo to apt
+    #       ansible.builtin.apt_repository:
+    #         repo: deb https://deb.nodesource.com/node_18.x {{ ansible_distribution_release }} main
+    #         update_cache: true
+    #     - name: Install Node 18
+    #       ansible.builtin.apt:
+    #         name: nodejs
+    #     # Since this will be run from witihn the project, the "packageManager" field in
+    #     # the root package.json will be used and that version of pnpm will be installed automatically
+    #     - name: Enable corepack
+    #       ansible.builtin.shell:
+    #         cmd: "touch {{ ansible_env['HOME'] }}/corepack_enabled_flag && corepack enable"
+    #         creates: "{{ ansible_env['HOME'] }}/corepack_enabled_flag"
+    #       register: corepack_enable
+    #     - name: Print corepack enable
+    #       ansible.builtin.debug:
+    #         var: corepack_enable
     - name: Setup pnpm
-      become: true
+      # become: true
       block:
         # - name: Install and enable pnpm
         #   ansible.builtin.shell:
@@ -85,7 +116,7 @@
     #     executable: /bin/bash
     #   register: pnpm_home_path
     - name: Install global node packages
-      become: true
+      # become: true
       environment:
         PNPM_HOME: "{{ pnpm_home }}"
         PATH: "{{pnpm_home}}:{{ansible_env.PATH}}"
@@ -111,7 +142,7 @@
           - python3
           - python3-pip
           - build-essential
-      become: true
+      # become: true
     - name: Setup Caddy 2
       become: true
       block:
@@ -146,7 +177,7 @@
             capability: cap_net_bind_service=eip
             state: present
     - name: Setup pm2 log rotation
-      become: true
+      # become: true
       environment:
         PNPM_HOME: "{{ pnpm_home }}"
         PATH: "{{pnpm_home}}:{{ansible_env.PATH}}"
