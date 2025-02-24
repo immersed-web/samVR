@@ -18,14 +18,6 @@
     PNPM_HOME: "{{ pnpm_home }}"
     PATH: "{{pnpm_home}}:{{ansible_env.PATH}}"
   tasks:
-    # - name: Generate prisma client
-    #   ansible.builtin.command:
-    #     argv:
-    #       - pnpm
-    #       - --filter
-    #       - database
-    #       - generate
-    #   changed_when: true
     - name: Create/Start postgres DB
       ansible.builtin.command:
         chdir: "{{ playbook_dir }}/.."
@@ -37,10 +29,10 @@
         port: 5432
         sleep: 2
         active_connection_states: "ESTABLISHED"
-    - name: Migrate database
-      ansible.builtin.command: pnpm --filter database migrate
-      register: migration_output
-      changed_when: "not 'No pending migrations' in migration_output.stdout"
+    - name: Push database schema
+      ansible.builtin.command: pnpm --filter database push
+      register: database_push_output
+      changed_when: "not 'No changes detected' in database_push_output.stdout"
     - name: Seed database
       ansible.builtin.command: pnpm --filter database seed
 - name: Build monorepo
@@ -54,10 +46,10 @@
     PNPM_HOME: "{{ pnpm_home }}"
     PATH: "{{pnpm_home}}:{{ansible_env.PATH}}"
   tasks:
-    - name: Build database js bundle
-      ansible.builtin.command: pnpm --filter database build
-      changed_when: true
-    - name: Build shared packages
+    # - name: Build database js bundle
+    #   ansible.builtin.command: pnpm --filter database build
+    #   changed_when: true
+    - name: Build shared packages (./packages/**)
       ansible.builtin.command:
         chdir: "{{ playbook_dir }}/.."
         argv:
@@ -66,14 +58,25 @@
           - "./packages/**"
           - -r
           - build
-      changed_when: true
-    - name: Build all the node projects
+      register: packages_build_output
+      changed_when: "'built in' in packages_build_output.stdout"
+    # - name: Build all the node projects
+    #   ansible.builtin.command:
+    #     chdir: "{{ playbook_dir }}/.."
+    #     argv:
+    #       - pnpm
+    #       - --filter
+    #       - "!./packages/**"
+    #       - -r
+    #       - build
+    #   changed_when: true
+    - name: Build the frontend (app)
       ansible.builtin.command:
         chdir: "{{ playbook_dir }}/.."
         argv:
           - pnpm
           - --filter
-          - "!./packages/**"
-          - -r
+          - "app"
           - build
-      changed_when: true
+      register: app_build_output
+      changed_when: "'built in' in app_build_output.stdout"
