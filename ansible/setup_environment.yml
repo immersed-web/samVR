@@ -50,8 +50,8 @@
             executable: /bin/bash
             chdir: "{{ ansible_env.HOME }}"
             # creates: "{{ ansible_env.HOME }}/.nvm/versions/node/{{ item }}"
-            register: nvm_install_response
-            changed_when: "'already installed' not in nvm_install_response.stderr"
+          register: nvm_install_response
+          changed_when: "'already installed' not in nvm_install_response.stderr"
           loop:
             - 22
         # Since this will be run from witihn the project, the "packageManager" field in
