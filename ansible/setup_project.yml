@@ -6,7 +6,7 @@
   tasks:
     - name: Install
       community.general.pnpm:
-        path: "{{ ansible_env.HOME }}/samvr"
+        path: "{{ playbook_dir }}/.."
 - name: Setup database
   hosts: localhost
   vars:
