@@ -29,8 +29,12 @@
         port: 5432
         sleep: 2
         active_connection_states: "ESTABLISHED"
-    - name: Push database schema
-      ansible.builtin.command: pnpm --filter database push
+    # - name: Push database schema
+    #   ansible.builtin.command: pnpm --filter database push
+    #   register: database_push_output
+    #   changed_when: "not 'No changes detected' in database_push_output.stdout"
+    - name: Migrate database schema
+      ansible.builtin.command: pnpm --filter database migrate
       register: database_push_output
       changed_when: "not 'No changes detected' in database_push_output.stdout"
     - name: Seed database
