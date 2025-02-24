@@ -6,5 +6,5 @@ dist/
 docker-data/
 db_backups/
 *-gitignore
-
+tsconfig.tsbuildinfo
 certs/*.pem
