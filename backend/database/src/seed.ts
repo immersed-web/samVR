@@ -1,7 +1,8 @@
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
+// import { drizzle } from "drizzle-orm/postgres-js";
+import { drizzle } from "drizzle-orm/node-postgres";
+// import postgres from "postgres";
 import * as schema from "./schema.js";
-import { eq } from "drizzle-orm";
+// import { eq } from "drizzle-orm";
 import bcrypt from 'bcrypt'
 
 if (!process.env.DATABASE_URL) {
@@ -12,8 +13,8 @@ if (!process.env.ADMIN_PASSWORD) {
 }
 // const migrationClient = postgres(process.env.DATABASE_URL, { max: 1 });
 
-const queryClient = postgres(process.env.DATABASE_URL);
-const db = drizzle(queryClient, { schema });
+// const queryClient = postgres(process.env.DATABASE_URL);
+const db = drizzle(process.env.DATABASE_URL, { schema });
 
 // if (!await db.query.users.findFirst()) {
 
