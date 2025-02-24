@@ -52,11 +52,12 @@
             creates: "{{ ansible_env.HOME }}/.nvm/versions/{{ item }}"
           loop:
             - 22
-        # I dont think this will work if switching node versions, as corepack is enabled/disabled per node install (I think)
+        # I dont think this (the flag file) will work if switching node versions, as corepack is enabled/disabled per node install (I think)
         - name: Enable corepack
           ansible.builtin.shell:
             cmd: "touch {{ ansible_env['HOME'] }}/corepack_enabled_flag && corepack enable"
             creates: "{{ ansible_env['HOME'] }}/corepack_enabled_flag"
+            executable: /bin/bash
           register: corepack_enable
         - name: Print corepack enable
           ansible.builtin.debug:
