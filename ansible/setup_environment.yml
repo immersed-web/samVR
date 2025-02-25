@@ -61,6 +61,7 @@
           ansible.builtin.shell:
             cmd: "corepack enable && corepack enable npm && touch {{ ansible_env['HOME'] }}/corepack_enabled_flag"
             creates: "{{ ansible_env['HOME'] }}/corepack_enabled_flag"
+            chdir: "{{ playbook_dir }}/.."
             executable: /bin/bash
           # register: corepack_enable
         # - name: Print corepack enable
