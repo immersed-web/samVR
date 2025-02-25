@@ -94,11 +94,12 @@
         # the root package.json will be used and that version of pnpm will be installed automatically
         # I dont think the flag file will work if switching node versions, as corepack is enabled/disabled per node install (I think)
         - name: Enable corepack
-          ansible.builtin.shell:
-            cmd: ". {{ ansible_env['HOME'] }}/.bashrc && corepack enable && corepack enable npm && touch {{ ansible_env['HOME'] }}/corepack_enabled_flag"
-            creates: "{{ ansible_env['HOME'] }}/corepack_enabled_flag"
-            chdir: "{{ playbook_dir }}/.."
+          shell: >
+            . {{ ansible_env['HOME'] }}/.bashrc && corepack enable && corepack enable npm && touch {{ ansible_env['HOME'] }}/corepack_enabled_flag
+          args:
             executable: /bin/bash
+            chdir: "{{ playbook_dir }}/.."
+            creates: "{{ ansible_env['HOME'] }}/corepack_enabled_flag"
           # register: corepack_enable
         # - name: Print corepack enable
         #   ansible.builtin.debug:
