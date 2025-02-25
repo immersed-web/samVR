@@ -59,7 +59,7 @@
         # I dont think the flag file will work if switching node versions, as corepack is enabled/disabled per node install (I think)
         - name: Enable corepack
           ansible.builtin.shell:
-            cmd: "corepack enable && corepack enable npm && touch {{ ansible_env['HOME'] }}/corepack_enabled_flag"
+            cmd: ". {{ ansible_env.HOME }}/.nvm/nvm.sh && corepack enable && corepack enable npm && touch {{ ansible_env['HOME'] }}/corepack_enabled_flag"
             creates: "{{ ansible_env['HOME'] }}/corepack_enabled_flag"
             chdir: "{{ playbook_dir }}/.."
             executable: /bin/bash
