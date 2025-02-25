@@ -54,19 +54,6 @@
           changed_when: "'already installed' not in nvm_install_response.stderr"
           loop:
             - 22
-        # Since this will be run from witihn the project, the "packageManager" field in
-        # the root package.json will be used and that version of pnpm will be installed automatically
-        # I dont think the flag file will work if switching node versions, as corepack is enabled/disabled per node install (I think)
-        - name: Enable corepack
-          ansible.builtin.shell:
-            cmd: ". {{ ansible_env['HOME'] }}/.bashrc && corepack enable && corepack enable npm && touch {{ ansible_env['HOME'] }}/corepack_enabled_flag"
-            creates: "{{ ansible_env['HOME'] }}/corepack_enabled_flag"
-            chdir: "{{ playbook_dir }}/.."
-            executable: /bin/bash
-          # register: corepack_enable
-        # - name: Print corepack enable
-        #   ansible.builtin.debug:
-        #     var: corepack_enable
     # - name: Setup nodejs
     #   become: true
     #   # when: node_version.stdout == 'NONODE'
@@ -103,6 +90,19 @@
         #   ansible.builtin.debug:
         #     var: pnpm_install
         #   changed_when: false
+        # Since this will be run from witihn the project, the "packageManager" field in
+        # the root package.json will be used and that version of pnpm will be installed automatically
+        # I dont think the flag file will work if switching node versions, as corepack is enabled/disabled per node install (I think)
+        - name: Enable corepack
+          ansible.builtin.shell:
+            cmd: ". {{ ansible_env['HOME'] }}/.bashrc && corepack enable && corepack enable npm && touch {{ ansible_env['HOME'] }}/corepack_enabled_flag"
+            creates: "{{ ansible_env['HOME'] }}/corepack_enabled_flag"
+            chdir: "{{ playbook_dir }}/.."
+            executable: /bin/bash
+          # register: corepack_enable
+        # - name: Print corepack enable
+        #   ansible.builtin.debug:
+        #     var: corepack_enable
         - name: Run pnpm setup command
           # when: corepack_enable.changed
           ansible.builtin.command:
