@@ -104,7 +104,7 @@
           changed_when: "'Appended new lines' in pnpm_setup_output.stdout"
         - name: Extract PNPM_HOME from setup output
           set_fact:
-            pnpm_home: "{{ pnpm_setup_output.stdout | regex_search('PNPM_HOME=(.*)', '\\1') | trim | strip('\"') }}"
+            pnpm_home: "{{ pnpm_setup_output.stdout | regex_search('PNPM_HOME=(.*)', '\\1') | trim }}"
           when: pnpm_setup_output.changed
     - name: install global node packages
       environment:
