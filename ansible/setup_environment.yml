@@ -110,12 +110,16 @@
             pnpm add -g dotenv-cli
           args:
             executable: /bin/bash
+          register: dotenv-cli_install_status
+          changed_when: "'Already up to date' in dotenv-cli_install_status.stdout"
         - name: Add pm2
           ansible.builtin.shell: |
             {{ nvm_source }}
             pnpm add -g pm2
           args:
             executable: /bin/bash
+          register: pm2_install_status
+          changed_when: "'Already up to date' in pm2_install_status.stdout"
     # - name: Install global node packages
     #   # become: true
     #   environment:
