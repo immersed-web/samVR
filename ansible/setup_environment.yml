@@ -102,22 +102,36 @@
             executable: /bin/bash
           register: pnpm_setup_output
           changed_when: "'Appended new lines' in pnpm_setup_output.stdout"
-    - name: Install global node packages
-      # become: true
-      environment:
-      #   PNPM_HOME: "{{ pnpm_home }}"
-        PATH: "{{node_path}}:{{pnpm_home}}:{{ansible_env.PATH}}"
+    - name: install global node packages
       block:
         - name: Add dotenv-cli
-          community.general.pnpm:
-            executable: "{{ pnpm_home }}"
-            global: true
-            name: dotenv-cli
+          ansible.builtin.shell: |
+            {{ nvm_source }}
+            pnpm add -g dotenv-cli
+          args:
+            executable: /bin/bash
         - name: Add pm2
-          community.general.pnpm:
-            executable: "{{ pnpm_home }}"
-            global: true
-            name: pm2
+          ansible.builtin.shell: |
+            {{ nvm_source }}
+            pnpm add -g pm2
+          args:
+            executable: /bin/bash
+    # - name: Install global node packages
+    #   # become: true
+    #   environment:
+    #   #   PNPM_HOME: "{{ pnpm_home }}"
+    #     PATH: "{{node_path}}:{{pnpm_home}}:{{ansible_env.PATH}}"
+    #   block:
+    #     - name: Add dotenv-cli
+    #       community.general.pnpm:
+    #         executable: "{{ pnpm_home }}"
+    #         global: true
+    #         name: dotenv-cli
+    #     - name: Add pm2
+    #       community.general.pnpm:
+    #         executable: "{{ pnpm_home }}"
+    #         global: true
+    #         name: pm2
     - name: Install Mediasoup dependencies
       ansible.builtin.apt:
         name:
