@@ -50,7 +50,7 @@
         - name: Get and register node version
           ansible.builtin.shell: |
             {{ nvm_source }}
-            node -v | tr -d '\n' && echo -n NONODE
+            node -v | tr -d '\n' || echo -n NONODE
           args:
             executable: /bin/bash
           # ignore_errors: true
