@@ -46,18 +46,16 @@
           loop:
             - 22
     - name: Setup pnpm
-      # become: true
       block:
         - name: Get and store nodejs version in a fact
-          become: no
           ansible.builtin.shell: |
-            {{ nvm_source}}
-            node -v && echo -n NONODE
+            {{ nvm_source }}
+            node -v | tr -d '\n' && echo -n NONODE
           ignore_errors: true
           changed_when: false
-          register: node_version_raw
-          set_fact:
-            node_version: "{{ node_version_raw.stdout | trim }}"
+          register: node_version
+          # set_fact:
+          #   node_version: "{{ node_version_raw.stdout | trim }}"
         # Since this will be run from witihn the project, the "packageManager" field in
         # the root package.json will be used and that version of pnpm will be installed automatically
         # I dont think the flag file will work if switching node versions, as corepack is enabled/disabled per node install (I think)
@@ -71,15 +69,15 @@
             executable: /bin/bash
             chdir: "{{ playbook_dir }}/.."
             creates: "{{ ansible_env['HOME'] }}/corepack_enabled_for_{{ node_version }}_flag"
-        - name: Store pnpm path in a fact
+        - name: Get pnpm home
           shell: |
             {{ nvm_source }}
             which pnpm
           register: pnpm_path
           changed_when: false
+        - name: Store pnpm home in a fact
           set_fact:
             pnpm_home: "{{ pnpm_path.stdout | trim }}"
-
         # - name: Run pnpm setup command
         #   ansible.builtin.shell:
         #     cmd: pnpm setup
