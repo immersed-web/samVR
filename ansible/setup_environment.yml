@@ -64,11 +64,11 @@
             {{ nvm_source}}
             corepack enable
             corepack enable npm
-            touch {{ ansible_env['HOME'] }}/corepack_enabled_for_{{ node_version }}_flag
+            touch {{ ansible_env['HOME'] }}/corepack_enabled_for_{{ node_version.stdout }}_flag
           args:
             executable: /bin/bash
             chdir: "{{ playbook_dir }}/.."
-            creates: "{{ ansible_env['HOME'] }}/corepack_enabled_for_{{ node_version }}_flag"
+            creates: "{{ ansible_env['HOME'] }}/corepack_enabled_for_{{ node_version.stdout }}_flag"
         - name: Get pnpm home
           shell: |
             {{ nvm_source }}
