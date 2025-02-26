@@ -45,6 +45,17 @@
           changed_when: "'already installed' not in nvm_install_response.stderr"
           loop:
             - 22
+        - name: Get node path
+          shell: |
+            {{ nvm_source }}
+            which node
+          args:
+            executable: /bin/bash
+          register: node_path
+          changed_when: false
+        - name: Store node path in a fact
+          set_fact:
+            node_path: "{{ node_path.stdout | trim }}"
     - name: Setup pnpm
       block:
         - name: Get and register node version
@@ -93,9 +104,9 @@
           changed_when: "'Appended new lines' in pnpm_setup_output.stdout"
     - name: Install global node packages
       # become: true
-      # environment:
+      environment:
       #   PNPM_HOME: "{{ pnpm_home }}"
-      #   PATH: "{{pnpm_home}}:{{ansible_env.PATH}}"
+        PATH: "{{node_path}}:{{pnpm_home}}:{{ansible_env.PATH}}"
       block:
         - name: Add dotenv-cli
           community.general.pnpm:
