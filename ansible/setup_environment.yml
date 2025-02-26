@@ -191,7 +191,7 @@
             executable: /bin/bash
           register: logrotate_install_status
           # TODO: more foolproof test for if was changed
-          changed_when: "'Installing' in pm2_status.stdout"
+          changed_when: "'Installing' in logrotate_install_status.stdout"
     - name: Setup docker
       become: true
       block:
