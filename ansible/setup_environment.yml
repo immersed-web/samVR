@@ -83,7 +83,7 @@
             executable: /bin/bash
             chdir: "{{ playbook_dir }}/.."
             creates: "{{ ansible_env['HOME'] }}/corepack_enabled_for_{{ node_version.stdout }}_flag"
-        - name: Get pnpm home
+        - name: Get pnpm path
           shell: |
             {{ nvm_source }}
             which pnpm
@@ -91,9 +91,9 @@
             executable: /bin/bash
           register: pnpm_path
           changed_when: false
-        - name: Store pnpm home in a fact
+        - name: Store pnpm path in a fact
           set_fact:
-            pnpm_home: "{{ pnpm_path.stdout | trim }}"
+            pnpm_path: "{{ pnpm_path.stdout | trim }}"
         - name: Run pnpm setup command
           ansible.builtin.shell: |
             {{ nvm_source }}
