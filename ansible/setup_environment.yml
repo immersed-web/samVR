@@ -106,6 +106,9 @@
           set_fact:
             pnpm_home: "{{ pnpm_setup_output.stdout | regex_search('PNPM_HOME=(.*)', '\\1') | trim | replace('\"', '') }}"
           when: pnpm_setup_output.changed
+        - name: Debug extracted PNPM_HOME
+          debug:
+            var: pnpm_home
     - name: install global node packages
       environment:
         PNPM_HOME: "{{ pnpm_home }}"
