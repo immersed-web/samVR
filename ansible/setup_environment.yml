@@ -185,10 +185,13 @@
         #   changed_when: false
         #   failed_when: false
         - name: Ensure pm2-logrotate is installed
-          ansible.builtin.command:
-            cmd: pm2 describe pm2-logrotate || pm2 install pm2-logrotate
-          changed_when: "'doesn\\'t exist' in logrotate_install_status.stderr"
-          # changed_when: true
+          ansible.builtin.shell: |
+            pm2 describe pm2-logrotate || pm2 install pm2-logrotate
+          args:
+            executable: /bin/bash
+          register: logrotate_install_status
+          # TODO: more foolproof test for if was changed
+          changed_when: "'Installing' in pm2_status.stdout"
     - name: Setup docker
       become: true
       block:
