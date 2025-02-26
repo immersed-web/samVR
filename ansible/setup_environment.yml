@@ -197,6 +197,7 @@
         #   failed_when: false
         - name: Ensure pm2-logrotate is installed
           ansible.builtin.shell: |
+            {{ nvm_source }}
             pm2 describe pm2-logrotate || pm2 install pm2-logrotate
           args:
             executable: /bin/bash
