@@ -12,10 +12,6 @@
     # - name: Print all Ansible facts
     #   ansible.builtin.debug:
     #     var: ansible_facts
-    # - name: Add caddy role
-    #   community.general.ansible_galaxy_install:
-    #     type: role
-    #     name: caddy_ansible.caddy_ansible
     - name: Update and upgrade package register
       ansible.builtin.apt:
         update_cache: true
@@ -26,13 +22,6 @@
       ansible.builtin.apt:
         name: ntp
         state: latest
-    # - name: Check node version
-    #   become: true
-    #   ansible.builtin.command:
-    #     cmd: "node -v && echo -n NONODE "
-    #   ignore_errors: true
-    #   changed_when: false
-    #   register: node_version
     - name: Setup node
       become: no
       block:
@@ -56,42 +45,19 @@
           changed_when: "'already installed' not in nvm_install_response.stderr"
           loop:
             - 22
-    # - name: Setup nodejs
-    #   become: true
-    #   # when: node_version.stdout == 'NONODE'
-    #   block:
-    #     - name: Add nodejs apt key
-    #       ansible.builtin.apt_key:
-    #         url: https://deb.nodesource.com/gpgkey/nodesource.gpg.key
-    #     - name: Add node repo to apt
-    #       ansible.builtin.apt_repository:
-    #         repo: deb https://deb.nodesource.com/node_18.x {{ ansible_distribution_release }} main
-    #         update_cache: true
-    #     - name: Install Node 18
-    #       ansible.builtin.apt:
-    #         name: nodejs
-    #     # Since this will be run from witihn the project, the "packageManager" field in
-    #     # the root package.json will be used and that version of pnpm will be installed automatically
-    #     - name: Enable corepack
-    #       ansible.builtin.shell:
-    #         cmd: "touch {{ ansible_env['HOME'] }}/corepack_enabled_flag && corepack enable"
-    #         creates: "{{ ansible_env['HOME'] }}/corepack_enabled_flag"
-    #       register: corepack_enable
-    #     - name: Print corepack enable
-    #       ansible.builtin.debug:
-    #         var: corepack_enable
     - name: Setup pnpm
       # become: true
       block:
-        # - name: Install and enable pnpm
-        #   ansible.builtin.shell:
-        #     cmd: "command -v pnpm > /dev/null && echo -n PNPMAVAILABLE || corepack prepare pnpm@latest-7 --activate"
-        #   register: pnpm_install
-        #   changed_when: pnpm_install.stdout != 'PNPMAVAILABLE'
-        # - name: Print pnpm_install result
-        #   ansible.builtin.debug:
-        #     var: pnpm_install
-        #   changed_when: false
+        - name: Get and store nodejs version in a fact
+          become: no
+          ansible.builtin.shell: |
+            {{ nvm_source}}
+            node -v && echo -n NONODE
+          ignore_errors: true
+          changed_when: false
+          register: node_version_raw
+          set_fact:
+            node_version: "{{ node_version_raw.stdout | trim }}"
         # Since this will be run from witihn the project, the "packageManager" field in
         # the root package.json will be used and that version of pnpm will be installed automatically
         # I dont think the flag file will work if switching node versions, as corepack is enabled/disabled per node install (I think)
@@ -100,52 +66,41 @@
             {{ nvm_source}}
             corepack enable
             corepack enable npm
-            touch {{ ansible_env['HOME'] }}/corepack_enabled_flag
+            touch {{ ansible_env['HOME'] }}/corepack_enabled_for_{{ node_version }}_flag
           args:
             executable: /bin/bash
             chdir: "{{ playbook_dir }}/.."
-            creates: "{{ ansible_env['HOME'] }}/corepack_enabled_flag"
-          # register: corepack_enable
-        # - name: Print corepack enable
-        #   ansible.builtin.debug:
-        #     var: corepack_enable
-        - name: Run pnpm setup command
-          # when: corepack_enable.changed
-          ansible.builtin.command:
-            cmd: pnpm setup
-          register: pnpm_setup_output
-          changed_when: "'Appended new lines' in pnpm_setup_output.stdout"
-        # - name: Source bashrc after pnpm was added to path
-        #   # when: pnpm_setup_output.changed
+            creates: "{{ ansible_env['HOME'] }}/corepack_enabled_for_{{ node_version }}_flag"
+        - name: Store pnpm path in a fact
+          shell: |
+            {{ nvm_source }}
+            which pnpm
+          register: pnpm_path
+          changed_when: false
+          set_fact:
+            pnpm_home: "{{ pnpm_path.stdout | trim }}"
+
+        # - name: Run pnpm setup command
         #   ansible.builtin.shell:
-        #     cmd: ". ~/.bashrc"
-        #     # cmd: "{{ pnpm_setup_output.stdout_lines[-1] }}"
-    # - name: Get PNPM_HOME
-    #   ansible.builtin.shell:
-    #     cmd: source ~/.bashrc && printenv PNPM_HOME
-    #     executable: /bin/bash
-    #   register: pnpm_home_path
+        #     cmd: pnpm setup
+        #   register: pnpm_setup_output
+        #   changed_when: "'Appended new lines' in pnpm_setup_output.stdout"
     - name: Install global node packages
       # become: true
-      environment:
-        PNPM_HOME: "{{ pnpm_home }}"
-        PATH: "{{pnpm_home}}:{{ansible_env.PATH}}"
+      # environment:
+      #   PNPM_HOME: "{{ pnpm_home }}"
+      #   PATH: "{{pnpm_home}}:{{ansible_env.PATH}}"
       block:
-        # - name: Check pnpm_home
-        #   shell:
-        #     cmd:  set | grep PNPM_HOME
-        #     executable: "/bin/bash"
-        #   changed_when: false
         - name: Add dotenv-cli
           community.general.pnpm:
+            executable: "{{ pnpm_home }}"
             global: true
             name: dotenv-cli
         - name: Add pm2
           community.general.pnpm:
+            executable: "{{ pnpm_home }}"
             global: true
             name: pm2
-    # - name: Temp end play
-    #   ansible.builtin.meta: "end_play"
     - name: Install Mediasoup dependencies
       ansible.builtin.apt:
         name:
@@ -188,21 +143,21 @@
             state: present
     - name: Setup pm2 log rotation
       # become: true
-      environment:
-        PNPM_HOME: "{{ pnpm_home }}"
-        PATH: "{{pnpm_home}}:{{ansible_env.PATH}}"
+      # environment:
+      #   PNPM_HOME: "{{ pnpm_home }}"
+      #   PATH: "{{pnpm_home}}:{{ansible_env.PATH}}"
       block:
-        - name: Check if already installed
+        # - name: Check if already installed
+        #   ansible.builtin.command:
+        #     cmd: pm2 describe pm2-logrotate
+        #   register: logrotate_install_status
+        #   changed_when: false
+        #   failed_when: false
+        - name: Ensure pm2-logrotate is installed
           ansible.builtin.command:
-            cmd: pm2 describe pm2-logrotate
-          register: logrotate_install_status
-          changed_when: false
-          failed_when: false
-        - name: Install pm2-logrotate
-          ansible.builtin.command:
-            cmd: pm2 install pm2-logrotate
-          when: "'doesn\\'t exist' in logrotate_install_status.stderr"
-          changed_when: true
+            cmd: pm2 describe pm2-logrotate || pm2 install pm2-logrotate
+          changed_when: "'doesn\\'t exist' in logrotate_install_status.stderr"
+          # changed_when: true
     - name: Setup docker
       become: true
       block:
