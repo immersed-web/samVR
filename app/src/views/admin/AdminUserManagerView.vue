@@ -135,7 +135,7 @@ function getClassForRole(role: UserRole) {
       return 'bg-amber-600'; // has-[:checked]:bg-amber-600
     case 'superadmin':
       return 'bg-orange-700'; // has-[:checked]:bg-orange-700
-    case 'gunnar':
+    case 'god':
       return 'bg-fuchsia-800'; // has-[:checked]:bg-fuchsia-800
     default:
       console.warn('switch not exhausted when calculating class for userRole');
@@ -161,7 +161,7 @@ const roleFilter = reactive<Record<UserRole, boolean>>({
   moderator: false,
   admin: false,
   superadmin: false,
-  gunnar: false,
+  god: false,
 })
 const pickedRoleFilters = computed(() => {
   const filterArr = Object.entries(roleFilter)

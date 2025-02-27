@@ -149,7 +149,7 @@ export function translateUserRole(userRole: UserRole) {
       return 'administratör';
     case 'superadmin':
       return 'huvudadministratör';
-    case 'gunnar':
+    case 'god':
       return 'överchef';
     default:
       console.warn('switch not exhausted when translating permissionLevel');
@@ -204,7 +204,7 @@ export function translateVisibility(visibitity: Visibility) {
 }
 
 // type RoleSet = Set<Role>;
-// const roles: Set<Role> = new Set(['gunnar', 'superadmin', 'admin', 'moderator', 'user', 'guest']);
+// const roles: Set<Role> = new Set(['god', 'superadmin', 'admin', 'moderator', 'user', 'guest']);
 // const arr = Array.from(roles);
 // type RoleEnumToZod = toZod<EnumFromRoleUnion>
 
@@ -213,7 +213,7 @@ export function translateVisibility(visibitity: Visibility) {
 // };
 
 // const zodifiedRoleEnun: toZod<EnumFromRoleUnion> = z.object({
-//   gunnar: z.literal('gunnar'),
+//   god: z.literal('god'),
 //   superadmin: z.literal('superadmin'),
 //   admin: z.literal('admin'),
 //   moderator: z.literal('moderator'),

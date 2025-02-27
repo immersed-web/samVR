@@ -12,7 +12,7 @@ export const AssetTypeEnum = pgEnum("AssetType", ['image', 'video', 'model', 'na
 
 export const PlacedObjectTypeEnum = pgEnum("PlacedObjectType", ['asset', 'vrPortal', 'streamPortal', 'externalLinkPortal', 'pointLight', 'directionalLight', 'ambientLight']);
 // export const PortalType = pgEnum("PortalType", ['vrSpace', 'stream', 'externalUrl']);
-export const RoleEnum = pgEnum("Role", ['gunnar', 'superadmin', 'admin', 'moderator', 'user', 'guest'])
+export const RoleEnum = pgEnum("Role", ['god', 'superadmin', 'admin', 'moderator', 'user', 'guest'])
 export const VisibilityEnum = pgEnum("Visibility", ['private', 'unlisted', 'public'])
 
 const createdAndUpdatedAt = {
