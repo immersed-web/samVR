@@ -57,16 +57,16 @@ cd into the ansible folder where all the playbook files are:
 ```bash
 cd ansible
 ```
-Setup all the system wide tools and dependencies
+Setup all the system wide tools and dependencies. The -K argument makes the script prompt for user password when permission escalation (sudo) is required.
 ```bash
-ansible-playbook setup_environment.yml
+ansible-playbook setup_environment.yml -K
 ```
 
 __Log off and log back in__. This is needed because the previous script (setup_environment.yml) added some environment variables to the user/profile (.bashrc or equivalent) that only gets loaded when the shell starts. Alternatively, you can manually "source" the shell config manually. e.g. `source ~/.bashrc`, but it's probably more reliable to log off and on again.
 
 Install the internal project dependencies and build the apps
 ```bash
-ansible-playbook setup_project.yml
+ansible-playbook setup_project.yml -K
 ```
 
 ### 4. Now let's run the project 🚀:
@@ -78,6 +78,11 @@ Run pm2 process manager in the project root (pm2 will pick up the file named eco
 ```bash
 pm2 start
 ```
+
+### 5. Log in as the seeded god user
+Visit the webapplication and log in. 🚀
+username: **överchefen**
+password: **`<ADMIN_PASSWORD you have configured in the .env file earlier>`**
 
 ## Update to new version
 - start in project root

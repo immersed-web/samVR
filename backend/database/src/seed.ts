@@ -35,8 +35,8 @@ try {
     const createdUsers = [];
     let newUser = await tx.insert(schema.users).values({
       password: hashedPassword,
-      username: 'superadmin',
-      role: 'superadmin',
+      username: 'överchefen',
+      role: 'god',
     }).returning();
     createdUsers.push(newUser[0]);
   });
