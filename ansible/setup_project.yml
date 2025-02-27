@@ -21,14 +21,14 @@
 - name: Setup database
   hosts: localhost
   vars:
-    # pnpm_home: "{{ ansible_env.PNPM_HOME | default(fallback_pnpm_home) }}"
-    # fallback_pnpm_home: "{{ansible_env.HOME}}/.local/share/pnpm"
+    pnpm_home: "{{ ansible_env.PNPM_HOME | default(fallback_pnpm_home) }}"
+    fallback_pnpm_home: "{{ansible_env.HOME}}/.local/share/pnpm"
     nvm_source: '. "{{ ansible_env.HOME }}/.nvm/nvm.sh"'
     # fallback_pnpm_home: "FALLLABACK"
   environment:
     CI: "true" # Make pnpm not touch lockfile when running from ansible
-    # PNPM_HOME: "{{ pnpm_home }}"
-    # PATH: "{{pnpm_home}}:{{ansible_env.PATH}}"
+    PNPM_HOME: "{{ pnpm_home }}"
+    PATH: "{{pnpm_home}}:{{ansible_env.PATH}}"
   tasks:
     - name: Create/Start postgres DB
       become: true
