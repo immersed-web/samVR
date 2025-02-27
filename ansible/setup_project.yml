@@ -31,6 +31,7 @@
     # PATH: "{{pnpm_home}}:{{ansible_env.PATH}}"
   tasks:
     - name: Create/Start postgres DB
+      become: true
       ansible.builtin.command:
         chdir: "{{ playbook_dir }}/.."
         cmd: docker compose --ansi never --progress plain up -d
