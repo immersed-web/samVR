@@ -1,0 +1,1017 @@
+{
+  "id": "00da352d-b6ec-4613-9e4c-828f27056153",
+  "prevId": "ed48967f-65ac-4adb-a11f-92dc857e8a92",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.Assets": {
+      "name": "Assets",
+      "schema": "",
+      "columns": {
+        "assetId": {
+          "name": "assetId",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "assetType": {
+          "name": "assetType",
+          "type": "AssetType",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "originalFileName": {
+          "name": "originalFileName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "generatedName": {
+          "name": "generatedName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "size": {
+          "name": "size",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mimeType": {
+          "name": "mimeType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "showInUserLibrary": {
+          "name": "showInUserLibrary",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "assetFileExtension": {
+          "name": "assetFileExtension",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ownerUserId": {
+          "name": "ownerUserId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp (3)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp (3)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "Assets_ownerUserId_Users_userId_fk": {
+          "name": "Assets_ownerUserId_Users_userId_fk",
+          "tableFrom": "Assets",
+          "tableTo": "Users",
+          "columnsFrom": [
+            "ownerUserId"
+          ],
+          "columnsTo": [
+            "userId"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "Assets_generatedName_unique": {
+          "name": "Assets_generatedName_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "generatedName"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.CameraPortals": {
+      "name": "CameraPortals",
+      "schema": "",
+      "columns": {
+        "fromCameraId": {
+          "name": "fromCameraId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "toCameraId": {
+          "name": "toCameraId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "x": {
+          "name": "x",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "y": {
+          "name": "y",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "distance": {
+          "name": "distance",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp (3)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp (3)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "CameraPortals_fromCameraId_Cameras_cameraId_fk": {
+          "name": "CameraPortals_fromCameraId_Cameras_cameraId_fk",
+          "tableFrom": "CameraPortals",
+          "tableTo": "Cameras",
+          "columnsFrom": [
+            "fromCameraId"
+          ],
+          "columnsTo": [
+            "cameraId"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "CameraPortals_toCameraId_Cameras_cameraId_fk": {
+          "name": "CameraPortals_toCameraId_Cameras_cameraId_fk",
+          "tableFrom": "CameraPortals",
+          "tableTo": "Cameras",
+          "columnsFrom": [
+            "toCameraId"
+          ],
+          "columnsTo": [
+            "cameraId"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "cameraPortals_pkey": {
+          "name": "cameraPortals_pkey",
+          "columns": [
+            "fromCameraId",
+            "toCameraId"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.Cameras": {
+      "name": "Cameras",
+      "schema": "",
+      "columns": {
+        "cameraId": {
+          "name": "cameraId",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "streamId": {
+          "name": "streamId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "senderId": {
+          "name": "senderId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cameraType": {
+          "name": "cameraType",
+          "type": "CameraType",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'panoramic360'"
+        },
+        "viewOriginX": {
+          "name": "viewOriginX",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0.5
+        },
+        "viewOriginY": {
+          "name": "viewOriginY",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0.5
+        },
+        "fovStart": {
+          "name": "fovStart",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "fovEnd": {
+          "name": "fovEnd",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "orientation": {
+          "name": "orientation",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp (3)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp (3)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "cameras_name_streamId_key": {
+          "name": "cameras_name_streamId_key",
+          "columns": [
+            {
+              "expression": "name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "streamId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "cameras_senderId_streamId_key": {
+          "name": "cameras_senderId_streamId_key",
+          "columns": [
+            {
+              "expression": "streamId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "senderId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "Cameras_streamId_Streams_streamId_fk": {
+          "name": "Cameras_streamId_Streams_streamId_fk",
+          "tableFrom": "Cameras",
+          "tableTo": "Streams",
+          "columnsFrom": [
+            "streamId"
+          ],
+          "columnsTo": [
+            "streamId"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.Permissions": {
+      "name": "Permissions",
+      "schema": "",
+      "columns": {
+        "userId": {
+          "name": "userId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "targetType": {
+          "name": "targetType",
+          "type": "PermissionTargetType",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "targetId": {
+          "name": "targetId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "permissionLevel": {
+          "name": "permissionLevel",
+          "type": "PermissionLevel",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'view'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "Permissions_userId_Users_userId_fk": {
+          "name": "Permissions_userId_Users_userId_fk",
+          "tableFrom": "Permissions",
+          "tableTo": "Users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "userId"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "permissions_pkey": {
+          "name": "permissions_pkey",
+          "columns": [
+            "userId",
+            "targetType",
+            "targetId"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.PlacedObjects": {
+      "name": "PlacedObjects",
+      "schema": "",
+      "columns": {
+        "placedObjectId": {
+          "name": "placedObjectId",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "vrSpaceId": {
+          "name": "vrSpaceId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "PlacedObjectType",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "objectId": {
+          "name": "objectId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "objectSettings": {
+          "name": "objectSettings",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "position": {
+          "name": "position",
+          "type": "real[]",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "orientation": {
+          "name": "orientation",
+          "type": "real[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scale": {
+          "name": "scale",
+          "type": "real[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp (3)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp (3)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "PlacedObjects_vrSpaceId_VrSpaces_vrSpaceId_fk": {
+          "name": "PlacedObjects_vrSpaceId_VrSpaces_vrSpaceId_fk",
+          "tableFrom": "PlacedObjects",
+          "tableTo": "VrSpaces",
+          "columnsFrom": [
+            "vrSpaceId"
+          ],
+          "columnsTo": [
+            "vrSpaceId"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.session": {
+      "name": "session",
+      "schema": "",
+      "columns": {
+        "sid": {
+          "name": "sid",
+          "type": "varchar",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "sess": {
+          "name": "sess",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expire": {
+          "name": "expire",
+          "type": "timestamp(6)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "Session_sid_key": {
+          "name": "Session_sid_key",
+          "columns": [
+            {
+              "expression": "sid",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "IDX_session_expire": {
+          "name": "IDX_session_expire",
+          "columns": [
+            {
+              "expression": "expire",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.Streams": {
+      "name": "Streams",
+      "schema": "",
+      "columns": {
+        "streamId": {
+          "name": "streamId",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ownerUserId": {
+          "name": "ownerUserId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "streamStartTime": {
+          "name": "streamStartTime",
+          "type": "timestamp (3)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "streamAutoStart": {
+          "name": "streamAutoStart",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "streamManuallyStarted": {
+          "name": "streamManuallyStarted",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "streamManuallyEnded": {
+          "name": "streamManuallyEnded",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "Visibility",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'public'"
+        },
+        "mainCameraId": {
+          "name": "mainCameraId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp (3)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp (3)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "Stream_name_key": {
+          "name": "Stream_name_key",
+          "columns": [
+            {
+              "expression": "name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "Streams_ownerUserId_Users_userId_fk": {
+          "name": "Streams_ownerUserId_Users_userId_fk",
+          "tableFrom": "Streams",
+          "tableTo": "Users",
+          "columnsFrom": [
+            "ownerUserId"
+          ],
+          "columnsTo": [
+            "userId"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "Streams_mainCameraId_Cameras_cameraId_fk": {
+          "name": "Streams_mainCameraId_Cameras_cameraId_fk",
+          "tableFrom": "Streams",
+          "tableTo": "Cameras",
+          "columnsFrom": [
+            "mainCameraId"
+          ],
+          "columnsTo": [
+            "cameraId"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.Users": {
+      "name": "Users",
+      "schema": "",
+      "columns": {
+        "userId": {
+          "name": "userId",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp (3)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp (3)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "username": {
+          "name": "username",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "password": {
+          "name": "password",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "Role",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'user'"
+        },
+        "avatarDesign": {
+          "name": "avatarDesign",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "User_username_key": {
+          "name": "User_username_key",
+          "columns": [
+            {
+              "expression": "username",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.VrSpaces": {
+      "name": "VrSpaces",
+      "schema": "",
+      "columns": {
+        "vrSpaceId": {
+          "name": "vrSpaceId",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ownerUserId": {
+          "name": "ownerUserId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "worldModelAssetId": {
+          "name": "worldModelAssetId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "navMeshAssetId": {
+          "name": "navMeshAssetId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "panoramicPreview": {
+          "name": "panoramicPreview",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "Visibility",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'public'"
+        },
+        "worldModelScale": {
+          "name": "worldModelScale",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "spawnPosition": {
+          "name": "spawnPosition",
+          "type": "real[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "spawnRadius": {
+          "name": "spawnRadius",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "skyColor": {
+          "name": "skyColor",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp (3)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp (3)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "VrSpaces_ownerUserId_Users_userId_fk": {
+          "name": "VrSpaces_ownerUserId_Users_userId_fk",
+          "tableFrom": "VrSpaces",
+          "tableTo": "Users",
+          "columnsFrom": [
+            "ownerUserId"
+          ],
+          "columnsTo": [
+            "userId"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "VrSpaces_worldModelAssetId_Assets_assetId_fk": {
+          "name": "VrSpaces_worldModelAssetId_Assets_assetId_fk",
+          "tableFrom": "VrSpaces",
+          "tableTo": "Assets",
+          "columnsFrom": [
+            "worldModelAssetId"
+          ],
+          "columnsTo": [
+            "assetId"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "VrSpaces_navMeshAssetId_Assets_assetId_fk": {
+          "name": "VrSpaces_navMeshAssetId_Assets_assetId_fk",
+          "tableFrom": "VrSpaces",
+          "tableTo": "Assets",
+          "columnsFrom": [
+            "navMeshAssetId"
+          ],
+          "columnsTo": [
+            "assetId"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "VrSpaces_panoramicPreview_Assets_assetId_fk": {
+          "name": "VrSpaces_panoramicPreview_Assets_assetId_fk",
+          "tableFrom": "VrSpaces",
+          "tableTo": "Assets",
+          "columnsFrom": [
+            "panoramicPreview"
+          ],
+          "columnsTo": [
+            "assetId"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.AssetType": {
+      "name": "AssetType",
+      "schema": "public",
+      "values": [
+        "image",
+        "video",
+        "model",
+        "navmesh",
+        "document"
+      ]
+    },
+    "public.CameraType": {
+      "name": "CameraType",
+      "schema": "public",
+      "values": [
+        "panoramic360",
+        "normal"
+      ]
+    },
+    "public.PermissionLevel": {
+      "name": "PermissionLevel",
+      "schema": "public",
+      "values": [
+        "admin",
+        "edit",
+        "view"
+      ]
+    },
+    "public.PermissionTargetType": {
+      "name": "PermissionTargetType",
+      "schema": "public",
+      "values": [
+        "stream",
+        "vrSpace"
+      ]
+    },
+    "public.PlacedObjectType": {
+      "name": "PlacedObjectType",
+      "schema": "public",
+      "values": [
+        "asset",
+        "vrPortal",
+        "streamPortal",
+        "externalLinkPortal",
+        "pointLight",
+        "directionalLight",
+        "ambientLight"
+      ]
+    },
+    "public.Role": {
+      "name": "Role",
+      "schema": "public",
+      "values": [
+        "god",
+        "superadmin",
+        "admin",
+        "moderator",
+        "user",
+        "guest"
+      ]
+    },
+    "public.Visibility": {
+      "name": "Visibility",
+      "schema": "public",
+      "values": [
+        "private",
+        "unlisted",
+        "public"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
