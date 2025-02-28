@@ -3,7 +3,7 @@ const log = new Log('Router:VR');
 process.env.DEBUG = 'Router:VR*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
-import { ClientRealtimeDataSchema, PlacedObjectIdSchema, PlacedObjectInsertSchema, ScreenShareSchema, TransformSchema, VrSpaceIdSchema, VrSpaceUpdateSchema } from 'schemas';
+import { ClientRealtimeDataSchema, hasAtLeastSecurityRole, PlacedObjectIdSchema, PlacedObjectInsertSchema, ScreenShareSchema, TransformSchema, VrSpaceIdSchema, VrSpaceUpdateSchema } from 'schemas';
 import { procedure as p, router, isUserClientM, userClientP, atLeastUserP, userInVrSpaceP, userWithEditRightsToVrSpace, userWithAdminRightsToVrSpace } from '../trpc/trpc.js';
 import { VrSpace } from 'classes/VrSpace.js';
 import { z } from 'zod';
@@ -23,7 +23,7 @@ export const vrRouter = router({
     // log.debug('user: ', user);
     try {
 
-    const dbResponse = await db.select({
+      let unfilteredQuery = db.select({
       vrSpaceId: schema.vrSpaces.vrSpaceId,
       name: schema.vrSpaces.name,
       image: schema.assets.generatedName,
@@ -46,14 +46,18 @@ export const vrRouter = router({
           not(eq(schema.vrSpaces.ownerUserId, ctx.userId)),
           eq(schema.permissions.targetId, schema.vrSpaces.vrSpaceId)
         )
-      )).where(or(
+      ));
+
+      if (hasAtLeastSecurityRole(ctx.role, 'superadmin')) {
+        return await unfilteredQuery;
+      } else {
+        const filteredQuery = unfilteredQuery.where(or(
         eq(schema.permissions.userId, ctx.userId),
         eq(schema.vrSpaces.ownerUserId, ctx.userId),
         eq(schema.vrSpaces.visibility, 'public'),
       ));
-
-      // log.info(dbResponse)
-    return dbResponse;
+        return await filteredQuery;
+      }
     } catch (e) {
       log.error(e);
     }
