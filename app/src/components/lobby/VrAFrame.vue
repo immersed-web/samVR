@@ -10,7 +10,7 @@
     </PlacedObject>
   </a-entity>
 
-  <a-sky :color="skyColor" />
+  <!-- <a-sky :color="skyColor" /> -->
   <a-entity :scale="vrSpaceStore.worldModelScaleString">
     <a-gltf-model bvh @model-loaded="onModelLoaded" id="model" ref="modelTag" :src="vrSpaceStore.worldModelUrl"
       class="raycastable-surface" :class="{ 'navmesh': !vrSpaceStore.navMeshUrl }" @click.stop="triggerCursorClick" />
@@ -257,9 +257,6 @@ const otherClients = computed(() => {
   return omit(vrSpaceStore.currentVrSpace.clients, [clientStore.clientState.connectionId]) as typeof vrSpaceStore.currentVrSpace.clients;
 });
 
-const skyColor = computed(() => {
-  return vrSpaceStore.currentVrSpace?.dbData.skyColor ?? 'lightskyblue';
-});
 
 const isTouchDevice = ref(false);
 onBeforeMount(async () => {

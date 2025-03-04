@@ -6,8 +6,8 @@
       <UIOverlay />
       <WaitForAframe>
         <template v-if="vrSpaceStore.currentVrSpace && mediasoupInitialized">
-          <a-scene renderer="logarithmicDepthBuffer: false" scene-cleanup ref="aframeScene"
-            cursor="fuse:false; rayOrigin:mouse;"
+          <a-scene :background="`color: ${skyColor}`" renderer="logarithmicDepthBuffer: false" scene-cleanup
+            ref="aframeScene" cursor="fuse:false; rayOrigin:mouse;"
             :raycaster="`objects: ${currentRaycastSelectorString}; mouseCursorStyleEnabled: ${pointerOnHover}`"
             raycaster-update @raycast-update="setCursorIntersection($event.detail)">
             <a-assets>
@@ -78,6 +78,10 @@ const { setCursorIntersection, currentCursorMode, setCursorEntityRef, pointerOnH
 const router = useRouter();
 const vrSpaceStore = useVrSpaceStore();
 const soupStore = useSoupStore();
+
+const skyColor = computed(() => {
+  return vrSpaceStore.currentVrSpace?.dbData.skyColor ?? 'lightskyblue';
+});
 
 const { stream: screenshareStream, start: startScreenshare, stop: stopDisplayMedia } = useDisplayMedia();
 

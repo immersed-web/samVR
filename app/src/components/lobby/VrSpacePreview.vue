@@ -53,15 +53,15 @@
         </div>
       </div>
     </div>
-    <a-scene tick-counter @renderstart="onRenderStart" @loaded="onSceneLoaded" @camera-set-active="onCameraSetActive"
-      embedded class="min-h-[70svh]" ref="sceneTag" id="ascene" xr-mode-ui="enabled: false"
-      @raycast-update="setCursorIntersection($event.detail)">
+    <a-scene :background="`color: ${skyColor}`" tick-counter @renderstart="onRenderStart" @loaded="onSceneLoaded"
+      @camera-set-active="onCameraSetActive" embedded class="min-h-[70svh]" ref="sceneTag" id="ascene"
+      xr-mode-ui="enabled: false" @raycast-update="setCursorIntersection($event.detail)">
       <a-assets timeout="20000">
         <a-asset-item id="icon-font"
           src="https://fonts.gstatic.com/s/materialicons/v70/flUhRq6tzZclQEJ-Vdg-IuiaDsNa.woff" />
       </a-assets>
       <a-entity @loaded="onCameraEntityLoaded" camera ref="cameraTag" />
-      <a-sky :color="skyColor" />
+      <!-- <a-sky :color="skyColor" /> -->
       <slot />
 
       <!-- The model -->
