@@ -48,7 +48,7 @@
             <input v-model="roleFilter[role.value]" type="checkbox" class="hidden" />
             <span class="text-sm leading-none material-icons">{{ roleFilter[role.value] ? 'done' :
               'done_outline' }}</span>{{
-                role.label }}
+            role.label }}
           </label>
           <button v-if="filterActive" @click="clearFilters"
             class="btn btn-neutral btn-circle btn-xs material-icons">clear</button>
@@ -66,11 +66,11 @@
               </select>
               <div class="justify-self-start tooltip cursor-help" data-tip="Lämna blankt för att inte ändra">
                 <input v-model="editedPassword" class="input input-bordered input-sm px-3" placeholder="Lösenord"
-                  @keyup.enter="updateEditedUser({ userId: editedUserId, username: editedUsername, password: editedPassword === '' ? undefined : editedPassword })">
+                  @keyup.enter="updateEditedUser({ userId: editedUserId, username: editedUsername, password: editedPassword === '' ? undefined : editedPassword, role: editedRole })">
                 <!-- <span class="material-icons">help</span> -->
               </div>
               <button
-                @click="updateEditedUser({ userId: editedUserId, username: editedUsername, password: editedPassword === '' ? undefined : editedPassword })"
+                @click="updateEditedUser({ userId: editedUserId, username: editedUsername, password: editedPassword === '' ? undefined : editedPassword, role: editedRole })"
                 class="btn btn-primary">
                 <span class="material-icons">save</span>
               </button>
