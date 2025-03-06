@@ -139,9 +139,10 @@
                 Justera storleken på 3D-modellen.
               </p>
               <div class="flex gap-4 items-center w-full">
-                <span class="label-text font-bold badge badge-outline badge-lg">
-                  {{ vrSpaceStore.writableVrSpaceDbData.worldModelScale.toFixed(5) }}
-                </span>
+                <input v-model.number="vrSpaceStore.writableVrSpaceDbData.worldModelScale"
+                  class="label-text font-bold badge badge-outline badge-lg w-24">
+                <!-- {{ vrSpaceStore.writableVrSpaceDbData.worldModelScale.toFixed(5) }}
+                </span> -->
                 <input class="range grow" type="range" min="0.1" max="5" step="0.00001"
                   v-model.number="vrSpaceStore.writableVrSpaceDbData.worldModelScale">
                 <button @click="vrSpaceStore.writableVrSpaceDbData.worldModelScale = 1"
