@@ -14,189 +14,193 @@
     </div>
     <div v-else class="grid grid-cols-[clamp(17rem,45%,47rem)_1fr] gap-2">
       <TabsComponent class="max-w-4xl" :tabs="tabs" breakpoint-adjustment.number="1.03">
-        <TabPanel>
-          <div class="space-y-4">
-            <div class="form-control">
-              <div class="font-semibold">Scenens namn</div>
-              <input class="input input-bordered input-sm" v-model="vrSpaceStore.writableVrSpaceDbData.name">
-            </div>
-            <div class="form-control">
-              <div class="font-semibold">Beskrivning</div>
-              <textarea rows=5 class="textarea textarea-bordered " placeholder="beskriv din vr-miljö"
-                v-model="vrSpaceStore.writableVrSpaceDbData.description"></textarea>
-            </div>
-            <div class="flex items-center gap-4 justify-end">
-              <span class="text-red-600 text-sm">
-                Varning. Detta tar bort vr-miljön permanent!
-              </span>
-              <button v-if="!isRevealed" @click.stop="triggerDeleteDialog" class="btn btn-error btn-sm">Radera denna
-                VR-miljö</button>
-              <template v-else>
-                <button @click="confirm" class="btn btn-error btn-sm">Klicka en gång till för att verifiera</button>
-                <button @click="cancel" class="btn btn-sm">Avbryt</button>
-              </template>
+        <template v-if="hasAdminRights">
 
-            </div>
-          </div>
-        </TabPanel>
-        <TabPanel>
-          <div class="space-y-4">
-            <div class="divider mt-0">
-              Publik eller privat?
-            </div>
-            <p class="text-sm text-gray-600">
-              Välj ifall VR-scenen ska vara publikt tillgänglig, öppen för vem som helst att besöka. Eller om scenen
-              är privat för dig och de
-              du har valt att dela den med.
-            </p>
-            <label class="max-w-xs label py-0 cursor-pointer gap-2 font-semibold">
-              <span class="label-text">
-                Öppet för alla:
-              </span>
-              <input type="checkbox" class="toggle toggle-success" true-value="public" false-value="private"
-                v-model="vrSpaceStore.writableVrSpaceDbData.visibility">
-            </label>
-            <div class="divider">
-              Delning
-            </div>
-            <p class="text-sm text-gray-600">
-              Välj de användare som ska ha tillgång till scenen, samt på vilken nivå de ska ha tillgång.
-            </p>
-
-            <div class="form-control">
-              <span class="font-semibold">
-                Dela med en ny person
-              </span>
-              <div class="flex gap-2 justify-between items-center z-10 flex-wrap">
-                <AutoComplete v-if="users?.length" class="grow" placeholder="sök efter användare..."
-                  v-model="selectedUser" display-key="username" id-key="userId" :options="users" />
-                <select v-model="selectedPermission" class="select select-bordered select-sm">
-                  <option :value="permissionLevel" v-for="permissionLevel in insertablePermissionHierarchy"
-                    :key="permissionLevel">
-                    {{ translatePermissionLevelVerb(permissionLevel) }}
-                  </option>
-                </select>
-                <button :disabled="!selectedUser" @click="addEditPermission" class="btn btn-primary btn-sm">
-                  Lägg till
-                </button>
+          <TabPanel>
+            <div class="space-y-4">
+              <div class="form-control">
+                <div class="font-semibold">Scenens namn</div>
+                <input class="input input-bordered input-sm" v-model="vrSpaceStore.writableVrSpaceDbData.name">
               </div>
-            </div>
-            <!-- <p>{{ selectedUser }}</p> -->
-            <!-- <p class="overflow-hidden">{{ users }}</p> -->
-
-            <div class="form-control">
-              <span class="font-semibold">
-                Personer med tillgång till VR-scenen
-              </span>
-              <div class="grid grid-cols-[0.5fr_1fr_0fr] gap-6 w-fit">
-
-                <template v-for="userPermission in vrSpaceStore.currentVrSpace?.dbData.allowedUsers"
-                  :key="userPermission.user.userId">
-                  <span>{{ userPermission.user.username }}</span>
-                  <span> {{ translatePermissionLevelAdjective(userPermission.permissionLevel) }}</span>
-                  <button class="btn btn-circle btn-xs material-icons"
-                    @click="removeEditPermission(userPermission.user.userId)">clear</button>
+              <div class="form-control">
+                <div class="font-semibold">Beskrivning</div>
+                <textarea rows=5 class="textarea textarea-bordered " placeholder="beskriv din vr-miljö"
+                  v-model="vrSpaceStore.writableVrSpaceDbData.description"></textarea>
+              </div>
+              <div class="flex items-center gap-4 justify-end">
+                <span class="text-red-600 text-sm">
+                  Varning. Detta tar bort vr-miljön permanent!
+                </span>
+                <button v-if="!isRevealed" @click.stop="triggerDeleteDialog" class="btn btn-error btn-sm">Radera denna
+                  VR-miljö</button>
+                <template v-else>
+                  <button @click="confirm" class="btn btn-error btn-sm">Klicka en gång till för att verifiera</button>
+                  <button @click="cancel" class="btn btn-sm">Avbryt</button>
                 </template>
+
               </div>
             </div>
-          </div>
-        </TabPanel>
-        <TabPanel>
-          <template v-if="vrSpaceStore.currentVrSpace">
+          </TabPanel>
+          <TabPanel>
             <div class="space-y-4">
               <div class="divider mt-0">
-                3D-modell för miljön
+                Publik eller privat?
               </div>
-              <p class="text-sm mb-2 text-gray-600">
-                Ladda upp en 3D-modell för VR-scenens miljö. Detta är den modell som omsluter besökaren, t.ex. ett
-                rum eller en park.
+              <p class="text-sm text-gray-600">
+                Välj ifall VR-scenen ska vara publikt tillgänglig, öppen för vem som helst att besöka. Eller om scenen
+                är privat för dig och de
+                du har valt att dela den med.
               </p>
-              <pre
-                class="whitespace-normal">{{ vrSpaceStore.currentVrSpace.dbData.worldModelAsset?.originalFileName }}</pre>
-              <AssetUpload @uploaded="onModelUploaded" :accepted-asset-types="['model']" name="miljömodell"
-                :show-in-user-library="false" :uploaded-asset-data="vrSpaceStore.currentVrSpace.dbData.worldModelAsset"
-                @asset-deleted="vrSpaceStore.reloadVrSpaceFromDB" />
+              <label class="max-w-xs label py-0 cursor-pointer gap-2 font-semibold">
+                <span class="label-text">
+                  Öppet för alla:
+                </span>
+                <input type="checkbox" class="toggle toggle-success" true-value="public" false-value="private"
+                  v-model="vrSpaceStore.writableVrSpaceDbData.visibility">
+              </label>
+              <div class="divider">
+                Delning
+              </div>
+              <p class="text-sm text-gray-600">
+                Välj de användare som ska ha tillgång till scenen, samt på vilken nivå de ska ha tillgång.
+              </p>
+
+              <div class="form-control">
+                <span class="font-semibold">
+                  Dela med en ny person
+                </span>
+                <div class="flex gap-2 justify-between items-center z-10 flex-wrap">
+                  <AutoComplete v-if="users?.length" class="grow" placeholder="sök efter användare..."
+                    v-model="selectedUser" display-key="username" id-key="userId" :options="users" />
+                  <select v-model="selectedPermission" class="select select-bordered select-sm">
+                    <option :value="permissionLevel" v-for="permissionLevel in insertablePermissionHierarchy"
+                      :key="permissionLevel">
+                      {{ translatePermissionLevelVerb(permissionLevel) }}
+                    </option>
+                  </select>
+                  <button :disabled="!selectedUser" @click="addEditPermission" class="btn btn-primary btn-sm">
+                    Lägg till
+                  </button>
+                </div>
+              </div>
+              <!-- <p>{{ selectedUser }}</p> -->
+              <!-- <p class="overflow-hidden">{{ users }}</p> -->
+
+              <div class="form-control">
+                <span class="font-semibold">
+                  Personer med tillgång till VR-scenen
+                </span>
+                <div class="grid grid-cols-[0.5fr_1fr_0fr] gap-6 w-fit">
+
+                  <template v-for="userPermission in vrSpaceStore.currentVrSpace?.dbData.allowedUsers"
+                    :key="userPermission.user.userId">
+                    <span>{{ userPermission.user.username }}</span>
+                    <span> {{ translatePermissionLevelAdjective(userPermission.permissionLevel) }}</span>
+                    <button class="btn btn-circle btn-xs material-icons"
+                      @click="removeEditPermission(userPermission.user.userId)">clear</button>
+                  </template>
+                </div>
+              </div>
             </div>
-
-            <template v-if="vrSpaceStore.currentVrSpace.dbData.worldModelAsset">
-              <div class="divider">
-                3D-modell för gåbara ytor (navmesh)
-              </div>
-              <p class="text-sm mb-2 text-gray-600">
-                Ladda upp en 3D-modell för miljöns navmesh. Modellen anger var besökarna kan röra sig fritt samt
-                vilka ytor som inte går att beträda. Ifall en navmesh-modell inte laddas upp så försöker programmet
-                att beräkna detta automatiskt, vilket kan ge upphov till oväntade fel.
-              </p>
-              <pre
-                class="whitespace-normal">{{ vrSpaceStore.currentVrSpace.dbData.navMeshAsset?.originalFileName }}</pre>
-              <AssetUpload @uploaded="onNavmeshUploaded" accepted-asset-types="navmesh" name="navmesh"
-                :show-in-user-library="false" :uploaded-asset-data="vrSpaceStore.currentVrSpace.dbData.navMeshAsset"
-                @asset-deleted="vrSpaceStore.reloadVrSpaceFromDB" />
-              <div class="divider">
-                Storlek
-              </div>
-              <p class="text-sm mb-2 text-gray-600">
-                Justera storleken på 3D-modellen.
-              </p>
-              <div class="flex gap-4 items-center w-full">
-                <input v-model.number="vrSpaceStore.writableVrSpaceDbData.worldModelScale"
-                  class="label-text font-bold badge badge-outline badge-lg w-24">
-                <!-- {{ vrSpaceStore.writableVrSpaceDbData.worldModelScale.toFixed(5) }}
-                </span> -->
-                <input class="range grow" type="range" min="0.1" max="5" step="0.00001"
-                  v-model.number="vrSpaceStore.writableVrSpaceDbData.worldModelScale">
-                <button @click="vrSpaceStore.writableVrSpaceDbData.worldModelScale = 1"
-                  class="btn btn-xs btn-circle btn-outline material-icons">replay</button>
-              </div>
-
-              <!-- Startplats -->
-              <div class="">
-                <div class="divider">
-                  Startplats för besökare
+          </TabPanel>
+          <TabPanel>
+            <template v-if="vrSpaceStore.currentVrSpace">
+              <div class="space-y-4">
+                <div class="divider mt-0">
+                  3D-modell för miljön
                 </div>
                 <p class="text-sm mb-2 text-gray-600">
-                  Välj den plats där besökare startar då de öppnar VR-scenen.
-                  Klicka på knappen nedan och sedan i 3D-modellen för att placera startplatsen.
-                  Du kan ändra storlek på startplatsen för att slumpa startpositionen inom den gula cirkeln.
+                  Ladda upp en 3D-modell för VR-scenens miljö. Detta är den modell som omsluter besökaren, t.ex. ett
+                  rum eller en park.
                 </p>
-                <div class="flex gap-4 g items-end justify-stretch">
-                  <div class="tooltip tooltip-right flex"
-                    data-tip="Klicka sedan i 3D-scenen för att välja var besökarna startar">
-                    <!-- <input type="radio" value="spawnPosition" aria-label="Placera startplats"
+                <pre
+                  class="whitespace-normal">{{ vrSpaceStore.currentVrSpace.dbData.worldModelAsset?.originalFileName }}</pre>
+                <AssetUpload @uploaded="onModelUploaded" :accepted-asset-types="['model']" name="miljömodell"
+                  :show-in-user-library="false"
+                  :uploaded-asset-data="vrSpaceStore.currentVrSpace.dbData.worldModelAsset"
+                  @asset-deleted="vrSpaceStore.reloadVrSpaceFromDB" />
+              </div>
+
+              <template v-if="vrSpaceStore.currentVrSpace.dbData.worldModelAsset">
+                <div class="divider">
+                  3D-modell för gåbara ytor (navmesh)
+                </div>
+                <p class="text-sm mb-2 text-gray-600">
+                  Ladda upp en 3D-modell för miljöns navmesh. Modellen anger var besökarna kan röra sig fritt samt
+                  vilka ytor som inte går att beträda. Ifall en navmesh-modell inte laddas upp så försöker programmet
+                  att beräkna detta automatiskt, vilket kan ge upphov till oväntade fel.
+                </p>
+                <pre
+                  class="whitespace-normal">{{ vrSpaceStore.currentVrSpace.dbData.navMeshAsset?.originalFileName }}</pre>
+                <AssetUpload @uploaded="onNavmeshUploaded" accepted-asset-types="navmesh" name="navmesh"
+                  :show-in-user-library="false" :uploaded-asset-data="vrSpaceStore.currentVrSpace.dbData.navMeshAsset"
+                  @asset-deleted="vrSpaceStore.reloadVrSpaceFromDB" />
+                <div class="divider">
+                  Storlek
+                </div>
+                <p class="text-sm mb-2 text-gray-600">
+                  Justera storleken på 3D-modellen.
+                </p>
+                <div class="flex gap-4 items-center w-full">
+                  <input v-model.number="vrSpaceStore.writableVrSpaceDbData.worldModelScale"
+                    class="label-text font-bold badge badge-outline badge-lg w-24">
+                  <!-- {{ vrSpaceStore.writableVrSpaceDbData.worldModelScale.toFixed(5) }}
+                </span> -->
+                  <input class="range grow" type="range" min="0.1" max="5" step="0.00001"
+                    v-model.number="vrSpaceStore.writableVrSpaceDbData.worldModelScale">
+                  <button @click="vrSpaceStore.writableVrSpaceDbData.worldModelScale = 1"
+                    class="btn btn-xs btn-circle btn-outline material-icons">replay</button>
+                </div>
+
+                <!-- Startplats -->
+                <div class="">
+                  <div class="divider">
+                    Startplats för besökare
+                  </div>
+                  <p class="text-sm mb-2 text-gray-600">
+                    Välj den plats där besökare startar då de öppnar VR-scenen.
+                    Klicka på knappen nedan och sedan i 3D-modellen för att placera startplatsen.
+                    Du kan ändra storlek på startplatsen för att slumpa startpositionen inom den gula cirkeln.
+                  </p>
+                  <div class="flex gap-4 g items-end justify-stretch">
+                    <div class="tooltip tooltip-right flex"
+                      data-tip="Klicka sedan i 3D-scenen för att välja var besökarna startar">
+                      <!-- <input type="radio" value="spawnPosition" aria-label="Placera startplats"
                         class="btn btn-sm btn-primary"
                         :class="{ activeRaycast: currentRaycastReason == 'spawnPosition' }"
                         v-model="currentRaycastReason"> -->
-                    <button class="btn btn-sm btn-primary" @click="setCursorMode('place-spawnposition')">
-                      Placera
-                      startplats
-                    </button>
+                      <button class="btn btn-sm btn-primary" @click="setCursorMode('place-spawnposition')">
+                        Placera
+                        startplats
+                      </button>
+                    </div>
+                    <label class="flex grow flex-col gap-1">
+                      <span class="label-text font-semibold whitespace-nowrap">
+                        Startplatsens storlek
+                      </span>
+                      <input type="range" min="0.5" max="8" step="0.1"
+                        v-model.number="vrSpaceStore.writableVrSpaceDbData.spawnRadius" class="range">
+                    </label>
                   </div>
-                  <label class="flex grow flex-col gap-1">
-                    <span class="label-text font-semibold whitespace-nowrap">
-                      Startplatsens storlek
-                    </span>
-                    <input type="range" min="0.5" max="8" step="0.1"
-                      v-model.number="vrSpaceStore.writableVrSpaceDbData.spawnRadius" class="range">
-                  </label>
                 </div>
+
+              </template>
+              <div class="divider">
+                Himlens färg
+              </div>
+              <div class="flex gap-2 items-center">
+                <div class="rounded-full outline outline-2 overflow-clip">
+                  <input class="size-10 border-none block cursor-pointer -m-2" type="color"
+                    v-model="vrSpaceStore.writableVrSpaceDbData.skyColor">
+                </div>
+                <span class="label-text text-gray-600">
+                  Välj den färg som himlen ska ha i VR-scenen.
+                </span>
               </div>
 
             </template>
-            <div class="divider">
-              Himlens färg
-            </div>
-            <div class="flex gap-2 items-center">
-              <div class="rounded-full outline outline-2 overflow-clip">
-                <input class="size-10 border-none block cursor-pointer -m-2" type="color"
-                  v-model="vrSpaceStore.writableVrSpaceDbData.skyColor">
-              </div>
-              <span class="label-text text-gray-600">
-                Välj den färg som himlen ska ha i VR-scenen.
-              </span>
-            </div>
-
-          </template>
-        </TabPanel>
+          </TabPanel>
+        </template>
         <TabPanel>
           <!-- Placera objekt -->
           <div class="space-y-4">
@@ -441,13 +445,38 @@ onTransformUpdate(spo => {
   });
 })
 
-const tabs = [
-  { label: 'Info', iconName: 'info' },
-  { label: 'Delning', iconName: 'manage_accounts' },
-  { label: 'Scen', iconName: 'landscape' },
-  { label: 'Mediabibliotek', iconName: 'collections' },
-  { label: 'Objekt', iconName: 'view_in_ar' },
-];
+const hasAdminRights = computed(() => {
+  const hasAdminPermission = vrSpaceStore.currentVrSpace?.dbData.allowedUsers.some(permission => {
+    const userId = authStore.userId;
+    return permission.user.userId === userId && permission.permissionLevel === 'admin';
+  });
+  const isOwner = vrSpaceStore.currentVrSpace?.dbData.ownerUserId === authStore.userId;
+  const isSuperAdmin = authStore.role === 'superadmin';
+
+  return isSuperAdmin || isOwner || hasAdminPermission;
+})
+
+const tabs = computed(() => {
+  let tabList = [
+    { label: 'Mediabibliotek', iconName: 'collections' },
+    { label: 'Objekt', iconName: 'view_in_ar' },
+  ]
+  if (hasAdminRights.value) {
+    tabList.unshift(
+      { label: 'Info', iconName: 'info' },
+      { label: 'Delning', iconName: 'manage_accounts' },
+      { label: 'Scen', iconName: 'landscape' },
+    )
+  }
+  return tabList;
+})
+// const tabs = [
+//   { label: 'Info', iconName: 'info' },
+//   { label: 'Delning', iconName: 'manage_accounts' },
+//   { label: 'Scen', iconName: 'landscape' },
+//   { label: 'Mediabibliotek', iconName: 'collections' },
+//   { label: 'Objekt', iconName: 'view_in_ar' },
+// ];
 
 const { setCursorMode, currentCursorMode, isCursorHovering, currentRaycastSelectorString, setCursorEntityRef, onCursorClick, currentCursorIntersection, currentCursorTransform, triggerCursorClick } = useCurrentCursorIntersection();
 setCursorMode('select-objects');
