@@ -92,7 +92,18 @@ export default async function () {
 
   // TODO: Find out why rig and camera seems to be a few decimeter of in horizontal position. Only in real VR though. Not in browser as it seems at least.
   await import('aframe-blink-controls');
+  // patchBlinkControls();
   await import('aframe-extras/controls/index.js');
   // console.log('registered and imported all aframe components!!! ------------------------');
   componentsAreRegistered = true;
 };
+
+// function patchBlinkControls() {
+//   const globalBlinkControls = AFRAME.components['blink-controls'].Component;
+//   function patchedParabolicCurveMaxRoot(p0, v0, a) {
+//     console.log('patchedParabolicCurveMaxRoot triggered');
+//     const root = (-v0.y - Math.sqrt(Math.abs(v0.y) ** 2 - 4 * (0.5 * Math.abs(a.y)) * Math.abs(p0.y))) / (2 * 0.5 * Math.abs(a.y))
+//     return root
+//   }
+//   globalBlinkControls.prototype['parabolicCurveMaxRoot'] = patchedParabolicCurveMaxRoot;
+// }
