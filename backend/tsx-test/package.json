@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "database": "workspace:*",
-    "debug-level": "3.0.0-1"
+    "debug-level": "3.2.1"
   },
   "keywords": [],
   "author": "",
