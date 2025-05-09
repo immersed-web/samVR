@@ -92,15 +92,11 @@
                   </button>
                 </div>
               </div>
-              <!-- <p>{{ selectedUser }}</p> -->
-              <!-- <p class="overflow-hidden">{{ users }}</p> -->
-
-              <div class="form-control">
+              <div v-if="vrSpaceStore.currentVrSpace.dbData.allowedUsers.length" class="form-control">
                 <span class="font-semibold">
                   Personer med tillgång till VR-scenen
                 </span>
                 <div class="grid grid-cols-[0.5fr_1fr_0fr] gap-6 w-fit">
-
                   <template v-for="userPermission in vrSpaceStore.currentVrSpace?.dbData.allowedUsers"
                     :key="userPermission.user.userId">
                     <span>{{ userPermission.user.username }}</span>
