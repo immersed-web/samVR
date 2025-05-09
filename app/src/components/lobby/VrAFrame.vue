@@ -22,7 +22,7 @@
 
   <a-entity v-if="vrSpaceStore.currentVrSpace.dbData.spawnPosition" ref="spawnPoint"
     :position="arrToCoordString(vrSpaceStore.currentVrSpace.dbData.spawnPosition)">
-    <a-circle opacity="0.2" color="fuchsia" rotation="-90 0 0"
+    <a-circle opacity="0.2" color="fuchsia" position="0 0.05 0" rotation="-90 0 0"
       :radius="vrSpaceStore.currentVrSpace.dbData.spawnRadius" />
     <!-- <a-entity :position="`0 ${defaultHeightOverGround} 0`"
         mesh-ui-block="backgroundOpacity: 0.2; justifyContent: space-evenly; fontSize: 0.03; padding: 0.004" class="">
@@ -52,7 +52,7 @@
     <a-entity camera id="camera" ref="cameraTag"
       look-controls="touchEnabled: true; reverseMouseDrag: false; reverseTouchDrag: true; pointerLockEnabled: true;"
       wasd-controls="acceleration:35;"
-      :simple-navmesh-constraint="`navmesh: .navmesh; fall: 1; height: ${defaultHeightOverGround};`"
+      :simple-navmesh-constraint="`navmesh: .navmesh; fall: 0.3; height: ${defaultHeightOverGround};`"
       emit-move="interval: 20;" :position="`0 ${defaultHeightOverGround} 0`">
       <a-entity ref="cameraAttacher" :position="cameraAttacherPosString">
         <!-- <a-troika-text :value="cameraRigLocalPos" position="0 0.5 -3" />
@@ -437,6 +437,7 @@ function pickSpawnPoint() {
   }
   let startPos = getRandomSpawnPosition();
   if (startPos) {
+    // startPos.y += 0.5;
     const startPosArr = startPos.toArray();
     // console.log('placing cameraRig at start position', startPos);
     camerarigTag.value.object3D.position.set(...startPosArr);
