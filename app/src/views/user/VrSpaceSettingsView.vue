@@ -51,13 +51,22 @@
                 är privat för dig och de
                 du har valt att dela den med.
               </p>
-              <label class="max-w-xs label py-0 cursor-pointer gap-2 font-semibold">
-                <span class="label-text">
-                  Öppet för alla:
+              <div class="flex gap-4 items-center">
+                <span class="label-text font-semibold leading-none">
+                  Delning/tillgänglighet:
                 </span>
-                <input type="checkbox" class="toggle toggle-success" true-value="public" false-value="private"
-                  v-model="vrSpaceStore.writableVrSpaceDbData.visibility">
-              </label>
+                <div class="join">
+                  <input type="radio" v-model="vrSpaceStore.writableVrSpaceDbData.visibility" value="private"
+                    name="visibility" class="join-item btn btn-sm" aria-label="privat" />
+                  <input type="radio" v-model="vrSpaceStore.writableVrSpaceDbData.visibility" value="unlisted"
+                    name="visibility" class="join-item btn btn-sm" aria-label="olistad" />
+                  <input type="radio" v-model="vrSpaceStore.writableVrSpaceDbData.visibility" value="public"
+                    name="visibility" class="join-item btn btn-sm" aria-label="öppen" />
+                </div>
+
+                <!-- <input type="checkbox" class="toggle toggle-success" true-value="public" false-value="private"
+                  v-model="vrSpaceStore.writableVrSpaceDbData.visibility"> -->
+              </div>
               <div class="divider">
                 Delning
               </div>
@@ -834,6 +843,10 @@ async function deleteThisVrSpace() {
   animation: framesActiveRaycast 1s ease-in-out infinite alternate;
 }
 
+.trimmed-text {
+  leading-trim: both;
+  text-edge: cap alphabetic;
+}
 
 @keyframes framesActiveRaycast {
   from {
