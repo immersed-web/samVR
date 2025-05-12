@@ -67,6 +67,20 @@
                 <!-- <input type="checkbox" class="toggle toggle-success" true-value="public" false-value="private"
                   v-model="vrSpaceStore.writableVrSpaceDbData.visibility"> -->
               </div>
+              <div class="flex items-center gap-1.5">
+                <span class="label-text-alt font-bold flex-nowrap text-nowrap">Delningslänk:</span>
+                <div class="join">
+                  <p style="overflow-wrap: break-word; word-break: break-all;"
+                    class="inline-block bg-neutral-50 border p-1.5 join-item text-xs select-all">
+                    {{ eventUrl }}
+                  </p>
+                  <div class="tooltip" :data-tip="linkCopyTooltip">
+                    <button @click.prevent="copyEventUrlToClipboard" class="btn btn-xs btn-outline join-item h-full">
+                      <span class="material-icons text-lg">content_copy</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
               <div class="divider">
                 Delning
               </div>
@@ -420,7 +434,7 @@ import AutoComplete from '@/components/AutoComplete.vue';
 import { useCurrentCursorIntersection, useSelectedPlacedObject, useCurrentlyMovedObject, isAsset } from '@/composables/vrSpaceComposables';
 import { THREE, type Entity } from 'aframe';
 import { arrToCoordString, quaternionTupleToAframeRotation } from '@/modules/3DUtils';
-import { useArrayFilter, useConfirmDialog } from '@vueuse/core';
+import { autoResetRef, useArrayFilter, useConfirmDialog } from '@vueuse/core';
 import PlacedAsset from '@/components/entities/PlacedAsset.vue';
 import TabsComponent from '@/views/user/TabsComponent.vue';
 import { TabPanel } from '@headlessui/vue';
@@ -449,6 +463,20 @@ onTransformUpdate(spo => {
     objectSettings: objectSettings as Json
   });
 })
+
+const linkCopyTooltip = autoResetRef('Klicka för att kopiera adressen', 3000);
+const eventUrl = computed(() => {
+  const vrSpaceId = vrSpaceStore.currentVrSpace?.dbData.vrSpaceId;
+  if (!vrSpaceId) return undefined;
+
+  const url = new URL(router.resolve({ name: 'vrSpace', params: { vrSpaceId } }).href, window.location.origin).href;
+  return url;
+});
+function copyEventUrlToClipboard() {
+  if (!eventUrl.value) return;
+  navigator.clipboard.writeText(eventUrl.value);
+  linkCopyTooltip.value = 'Adress kopierad!';
+}
 
 const hasAdminRights = computed(() => {
   const hasAdminPermission = vrSpaceStore.currentVrSpace?.dbData.allowedUsers.some(permission => {
