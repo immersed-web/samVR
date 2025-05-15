@@ -3,6 +3,7 @@
     <div class="flex gap-8 mb-6 items-center">
       <h1 class=" text-3xl font-bold">
         Redigera {{ vrSpaceStore.writableVrSpaceDbData?.name }}
+        <!-- <span class="text-sm">adminRights: {{ hasAdminRights }}</span> -->
       </h1>
       <RouterLink :to="{ name: 'vrSpace', params: { vrSpaceId: props.vrSpaceId } }">
         <button class="btn btn-primary btn-sm">Besök <span class="material-icons">open_in_new</span></button>
@@ -421,7 +422,7 @@ import AssetUpload, { type AssetUploadEmitUploadedPayload } from './AssetUpload.
 import VrSpacePreview from '@/components/lobby/VrSpacePreview.vue';
 import WaitForAframe from '@/components/WaitForAframe.vue'
 import { ref, watch, onMounted, computed, type ComponentInstance, onBeforeUnmount } from 'vue';
-import { insertablePermissionHierarchy, type Asset, type VrSpaceId, defaultHeightOverGround, type UserId, type Json, translatePermissionLevelAdjective, translatePermissionLevelVerb } from 'schemas';
+import { insertablePermissionHierarchy, type Asset, type VrSpaceId, defaultHeightOverGround, type UserId, type Json, translatePermissionLevelAdjective, translatePermissionLevelVerb, hasAtLeastSecurityRole } from 'schemas';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import { useConnectionStore } from '@/stores/connectionStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -484,9 +485,10 @@ const hasAdminRights = computed(() => {
     return permission.user.userId === userId && permission.permissionLevel === 'admin';
   });
   const isOwner = vrSpaceStore.currentVrSpace?.dbData.ownerUserId === authStore.userId;
-  const isSuperAdmin = authStore.role === 'superadmin';
+  // const isSuperAdmin = authStore.role === 'superadmin';
+  const isSuperAdminOrHigher = hasAtLeastSecurityRole(authStore.role, 'superadmin');
 
-  return isSuperAdmin || isOwner || hasAdminPermission;
+  return isSuperAdminOrHigher || isOwner || hasAdminPermission;
 })
 
 const tabs = computed(() => {
