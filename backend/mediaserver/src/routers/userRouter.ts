@@ -54,30 +54,15 @@ export const userRouter = router({
     const userPermissionLevel = await getPermissionLevelForTarget(input.targetType, input.targetId, ctx.userId);
 
     log.info('permission for requesting user', userPermissionLevel);
-    if (!userPermissionLevel || !hasAtLeastPermissionLevel(userPermissionLevel, 'edit')) {
-      throw Error('you are not authorized to do that');
+    const isSuperAdminOrHigher = hasAtLeastSecurityRole(ctx.role, 'superadmin');
+    if (!isSuperAdminOrHigher) {
+      if (!userPermissionLevel || !hasAtLeastPermissionLevel(userPermissionLevel, 'edit')) {
+        throw Error('you are not authorized to do that');
+      }
+      if (input.permissionLevel && !hasAtLeastPermissionLevel(userPermissionLevel, input.permissionLevel)) {
+        throw Error('cant create permission with higher level than yourself!');
+      }
     }
-    if (input.permissionLevel && !hasAtLeastPermissionLevel(userPermissionLevel, input.permissionLevel)) {
-      throw Error('cant create permission with higher level than yourself!');
-    }
-    // const user = await queryUserWithIncludes.execute({ userId: ctx.userId });
-    // if (!user) throw new Error('no user found with that id');
-    // const perms = groupUserPermissions(user.permissions);
-
-    // let permissionExists = false;
-    // if (input.targetType === 'stream') {
-    //   if (user.ownedStreams.some(s => s.streamId === input.targetId)) {
-    //     permissionExists = true;
-    //   } else {
-    //     permissionExists = perms.streams.some(p => p.streamId === input.targetId)
-    //   }
-    // } else if (input.targetType === 'vrSpace') {
-    //   if (user.ownedVrSpaces.some(s => s.vrSpaceId === input.targetId)) {
-    //     permissionExists = true;
-    //   } else {
-    //     permissionExists = perms.vrSpaces.some(p => p.vrSpaceId === input.targetId)
-    //   }
-    // }
     log.info('gonna try to create permission', input);
 
     const [dbResponse] = await db.insert(schema.permissions).values(input).returning();
