@@ -8,7 +8,7 @@
         </button>
       </div>
     </div>
-    <button @click="guestContinue()" class="btn btn-primary">
+    <button @click="guestContinue" class="btn btn-primary">
       Gå in
     </button>
   </div>
@@ -20,7 +20,11 @@ import { ref } from 'vue';
 import { useAuthStore } from '@/stores/authStore';
 import { useRouter } from 'vue-router';
 
-const appName = import.meta.env.EXPOSED_PROJECT_NAME;
+// const appName = import.meta.env.EXPOSED_PROJECT_NAME;
+
+const emit = defineEmits<{
+  'continue': [],
+}>();
 
 const router = useRouter();
 const fromRoute = router.currentRoute.value.redirectedFrom;
@@ -37,13 +41,14 @@ async function generateUsername() {
 
 const guestContinue = async () => {
   await authStore.autoGuest(guestUsername.value);
+  emit('continue');
   // const connectionStore = useConnectionStore();
   // connectionStore.createUserClient();
-  if (fromRoute?.name === 'userStream') {
-    // console.log('routing back to the stream');
-    router.push(fromRoute);
-    return;
-  }
-  router.push({ name: 'start' });
+  // if (fromRoute?.name === 'userStream') {
+  //   // console.log('routing back to the stream');
+  //   router.push(fromRoute);
+  //   return;
+  // }
+  // router.push({ name: 'start' });
 };
 </script>

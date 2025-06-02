@@ -8,6 +8,12 @@
       <div class="flex-1 hero text-neutral-content">
         <div class="card">
           <div class="card-body">
+            <div v-if="redirectIsActive" role="alert" class="alert bg-transparent text-neutral-content">
+              <span class="material-icons">info</span>
+              <span>Du försökte nå en sida som kräver inloggning. Fortsätt som gäst eller logga in, så slussas du
+                därefter vidare till den sida du var på väg till.
+              </span>
+            </div>
             <h1 class="mb-2">
               Sam<span class="bg-clip-text text-transparent bg-gradient-to-b from-primary to-secondary">VR</span>
             </h1>
@@ -32,7 +38,7 @@
             <div class="card-body">
 
               <h2 class="text-lg">Fortsätt som gäst</h2>
-              <GuestBox />
+              <GuestBox @continue="navigate" />
             </div>
           </div>
           <div class="divider my-2 divider-secondary text-neutral-content">eller</div>
@@ -54,18 +60,15 @@
 // Imports
 import unsplashBackground from '@/assets/milad-fakurian-DX7pT_guAyE-unsplash.jpg';
 import { useRouter } from 'vue-router';
-// import { useClientStore } from '@/stores/clientStore';
-import { onMounted, ref, shallowRef } from 'vue';
+import { computed, onMounted, ref, shallowRef } from 'vue';
 import { useAuthStore } from '@/stores/authStore';
 import { hasAtLeastSecurityRole, type UserRole } from 'schemas';
 import { useConnectionStore } from '@/stores/connectionStore';
 import LoginBox from '@/components/LoginBox.vue';
 import { autoResetRef } from '@vueuse/core';
 import GuestBox from '@/components/GuestBox.vue';
-// import StreamListView from '@/views/public/StreamListView.vue';
 
 const showDevLoginButtons = import.meta.env.DEV;
-// const showDevLoginButtons = false;
 
 // Router
 const router = useRouter();
@@ -73,6 +76,10 @@ const fromRoute = router.currentRoute.value.redirectedFrom;
 console.log('redirected from', fromRoute);
 const defaultLoginRedirect = router.currentRoute.value.meta.afterLoginRedirect;
 console.log('explicit redirect after login:', defaultLoginRedirect);
+
+const redirectIsActive = computed(() => {
+  return fromRoute || defaultLoginRedirect;
+})
 
 // Stores
 const authStore = useAuthStore();
@@ -88,35 +95,32 @@ const error = autoResetRef<Error | undefined>(undefined, 5000);
 
 const login = async (username: string, password: string) => {
   console.log('Login called with credentials:', username, password);
-  try{
+  try {
     await authStore.login(username, password);
-    // console.log('Login as role', authStore.role);
-    if(defaultLoginRedirect){
-      // console.log('redirectAfterLogin', props.redirectAfterLogin);
-      router.push({name: defaultLoginRedirect});
-    } else if(fromRoute && fromRoute.path !== '/'){
-      // console.log('fromRoute', fromRoute);
-      router.push(fromRoute);
-    } else {
-      // console.log('Regular login', authStore.role);
-      // router.push('/');
-      router.push({ name: 'start' });
-      // if (authStore.role && hasAtLeastSecurityRole(authStore.role, 'admin')) {
-      //   router.push({name: 'adminHome'});
-      // }
-      // else {
-      //   router.push({name: 'userHome'});
-      // }
-
-    }
+    console.log('Logged in as role', authStore.role);
+    navigate();
   }
-  catch(e: unknown){
+  catch (e: unknown) {
     console.error(e);
-    if(e instanceof Error){
+    if (e instanceof Error) {
       error.value = e;
     }
   }
 };
+
+function navigate() {
+  if (defaultLoginRedirect) {
+    console.log('explicit redirect set:', defaultLoginRedirect);
+    router.push({ name: defaultLoginRedirect });
+  } else if (fromRoute && fromRoute.path !== '/') {
+    console.log('fromRoute:', fromRoute);
+    console.log('was redirected here. Redirecting back to fromRoute');
+    router.push(fromRoute);
+  } else {
+    console.log('Regular login', authStore.role);
+    router.push({ name: 'start' });
+  }
+}
 
 </script>
 
