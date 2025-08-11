@@ -27,7 +27,7 @@
     "@vue/reactivity": "3.2.47",
     "database": "workspace:*",
     "date-fns": "^2.30.0",
-    "debug-level": "3.0.0-1",
+    "debug-level": "3.2.1",
     "devalue": "^4.3.3",
     "drizzle-orm": "^0.38.3",
     "h264-profile-level-id": "^2.0.0",
