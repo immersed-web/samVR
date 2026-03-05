@@ -3,8 +3,8 @@
     "madge": "madge ./app/"
   },
   "dependencies": {
-    "@trpc/client": "10.45.2",
-    "@trpc/server": "10.45.2",
+    "@trpc/client": "10.45.4",
+    "@trpc/server": "10.45.4",
     "@types/lodash-es": "^4.17.12",
     "lodash-es": "^4.17.21",
     "mediasoup": "^3.13.16",
