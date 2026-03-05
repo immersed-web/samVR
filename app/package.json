@@ -54,7 +54,7 @@
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.10.3",
-    "@tsconfig/node18": "^18.2.4",
+    "@tsconfig/node20": "^20.1.0",
     "@types/aframe": "^1.2.6",
     "@types/dom-mediacapture-transform": "^0.1.9",
     "@types/node": "^20.11.17",
