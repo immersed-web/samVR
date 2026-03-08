@@ -29,7 +29,7 @@
     "date-fns": "^2.30.0",
     "debug-level": "3.0.0-1",
     "devalue": "^4.3.3",
-    "drizzle-orm": "^0.38.3",
+    "drizzle-orm": "^0.45.0",
     "h264-profile-level-id": "^2.0.0",
     "ip": "^1.1.8",
     "lodash-es": "^4.17.21",
