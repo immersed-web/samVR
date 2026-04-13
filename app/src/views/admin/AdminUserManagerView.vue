@@ -207,6 +207,7 @@ const filterActive = computed(() => {
   return filterArr.some(([k, active]) => active);
 })
 function clearFilters() {
+  userSearch.value = '';
   for (const key of Object.keys(roleFilter) as UserRole[]) {
     roleFilter[key] = false;
   }
