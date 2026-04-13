@@ -39,6 +39,9 @@
             </button>
           </div>
         </div>
+        <div v-if="responseMessage" class="alert mb-4" :class="responseType === 'alert-success' ? 'alert-success' : 'alert-error'">
+            <span>{{ responseMessage }}</span>
+          </div>
         <h3>
           Befintliga användare
         </h3>
@@ -92,7 +95,7 @@
                 class="btn">
                 <span class="material-icons">edit</span>
               </button>
-              <button @click="makeCallThenResetList(() => deleteUser(user.userId))" class="btn btn-error">
+              <button @click="makeCallThenResetList(() => deleteUser(user.userId), false)" class="btn btn-error">
                 <span class="material-icons">delete</span>
               </button>
             </template>
@@ -142,6 +145,10 @@ function getClassForRole(role: UserRole) {
       return 'bg-slate-400'; // has-[:checked]:bg-slate-400
   }
 }
+
+const responseMessage = ref<string>();
+const responseType = ref<'alert-success' | 'alert-error'>('alert-success');
+const messageTimeoutId = ref<NodeJS.Timeout | null>(null);
 
 const createdUsername = ref('');
 const createdPassword = ref('');
@@ -209,12 +216,41 @@ onBeforeMount(async () => {
   console.log(fetchedUsers.value);
 });
 
-async function makeCallThenResetList(fetchReq: (...p: any) => Promise<any>) {
-  await fetchReq();
-  editedUserId.value = undefined;
-  createdUsername.value = '';
-  createdPassword.value = '';
-  fetchedUsers.value = await getUsers();
+async function makeCallThenResetList(
+  fetchReq: (...p: any) => Promise<any>,
+  showMessageBool: boolean = true) {
+  try {
+    await fetchReq();
+
+    if (showMessageBool) {
+      showMessage(`Användare "${createdUsername.value}" skapad!`, 'alert-success');
+    }
+    createdUsername.value = '';
+    createdPassword.value = '';
+    createdRole.value = 'guest';
+  } catch (e: any) {
+    if (e.message === 'username already exists') {
+      showMessage('Användarnamnet finns redan.', 'alert-error');
+    } else {
+      showMessage(`Fel: ${e.message || 'Okänt fel vid skapande av användare'}`, 'alert-error');
+    }
+  } finally {
+    fetchedUsers.value = await getUsers();
+    editedUserId.value = undefined;
+  }
+}
+
+function showMessage(msg: string, type: 'alert-success' | 'alert-error') {
+  responseMessage.value = msg;
+  responseType.value = type;
+  
+  if (messageTimeoutId.value) {
+    clearTimeout(messageTimeoutId.value);
+  }
+  
+  messageTimeoutId.value = setTimeout(() => {
+    responseMessage.value = '';
+  }, 5000);
 }
 
 </script>
