@@ -90,6 +90,12 @@ const createUser: RequestHandler = async (req: CreateUserRequest, res) => {
     res.status(201).send(dbResponse);
     return;
   } catch (e) {
+    //Checking if error is from unique constraint violation on username
+    if (typeof e === 'object' && e !== null && 'code' in e && (e as { code?: string }).code === '23505') {
+      res.status(409).send('username already exists');
+      return;
+    }
+
     console.error('database error when creating user');
     console.error(e);
     res.status(501).send(e);
