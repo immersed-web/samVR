@@ -21,6 +21,7 @@ const haikunator = new Haikunator({
 
 // console.log('environment: ', process.env);
 const devMode = process.env.DEVELOPMENT;
+const localMode = process.env.EXPOSED_LOCAL === 'true';
 
 const app = express();
 
@@ -32,11 +33,11 @@ app.set('trust proxy', 1);
 // Find a way to make our auth flow work without this set to false
 let cookieHttpOnly = false;
 let cookieSecure = true;
-if (devMode) {
+let originUrls: string[] = [];
+if (localMode) {
   // NOTE: I couldnt come up with a way to allow all origins so we have hardcoded the devservers url here
-  const devServerUrl = 'http://localhost:5173';
-  console.log('allowing cors for development: ', devServerUrl);
-  app.use(cors({ credentials: true, origin: [devServerUrl] }));
+  originUrls = ['http://localhost:5173', 'http://127.0.0.1:5173'];
+  console.log('allowing cors for local development: ', originUrls);
 
   console.log('allowing cookie despite not https');
   cookieHttpOnly = false;
@@ -46,12 +47,11 @@ if (devMode) {
     console.error('no EXPOSED_SERVER_URL provided from env');
     process.exit(1);
   }
-  console.log('restricting CORS for production');
-  app.use(cors({
-    origin: [process.env.EXPOSED_SERVER_URL],
-    credentials: true
-  }));
+  originUrls = [`https://${process.env.EXPOSED_SERVER_URL}`];
+  console.log('restricting CORS for https:', originUrls);
 }
+
+app.use(cors({ credentials: true, origin: originUrls }));
 
 app.use((req, res, next) => {
   return parseJsonBody()(req, res, (err) => {
@@ -167,7 +167,7 @@ app.get('/guest-jwt', (req, res) => {
 });
 
 
-const port = Number.parseInt(process.env.AUTH_PORT || '3333');
+const port = Number.parseInt(process.env.EXPOSED_AUTH_PORT || '3333');
 app.listen(port, () => {
   console.log(`listening on ${port}`);
   if (process.env.DEVELOPMENT)

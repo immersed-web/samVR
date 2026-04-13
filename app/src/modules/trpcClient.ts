@@ -13,8 +13,12 @@ import { createReceiver } from 'ts-event-bridge/receiver'
 import { shallowRef, type ShallowRef, computed, type ComputedRef } from 'vue';
 import type { Payload } from 'ts-event-bridge/sender';
 
-const wsBaseURL = `wss://${import.meta.env.EXPOSED_SERVER_URL}${import.meta.env.EXPOSED_MEDIASOUP_PATH}`;
+const localMode = import.meta.env.EXPOSED_LOCAL === 'true';
 
+let wsBaseURL = `wss://${import.meta.env.EXPOSED_SERVER_URL}${import.meta.env.EXPOSED_MEDIASOUP_PATH}`;
+if (localMode) {
+  wsBaseURL = `ws://${import.meta.env.EXPOSED_SERVER_URL}:${import.meta.env.EXPOSED_MEDIASOUP_PORT}`;
+}
 const { receiver, onMessageReceived } = createReceiver<UserClientEventMap>({
   onUnhandledEvent(evt, msg) {
     console.warn('unhandled event: ', evt, msg);

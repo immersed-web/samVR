@@ -90,6 +90,12 @@ const createUser: RequestHandler = async (req: CreateUserRequest, res) => {
     res.status(201).send(dbResponse);
     return;
   } catch (e) {
+    //Checking if error is from unique constraint violation on username
+    if (typeof e === 'object' && e !== null && 'code' in e && (e as { code?: string }).code === '23505') {
+      res.status(409).send('username already exists');
+      return;
+    }
+
     console.error('database error when creating user');
     console.error(e);
     res.status(501).send(e);
@@ -105,6 +111,7 @@ interface CreateSenderRequest extends ExpressReq {
     streamId?: StreamId,
   }
 }
+
 const createSenderForVenue: RequestHandler = async (req : CreateSenderRequest, res) => {
   const userData = req.session.user
   // console.log(userData);
@@ -147,6 +154,7 @@ interface UpdateUserRequest extends ExpressReq {
     password?: string,
   }
 }
+
 const updateUser: RequestHandler = async (req: UpdateUserRequest, res) => {
   const userData = req.session.user;
   const payload = req.body;
@@ -206,6 +214,7 @@ interface DeleteUserRequest extends ExpressReq {
     userId: UserId
   }
 }
+
 const deleteUser: RequestHandler = async (req: DeleteUserRequest, res) => {
   try {
     const userData = req.session.user;
@@ -397,7 +406,7 @@ const loginUser: RequestHandler = async (req, res) => {
       where: eq(schema.users.username, username),
     })
     if (!foundUser) {
-      throw new Error('no user with that username found!');
+      throw new Error('no user with that username and password found!');
     }
     const correct = await bcrypt.compare(password, foundUser.password);
     if (correct) {
@@ -406,14 +415,18 @@ const loginUser: RequestHandler = async (req, res) => {
       req.session.user = pickedUserData;
       res.status(200).send();
       return;
+    } else {
+      throw new Error('no user with that username and password found!');
     }
   } catch (e) {
     console.error(e);
-    res.status(501).send('failed when trying to login');
+    if (e instanceof Error && e.message === 'no user with that username and password found!') {
+      res.status(401).send('User with that username or password not found');
+    } else {
+      res.status(501).send('failed when trying to login');
+    }
     return;
   }
-  res.status(403).send('You shall not pass!');
-  return;
 
 };
 

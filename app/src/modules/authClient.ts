@@ -4,8 +4,18 @@ import type { JwtPayload, JwtUserData, UserRole } from 'schemas';
 import type { User } from 'database/schema';
 import decodeJwt from 'jwt-decode';
 
-const completeAuthUrl = `https://${import.meta.env.EXPOSED_SERVER_URL}${import.meta.env.EXPOSED_AUTH_PATH}`;
-// console.log('authUrl: ', completeAuthUrl);
+const devMode = import.meta.env.DEV;
+const localMode = import.meta.env.EXPOSED_LOCAL === 'true';
+console.log('localMode:', localMode);
+
+let completeAuthUrl: string;
+if (localMode) {
+  completeAuthUrl = `http://${import.meta.env.EXPOSED_SERVER_URL}:${import.meta.env.EXPOSED_AUTH_PORT}`;
+} else {
+  completeAuthUrl = `https://${import.meta.env.EXPOSED_SERVER_URL}${import.meta.env.EXPOSED_AUTH_PATH}`;
+}
+
+console.log('authUrl: ', completeAuthUrl);
 const authEndpoint = axios.create({ baseURL: completeAuthUrl, withCredentials: true });
 
 export function createUser(username: string, password: string, role: UserRole) {
@@ -37,7 +47,7 @@ export function updateUser(userData: {userId: string, username?: string, passwor
 }
 
 export function deleteUser(userId: string) {
-  return handleResponse(() => authEndpoint.post('/user/delete', {userId}));
+  return handleResponse(() => authEndpoint.post('/user/delete', { userId }));
 }
 
 type FetchedUsers = Omit<User, 'password'>[]
@@ -186,15 +196,15 @@ export const loginWithAutoToken = async (username: string, password: string) => 
 
 export const guestJwt = (params?: {requestedUsername?: string, previousToken?: string}) => {
   if(params?.previousToken){
-    return handleResponse<string>(() =>authEndpoint.get(`/guest-jwt?prevToken=${params.previousToken}`));
+    return handleResponse<string>(() => authEndpoint.get(`/guest-jwt?prevToken=${params.previousToken}`));
   }
   if(params?.requestedUsername){
-    return handleResponse<string>(() =>authEndpoint.get(`/guest-jwt?username=${params.requestedUsername}`));
+    return handleResponse<string>(() => authEndpoint.get(`/guest-jwt?username=${params.requestedUsername}`));
   }
-  return handleResponse<string>(() =>authEndpoint.get('/guest-jwt'));
+  return handleResponse<string>(() => authEndpoint.get('/guest-jwt'));
 };
 export const getJwt = () => handleResponse<string>(() => authEndpoint.get('user/jwt'));
-export const getMe = () => handleResponse<JwtUserData>(() => authEndpoint.get('/user/me'));
+export const getMe = () => handleResponse<JwtUserData>(() => authEndpoint.get('user/me'));
 export const logout = () => {
   clearTimeout(activeTimeout);
   return handleResponse<void>(() => authEndpoint.get('user/logout'));

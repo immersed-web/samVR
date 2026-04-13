@@ -3,6 +3,7 @@ import { HttpStatus } from 'http-status-ts';
 import { serveStatic } from '@hono/node-server/serve-static'
 import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono'
+import { cors } from 'hono/cors'
 // import { logger } from 'hono/logger';
 // import { createMiddleware } from 'hono/factory'
 import { HTTPException } from 'hono/http-exception'
@@ -13,6 +14,7 @@ import { randomUUID } from 'crypto'
 import { Stream, pipeline } from 'node:stream';
 import type { ReadableStream } from 'node:stream/web';
 import fs from 'fs'
+import promise from 'fs/promises';
 
 import { hc, InferRequestType, InferResponseType } from 'hono/client'
 
@@ -29,6 +31,10 @@ import sharp from 'sharp';
 
 const savePathAbsolute = path.resolve('.', 'uploads')
 const savePathRelative = './uploads/'
+const devMode = process.env.DEVELOPMENT === 'true';
+const localMode = process.env.EXPOSED_LOCAL === 'true';
+
+await promise.mkdir(savePathAbsolute, { recursive: true });
 
 // const authHandler = basicAuth({ username: 'gunnar', password: 'hemligt' })
 // const jwtHandler = jwt({ secret: 'secret' });
@@ -83,6 +89,9 @@ publicRoutes.get('/file/:filename',
     root: savePathRelative,
   }),
   )
+  .get('/test', (c) => {
+    return c.text('test', HttpStatus.OK);
+  });
 
 const privateRoutes = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
   .use((c, next) => {
@@ -202,11 +211,30 @@ const privateRoutes = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
     return c.json(dbResponse, HttpStatus.OK);
   });
 
-const app = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
-  .route('/', publicRoutes)
-  .route('/', privateRoutes);
+const app = new Hono<{ Variables: { jwtPayload: JwtPayload } }>();
 
-const port = Number.parseInt(process.env.FILESERVER_PORT ?? '3000');
+if (localMode) {
+  app.use(
+    '*',
+    cors({
+      origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+      credentials: true,
+    })
+  );
+} else {
+  app.use(
+    '*',
+    cors({
+      origin: [`https://${process.env.EXPOSED_SERVER_URL}`],
+      credentials: true
+    })
+  )
+}
+
+app.route('/', publicRoutes)
+app.route('/', privateRoutes);
+
+const port = Number.parseInt(process.env.EXPOSED_FILESERVER_PORT ?? '3000');
 console.log(`Server is running on port ${port}`)
 
 serve({
