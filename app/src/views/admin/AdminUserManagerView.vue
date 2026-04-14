@@ -127,7 +127,7 @@
               <option :value="25">25</option>
               <option :value="50">50</option>
             </select>
-          </div>
+        </div>
       </div>
       <div v-else>
         <!-- Vad gör du här? Du får inte vara här. -->
@@ -207,6 +207,7 @@ const filterActive = computed(() => {
   return filterArr.some(([k, active]) => active);
 })
 function clearFilters() {
+  userSearch.value = '';
   for (const key of Object.keys(roleFilter) as UserRole[]) {
     roleFilter[key] = false;
   }
