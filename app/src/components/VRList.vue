@@ -62,12 +62,12 @@
         </div>
       </div>
     </div>
-    <div class="flex justify-between items-baseline gap-2 mt-4">
+    <div class="flex items-center gap-2 mt-4">
       <div class="flex gap-2">
         <button class="btn btn-sm" :disabled="currentPage === 1" @click="currentPage--">
           Föregående
         </button>
-        <span class="text-sm">Sida {{ currentPage }} av {{ totalPages }}</span>
+        <span class="text-sm leading-none self-center">Sida {{ currentPage }} av {{ totalPages }}</span>
         <button class="btn btn-sm" :disabled="currentPage === totalPages" @click="currentPage++">
           Nästa
         </button>
