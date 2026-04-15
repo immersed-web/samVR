@@ -268,6 +268,13 @@
               :model-url="vrSpaceStore.worldModelUrl" :navmesh-url="vrSpaceStore.navMeshUrl"
               :raycastSelector="currentRaycastSelectorString"
               :auto-rotate="currentCursorMode === 'select-objects' && selectedPlacedObject === undefined">
+               <!-- Assets stay here, but move to top-level scene if shared -->
+  <a-assets v-once timeout="25000">
+    <template v-for="(fileNames, prop) in avatarAssets" :key="prop">
+      <a-asset-item :id="`${prop}-${idx}`" v-for="(fileName, idx) in fileNames" :key="fileName"
+                    :src="`/avatar/${prop}/${fileName}.glb`" />
+    </template>
+  </a-assets>
               <a-entity v-if="true" id="placed-objects">
                 <a-entity v-for="placedObject in placedObjectsNotBeingEdited"
                   :key="`${placedObject.placedObjectId}_${placedObject.updatedAt}`"
@@ -303,40 +310,27 @@
                   :position="`0 ${defaultHeightOverGround} 0`"
                   :opacity="currentCursorMode === 'place-spawnposition' ? 0.5 : 1.0"
                   :material="`shader: vr-portal; warpParams: 3 0.9; src: url(${vrSpaceStore.panoramicPreviewUrl}); side: back;`" /> -->
-                  <a-scene embedded ref="sceneTag" cursor="fuse:false; rayOrigin:mouse;" raycaster="objects: .clickable"
-                            :position="`0 ${defaultHeightOverGround} 0`"
-                            xr-mode-ui="enabled: false;">
-                            <a-assets v-once timeout="25000">
-                              <template v-for="(fileNames, prop) in avatarAssets" :key="prop">
-                                <a-asset-item :id="`${prop}-${idx}`" v-for="(fileName, idx) in fileNames" :key="fileName"
-                                  :src="`/avatar/${prop}/${fileName}.glb`" />
-                              </template>
-                            </a-assets>
-                            <a-entity camera look-controls="enabled: false" camera-controls />
-                            <a-sky color="skyblue" />
-                            <a-entity laser-controls="hand: left" raycaster="objects: .clickable" />
-                            <a-entity laser-controls="hand: right" raycaster="objects: .clickable" />
-                  
-                  
-                            <a-entity position="0 0.2 0">
-                              <template v-for="(modelSetting, key) in currentAvatarSettings.parts" :key="key">
-                                <template v-if="modelSetting.model">
-                                  <template v-if="skinParts.includes(key)">
-                                    <a-gltf-model make-gltf-swappable
-                                      :src="`#${key}-${avatarAssets[key as keyof typeof avatarAssets].indexOf(modelSetting.model)}`"
-                                      :model-color="`colors: ${currentAvatarSettings.skinColor ?? ''}; materialName: skin`" />
-                                    <a-gltf-model v-if="key === 'hands' && modelSetting.model" make-gltf-swappable
-                                      :src="`#${key}-${avatarAssets[key as keyof typeof avatarAssets].indexOf(modelSetting.model)}`"
-                                      :model-color="`colors: ${currentAvatarSettings.skinColor ?? ''}; materialName: skin`"
-                                      scale="-1 1 1" />
-                                  </template>
-                                  <a-gltf-model v-else make-gltf-swappable @nrOfCustomColors="setNrOfCustomColors(key, $event)"
-                                    :src="`#${key}-${avatarAssets[key as keyof typeof avatarAssets].indexOf(modelSetting.model)}`"
-                                    :model-color="`colors: ${modelSetting.colors ?? ''};`" />
-                                </template>
-                              </template>
-                            </a-entity>
-                          </a-scene>
+                  <a-entity ref="avatarGroup" position="0 2 0">
+
+  <!-- Avatar body parts -->
+  <template v-for="(modelSetting, key) in currentAvatarSettings.parts" :key="key">
+    <template v-if="modelSetting.model">
+      <template v-if="skinParts.includes(key)">
+        <a-gltf-model make-gltf-swappable
+                      :src="`#${key}-${avatarAssets[key as keyof typeof avatarAssets].indexOf(modelSetting.model)}`"
+                      :model-color="`colors: ${currentAvatarSettings.skinColor ?? ''}; materialName: skin`" />
+        <a-gltf-model v-if="key === 'hands' && modelSetting.model" make-gltf-swappable
+                      :src="`#${key}-${avatarAssets[key as keyof typeof avatarAssets].indexOf(modelSetting.model)}`"
+                      :model-color="`colors: ${currentAvatarSettings.skinColor ?? ''}; materialName: skin`"
+                      scale="-1 1 1" />
+      </template>
+      <a-gltf-model v-else make-gltf-swappable @nrOfCustomColors="setNrOfCustomColors(key, $event)"
+                    :src="`#${key}-${avatarAssets[key as keyof typeof avatarAssets].indexOf(modelSetting.model)}`"
+                    :model-color="`colors: ${modelSetting.colors ?? ''};`" />
+    </template>
+  </template>
+</a-entity>
+
               </a-entity>
               <a-entity id="teleport-target-aframe-cursor" ref="cursorEntity">
 
@@ -477,6 +471,27 @@ type ScreenshotPayload = ExtractEmitData<'screenshot', ComponentInstance<typeof 
 
 const { selectedPlacedObject, placedObjectRotation, placedObjectScale, transformedSelectedObject, onTransformUpdate } = useSelectedPlacedObject();
 const { currentlyMovedObject } = useCurrentlyMovedObject();
+
+const partsNrOfColors = reactive(Object.fromEntries(Object.keys(avatarAssets).map(k => [k, 0])));
+function setNrOfCustomColors(part: string, evt: CustomEvent) {
+  // console.log('setNrOfCustomColors', evt, part);
+  const entity = evt.target as Entity;
+  // @ts-ignore
+  const nrOfColors = entity.components['model-color'].nrOfCustomColors as number;
+  // console.log(part, nrOfColors, entity.components['model-color']);
+  partsNrOfColors[part] = nrOfColors;
+  for (const [key, value] of Object.entries(currentAvatarSettings.parts)) {
+    const keyTyped = key as PartKeyWithColor;
+    // console.log(keyTyped, value, partsNrOfColors[key]);
+    for (let i = 0; i < partsNrOfColors[keyTyped]; i++) {
+      // console.log(currentAvatarSettings.parts[keyTyped].colors[i])
+      // currentColorSettings[key][i] = currentAvatarSettings.parts[key].colors[i];
+      if (currentAvatarSettings.parts[keyTyped].colors[i]) {
+        customColorsIsActive[keyTyped][i] = true;
+      }
+    }
+  }
+}
 
 import { avatarAssets, type AvatarDesign, defaultAvatarDesign, type PartKeyWithColor, skinParts } from 'schemas';
 import { parse } from 'devalue';
