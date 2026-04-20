@@ -20,7 +20,7 @@
           <TabPanel>
             <div class="space-y-4">
               <div class="form-control">
-                <div class="font-semibold">Scenens namn</div>
+                <div class="font-semibold">Miljöns namn</div>
                 <input class="input input-bordered input-sm" v-model="vrSpaceStore.writableVrSpaceDbData.name">
               </div>
               <div class="form-control">
@@ -48,7 +48,7 @@
                 Publik eller privat?
               </div>
               <p class="text-sm text-gray-600">
-                Välj ifall VR-scenen ska vara publikt tillgänglig, öppen för vem som helst att besöka. Eller om scenen
+                Välj ifall VR-miljön ska vara publikt tillgänglig, öppen för vem som helst att besöka. Eller om miljön
                 är privat för dig och de
                 du har valt att dela den med.
               </p>
@@ -86,7 +86,7 @@
                 Delning
               </div>
               <p class="text-sm text-gray-600">
-                Välj de användare som ska ha tillgång till scenen, samt på vilken nivå de ska ha tillgång.
+                Välj användare samt vilken behörighet de ska ha.
               </p>
 
               <div class="form-control">
@@ -109,7 +109,7 @@
               </div>
               <div v-if="vrSpaceStore.currentVrSpace.dbData.allowedUsers.length" class="form-control">
                 <span class="font-semibold">
-                  Personer med tillgång till VR-scenen
+                  Personer med tillgång till VR-miljön
                 </span>
                 <div class="grid grid-cols-[0.5fr_1fr_0fr] gap-6 w-fit">
                   <template v-for="userPermission in vrSpaceStore.currentVrSpace?.dbData.allowedUsers"
@@ -130,7 +130,7 @@
                   3D-modell för miljön
                 </div>
                 <p class="text-sm mb-2 text-gray-600">
-                  Ladda upp en 3D-modell för VR-scenens miljö. Detta är den modell som omsluter besökaren, t.ex. ett
+                  Ladda upp en 3D-modell för VR-miljöns miljö. Detta är den modell som omsluter besökaren, t.ex. ett
                   rum eller en park.
                 </p>
                 <pre
@@ -178,13 +178,13 @@
                     Startplats för besökare
                   </div>
                   <p class="text-sm mb-2 text-gray-600">
-                    Välj den plats där besökare startar då de öppnar VR-scenen.
+                    Välj den plats där besökare startar då de öppnar VR-miljön.
                     Klicka på knappen nedan och sedan i 3D-modellen för att placera startplatsen.
                     Du kan ändra storlek på startplatsen för att slumpa startpositionen inom den gula cirkeln.
                   </p>
                   <div class="flex gap-4 g items-end justify-stretch">
                     <div class="tooltip tooltip-right flex"
-                      data-tip="Klicka sedan i 3D-scenen för att välja var besökarna startar">
+                      data-tip="Klicka sedan i 3D-miljön för att välja var besökarna startar">
                       <!-- <input type="radio" value="spawnPosition" aria-label="Placera startplats"
                         class="btn btn-sm btn-primary"
                         :class="{ activeRaycast: currentRaycastReason == 'spawnPosition' }"
@@ -214,7 +214,7 @@
                     v-model="vrSpaceStore.writableVrSpaceDbData.skyColor">
                 </div>
                 <span class="label-text text-gray-600">
-                  Välj den färg som himlen ska ha i VR-scenen.
+                  Välj den färg som himlen ska ha i VR-miljön.
                 </span>
               </div>
 
@@ -232,7 +232,7 @@
               :accepted-asset-types="['document', 'image', 'video', 'model']" name="object"
               :show-in-user-library="true" />
             <div class="divider">
-              Placera objekt i scenen
+              Placera objekt i miljön
             </div>
             <AssetLibrary @asset-deleted="vrSpaceStore.reloadVrSpaceFromDB" :assets="libraryAssets"
               @asset-picked="onAssetPicked" />
@@ -241,10 +241,10 @@
         <TabPanel>
           <div class="space-y-4">
             <div class="divider mt-0">
-              Portaler till andra VR-scener
+              Portaler till andra VR-miljöer
             </div>
             <p class="text-sm text-gray-600">
-              Skapa portaler som låter besökarna förflytta sig till andra VR-scener. Välj en scen att förflytta
+              Skapa portaler som låter besökarna förflytta sig till andra VR-miljöer. Välj en miljö att förflytta
               sig till
               och klicka sedan i 3D-modellen för att placera portalen.
             </p>
@@ -399,7 +399,7 @@
         <pre>{{ selectedPlacedObject?.position }}</pre>
         <pre>{{ vrSpaceStore.currentVrSpace?.dbData.placedObjects.find(p => p.placedObjectId === selectedPlacedObject?.placedObjectId)?.position }}</pre> -->
           <template v-if="vrSpaceStore.currentVrSpace?.dbData.worldModelAsset">
-            <h4>Interagera med VR-scenen</h4>
+            <h4>Interagera med VR-miljön</h4>
             <div class="grid grid-cols-2 gap-2">
               <div>
                 <!-- Hoppa in i världen -->
