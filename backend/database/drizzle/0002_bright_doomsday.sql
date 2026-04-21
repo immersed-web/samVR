@@ -1,0 +1,1 @@
+ALTER TYPE "public"."PlacedObjectType" ADD VALUE 'text' BEFORE 'vrPortal';

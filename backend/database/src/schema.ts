@@ -10,7 +10,7 @@ export const CameraTypeEnum = pgEnum("CameraType", ['panoramic360', 'normal'])
 export const AssetTypeEnum = pgEnum("AssetType", ['image', 'video', 'model', 'navmesh', 'document']);
 // export type AssetTypes = typeof AssetTypeEnum.enumValues[number];
 
-export const PlacedObjectTypeEnum = pgEnum("PlacedObjectType", ['asset', 'vrPortal', 'streamPortal', 'externalLinkPortal', 'pointLight', 'directionalLight', 'ambientLight']);
+export const PlacedObjectTypeEnum = pgEnum("PlacedObjectType", ['asset', 'text', 'vrPortal', 'streamPortal', 'externalLinkPortal', 'pointLight', 'directionalLight', 'ambientLight']);
 // export const PortalType = pgEnum("PortalType", ['vrSpace', 'stream', 'externalUrl']);
 export const RoleEnum = pgEnum("Role", ['god', 'superadmin', 'admin', 'moderator', 'user', 'guest'])
 export const VisibilityEnum = pgEnum("Visibility", ['private', 'unlisted', 'public'])
