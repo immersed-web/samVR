@@ -23,7 +23,7 @@ export const useAuthStore = defineStore('auth', () => {
   const token = ref<string>();
   const tokenOrThrow = () => {
     // console.log('accessing tokenOrThrow');
-    if(!token.value) {
+    if (!token.value) {
       throw Error('token was undefined when trying to access it from authstore');
     }
     return token.value;
@@ -59,13 +59,12 @@ export const useAuthStore = defineStore('auth', () => {
   const isLoggedIn = computed(() => isAuthenticated.value && hasAtLeastSecurityRole(role.value, 'user'));
   const routePrefix = computed(() => role.value && hasAtLeastSecurityRole(role.value, 'admin') ? 'admin' : 'user');
   async function autoGuest(username?: string) {
-    await logout();
     await guestAutoToken((t) => {
       token.value = t;
     }, username);
   }
-  async function restoreFromSession(){
-    if(!hasCookie.value){
+  async function restoreFromSession() {
+    if (!hasCookie.value) {
       console.warn('You will need to have a cookie set in order to restore a persisted login session');
     }
     await userAutoToken((t) => token.value = t);
@@ -73,9 +72,11 @@ export const useAuthStore = defineStore('auth', () => {
   }
   async function logout() {
     await authLogout();
+    console.log('removing guestAvatarSettings')
+    localStorage.removeItem('guestAvatarSettings')
     _reset();
   }
-  async function login (username: string, password: string ) {
+  async function login(username: string, password: string) {
     await authLogin(username, password);
     hasCookie.value = browserHasCookie();
     await userAutoToken((t) => {

@@ -32,7 +32,7 @@ const authStore = useAuthStore();
 const currentAvatarSettings = reactive<AvatarDesign>(defaultAvatarDesign);
 
 const partMap: Record<string, string> = {
-  'eyes': 'Ögon', 
+  'eyes': 'Ögon',
   'eyebrows': 'Ögonbryn',
   'mouths': 'Mun',
   'hair': 'Hår',
@@ -44,36 +44,32 @@ const partMap: Record<string, string> = {
 };
 
 onMounted(() => {
-  const wasLoaded = loadAvatarFromClientState();
-  if (!wasLoaded) {
-    loadAvatarFromStorage();
-  }
-
-  watch(() => authStore.role, (newRole) => {
-    if (newRole === 'guest') {
-      const hasRandomizedBefore = localStorage.getItem('guestAvatarRandomized')
-
-      if (!hasRandomizedBefore) {
-        setTimeout(() => {
-          randomizeAvatar()
-          localStorage.setItem('guestAvatarRandomized', 'true')
-        }, 150)
-      }
+  if (authStore.isNotGuest) {
+    const wasLoaded = loadAvatarFromClientState();
+    if (!wasLoaded) {
+      console.warn('failed to load avatarSettings from clientState')
     }
-  }, { immediate: true })
+  } else if (authStore.isGuest) {
+    const wasLoaded = loadGuestAvatarFromStorage();
+    if (!wasLoaded) {
+      randomizeAvatar();
+      saveGuestAvatarSettingsToStorage();
+    }
+  }
 
   // we only start watching after loading the (maybe) saved avatardesign
   watch(() => currentAvatarSettings, () => {
     if (authStore.role === 'guest') {
-      saveAvatarSettingsToStorage();
+      saveGuestAvatarSettingsToStorage();
+    } else {
+      connectionStore.client.user.updateAvatarDesign.mutate(currentAvatarSettings);
     }
-    connectionStore.client.user.updateAvatarDesign.mutate(currentAvatarSettings);
   }, { deep: true });
 });
 
-function saveAvatarSettingsToStorage() {
-  // console.log('avatarSettings before save:', currentAvatarSettings);
-  window.localStorage.setItem('avatarSettings', stringify(currentAvatarSettings));
+function saveGuestAvatarSettingsToStorage() {
+  // console.log('guestAvatarSettings before save:', currentAvatarSettings);
+  window.localStorage.setItem('guestAvatarSettings', stringify(currentAvatarSettings));
 }
 
 function randomizeAvatar() {
@@ -96,10 +92,11 @@ function loadAvatarFromClientState() {
   return false;
 }
 
-function loadAvatarFromStorage() {
-  const loadedString = localStorage.getItem('avatarSettings');
+function loadGuestAvatarFromStorage() {
+  const loadedString = localStorage.getItem('guestAvatarSettings');
   if (!loadedString) {
     console.error('no saved avatardesign in localstorage');
+    return false;
   } else {
     const parsedAvatarSettings = parse(loadedString);
     currentAvatarSettings.parts = parsedAvatarSettings.parts;
@@ -110,6 +107,7 @@ function loadAvatarFromStorage() {
       currentSkinColor.value = parsedAvatarSettings.skinColor
     }
     console.log("Loaded parts", parsedAvatarSettings.parts)
+    return true;
   }
 
 }
@@ -277,8 +275,8 @@ watch(currentColorPickerValue, (newColor, prevColor) => {
                         :value="asset" as="template">
                         <li :class="[
                           active ? 'bg-amber-100 text-amber-900' : 'text-gray-900',
-  'relative cursor-default select-none',
-]">
+                          'relative cursor-default select-none',
+                        ]">
                           <span class="capitalize" :class="[
                             selected ? 'font-medium' : 'font-normal',
                             'block truncate',
@@ -319,18 +317,14 @@ watch(currentColorPickerValue, (newColor, prevColor) => {
             </div>
           </template>
         </template>
-          <div class="col-start-1 col-span-3 flex justify-center items-center gap-2 mt-1">
-            <button 
-              @click="randomizeAvatar" 
-              title="Randomisera avatar"
-              class="btn text-slate-100 btn-sm bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center material-icons text-xl leading-none w-[10rem]
+        <div class="col-start-1 col-span-3 flex justify-center items-center gap-2 mt-1">
+          <button @click="randomizeAvatar" title="Randomisera avatar" class="btn text-slate-100 btn-sm bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center material-icons text-xl leading-none w-[10rem]
               bg-gradient-to-r from-blue-500 to-purple-500
            hover:bg-gradient-to-l hover:from-purple-500 hover:to-blue-500
-           hover:shadow-lg transition-all duration-300"
-            >
-              shuffle
-            </button>
-          </div>
+           hover:shadow-lg transition-all duration-300">
+            shuffle
+          </button>
+        </div>
         <PopUp ref="popupParts" class="bg-white rounded-xl">
           <Vue3ColorPicker v-model="currentColorPickerValue" :show-picker-mode="false"
             @update:model-value="onColorPicked(popupPartsKeys!.part, popupPartsKeys!.cIdx, currentColorPickerValue)"

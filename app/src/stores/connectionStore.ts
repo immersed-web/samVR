@@ -5,7 +5,8 @@ import { defineStore } from 'pinia';
 import type { AvatarDesign, ClientType } from 'schemas';
 import { computed, ref, shallowRef, watch, type ShallowRef } from 'vue';
 import { useAuthStore } from './authStore';
-import { parse } from 'devalue';
+import { parse, stringify } from 'devalue';
+import { createRandomAvatar } from '@/modules/utils';
 
 export const useConnectionStore = defineStore('connection', () => {
   // console.log('connection store initializing!!');
@@ -16,15 +17,17 @@ export const useConnectionStore = defineStore('connection', () => {
   watch(connected, async (newConnectedState) => {
     console.log('connection state changed');
     if (newConnectedState) {
-      const avatarString = localStorage.getItem('avatarSettings');
-      if (typeof avatarString === 'string') {
-        {
-          const parsedAvatarSettings = parse(avatarString) as AvatarDesign;
-          // console.log('gonna init local client data', parsedAvatarSettings);
-          // const response = await client.value.greeting.query();
-          // console.log(response);
-          await client.value.user.initLocalClientData.mutate({ avatarDesign: parsedAvatarSettings });
+      if (authStore.isGuest) {
+        let avatarString = localStorage.getItem('guestAvatarSettings');
+        if (typeof avatarString !== 'string') {
+          avatarString = stringify(createRandomAvatar())
+          localStorage.setItem('guestAvatarSettings', avatarString);
         }
+        const parsedAvatarSettings = parse(avatarString) as AvatarDesign;
+        // console.log('gonna init local client data', parsedAvatarSettings);
+        // const response = await client.value.greeting.query();
+        // console.log(response);
+        await client.value.user.initLocalClientData.mutate({ avatarDesign: parsedAvatarSettings });
       }
     }
   });
@@ -42,18 +45,18 @@ export const useConnectionStore = defineStore('connection', () => {
     closeClient();
   }
 
-  async function _initConnection () {
-    if(connectionStatusChecker){
+  async function _initConnection() {
+    if (connectionStatusChecker) {
       clearInterval(connectionStatusChecker);
     }
     // client.value.subHeartBeat.subscribe(undefined, {onData(data){connected.value = true;}, onStopped(){ connected.value = false;}, onComplete(){connected.value = false;}});
     const wsC = wsClient();
-    if(!wsC){
+    if (!wsC) {
       throw Error('must create a trpc client (and thus implicitly a wsClient) before accessing the ws connection');
     }
     // reactiveWSConnection.value = wsClient.getConnection();
-    function attachWsEvents(ws:WebSocket){
-      if(ws.readyState === ws.OPEN){
+    function attachWsEvents(ws: WebSocket) {
+      if (ws.readyState === ws.OPEN) {
         connected.value = true;
       }
       ws.addEventListener('close', () => {
@@ -74,9 +77,9 @@ export const useConnectionStore = defineStore('connection', () => {
     attachWsEvents(ws);
     // NOTE: This was the only way I managed to reliably retrieve the (new) socket instance after connection is closed.
     connectionStatusChecker = setInterval(() => {
-      if(ws.readyState === ws.CLOSED){
+      if (ws.readyState === ws.CLOSED) {
         const wsC = wsClient();
-        if(!wsC){
+        if (!wsC) {
           console.error('wsClient undefined when trying to retrieve websocket connection');
           return;
         }
@@ -89,8 +92,8 @@ export const useConnectionStore = defineStore('connection', () => {
     // console.log('greeting response: ', greetingResponse);
   }
 
-  function createSenderClient(){
-    if(!authStore.isAuthenticated){
+  function createSenderClient() {
+    if (!authStore.isAuthenticated) {
       console.error('Trying to create client when not logged in. Ignoring!');
     }
     createTrpcClient(() => authStore.tokenOrThrow(), 'sender');
@@ -99,7 +102,7 @@ export const useConnectionStore = defineStore('connection', () => {
   }
 
   function createUserClient() {
-    if(!authStore.isAuthenticated){
+    if (!authStore.isAuthenticated) {
       console.error('Trying to create client when not logged in. Ignoring!');
     }
     createTrpcClient(() => authStore.tokenOrThrow(), 'client');

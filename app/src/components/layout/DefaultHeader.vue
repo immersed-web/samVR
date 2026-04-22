@@ -22,12 +22,12 @@
     <div class="sm:flex shrink hidden gap-1 items-center">
       <div class="flex flex-wrap shrink justify-end items-baseline text-xs font-semibold">
         <span class="text-base-content/50">{{ authStore.role === 'guest' ? 'Besöker som' : 'Inloggad som'
-          }}&nbsp;</span>
+        }}&nbsp;</span>
         <span>
           <span class="font-bold text-white/80 text-base">{{
             authStore.username }}</span>
           <span class="" v-if="authStore.role">&nbsp;({{ translateUserRole(authStore.role)
-            }})</span>
+          }})</span>
         </span>
         <!-- <span v-if="authStore.role"
           class="text-xs justify-self-start flex items-center leading-none h-6 px-2 font-semibold rounded-full bg-fuchsia-600">
@@ -98,7 +98,6 @@ function closeMenu() {
 }
 
 const logout = async () => {
-  localStorage.removeItem('guestAvatarRandomized')
   await authStore.logout();
   console.log('was logged out');
   router.push({ path: '/login', force: true });
@@ -106,6 +105,4 @@ const logout = async () => {
 
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>
