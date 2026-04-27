@@ -24,7 +24,8 @@
               <a-asset-item id="icon-font"
                 src="https://fonts.gstatic.com/s/materialicons/v70/flUhRq6tzZclQEJ-Vdg-IuiaDsNa.woff" />
             </a-assets>
-            <VrAFrame>
+            <VrAFrame
+            :isMenuOpen="isMenuOpen">
               <a-entity ref="vrCursor">
                 <a-ring :visible="currentCursorMode === 'teleport'" transparent opacity="0.3" position="0 0 0.01"
                   radius-inner="0.13" radius-outer="0.17" material="shader: flat;" rotation="0 0 0" color="white" />

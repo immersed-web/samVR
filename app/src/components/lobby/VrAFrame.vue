@@ -50,8 +50,8 @@
     :nipple-controls="`enabled: ${isTouchDevice};mode: static; rotationSensitivity: 2.0; bottomMargin: 70px; sideMargin: 30px;`">
     <!-- <a-sphere radius="0.3" /> -->
     <a-entity camera id="camera" ref="cameraTag"
-      look-controls="touchEnabled: true; reverseMouseDrag: false; reverseTouchDrag: true; pointerLockEnabled: true;"
-      wasd-controls="acceleration:35;"
+      :look-controls="`touchEnabled: true; enabled: ${!props.isMenuOpen}; reverseMouseDrag: false; reverseTouchDrag: true; pointerLockEnabled: true;`"
+      :wasd-controls="`acceleration:35; enabled: ${!props.isMenuOpen};`"
       :simple-navmesh-constraint="`navmesh: .navmesh; fall: 0.3; height: ${defaultHeightOverGround};`"
       emit-move="interval: 20;" :position="`0 ${defaultHeightOverGround} 0`">
       <a-entity ref="cameraAttacher" :position="cameraAttacherPosString">
@@ -185,6 +185,7 @@ import { usePointerLock } from '@vueuse/core';
 import { overlayGUILeft, overlayGUIRight, leftHandVRGui, rightHandVRGui, cameraAttacher } from '@/composables/teleportTargets';
 import AvatarHand from '@/components/entities/AvatarHand.vue';
 import PlacedObject from '@/components/entities/PlacedObject.vue';
+import { is } from 'date-fns/locale';
 const { currentCursorIntersection, triggerCursorClick, isCursorOnNavmesh, currentRaycastSelectorString, pointerOnHover } = useCurrentCursorIntersection();
 const { lock, unlock, element } = usePointerLock();
 
@@ -220,6 +221,7 @@ const props = defineProps({
   // navmeshUrl: {type: String, default: ''},
   // showNavMesh: { type: Boolean, default: false },
   // modelScale: {type: Number, default: 1},
+  isMenuOpen: { type: Boolean, default: false },
 });
 
 const worldModelLoaded = ref(false);
