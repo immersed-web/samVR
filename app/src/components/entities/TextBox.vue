@@ -1,54 +1,46 @@
 <template>
   <a-entity
-    :position="positionString"
-    :rotation="rotationString"
-    :scale="scaleString"
-    class="raycastable-surface selectable-object editable-object"
-    @click.stop="$emit('select', props.placedObject)"
+    :class="$attrs.class"
+    :scale="entityScale"
+    @click.stop="$emit('click')"
   >
+    <a-plane
+      position="0 0 0.01"
+      width="2.4"
+      height="0.9"
+      material="color: #ffffff; opacity: 0.001; transparent: true; side: double"
+    />
     <a-troika-text
-      v-if="textSettings"
-      :value="textSettings.text ?? ''"
-      :color="textSettings.color ?? '#000000'"
-      :font-size="textSettings.fontSize ?? 0.5"
-      :outline-color="textSettings.outlineColor ?? '#ffffff'"
-      :outline-width="textSettings.outlineWidth ?? 0.02"
+      :value="text"
+      :font-size="fontSize"
+      :color="color"
       align="center"
       anchor="center"
-      baseline="center"
-      :max-width="textSettings.maxWidth ?? 4"
+      baseline="middle"
+      :max-width="maxWidth"
+      position="0 0 0.02"
     />
   </a-entity>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { arrToCoordString, quaternionTupleToAframeRotation } from '@/modules/3DUtils';
-import type { PlacedObjectWithIncludes } from 'database';
-
-interface TextSettings {
-  text: string;
-  color?: string;
-  fontSize?: number;
-  outlineColor?: string;
-  outlineWidth?: number;
-  maxWidth?: number;
-}
+import { computed } from 'vue'
+import { arrToCoordString, quaternionTupleToAframeRotation } from '@/modules/3DUtils'
 
 const props = defineProps<{
-  placedObject: PlacedObjectWithIncludes;
-}>();
+  placedObject: any
+}>()
 
-const emit = defineEmits<{
-  select: [PlacedObjectWithIncludes];
-}>();
+defineEmits<{
+  (e: 'click'): void
+}>()
 
-const positionString = computed(() => arrToCoordString(props.placedObject.position));
-const rotationString = computed(() => arrToCoordString(quaternionTupleToAframeRotation(props.placedObject.orientation ?? [0, 0, 0, 1])));
-const scaleString = computed(() => arrToCoordString(props.placedObject.scale ?? [1, 1, 1]));
+const textSettings = computed(() => props.placedObject.objectSettings ?? {})
 
-const textSettings = computed(() => {
-  if (props.placedObject.type !== 'text') return null;
-  return props.placedObject.objectSettings as TextSettings | null;
-});
+const text = computed(() => textSettings.value.text ?? 'Ny textbox')
+const fontSize = computed(() => textSettings.value.fontSize ?? 0.8)
+const color = computed(() => textSettings.value.color ?? '#ffffff')
+const maxWidth = computed(() => textSettings.value.maxWidth ?? 4)
+
+const entityScale = computed(() => arrToCoordString(props.placedObject.scale ?? [1, 1, 1]))
 </script>
