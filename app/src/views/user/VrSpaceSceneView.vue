@@ -2,19 +2,30 @@
   <div>
     <div class="min-h-screen z-0">
       <div class="pointer-events-none *:pointer-events-auto absolute z-50" ref="domOutlet" id="aframe-dom-outlet">
+        <!-- Menu -->
+        <EscapeMenu 
+          :model="{
+            isOpen: isMenuOpen,
+            onResume: () => closeMenu(),
+            onLeave: () => {
+              closeMenu();
+              router.push('/')}
+          }" 
+        />
       </div>
       <UIOverlay />
       <WaitForAframe>
         <template v-if="vrSpaceStore.currentVrSpace && mediasoupInitialized">
           <a-scene :background="`color: ${skyColor}`" renderer="logarithmicDepthBuffer: false" scene-cleanup
-            ref="aframeScene" cursor="fuse:false; rayOrigin:mouse;"
+            ref="aframeScene" cursor="fuse:false; rayOrigin:mouse; enabled: !isMenuOpen"
             :raycaster="`objects: ${currentRaycastSelectorString}; mouseCursorStyleEnabled: ${pointerOnHover}`"
             raycaster-update @raycast-update="setCursorIntersection($event.detail)">
             <a-assets>
               <a-asset-item id="icon-font"
                 src="https://fonts.gstatic.com/s/materialicons/v70/flUhRq6tzZclQEJ-Vdg-IuiaDsNa.woff" />
             </a-assets>
-            <VrAFrame>
+            <VrAFrame
+            :isMenuOpen="isMenuOpen">
               <a-entity ref="vrCursor">
                 <a-ring :visible="currentCursorMode === 'teleport'" transparent opacity="0.3" position="0 0 0.01"
                   radius-inner="0.13" radius-outer="0.17" material="shader: flat;" rotation="0 0 0" color="white" />
@@ -58,6 +69,7 @@
 <script setup lang="ts">
 import { aFrameSceneProvideKey } from '@/modules/injectionKeys';
 import VrAFrame from '../../components/lobby/VrAFrame.vue';
+import EscapeMenu from '../../components/EscapeMenu.vue';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import type { VrSpaceId } from 'schemas';
 import { onBeforeMount, provide, ref, watch, getCurrentInstance, onBeforeUnmount, computed, nextTick, onMounted, onUpdated, reactive } from 'vue';
@@ -104,6 +116,33 @@ watch(() => props.vrSpaceId, () => {
 watch(() => vrSpaceStore.screenShares, (newScreenShares) => {
   console.log('screenshares changed', newScreenShares);
 })
+
+const isMenuOpen = ref(false);
+
+function toggleMenu() {
+  isMenuOpen.value = !isMenuOpen.value;
+}
+
+function closeMenu() {
+  isMenuOpen.value = false;
+}
+
+function onGlobalKeyDown(e: KeyboardEvent) {
+  if (e.key !== 'Escape') return;
+  
+  e.preventDefault();
+  e.stopPropagation();
+  
+  toggleMenu();
+}
+
+onMounted(() => {
+  document.addEventListener('keydown', onGlobalKeyDown, true);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener('keydown', onGlobalKeyDown, true);
+});
 
 // Emoji stuff
 function setEmojiSelf(coords: Tuple, active: boolean) {
