@@ -20,7 +20,7 @@
           <TabPanel>
             <div class="space-y-4">
               <div class="form-control">
-                <div class="font-semibold">Scenens namn</div>
+                <div class="font-semibold">Miljöns namn</div>
                 <input class="input input-bordered input-sm" v-model="vrSpaceStore.writableVrSpaceDbData.name">
               </div>
               <div class="form-control">
@@ -48,7 +48,7 @@
                 Publik eller privat?
               </div>
               <p class="text-sm text-gray-600">
-                Välj ifall VR-scenen ska vara publikt tillgänglig, öppen för vem som helst att besöka. Eller om scenen
+                Välj ifall VR-miljön ska vara publikt tillgänglig, öppen för vem som helst att besöka. Eller om miljön
                 är privat för dig och de
                 du har valt att dela den med.
               </p>
@@ -62,7 +62,7 @@
                   <input type="radio" v-model="vrSpaceStore.writableVrSpaceDbData.visibility" value="unlisted"
                     name="visibility" class="join-item btn btn-sm" aria-label="olistad" />
                   <input type="radio" v-model="vrSpaceStore.writableVrSpaceDbData.visibility" value="public"
-                    name="visibility" class="join-item btn btn-sm" aria-label="öppen" />
+                    name="visibility" class="join-item btn btn-sm" aria-label="publik" />
                 </div>
 
                 <!-- <input type="checkbox" class="toggle toggle-success" true-value="public" false-value="private"
@@ -86,7 +86,7 @@
                 Delning
               </div>
               <p class="text-sm text-gray-600">
-                Välj de användare som ska ha tillgång till scenen, samt på vilken nivå de ska ha tillgång.
+                Välj användare samt vilken behörighet de ska ha.
               </p>
 
               <div class="form-control">
@@ -109,7 +109,7 @@
               </div>
               <div v-if="vrSpaceStore.currentVrSpace.dbData.allowedUsers.length" class="form-control">
                 <span class="font-semibold">
-                  Personer med tillgång till VR-scenen
+                  Personer med tillgång till VR-miljön
                 </span>
                 <div class="grid grid-cols-[0.5fr_1fr_0fr] gap-6 w-fit">
                   <template v-for="userPermission in vrSpaceStore.currentVrSpace?.dbData.allowedUsers"
@@ -130,7 +130,7 @@
                   3D-modell för miljön
                 </div>
                 <p class="text-sm mb-2 text-gray-600">
-                  Ladda upp en 3D-modell för VR-scenens miljö. Detta är den modell som omsluter besökaren, t.ex. ett
+                  Ladda upp en 3D-modell för VR-miljöns miljö. Detta är den modell som omsluter besökaren, t.ex. ett
                   rum eller en park.
                 </p>
                 <pre
@@ -178,13 +178,13 @@
                     Startplats för besökare
                   </div>
                   <p class="text-sm mb-2 text-gray-600">
-                    Välj den plats där besökare startar då de öppnar VR-scenen.
+                    Välj den plats där besökare startar då de öppnar VR-miljön.
                     Klicka på knappen nedan och sedan i 3D-modellen för att placera startplatsen.
                     Du kan ändra storlek på startplatsen för att slumpa startpositionen inom den gula cirkeln.
                   </p>
                   <div class="flex gap-4 g items-end justify-stretch">
                     <div class="tooltip tooltip-right flex"
-                      data-tip="Klicka sedan i 3D-scenen för att välja var besökarna startar">
+                      data-tip="Klicka sedan i 3D-miljön för att välja var besökarna startar">
                       <!-- <input type="radio" value="spawnPosition" aria-label="Placera startplats"
                         class="btn btn-sm btn-primary"
                         :class="{ activeRaycast: currentRaycastReason == 'spawnPosition' }"
@@ -214,7 +214,7 @@
                     v-model="vrSpaceStore.writableVrSpaceDbData.skyColor">
                 </div>
                 <span class="label-text text-gray-600">
-                  Välj den färg som himlen ska ha i VR-scenen.
+                  Välj den färg som himlen ska ha i VR-miljön.
                 </span>
               </div>
 
@@ -232,7 +232,7 @@
               :accepted-asset-types="['document', 'image', 'video', 'model']" name="object"
               :show-in-user-library="true" />
             <div class="divider">
-              Placera objekt i scenen
+              Placera objekt i miljön
             </div>
             <AssetLibrary @asset-deleted="vrSpaceStore.reloadVrSpaceFromDB" :assets="libraryAssets"
               @asset-picked="onAssetPicked" />
@@ -241,10 +241,10 @@
         <TabPanel>
           <div class="space-y-4">
             <div class="divider mt-0">
-              Portaler till andra VR-scener
+              Portaler till andra VR-miljöer
             </div>
             <p class="text-sm text-gray-600">
-              Skapa portaler som låter besökarna förflytta sig till andra VR-scener. Välj en scen att förflytta
+              Skapa portaler som låter besökarna förflytta sig till andra VR-miljöer. Välj en miljö att förflytta
               sig till
               och klicka sedan i 3D-modellen för att placera portalen.
             </p>
@@ -268,6 +268,13 @@
               :model-url="vrSpaceStore.worldModelUrl" :navmesh-url="vrSpaceStore.navMeshUrl"
               :raycastSelector="currentRaycastSelectorString"
               :auto-rotate="currentCursorMode === 'select-objects' && selectedPlacedObject === undefined">
+               <!-- Assets stay here, but move to top-level scene if shared -->
+  <a-assets v-once timeout="25000">
+    <template v-for="(fileNames, prop) in avatarAssets" :key="prop">
+      <a-asset-item :id="`${prop}-${idx}`" v-for="(fileName, idx) in fileNames" :key="fileName"
+                    :src="`/avatar/${prop}/${fileName}.glb`" />
+    </template>
+  </a-assets>
               <a-entity v-if="true" id="placed-objects">
                 <a-entity v-for="placedObject in placedObjectsNotBeingEdited"
                   :key="`${placedObject.placedObjectId}_${placedObject.updatedAt}`"
@@ -299,10 +306,31 @@
                 <a-circle color="yellow" transparent="true" rotation="-90 0 0" position="0 0.05 0"
                   :opacity="currentCursorMode === 'place-spawnposition' ? 0.2 : 0.5"
                   :radius="vrSpaceStore.writableVrSpaceDbData.spawnRadius" />
-                <a-icosahedron v-if="vrSpaceStore.panoramicPreviewUrl" detail="5" scale="-0.5 -0.5 -0.5"
+                <!-- <a-icosahedron v-if="vrSpaceStore.panoramicPreviewUrl" detail="5" scale="-0.5 -0.5 -0.5"
                   :position="`0 ${defaultHeightOverGround} 0`"
                   :opacity="currentCursorMode === 'place-spawnposition' ? 0.5 : 1.0"
-                  :material="`shader: vr-portal; warpParams: 3 0.9; src: url(${vrSpaceStore.panoramicPreviewUrl}); side: back;`" />
+                  :material="`shader: vr-portal; warpParams: 3 0.9; src: url(${vrSpaceStore.panoramicPreviewUrl}); side: back;`" /> -->
+                  <a-entity ref="avatarGroup" position="0 2 0">
+
+  <!-- Avatar body parts -->
+  <template v-for="(modelSetting, key) in currentAvatarSettings.parts" :key="key">
+    <template v-if="modelSetting.model">
+      <template v-if="skinParts.includes(key)">
+        <a-gltf-model make-gltf-swappable
+                      :src="`#${key}-${avatarAssets[key as keyof typeof avatarAssets].indexOf(modelSetting.model)}`"
+                      :model-color="`colors: ${currentAvatarSettings.skinColor ?? ''}; materialName: skin`" />
+        <a-gltf-model v-if="key === 'hands' && modelSetting.model" make-gltf-swappable
+                      :src="`#${key}-${avatarAssets[key as keyof typeof avatarAssets].indexOf(modelSetting.model)}`"
+                      :model-color="`colors: ${currentAvatarSettings.skinColor ?? ''}; materialName: skin`"
+                      scale="-1 1 1" />
+      </template>
+      <a-gltf-model v-else make-gltf-swappable @nrOfCustomColors="setNrOfCustomColors(key, $event)"
+                    :src="`#${key}-${avatarAssets[key as keyof typeof avatarAssets].indexOf(modelSetting.model)}`"
+                    :model-color="`colors: ${modelSetting.colors ?? ''};`" />
+    </template>
+  </template>
+</a-entity>
+
               </a-entity>
               <a-entity id="teleport-target-aframe-cursor" ref="cursorEntity">
 
@@ -371,7 +399,7 @@
         <pre>{{ selectedPlacedObject?.position }}</pre>
         <pre>{{ vrSpaceStore.currentVrSpace?.dbData.placedObjects.find(p => p.placedObjectId === selectedPlacedObject?.placedObjectId)?.position }}</pre> -->
           <template v-if="vrSpaceStore.currentVrSpace?.dbData.worldModelAsset">
-            <h4>Interagera med VR-scenen</h4>
+            <h4>Interagera med VR-miljön</h4>
             <div class="grid grid-cols-2 gap-2">
               <div>
                 <!-- Hoppa in i världen -->
@@ -381,14 +409,6 @@
                     type="radio" value="selfPlacement" aria-label="Hoppa in i scenen" class="btn btn-sm btn-primary"
                     v-model="currentRaycastReason"> -->
                   <pre>{{ currentCursorMode }}</pre>
-                  <button v-if="!vrComponentTag?.firstPersonViewActive" @click="setCursorMode('enterFirstPersonView')"
-                    class="btn btn-primary btn-sm">
-                    Hoppa in i scenen
-                  </button>
-                  <button v-else @click="vrComponentTag?.exitFirstPersonView" class="btn btn-primary btn-sm">
-                    Hoppa ut ur
-                    scenen
-                  </button>
                 </div>
               </div>
               <div>
@@ -421,7 +441,7 @@
 import AssetUpload, { type AssetUploadEmitUploadedPayload } from './AssetUpload.vue';
 import VrSpacePreview from '@/components/lobby/VrSpacePreview.vue';
 import WaitForAframe from '@/components/WaitForAframe.vue'
-import { ref, watch, onMounted, computed, type ComponentInstance, onBeforeUnmount } from 'vue';
+import { ref, watch, onMounted, computed, type ComponentInstance, onBeforeUnmount, reactive } from 'vue';
 import { insertablePermissionHierarchy, type Asset, type VrSpaceId, defaultHeightOverGround, type UserId, type Json, translatePermissionLevelAdjective, translatePermissionLevelVerb, hasAtLeastSecurityRole } from 'schemas';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import { useConnectionStore } from '@/stores/connectionStore';
@@ -451,6 +471,33 @@ type ScreenshotPayload = ExtractEmitData<'screenshot', ComponentInstance<typeof 
 
 const { selectedPlacedObject, placedObjectRotation, placedObjectScale, transformedSelectedObject, onTransformUpdate } = useSelectedPlacedObject();
 const { currentlyMovedObject } = useCurrentlyMovedObject();
+
+const partsNrOfColors = reactive(Object.fromEntries(Object.keys(avatarAssets).map(k => [k, 0])));
+function setNrOfCustomColors(part: string, evt: CustomEvent) {
+  // console.log('setNrOfCustomColors', evt, part);
+  const entity = evt.target as Entity;
+  // @ts-ignore
+  const nrOfColors = entity.components['model-color'].nrOfCustomColors as number;
+  // console.log(part, nrOfColors, entity.components['model-color']);
+  partsNrOfColors[part] = nrOfColors;
+  for (const [key, value] of Object.entries(currentAvatarSettings.parts)) {
+    const keyTyped = key as PartKeyWithColor;
+    // console.log(keyTyped, value, partsNrOfColors[key]);
+    for (let i = 0; i < partsNrOfColors[keyTyped]; i++) {
+      // console.log(currentAvatarSettings.parts[keyTyped].colors[i])
+      // currentColorSettings[key][i] = currentAvatarSettings.parts[key].colors[i];
+      if (currentAvatarSettings.parts[keyTyped].colors[i]) {
+        customColorsIsActive[keyTyped][i] = true;
+      }
+    }
+  }
+}
+
+import { avatarAssets, type AvatarDesign, defaultAvatarDesign, type PartKeyWithColor, skinParts } from 'schemas';
+import { parse } from 'devalue';
+const currentAvatarSettings = reactive<AvatarDesign>(defaultAvatarDesign);
+const currentSkinColor = ref('');
+const skinColorIsActive = ref(false);
 
 onTransformUpdate(spo => {
   const transformedPO = spo;
@@ -760,10 +807,43 @@ onMounted(async () => {
   if (vrListResponse) {
     allowedVrSpaces.value = vrListResponse;
   }
+
+  const wasLoaded = loadAvatarFromClientState();
+  if (!wasLoaded) {
+    loadAvatarFromStorage();
+  }
 });
 onBeforeUnmount(async () => {
   await vrSpaceStore.leaveVrSpace();
 })
+
+function loadAvatarFromClientState() {
+  const avatarDesign = clientStore.clientState?.avatarDesign;
+  if (avatarDesign) {
+    currentAvatarSettings.parts = avatarDesign.parts;
+    currentAvatarSettings.skinColor = avatarDesign.skinColor;
+    return true;
+  }
+  return false;
+}
+
+function loadAvatarFromStorage() {
+  const loadedString = localStorage.getItem('avatarSettings');
+  if (!loadedString) {
+    console.error('no saved avatardesign in localstorage');
+  } else {
+    const parsedAvatarSettings = parse(loadedString);
+    currentAvatarSettings.parts = parsedAvatarSettings.parts;
+    currentAvatarSettings.skinColor = parsedAvatarSettings.skinColor;
+    console.log("Loaded skin color", parsedAvatarSettings.skinColor);
+    if (parsedAvatarSettings.skinColor) {
+      skinColorIsActive.value = true
+      currentSkinColor.value = parsedAvatarSettings.skinColor
+    }
+    console.log("Loaded parts", parsedAvatarSettings.parts)
+  }
+
+}
 
 let abortController: AbortController | undefined = undefined;
 function uploadScreenshot(canvas: ScreenshotPayload) {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, type Ref, reactive, watch, onMounted } from 'vue';
+import { ref, type Ref, reactive, nextTick, watch, onMounted } from 'vue';
 import { type Entity } from 'aframe';
 import { stringify, parse } from 'devalue';
 
@@ -31,23 +31,55 @@ const authStore = useAuthStore();
 
 const currentAvatarSettings = reactive<AvatarDesign>(defaultAvatarDesign);
 
+const partMap: Record<string, string> = {
+  'eyes': 'Ögon',
+  'eyebrows': 'Ögonbryn',
+  'mouths': 'Mun',
+  'hair': 'Hår',
+  'facialhair': 'Ansiktshår',
+  'clothes': 'Kläder',
+  'accessories': 'Tillbehör',
+  'jewelry': 'Smycken',
+  'layer': 'Ytterlager',
+};
+
 onMounted(() => {
-  const wasLoaded = loadAvatarFromClientState();
-  if (!wasLoaded) {
-    loadAvatarFromStorage();
+  if (authStore.isNotGuest) {
+    const wasLoaded = loadAvatarFromClientState();
+    if (!wasLoaded) {
+      console.warn('failed to load avatarSettings from clientState')
+    }
+  } else if (authStore.isGuest) {
+    const wasLoaded = loadGuestAvatarFromStorage();
+    if (!wasLoaded) {
+      randomizeAvatar();
+      saveGuestAvatarSettingsToStorage();
+    }
   }
+
   // we only start watching after loading the (maybe) saved avatardesign
   watch(() => currentAvatarSettings, () => {
     if (authStore.role === 'guest') {
-      saveAvatarSettingsToStorage();
+      saveGuestAvatarSettingsToStorage();
+    } else {
+      connectionStore.client.user.updateAvatarDesign.mutate(currentAvatarSettings);
     }
-    connectionStore.client.user.updateAvatarDesign.mutate(currentAvatarSettings);
   }, { deep: true });
 });
 
-function saveAvatarSettingsToStorage() {
-  // console.log('avatarSettings before save:', currentAvatarSettings);
-  window.localStorage.setItem('avatarSettings', stringify(currentAvatarSettings));
+function saveGuestAvatarSettingsToStorage() {
+  // console.log('guestAvatarSettings before save:', currentAvatarSettings);
+  window.localStorage.setItem('guestAvatarSettings', stringify(currentAvatarSettings));
+}
+
+function randomizeAvatar() {
+  for (const part in avatarAssets) {
+    const partTyped = part as keyof typeof avatarAssets;
+    const options = avatarAssets[partTyped];
+    const randomOption = options[Math.floor(Math.random() * options.length)];
+    currentAvatarSettings.parts[partTyped].model = randomOption;
+  }
+  currentAvatarSettings.skinColor = '#' + Math.floor(Math.random() * 16777215).toString(16);
 }
 
 function loadAvatarFromClientState() {
@@ -60,10 +92,11 @@ function loadAvatarFromClientState() {
   return false;
 }
 
-function loadAvatarFromStorage() {
-  const loadedString = localStorage.getItem('avatarSettings');
+function loadGuestAvatarFromStorage() {
+  const loadedString = localStorage.getItem('guestAvatarSettings');
   if (!loadedString) {
     console.error('no saved avatardesign in localstorage');
+    return false;
   } else {
     const parsedAvatarSettings = parse(loadedString);
     currentAvatarSettings.parts = parsedAvatarSettings.parts;
@@ -74,6 +107,7 @@ function loadAvatarFromStorage() {
       currentSkinColor.value = parsedAvatarSettings.skinColor
     }
     console.log("Loaded parts", parsedAvatarSettings.parts)
+    return true;
   }
 
 }
@@ -193,7 +227,7 @@ watch(currentColorPickerValue, (newColor, prevColor) => {
       <!-- COLUMN 1 -->
       <div
         class="grid grid-cols-[minmax(min-content,1fr)_minmax(8rem,1.7fr)_auto] items-center gap-5 overflow-y-auto capitalize bg-slate-200 p-2 rounded-md">
-        <span class="col-start-1 label-text font-semibold">Skin color</span>
+        <span class="col-start-1 label-text font-semibold">Hudfärg</span>
         <div class="col-start-3">
           <button class="btn btn-xs btn-circle btn-outline material-icons text-lg leading-none"
             :style="{ 'background': skinColorIsActive ? currentSkinColor : 'transparent' }" @click="popupSkin.open">
@@ -216,7 +250,7 @@ watch(currentColorPickerValue, (newColor, prevColor) => {
         <template v-for="(partsList, key) in avatarAssets" :key="key">
           <template v-if="avatarAssets[key].length > 1">
             <!-- <div class="col-start-1 col-span-3 divider divider-horizontal divider-neutral mt-1" /> -->
-            <span class="col-start-1 label-text font-semibold">{{ key }}</span>
+            <span class="col-start-1 label-text font-semibold">{{ partMap[key] }}</span>
             <div class=" flex max-w-56 bg-white join join-horizontal items-stretch justify-between gap-1">
               <button @click="changeClothingIdx(key, -1)"
                 class="text-slate-700 material-icons hover:bg-slate-200 join-item px-1">
@@ -241,8 +275,8 @@ watch(currentColorPickerValue, (newColor, prevColor) => {
                         :value="asset" as="template">
                         <li :class="[
                           active ? 'bg-amber-100 text-amber-900' : 'text-gray-900',
-  'relative cursor-default select-none',
-]">
+                          'relative cursor-default select-none',
+                        ]">
                           <span class="capitalize" :class="[
                             selected ? 'font-medium' : 'font-normal',
                             'block truncate',
@@ -283,6 +317,14 @@ watch(currentColorPickerValue, (newColor, prevColor) => {
             </div>
           </template>
         </template>
+        <div class="col-start-1 col-span-3 flex justify-center items-center gap-2 mt-1">
+          <button @click="randomizeAvatar" title="Randomisera avatar" class="btn text-slate-100 btn-sm bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center material-icons text-xl leading-none w-[10rem]
+              bg-gradient-to-r from-blue-500 to-purple-500
+           hover:bg-gradient-to-l hover:from-purple-500 hover:to-blue-500
+           hover:shadow-lg transition-all duration-300">
+            shuffle
+          </button>
+        </div>
         <PopUp ref="popupParts" class="bg-white rounded-xl">
           <Vue3ColorPicker v-model="currentColorPickerValue" :show-picker-mode="false"
             @update:model-value="onColorPicked(popupPartsKeys!.part, popupPartsKeys!.cIdx, currentColorPickerValue)"

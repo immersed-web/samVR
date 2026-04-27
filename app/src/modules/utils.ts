@@ -1,9 +1,23 @@
 import axios, { CanceledError, type AxiosProgressEvent } from "axios";
 import type { UploadResponse } from "fileserver";
-import type { AssetId } from "schemas";
+import { type AssetId, avatarAssets, type AvatarDesign, defaultAvatarDesign } from "schemas";
 
 const devMode = import.meta.env.DEV;
 const localMode = import.meta.env.EXPOSED_LOCAL === 'true';
+
+export function createRandomAvatar() {
+  let avatarDesign: AvatarDesign = defaultAvatarDesign
+
+  for (const part in avatarAssets) {
+    const partTyped = part as keyof typeof avatarAssets;
+    const options = avatarAssets[partTyped];
+    const randomOption = options[Math.floor(Math.random() * options.length)];
+    avatarDesign.parts[partTyped].model = randomOption;
+  }
+  avatarDesign.skinColor = '#' + Math.floor(Math.random() * 16777215).toString(16);
+
+  return avatarDesign
+}
 
 export function getAssetUrl<T extends string>(generatedName: T) {
   // console.log('getAssetUrl called', generatedName);

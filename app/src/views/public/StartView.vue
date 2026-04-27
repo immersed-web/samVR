@@ -6,17 +6,17 @@
     <div class="space-y-4">
       <UserBanner />
       <p class="text-lg italic text-gray-600">
-        Välkommen till SamVR! Här kan du utforska och fördjupa dig i fantastiska VR-scener som tar din
+        Välkommen till SamVR! Här kan du utforska och fördjupa dig i fantastiska VR-miljöer som tar din
         upplevelse till en ny nivå.
       </p>
 
       <div class="flex items-center justify-between gap-2">
         <h2 class="text-2xl font-bold">
-          VR-platser
+          VR-miljöer
         </h2>
         <button v-if="canCreateVrSpace" class="btn btn-primary btn-outline btn-sm px-2" @click="createVrSpace">
           <span class="material-icons">add</span>
-          Skapa ny VR-scen
+          Skapa ny VR-miljö
         </button>
       </div>
       <VRList />

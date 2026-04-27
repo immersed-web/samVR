@@ -53,6 +53,20 @@
         </div>
       </div>
     </div>
+    <div class="absolute left-0 bottom-0 z-10 flex flex-col gap-1 lowercase font-bold text-base-content *:bg-base-100/75">
+      <button 
+        v-if="!firstPersonViewActive"
+        @click="enterFirstPerson"
+        class="rounded-bl-lg py-1 px-2 btn btn-sm">
+        Hoppa in i scenen
+      </button>
+      <button 
+        v-else
+        @click="exitFirstPerson"
+        class="rounded-bl-lg py-1 px-2 btn btn-sm">
+        Hoppa ut ur scenen
+      </button>
+    </div>
     <a-scene :background="`color: ${skyColor}`" tick-counter @renderstart="onRenderStart" @loaded="onSceneLoaded"
       @camera-set-active="onCameraSetActive" embedded class="min-h-[70svh]" ref="sceneTag" id="ascene"
       xr-mode-ui="enabled: false" @raycast-update="setCursorIntersection($event.detail)">
@@ -89,9 +103,20 @@ import { arrToCoordString, attachOrbitControls } from '@/modules/3DUtils';
 
 const vrSpaceStore = useVrSpaceStore();
 
+
 const { setCursorIntersection, isCursorOnNavmesh, triggerCursorClick, setCursorMode } = useCurrentCursorIntersection();
 const { selectedPlacedObject, transformedSelectedObject, placedObjectPosition, placedObjectScale, placedObjectRotation } = useSelectedPlacedObject();
 const { currentlyMovedObject } = useCurrentlyMovedObject();
+
+async function enterFirstPerson() {
+  setCursorMode('enterFirstPersonView')
+}
+
+async function exitFirstPerson() {
+  firstPersonViewActive.value = false;
+  await exitFirstPersonView();
+  setCursorMode('select-objects');
+}
 
 const uniformScale = computed<number>({
   get() {

@@ -182,7 +182,7 @@ export function translatePermissionLevelVerb(userPermissionLevel: ReturnedPermis
     case 'edit':
       return 'redigera';
     case 'view':
-      return 'se/läsa';
+      return 'besöka';
     default:
       console.warn('switch not exhausted when translating permissionLevel');
       break;
