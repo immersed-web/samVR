@@ -29,8 +29,6 @@
 interface EscapeMenuModel {
   isOpen: boolean
   onResume: () => void
-  onSettings: () => void
-  onShare: () => void
   onLeave: () => void
 }
 
