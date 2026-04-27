@@ -237,6 +237,10 @@
             <AssetLibrary @asset-deleted="vrSpaceStore.reloadVrSpaceFromDB" :assets="libraryAssets"
               @asset-picked="onAssetPicked" />
           </div>
+          <button @click="createTextbox" class="btn btn-primary">
+            <span class="material-icons">text_fields</span>
+            Ny textbox
+          </button>
         </TabPanel>
         <TabPanel>
           <div class="space-y-4">
@@ -280,6 +284,10 @@
                     @click="selectedPlacedObject = placedObject" class="editable-object"
                     :scale="placedObject.scale ? arrToCoordString(placedObject.scale) : ''"
                     :asset="placedObject.asset" />
+                  <TextBox v-else-if="placedObject.type === 'text'"
+                    @click="selectedPlacedObject = placedObject"
+                    class="selectable-object editable-object"
+                    :placed-object="placedObject" />
                 </a-entity>
               </a-entity>
               <a-entity v-if="transformedSelectedObject">
@@ -431,6 +439,7 @@ import type { RouterOutputs } from '@/modules/trpcClient';
 import AssetLibrary from '@/components/lobby/AssetLibrary.vue';
 import { uploadFileData } from '@/modules/utils';
 import VrSpacePortal from '@/components/entities/VrSpacePortal.vue';
+import TextBox from '@/components/entities/TextBox.vue'
 import AutoComplete from '@/components/AutoComplete.vue';
 import { useCurrentCursorIntersection, useSelectedPlacedObject, useCurrentlyMovedObject, isAsset } from '@/composables/vrSpaceComposables';
 import { THREE, type Entity } from 'aframe';
@@ -490,6 +499,11 @@ const hasAdminRights = computed(() => {
 
   return isSuperAdminOrHigher || isOwner || hasAdminPermission;
 })
+
+function createTextbox() {
+  currentlyMovedObject.value = { type: 'text' as any };  // Fake for placement mode
+  setCursorMode('place-asset');
+}
 
 const tabs = computed(() => {
   let tabList = [
@@ -652,6 +666,27 @@ async function placeMovedObject() {
       orientation: rotation
     }, 'placing an asset')
     currentlyMovedObject.value = undefined;
+    return;
+  } else if (currentlyMovedObject.value?.type === 'text') {
+    console.log('✅ Creating TEXTBOX!');
+    await vrSpaceStore.upsertPlacedObject({
+      vrSpaceId: props.vrSpaceId,
+      type: 'text',
+      objectSettings: {
+        text: 'Ny textbox',
+        fontSize: 0.5,
+        color: '#ffffff',
+        maxWidth: 4,
+      },
+      position,
+      orientation: rotation,
+      scale: [2, 2, 2],
+    });
+    const newTextbox = vrSpaceStore.currentVrSpace?.dbData.placedObjects.find(p => p.placedObjectId === newTextboxId);
+    selectedPlacedObject.value = newTextbox;
+
+    currentlyMovedObject.value = undefined;
+    setCursorMode('select-objects');
     return;
   } else {
     console.log('placed an already placedObject, should update the DB');
