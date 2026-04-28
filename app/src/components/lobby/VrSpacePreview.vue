@@ -17,21 +17,21 @@
           <span class="-mt-1">x</span>
           <NumberSliderToggle 
             v-model.number="placedObjectPosition[0]" 
-            :min="-100" :max="100" :step="0.01"
+            :min="worldPositionBounds.min" :max="worldPositionBounds.max" :step="0.01"
           >
-            <OffsetSlider inverted v-model.number="placedObjectPosition[0]" />
+            <OffsetSlider v-model.number="placedObjectPosition[0]" />
           </NumberSliderToggle>
           <span class="-mt-1">y</span>
           <NumberSliderToggle 
             v-model.number="placedObjectPosition[1]" 
-            :min="-100" :max="100" :step="0.01"
+            :min="worldPositionBounds.min" :max="worldPositionBounds.max" :step="0.01"
           >
             <OffsetSlider v-model.number="placedObjectPosition[1]" />
           </NumberSliderToggle>
           <span class="-mt-1">z</span>
           <NumberSliderToggle 
             v-model.number="placedObjectPosition[2]" 
-            :min="-100" :max="100" :step="0.01"
+            :min="worldPositionBounds.min" :max="worldPositionBounds.max" :step="0.01"
           >
             <OffsetSlider v-model.number="placedObjectPosition[2]" />
           </NumberSliderToggle>
@@ -160,6 +160,18 @@ const uniformScale = computed<number>({
   },
   set(newValue: number) {
     placedObjectScale.value = [newValue, newValue, newValue];
+  }
+})
+
+const worldPositionBounds = computed(() => {
+  if (!modelTag.value) return { min: -1000, max: 1000 }
+  
+  const obj3D = modelTag.value.getObject3D('mesh') as THREE.Object3D
+  const bbox = new THREE.Box3().setFromObject(obj3D)
+  
+  return {
+    min: bbox.min.x - bbox.getSize(new THREE.Vector3()).x * 0.5,
+    max: bbox.max.x + bbox.getSize(new THREE.Vector3()).x * 0.5
   }
 })
 
