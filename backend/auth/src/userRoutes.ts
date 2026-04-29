@@ -203,6 +203,98 @@ const updateUser: RequestHandler = async (req: UpdateUserRequest, res) => {
   }
 };
 
+interface ChangePasswordRequest extends ExpressReq {
+  body: {
+    currentPassword: string;
+    newPassword: string;
+  }
+}
+
+const updateUserPassword: RequestHandler = async (req: ChangePasswordRequest, res) => {
+  const userData = req.session.user;
+  const data = req.body;
+  try {
+    if (!userData) {
+      throw new Error('no client userdata. unauthorized!');
+    }
+
+    if (userData.role === "guest" || userData.role === "god") {
+      throw new Error('you have no role! Thus you are not authorized!');
+    }
+
+    if (!data) {
+      throw new Error('no input data sent!');
+    }
+  } catch (e) {
+    const msg = extractMessageFromCatch(e, 'You give bad data!!!!');
+    res.status(400).send(msg);
+    return;
+  }
+
+  const currentUserDatabase = await db.query.users.findFirst({
+    columns: {
+      userId: true,
+      role: true,
+      password: true,
+    },
+    where: (users, { eq }) => eq(users.userId, userData.userId)
+  })
+
+  try {
+    if (!currentUserDatabase) {
+      throw new Error('User not found in databse.')
+    }
+
+    if (userData.role !== currentUserDatabase.role) {
+      throw new Error('Current user data does not match database.')
+    }
+  } catch (e) {
+    const msg = extractMessageFromCatch(e, 'Not authorized!');
+    res.status(401).send(msg);
+    return;
+  }
+
+  try {
+
+    if (!data.currentPassword) {
+      throw new Error('Inputted data does not match data in database!')
+    }
+
+    const correct = await bcrypt.compare(data.currentPassword, currentUserDatabase.password);
+    if (!correct) {
+      throw new Error('Inputted data does not match data in database!')
+    }
+  } catch (e) {
+    const msg = extractMessageFromCatch(e, 'Not authorized!');
+    res.status(401).send(msg);
+    return;
+  }
+
+  let hashedPassword = undefined;
+  if (data.newPassword) {
+    hashedPassword = await bcrypt.hash(data.newPassword, 10);
+  }
+
+  const userUpdate = {
+    password: hashedPassword,
+  };
+
+  try {
+    const [result] = await db.update(schema.users)
+      .set(userUpdate)
+      .where(eq(schema.users.userId, currentUserDatabase.userId))
+      .returning();
+    const resultWithoutPassword = exclude(result, 'password');
+    res.status(201).send(resultWithoutPassword);
+    return;
+  } catch (e) {
+    const errorMsg = extractMessageFromCatch(e, 'failed to update user!');
+    console.error(errorMsg);
+    res.status(501).send(errorMsg);
+    return;
+  }
+}
+
 interface DeleteUserRequest extends ExpressReq {
   body: {
     userId: UserId
@@ -282,6 +374,34 @@ const getUsers: RequestHandler = async (req, res) => {
 
   res.send(dbResponse);
 }
+
+// const getCurrentUser: RequestHandler = async (req, res) => {
+//   const userData = req.session.user;
+//   try {
+//     if (!userData) {
+//       throw new Error('no client userdata. unauthorized!');
+//     }
+//     if (!userData.role) {
+//       throw new Error('you have no role! Thus you are not authorized!');
+//     }
+//   } catch (e) {
+//     const msg = extractMessageFromCatch(e, 'You give bad data!!!!');
+//     res.status(400).send(msg);
+//     return;
+//   }
+
+//   const dbResponse = await db.query.users.findFirst({
+//     columns: {
+//       userId: true,
+//       username: true,
+//       role: true,
+//       password: true,
+//     },
+//     where: (users, { eq }) => eq(users.userId, userData.userId)
+//   })
+
+//   res.send(dbResponse);
+// }
 
 const getAdmins: RequestHandler = async (req, res) => {
   const userData = req.session.user;
@@ -482,6 +602,8 @@ export default function createUserRouter(): Router {
   userRouter.post('/create-sender', isLoggedIn, createSenderForVenue);
 
   userRouter.get('/me', isLoggedIn, getSelf);
+  userRouter.post('/change-Password', isLoggedIn, updateUserPassword)
+  // userRouter.get('/get-current-user', isLoggedIn, getCurrentUser)
 
   userRouter.get('/jwt', isLoggedIn, getJwt);
 

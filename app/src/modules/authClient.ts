@@ -18,6 +18,11 @@ if (localMode) {
 console.log('authUrl: ', completeAuthUrl);
 const authEndpoint = axios.create({ baseURL: completeAuthUrl, withCredentials: true });
 
+interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
 export function createUser(username: string, password: string, role: UserRole) {
   return handleResponse(() => authEndpoint.post('/user/create', {
     role: role.toString(),
@@ -187,6 +192,22 @@ export const loginWithAutoToken = async (username: string, password: string) => 
 
   await userAutoToken(t => latestJwtToken = t);
   return latestJwtToken;
+};
+
+export const changePassword = async (data: ChangePasswordRequest) => {
+  try {
+    const currentPassword = data.currentPassword;
+    const newPassword = data.newPassword;
+
+    await authEndpoint.post('/user/change-Password', {
+      currentPassword,
+      newPassword,
+    })
+
+    return Promise.resolve();
+  } catch (e) {
+    return Promise.reject(Error(e.response.data));
+  }
 };
 
 // export const deleteUser = (uuid: string) => authEndpoint.post('delete-user', { uuid });

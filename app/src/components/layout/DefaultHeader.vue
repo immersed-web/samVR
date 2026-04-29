@@ -1,4 +1,10 @@
 <template>
+  <!-- Modal used for changing passwords -->
+  <ChangePasswordModal
+    v-model="showPasswordModal"
+    @submit="handlePasswordSubmit"
+  />
+  
   <div data-theme="dark" :style="`background-image: url(${unsplashBackground});`"
     class="navbar justify-between gap-14 pl-6">
     <div class="">
@@ -34,6 +40,15 @@
           {{ translateUserRole(authStore.role) }}
         </span> -->
       </div>
+      <button
+        v-if="authStore.role === 'user'"
+        class="btn-ghost shrink-0 btn-error btn btn-circle"
+        @click="showPasswordModal = true"
+      >
+        <span class="material-icons">
+          password
+        </span>
+      </button>
       <button @click="logout" class="btn-ghost shrink-0 text-error btn-error btn btn-circle">
         <span class="material-icons">
           logout
@@ -50,6 +65,9 @@
             {{ route.label }}
           </RouterLink>
         </li>
+        <li>
+          <a @click="changePasswordHamburgerMenu">Ändra lösenord</a>
+        </li>
         <li class="text-error">
           <a @click="logout">{{ isAtLeastUser ? 'Logga ut' : 'Avsluta' }}</a>
         </li>
@@ -64,9 +82,25 @@ import { useAuthStore } from '@/stores/authStore';
 import { hasAtLeastSecurityRole, translateUserRole } from 'schemas';
 import { computed, ref } from 'vue';
 import unsplashBackground from '@/assets/milad-fakurian-DX7pT_guAyE-unsplash.jpg';
+import ChangePasswordModal from '@/components/ChangePasswordModal.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
+const showPasswordModal = ref(false);
+
+async function handlePasswordSubmit(payload: {
+  currentPassword: string;
+  newPassword: string;
+}) {
+  await authStore.changePassword(payload);
+  console.log('Password changed');
+  showPasswordModal.value = false;
+}
+
+const changePasswordHamburgerMenu = async () => {
+  showPasswordModal.value = true;
+  closeMenu();
+}
 
 const isAtLeastUser = computed(() => {
   return authStore.role ? hasAtLeastSecurityRole(authStore.role, 'user') : false;

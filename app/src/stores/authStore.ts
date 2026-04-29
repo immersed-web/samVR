@@ -1,8 +1,13 @@
 import { defineStore } from 'pinia';
-import { logout as authLogout, login as authLogin, userAutoToken, guestAutoToken } from '@/modules/authClient';
+import { logout as authLogout, login as authLogin, userAutoToken, guestAutoToken, changePassword as authChangePassword } from '@/modules/authClient';
 import { hasAtLeastSecurityRole, type JwtPayload } from 'schemas';
 import jwtDecode from 'jwt-decode';
 import { computed, ref } from 'vue';
+
+interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
 
 const browserHasCookie = () => {
   const cookieValue = document.cookie
@@ -85,6 +90,10 @@ export const useAuthStore = defineStore('auth', () => {
     });
   }
 
+  async function changePassword(data: ChangePasswordRequest) {
+    authChangePassword(data);
+  }
+
   return {
     isAuthenticated,
     isNotGuest: isLoggedIn,
@@ -101,6 +110,7 @@ export const useAuthStore = defineStore('auth', () => {
     restoreFromSession,
     logout,
     login,
+    changePassword,
     routePrefix,
   };
 }, {
