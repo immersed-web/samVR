@@ -89,6 +89,60 @@ export const vrRouter = router({
     ctx.client.leaveCurrentVrSpace();
     // ctx.vrSpace.removeClient(ctx.client);
   }),
+  transferVrSpaceOwnership: atLeastUserP.input(z.object({
+    fromUserId: z.string(),
+    toUserId: z.string(),
+  })).mutation(async ({ ctx, input }) => {
+    if (!hasAtLeastSecurityRole(ctx.role, 'admin')) {
+      throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Admin rights required' });
+    }
+    const { fromUserId, toUserId } = input;
+
+    log.info(`Transferring VR spaces from ${fromUserId} to ${toUserId}`);
+
+    const result = await db
+      .update(schema.vrSpaces)
+      .set({ ownerUserId: toUserId })
+      .where(eq(schema.vrSpaces.ownerUserId, fromUserId))
+      .returning({
+        vrSpaceId: schema.vrSpaces.vrSpaceId,
+        name: schema.vrSpaces.name
+      });
+
+    log.info(`Transferred ${result.length} VR spaces`);
+
+    for (const space of result) {
+      const vrSpace = VrSpace.getVrSpace(space.vrSpaceId);
+      if (vrSpace) {
+        vrSpace.reloadDbData('ownership transferred');
+      }
+    }
+
+    return {
+      transferredCount: result.length,
+      spaces: result
+    };
+  }),
+  doesUserHaveVrSpaces: atLeastUserP.input(z.object({ userId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      if (!hasAtLeastSecurityRole(ctx.role, 'admin')) {
+        throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Admin rights required' });
+      }
+
+      const { userId } = input;
+      log.info(`Checking if user ${userId} owns VR spaces`);
+
+
+      const result = await db
+        .select({ count: sql<number>`count(*)`.mapWith(Number) })
+        .from(schema.vrSpaces)
+        .where(eq(schema.vrSpaces.ownerUserId, userId));
+
+      const hasSpaces = result[0]?.count > 0;
+      log.info(`User ${userId} ${hasSpaces ? 'HAS' : 'has NO'} VR spaces`);
+
+      return hasSpaces;
+    }),
   updateVrSpace: userWithEditRightsToVrSpace.input(VrSpaceUpdateSchema).mutation(async ({ ctx, input }) => {
     log.info('updating vrSpace', input);
     const { vrSpaceId, reason, ...data } = input;

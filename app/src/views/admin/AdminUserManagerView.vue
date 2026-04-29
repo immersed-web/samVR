@@ -8,7 +8,7 @@
         <h3>
           Skapa ny användare
         </h3>
-        <div class="flex gap-6 items-end">
+        <div class="flex flex-col gap-6 items-stretch md:flex-row md:items-end">
           <div>
             <label class="flex items-center gap-2">
               <span class="label-text">Användarnamn:</span>
@@ -92,7 +92,10 @@
                 class="btn">
                 <span class="material-icons">edit</span>
               </button>
-              <button @click="makeCallThenResetList(() => deleteUser(user.userId))" class="btn btn-error">
+              <button 
+                @click="openDeleteModal(user)"
+                class="btn btn-error"
+              >
                 <span class="material-icons">delete</span>
               </button>
             </template>
@@ -104,24 +107,38 @@
         Du saknar behörighet till den här sidan.
       </div>
     </div>
+    <UserDeleteOwnershipModal
+      v-model="showDeleteModal"
+      :target-user-name="userToDelete?.username || ''"
+      :users="adminUsers"
+      @confirm="handleUserDelete"
+    />
   </MaxWidth7xl>
 </template>
 
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/authStore';
+import { useConnectionStore } from '@/stores/connectionStore';
 import { computed, onBeforeMount, reactive, ref } from 'vue';
 import { createUser, getAdmins, updateUser, deleteUser, getUsers } from '@/modules/authClient';
+import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import { allRolesBelow, hasAtLeastSecurityRole, roleHierarchy, translateUserRole, type UserRole } from 'schemas';
 import MaxWidth7xl from '@/components/layout/MaxWidth7xl.vue';
+import UserDeleteOwnershipModal from '@/components/UserDeletionEnvironmentsQuestionModal.vue';
 
 // Use imports
 const authStore = useAuthStore();
+const vrSpaceStore = useVrSpaceStore();
+const connection = useConnectionStore();
 const creatableRoles = computed(() => {
   if (!authStore.role) return [];
   const rolesBelowUser = allRolesBelow(authStore.role);
   const unuseRolesExcluded = rolesBelowUser.filter(r => r !== 'moderator' && r !== 'guest')
   return unuseRolesExcluded.map(r => ({ value: r, label: translateUserRole(r) })).reverse();
 })
+
+const showDeleteModal = ref(false);
+const userToDelete = ref<{ userId: string; username: string } | null>(null);
 
 function getClassForRole(role: UserRole) {
   switch (role) {
@@ -215,6 +232,48 @@ async function makeCallThenResetList(fetchReq: (...p: any) => Promise<any>) {
   createdUsername.value = '';
   createdPassword.value = '';
   fetchedUsers.value = await getUsers();
+}
+
+const adminUsers = computed(() => {
+  if (!fetchedUsers.value || !userToDelete.value) return [];
+  return fetchedUsers.value
+    .filter(u => ['admin', 'superadmin', 'god', 'user'].includes(u.role))
+    .filter(u => u.userId !== userToDelete.value!.userId)
+    .filter(u => u.userId !== authStore.userId);
+});
+
+async function openDeleteModal(user: Awaited<ReturnType<typeof getUsers>>[number]) {
+  try {
+    const hasVrSpaces = await vrSpaceStore.doesUserHaveVrSpaces(user.userId);
+
+    if (hasVrSpaces) {
+      userToDelete.value = { userId: user.userId, username: user.username };
+      showDeleteModal.value = true;
+    } else {
+      await deleteUser(user.userId);
+      await makeCallThenResetList(async () => {});
+    }
+  } catch (error) {
+    console.error('Check failed:', error);
+  }
+}
+
+async function handleUserDelete(payload: { action: 'take-over' | 'transfer'; targetUserId?: string }) {
+  if (!userToDelete.value) return;
+
+  const newOwnerId = payload.action === 'transfer'
+    ? payload.targetUserId
+    : authStore.userId;
+  
+  try {
+    await vrSpaceStore.transferVrSpaceOwnership(userToDelete.value.userId, newOwnerId);
+
+    await deleteUser(userToDelete.value.userId);
+    
+    await makeCallThenResetList(async () => {});
+  } catch (error) {
+    console.error('Delete failed:', error);
+  }
 }
 
 </script>

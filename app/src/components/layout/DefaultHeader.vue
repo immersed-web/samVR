@@ -10,7 +10,7 @@
       <!-- <Breadcrumbs /> -->
       <!-- </div> -->
     </div>
-    <div class="grow shrink-0 hidden sm:flex justify-center gap-1">
+    <div class="grow shrink-0 hidden lg:flex justify-center gap-1">
       <!-- <div class="text-xs">
         {{ authStore.username }}: {{ authStore.userId }}
       </div> -->
@@ -19,7 +19,7 @@
         {{ route.label }}
       </RouterLink>
     </div>
-    <div class="sm:flex shrink hidden gap-1 items-center">
+    <div class="lg:flex shrink hidden gap-1 items-center">
       <div class="flex flex-wrap shrink justify-end items-baseline text-xs font-semibold">
         <span class="text-base-content/50">{{ authStore.role === 'guest' ? 'Besöker som' : 'Inloggad som'
         }}&nbsp;</span>
@@ -40,7 +40,7 @@
         </span>
       </button>
     </div>
-    <div class="dropdown dropdown-end sm:hidden">
+    <div class="dropdown dropdown-end lg:hidden">
       <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
         <span class="material-icons">menu</span>
       </div>
