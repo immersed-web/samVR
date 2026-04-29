@@ -42,6 +42,17 @@
         <h3>
           Befintliga användare
         </h3>
+        <div class="flex flex-col gap-3 md:flex-row md:items-center">
+          <input
+            v-model="userSearch"
+            class="input input-bordered input-primary w-full md:max-w-sm"
+            placeholder="Sök användarnamn..."
+          />
+
+          <button v-if="filterActive || userSearch" @click="clearFilters" class="btn btn-neutral btn-sm">
+            Rensa filter
+          </button>
+        </div>
         <div class="flex flex-wrap gap-2">
           <label v-for="role in fetchedRoles" class="btn btn-xs gap-1 rounded-full leading-none"
             :class="`has-[:checked]:${getClassForRole(role.value)}`">
@@ -54,7 +65,7 @@
             class="btn btn-neutral btn-circle btn-xs material-icons">clear</button>
         </div>
         <div class="grid grid-cols-[auto_auto_1fr_auto_auto] gap-x-4 gap-y-1">
-          <div v-for="user in filteredUsers" :key="user.userId" class="grid grid-cols-subgrid col-span-5 items-center">
+          <div v-for="user in paginatedUsers" :key="user.userId" class="grid grid-cols-subgrid col-span-5 items-center">
             <template v-if="editedUserId === user.userId">
               <input v-model="editedUsername" class="input input-bordered input-sm px-3 text-base font-bold"
                 placeholder="Användarnamn"
@@ -98,6 +109,25 @@
             </template>
           </div>
         </div>
+        <div class="flex items-center gap-2 mt-4">
+            <button class="btn btn-sm" :disabled="currentPage === 1" @click="currentPage--">
+              Föregående
+            </button>
+          
+            <span class="text-sm">
+              Sida {{ currentPage }} av {{ totalPages }}
+            </span>
+          
+            <button class="btn btn-sm" :disabled="currentPage === totalPages" @click="currentPage++">
+              Nästa
+            </button>
+          
+            <select v-model.number="pageSize" class="select select-bordered select-sm">
+              <option :value="10">10</option>
+              <option :value="25">25</option>
+              <option :value="50">50</option>
+            </select>
+        </div>
       </div>
       <div v-else>
         <!-- Vad gör du här? Du får inte vara här. -->
@@ -109,7 +139,7 @@
 
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/authStore';
-import { computed, onBeforeMount, reactive, ref } from 'vue';
+import { computed, onBeforeMount, reactive, ref, watch } from 'vue';
 import { createUser, getAdmins, updateUser, deleteUser, getUsers } from '@/modules/authClient';
 import { allRolesBelow, hasAtLeastSecurityRole, roleHierarchy, translateUserRole, type UserRole } from 'schemas';
 import MaxWidth7xl from '@/components/layout/MaxWidth7xl.vue';
@@ -143,6 +173,10 @@ function getClassForRole(role: UserRole) {
   }
 }
 
+const userSearch = ref('');
+const currentPage = ref(1);
+const pageSize = ref(10);
+
 const createdUsername = ref('');
 const createdPassword = ref('');
 const createdRole = ref<UserRole>('guest');
@@ -173,14 +207,41 @@ const filterActive = computed(() => {
   return filterArr.some(([k, active]) => active);
 })
 function clearFilters() {
+  userSearch.value = '';
   for (const key of Object.keys(roleFilter) as UserRole[]) {
     roleFilter[key] = false;
   }
 }
 const filteredUsers = computed(() => {
-  if (!filterActive.value) return fetchedUsers.value;
-  return fetchedUsers.value.filter(user => pickedRoleFilters.value.includes(user.role));
-})
+  const query = userSearch.value.trim().toLowerCase();
+
+  const activeRoles = Object.entries(roleFilter)
+    .filter(([, active]) => active)
+    .map(([role]) => role as UserRole);
+
+  return fetchedUsers.value.filter(user => {
+    const matchesSearch =
+      query === '' || user.username.toLowerCase().includes(query);
+
+    const matchesRole =
+      activeRoles.length === 0 || activeRoles.includes(user.role);
+
+    return matchesSearch && matchesRole;
+  });
+});
+
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(filteredUsers.value.length / pageSize.value))
+);
+
+const paginatedUsers = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  return filteredUsers.value.slice(start, start + pageSize.value);
+});
+
+watch([userSearch, roleFilter], () => {
+  currentPage.value = 1;
+}, { deep: true });
 
 const editedUserId = ref<string>();
 const editedUsername = ref<string>();

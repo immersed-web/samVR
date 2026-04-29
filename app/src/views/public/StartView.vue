@@ -39,7 +39,7 @@ const authStore = useAuthStore();
 const vrSpaceStore = useVrSpaceStore();
 
 const canCreateVrSpace = computed(() => {
-  if (!authStore.role) { return false; }
+  if (!authStore.role || !hasAtLeastSecurityRole(authStore.role, 'admin')) { return false; }
   return hasAtLeastSecurityRole(authStore.role, 'user');
 });
 async function createVrSpace() {
