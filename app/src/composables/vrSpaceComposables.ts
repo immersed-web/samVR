@@ -53,7 +53,7 @@ const currentRaycastSelectorArray = computed<RaycastSelector[]>(() => {
       return ['.raycastable-surface'];
 
     case 'select-objects':
-      return ['.editable-object', '.clickable']
+      return ['.editable-object', '.clickable', '.editable-object *', '.clickable *']
 
     default:
       return ['.clickable'];
