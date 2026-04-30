@@ -301,6 +301,10 @@
                   :position="arrToCoordString(transformedSelectedObject.position)" class="selectable-object"
                   :scale="transformedSelectedObject.scale ? arrToCoordString(transformedSelectedObject.scale) : ''"
                   :asset="transformedSelectedObject.asset" />
+                  <TextBox v-else-if="transformedSelectedObject.type === 'text'"
+                    :key="`transformed-${transformedSelectedObject.placedObjectId}`"
+                    :placed-object="transformedSelectedObject"
+                    class="selectable-object editable-object" />
               </a-entity>
 
               <a-entity ref="spawnPosTag" v-if="spawnPosString" :position="spawnPosString">
@@ -389,6 +393,9 @@
                     type="radio" value="selfPlacement" aria-label="Hoppa in i scenen" class="btn btn-sm btn-primary"
                     v-model="currentRaycastReason"> -->
                   <pre>{{ currentCursorMode }}</pre>
+                  <pre>selected: {{ selectedPlacedObject?.type }} ({{ selectedPlacedObject?.placedObjectId?.slice(-4) }})</pre>
+<pre>transformed: {{ transformedSelectedObject?.type }}</pre>
+<pre>notEditing count: {{ placedObjectsNotBeingEdited.length }}</pre>
                   <button v-if="!vrComponentTag?.firstPersonViewActive" @click="setCursorMode('enterFirstPersonView')"
                     class="btn btn-primary btn-sm">
                     Hoppa in i scenen
