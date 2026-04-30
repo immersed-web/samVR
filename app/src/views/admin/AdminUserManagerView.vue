@@ -124,7 +124,7 @@ import { createUser, getAdmins, updateUser, deleteUser, getUsers } from '@/modul
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import { allRolesBelow, hasAtLeastSecurityRole, roleHierarchy, translateUserRole, type UserRole } from 'schemas';
 import MaxWidth7xl from '@/components/layout/MaxWidth7xl.vue';
-import UserDeleteOwnershipModal from '@/components/UserDeletionEnvironmentsQuestionModal.vue';
+import UserDeleteOwnershipModal from '@/components/UserDeletionVRSpacesQuestionModal.vue';
 
 // Use imports
 const authStore = useAuthStore();
