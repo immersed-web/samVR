@@ -195,8 +195,8 @@ you intend to delete the Compose-managed data volumes.
 
 Do this **before** running `docker compose up` with the new configuration,
 including on development installations with an existing anonymous DB volume.
-The command requires Docker, the Compose plugin, Python 3, PostgreSQL 16 and a
-running old Compose `db` container. It does not migrate custom PostgreSQL roles
+The command requires Docker, the Compose plugin, Python 3, `flock`, PostgreSQL 16
+and a running old Compose `db` container. It does not migrate custom PostgreSQL roles
 or other cluster-wide objects; it copies the configured application database.
 
 1. Stop all applications that can write to the database or uploads, including
@@ -211,8 +211,8 @@ or other cluster-wide objects; it copies the configured application database.
    ```
 
    The argument can be omitted for the default location. The command stops if
-   either destination volume already exists. It stores a PostgreSQL dump and
-   uploads archive in a new directory under `db_backups/`, restores the dump to
+   a destination volume exists that was not created by this migration. It stores
+   a PostgreSQL dump and uploads archive in a new directory under `db_backups/`, restores the dump to
    the named database volume, and copies and compares uploads. It leaves the
    original database volume and host upload directory untouched. Keep a copy
    of the backups outside the host as well.
@@ -222,11 +222,16 @@ or other cluster-wide objects; it copies the configured application database.
    recurring database **and** upload backups; the Compose setup does not yet
    schedule them. Keep the old data until the migration is verified.
 
-If the command fails after creating a destination volume, it leaves the volume
-and backups in place for inspection. Do not rerun it until you have identified
-and deliberately removed or renamed the incomplete destination volumes. A
-rollback after new migrations or writes may require restoring the saved database
-and uploads together; the old application may not support the migrated schema.
+If the command fails, resolve the cause and rerun it with the same uploads path,
+Compose project and backup directory. It keeps its state under `db_backups/`
+(or `SAMVR_MIGRATION_BACKUP_DIR` if set), creates a fresh backup, and replaces
+only unattached volumes it can identify as belonging to that incomplete attempt.
+If a volume is attached to a container, or was created by an older script without
+migration labels, it stops for inspection instead. An already completed
+migration is left unchanged. Earlier backups are retained; ensure enough free
+space before retrying. A rollback after new migrations or writes may require
+restoring the saved database and uploads together; the old application may not
+support the migrated schema.
 
 ## Credit
 The project to develop and create this software was initiated by Lèv Grunberg.

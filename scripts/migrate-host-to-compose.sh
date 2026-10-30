@@ -18,7 +18,7 @@ run_with_progress() {
         printf '  Still working: %s (%ss elapsed)\n' "$label" "$elapsed" >&2
       fi
     done
-  ) &
+  ) 9>&- &
   watcher=$!
   if wait "$task"; then
     status=0
@@ -66,17 +66,67 @@ project=${compose_names[0]}
 database_volume=${compose_names[1]}
 uploads_volume=${compose_names[2]}
 
+backup_root=${SAMVR_MIGRATION_BACKUP_DIR:-"$root/db_backups"}
+mkdir -p "$backup_root"
+backup_root=$(realpath "$backup_root")
+state_dir="$backup_root/.host-to-compose-$project"
+exec 9>"$backup_root/.host-to-compose-$project.lock"
+if ! flock -n 9; then
+  printf 'Another migration for project %s is already running.\n' "$project" >&2
+  exit 1
+fi
+
+token=''
+if [[ -d "$state_dir" ]]; then
+  if [[ ! -s "$state_dir/token" || ! -s "$state_dir/source-container" || ! -s "$state_dir/uploads-path" ]]; then
+    printf 'Migration state is incomplete in %s; inspect it before retrying.\n' "$state_dir" >&2
+    exit 1
+  fi
+  token=$(< "$state_dir/token")
+  if [[ $(< "$state_dir/uploads-path") != "$uploads" ]]; then
+    printf 'Uploads path differs from the existing migration state in %s.\n' "$state_dir" >&2
+    exit 1
+  fi
+fi
+
+check_destination_volumes() {
+  local volume owner containers
+  for volume in "$database_volume" "$uploads_volume"; do
+    if docker volume inspect "$volume" > /dev/null 2>&1; then
+      owner=$(docker volume inspect --format '{{ index .Labels "io.samvr.migration" }}' "$volume")
+      if [[ -z "$token" || "$owner" != "$token" ]]; then
+        printf 'Destination volume %s was not created by this migration; refusing to overwrite it.\n' "$volume" >&2
+        return 1
+      fi
+      if [[ ! -f "$state_dir/completed" ]]; then
+        containers=$(docker ps -aq --filter "volume=$volume")
+        if [[ -n "$containers" ]]; then
+          printf 'Destination volume %s is attached to a container; inspect it before retrying.\n' "$volume" >&2
+          return 1
+        fi
+      fi
+    elif [[ -f "$state_dir/completed" ]]; then
+      printf 'Previously migrated volume %s is missing; inspect the deployment before continuing.\n' "$volume" >&2
+      return 1
+    fi
+  done
+}
+check_destination_volumes
+
+if [[ -f "$state_dir/completed" ]]; then
+  printf 'Migration for project %s already completed; existing volumes were left unchanged.\n' "$project"
+  exit 0
+fi
+
 database_container=$(docker compose ps -q db)
 if [[ -z "$database_container" ]] || [[ $(docker inspect --format '{{.State.Running}}' "$database_container") != true ]]; then
   printf 'The existing Compose database must be running.\n' >&2
   exit 1
 fi
-for volume in "$database_volume" "$uploads_volume"; do
-  if docker volume inspect "$volume" > /dev/null 2>&1; then
-    printf 'Destination volume already exists: %s. Refusing to overwrite it.\n' "$volume" >&2
-    exit 1
-  fi
-done
+if [[ -n "$token" && $(< "$state_dir/source-container") != "$database_container" ]]; then
+  printf 'The source database container differs from the one in the migration state.\n' >&2
+  exit 1
+fi
 
 database_name=$(docker exec "$database_container" printenv POSTGRES_DB)
 POSTGRES_PASSWORD=$(docker exec "$database_container" printenv POSTGRES_PASSWORD)
@@ -100,8 +150,16 @@ if (( version < 160000 || version >= 170000 )); then
   exit 1
 fi
 
-backup_root=${SAMVR_MIGRATION_BACKUP_DIR:-"$root/db_backups"}
-mkdir -p "$backup_root"
+if [[ -z "$token" ]]; then
+  state_staging=$(mktemp -d "$backup_root/.host-to-compose-state-XXXXXXXX")
+  token=$(python3 -c 'import uuid; print(uuid.uuid4())')
+  printf '%s\n' "$token" > "$state_staging/token"
+  printf '%s\n' "$database_container" > "$state_staging/source-container"
+  printf '%s\n' "$uploads" > "$state_staging/uploads-path"
+  mv -T "$state_staging" "$state_dir"
+else
+  printf 'Resuming an incomplete migration; a fresh backup will be created.\n'
+fi
 backup=$(mktemp -d "$backup_root/named-volume-migration-XXXXXXXX")
 chmod 700 "$backup"
 printf 'Project: %s\nDatabase volume: %s\nUploads volume: %s\nUploads source: %s\nBackups: %s\n' \
@@ -121,8 +179,16 @@ run_with_progress 'Archiving uploads (compression can take time for large files)
   tar -C "$uploads" -czf "$backup/uploads.tar.gz" .
 
 printf 'Creating destination volumes...\n'
-docker volume create --label "com.docker.compose.project=$project" --label com.docker.compose.volume=database "$database_volume" > /dev/null
-docker volume create --label "com.docker.compose.project=$project" --label com.docker.compose.volume=uploads "$uploads_volume" > /dev/null
+check_destination_volumes
+for volume in "$database_volume" "$uploads_volume"; do
+  if docker volume inspect "$volume" > /dev/null 2>&1; then
+    printf 'Removing incomplete migration volume: %s\n' "$volume"
+    docker volume rm "$volume" > /dev/null
+  fi
+done
+docker volume create --label "com.docker.compose.project=$project" --label com.docker.compose.volume=database --label "io.samvr.migration=$token" "$database_volume" > /dev/null
+docker volume create --label "com.docker.compose.project=$project" --label com.docker.compose.volume=uploads --label "io.samvr.migration=$token" "$uploads_volume" > /dev/null
+check_destination_volumes
 
 printf 'Starting a temporary PostgreSQL container for the restore...\n'
 temporary_db=$(docker run -d --network none -e POSTGRES_PASSWORD -e "POSTGRES_DB=$database_name" \
@@ -151,6 +217,7 @@ run_with_progress 'Copying uploads and comparing them with the source' \
   --mount "type=volume,src=$uploads_volume,dst=/destination" postgres:16 \
   -c 'cp -a /source/. /destination/ && diff -qr /source /destination'
 
+touch "$state_dir/completed"
 printf '\nMigration data prepared. The old database and uploads were not removed.\n'
 printf 'Start the new stack with: docker compose --profile deploy up -d --build\n'
 printf 'Verify the deployment before discarding the old data or backups.\n'
