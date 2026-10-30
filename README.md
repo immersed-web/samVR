@@ -156,7 +156,9 @@ mediaserver and Caddy. Caddy serves the built frontend and proxies the APIs;
 the mediaserver uses host networking for WebRTC. Docker Engine and the Compose
 plugin are required. This deployment is separate from the PM2/Ansible process
 setup above: stop any existing PM2 services before starting it, since they use
-the same ports. The existing Compose Postgres service and its data are reused.
+the same ports. Postgres and uploads use named volumes. Existing deployments
+using the old anonymous database volume must migrate before starting the new
+stack; otherwise Compose starts a fresh database in the named volume.
 
 1. Initialize the submodule with `git submodule update --init --recursive`.
 2. Configure `.env`, including the public domain, database credentials, session
@@ -186,11 +188,45 @@ compiled into the frontend image, so rebuild when changing them. For an
 explicit migration and seed run, use `docker compose --profile deploy run --rm migrate`.
 
 The fileserver uses the `uploads` volume, while Caddy's certificate and config
-data use `caddy_data` and `caddy_config`. Existing host-based uploads under
-`backend/fileserver/uploads` are not automatically imported into the volume;
-copy them before switching an existing installation. Back up both the database
-and uploads before migration. Avoid `docker compose down -v` unless you intend
-to delete the Compose-managed data volumes.
+data use `caddy_data` and `caddy_config`. Avoid `docker compose down -v` unless
+you intend to delete the Compose-managed data volumes.
+
+### Migrating an existing host-based deployment
+
+Do this **before** running `docker compose up` with the new configuration,
+including on development installations with an existing anonymous DB volume.
+The command requires Docker, the Compose plugin, Python 3, PostgreSQL 16 and a
+running old Compose `db` container. It does not migrate custom PostgreSQL roles
+or other cluster-wide objects; it copies the configured application database.
+
+1. Stop all applications that can write to the database or uploads, including
+   the existing PM2 services (`pm2 delete all` and `pm2 kill`). Keep the old
+   Compose database container running. Keep the same Compose project name and
+   `.env` file used by the old deployment.
+2. Confirm the actual uploads location. By default it is
+   `backend/fileserver/uploads`. Pass a different directory if necessary:
+
+   ```bash
+   bash scripts/migrate-host-to-compose.sh /absolute/path/to/uploads
+   ```
+
+   The argument can be omitted for the default location. The command stops if
+   either destination volume already exists. It stores a PostgreSQL dump and
+   uploads archive in a new directory under `db_backups/`, restores the dump to
+   the named database volume, and copies and compares uploads. It leaves the
+   original database volume and host upload directory untouched. Keep a copy
+   of the backups outside the host as well.
+3. Start the new deployment using `docker compose --profile deploy up -d --build`.
+   Check logs, log in, open existing assets, upload a new file and test WebRTC
+   media between clients before returning traffic. Verify backups and establish
+   recurring database **and** upload backups; the Compose setup does not yet
+   schedule them. Keep the old data until the migration is verified.
+
+If the command fails after creating a destination volume, it leaves the volume
+and backups in place for inspection. Do not rerun it until you have identified
+and deliberately removed or renamed the incomplete destination volumes. A
+rollback after new migrations or writes may require restoring the saved database
+and uploads together; the old application may not support the migrated schema.
 
 ## Credit
 The project to develop and create this software was initiated by Lèv Grunberg.
