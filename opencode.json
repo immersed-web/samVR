@@ -1,0 +1,18 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "chrome-devtools": { "enabled": false },
+    "playwright": { "enabled": false },
+    "nuxt": { "enabled": false },
+    "nuxt-ui": { "enabled": false }
+  },
+  "permission": {
+    "skill": {
+      "*python*": "deny",
+      "*django*": "deny",
+      "*flask*": "deny",
+      "*fastapi*": "deny",
+      "*pytest*": "deny"
+    }
+  }
+}
