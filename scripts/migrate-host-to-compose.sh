@@ -1,6 +1,40 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# These operations do not expose a reliable percentage. Report elapsed time
+# while they run and preserve their exit status and standard input/output.
+run_with_progress() {
+  local label=$1 task watcher status
+  shift
+  printf '%s\n' "$label" >&2
+  "$@" <&0 &
+  task=$!
+  (
+    elapsed=0
+    while kill -0 "$task" 2>/dev/null; do
+      sleep 10 < /dev/null > /dev/null 2>&1
+      elapsed=$((elapsed + 10))
+      if kill -0 "$task" 2>/dev/null; then
+        printf '  Still working: %s (%ss elapsed)\n' "$label" "$elapsed" >&2
+      fi
+    done
+  ) &
+  watcher=$!
+  if wait "$task"; then
+    status=0
+  else
+    status=$?
+  fi
+  kill "$watcher" 2>/dev/null || true
+  wait "$watcher" 2>/dev/null || true
+  if (( status == 0 )); then
+    printf '  Completed: %s\n' "$label" >&2
+  else
+    printf '  Failed: %s (exit %s)\n' "$label" "$status" >&2
+  fi
+  return "$status"
+}
+
 root=$(dirname "$(dirname "$(realpath "$0")")")
 cd "$root"
 
@@ -15,6 +49,7 @@ if [[ ! -d "$uploads" ]]; then
 fi
 uploads=$(realpath "$uploads")
 
+printf 'Checking Compose configuration, source database and destination volumes...\n'
 # Resolve Compose's actual project and volume names without exposing its environment.
 mapfile -t compose_names < <(docker compose --profile deploy config --format json | python3 -c '
 import json, sys
@@ -80,17 +115,20 @@ cleanup() {
 }
 trap cleanup EXIT
 
-printf 'Backing up the database and uploads...\n'
-docker exec "$database_container" sh -c 'exec pg_dump -U postgres -d "$POSTGRES_DB" -Fc' > "$backup/database.dump"
-tar -C "$uploads" -czf "$backup/uploads.tar.gz" .
+run_with_progress 'Backing up the database' \
+  docker exec "$database_container" sh -c 'exec pg_dump -U postgres -d "$POSTGRES_DB" -Fc' > "$backup/database.dump"
+run_with_progress 'Archiving uploads (compression can take time for large files)' \
+  tar -C "$uploads" -czf "$backup/uploads.tar.gz" .
 
+printf 'Creating destination volumes...\n'
 docker volume create --label "com.docker.compose.project=$project" --label com.docker.compose.volume=database "$database_volume" > /dev/null
 docker volume create --label "com.docker.compose.project=$project" --label com.docker.compose.volume=uploads "$uploads_volume" > /dev/null
 
-printf 'Restoring the database into the new volume...\n'
+printf 'Starting a temporary PostgreSQL container for the restore...\n'
 temporary_db=$(docker run -d --network none -e POSTGRES_PASSWORD -e "POSTGRES_DB=$database_name" \
   --mount "type=volume,src=$database_volume,dst=/var/lib/postgresql/data" postgres:16)
 ready=false
+printf 'Waiting for the temporary database to be ready (up to 60 seconds)...\n'
 for ((i=0; i<60; i++)); do
   if docker exec "$temporary_db" pg_isready -h 127.0.0.1 -U postgres -d "$database_name" > /dev/null 2>&1; then
     ready=true
@@ -102,12 +140,13 @@ if [[ "$ready" != true ]]; then
   printf 'The temporary PostgreSQL container did not become ready.\n' >&2
   exit 1
 fi
-docker exec -i "$temporary_db" pg_restore -U postgres -d "$database_name" --exit-on-error --no-owner --no-privileges < "$backup/database.dump"
+run_with_progress 'Restoring the database into the new volume' \
+  docker exec -i "$temporary_db" pg_restore -U postgres -d "$database_name" --exit-on-error --no-owner --no-privileges < "$backup/database.dump"
 docker rm -f "$temporary_db" > /dev/null
 temporary_db=''
 
-printf 'Copying and checking uploads...\n'
-docker run --rm --network none --entrypoint sh \
+run_with_progress 'Copying uploads and comparing them with the source' \
+  docker run --rm --network none --entrypoint sh \
   --mount "type=bind,src=$uploads,dst=/source,readonly" \
   --mount "type=volume,src=$uploads_volume,dst=/destination" postgres:16 \
   -c 'cp -a /source/. /destination/ && diff -qr /source /destination'
