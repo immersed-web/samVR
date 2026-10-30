@@ -2,6 +2,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { sql, eq, InferSelectModel, InferModelFromColumns, and } from "drizzle-orm";
 import * as schema from "./schema.js";
 import { Prettify, StreamId, UserId, VrSpaceId } from "schemas";
+import { databaseUrl } from './connection.js';
 
 if (!process.env.DATABASE_URL) {
   throw new Error('Missing DATABASE_URL env var');
@@ -11,7 +12,7 @@ if (!process.env.DATABASE_URL) {
 // export const db = drizzle(client, { schema });
 export const db = drizzle({
   connection: {
-    connectionString: process.env.DATABASE_URL,
+    connectionString: databaseUrl(),
   },
   schema,
 });

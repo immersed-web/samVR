@@ -1,0 +1,17 @@
+{$EXPOSED_SERVER_URL} {
+  route {
+    handle_path {$EXPOSED_AUTH_PATH}* {
+      reverse_proxy auth:{$EXPOSED_AUTH_PORT}
+    }
+    handle_path {$EXPOSED_MEDIASOUP_PATH}* {
+      reverse_proxy host.docker.internal:{$EXPOSED_MEDIASOUP_PORT}
+    }
+    handle_path {$EXPOSED_FILESERVER_PATH}* {
+      reverse_proxy fileserver:{$EXPOSED_FILESERVER_PORT}
+    }
+    root * /srv
+    try_files {path} /index.html
+    file_server
+  }
+  log
+}

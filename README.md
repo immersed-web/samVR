@@ -141,7 +141,56 @@ The following ports are required to be opened on the server:
 | 22    | TCP       | If you need to SSH in to the server (you will) |
 | 80    | TCP       | Serve standard http requests |
 | 443   | TCP       | Serve standard https requests |
-| 40000-49999 | UDP | ports for the SFU mediaserver |
+| 40000-49999 | UDP and TCP | ports for the SFU mediaserver (UDP preferred; TCP fallback) |
+
+## Docker Compose deployment
+
+The default Compose configuration remains database-only for local development:
+
+```bash
+docker compose up -d
+```
+
+For a Linux production host, the `deploy` profile also starts auth, fileserver,
+mediaserver and Caddy. Caddy serves the built frontend and proxies the APIs;
+the mediaserver uses host networking for WebRTC. Docker Engine and the Compose
+plugin are required. This deployment is separate from the PM2/Ansible process
+setup above: stop any existing PM2 services before starting it, since they use
+the same ports. The existing Compose Postgres service and its data are reused.
+
+1. Initialize the submodule with `git submodule update --init --recursive`.
+2. Configure `.env`, including the public domain, database credentials, session
+   and JWT secrets, and `ADMIN_PASSWORD`. Set `LISTEN_IP` to the public IP and
+   `INTERNAL_IP` to an IP assigned to the host. The Compose deployment forces
+   production mode (`EXPOSED_LOCAL=false`). The Caddy paths and the frontend
+   paths are taken from the same `EXPOSED_*_PATH` settings.
+3. Point the domain at the host and open ports 80 and 443 (TCP), 443 (UDP for
+   HTTP/3), and 40000–49999 (UDP and TCP) in the host and cloud firewalls.
+   Caddy obtains HTTPS certificates for the configured domain.
+4. Build and start the stack:
+
+   ```bash
+   docker compose --profile deploy up -d --build
+   ```
+
+   The migration service waits for Postgres, applies migrations and seeds the
+   initial admin before the application services start. Log in as `överchefen`
+   with the `ADMIN_PASSWORD` used when seeding. Re-running the seed leaves an
+   existing account unchanged; changing `ADMIN_PASSWORD` does not change its
+   stored password.
+
+Use `docker compose --profile deploy ps` and `docker compose --profile deploy
+logs -f` to inspect the deployment. Rebuild and recreate the stack with the
+same `up -d --build` command after updates; frontend `EXPOSED_*` values are
+compiled into the frontend image, so rebuild when changing them. For an
+explicit migration and seed run, use `docker compose --profile deploy run --rm migrate`.
+
+The fileserver uses the `uploads` volume, while Caddy's certificate and config
+data use `caddy_data` and `caddy_config`. Existing host-based uploads under
+`backend/fileserver/uploads` are not automatically imported into the volume;
+copy them before switching an existing installation. Back up both the database
+and uploads before migration. Avoid `docker compose down -v` unless you intend
+to delete the Compose-managed data volumes.
 
 ## Credit
 The project to develop and create this software was initiated by Lèv Grunberg.

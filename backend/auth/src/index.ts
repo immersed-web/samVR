@@ -74,7 +74,7 @@ if (!process.env.SESSION_KEY) {
 const sessionDBAccess = new Pool({
   user: 'postgres',
   password: process.env.DATABASE_PASSWORD,
-  host: 'localhost',
+  host: process.env.DATABASE_HOST || 'localhost',
   port: 5432,
   database: process.env.DATABASE_NAME,
 })

@@ -1,0 +1,15 @@
+.git
+**/.git
+.env
+.env.*
+**/.env
+**/.env.*
+*.env
+node_modules
+**/node_modules
+**/dist
+**/tsconfig.tsbuildinfo
+db_backups
+docker-data
+certs
+backend/fileserver/uploads

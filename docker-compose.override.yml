@@ -1,0 +1,109 @@
+services:
+  migrate:
+    profiles: [deploy]
+    image: samvr-backend:local
+    build:
+      context: .
+      target: backend
+    env_file: .env
+    environment:
+      DATABASE_HOST: db
+    command:
+      - sh
+      - -c
+      - pnpm --filter database exec drizzle-kit migrate && pnpm --filter database exec tsx src/seed.ts
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  auth:
+    profiles: [deploy]
+    image: samvr-backend:local
+    build:
+      context: .
+      target: backend
+    env_file: .env
+    environment:
+      DATABASE_HOST: db
+      EXPOSED_LOCAL: "false"
+    command: ["pnpm", "--filter", "auth", "exec", "tsx", "src/index.ts"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  fileserver:
+    profiles: [deploy]
+    image: samvr-backend:local
+    build:
+      context: .
+      target: backend
+    env_file: .env
+    environment:
+      DATABASE_HOST: db
+      EXPOSED_LOCAL: "false"
+    command: ["pnpm", "--filter", "fileserver", "exec", "tsx", "src/index.ts"]
+    volumes:
+      - uploads:/app/backend/fileserver/uploads
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  mediaserver:
+    profiles: [deploy]
+    image: samvr-backend:local
+    build:
+      context: .
+      target: backend
+    network_mode: host
+    env_file: .env
+    environment:
+      EXPOSED_LOCAL: "false"
+    command: ["pnpm", "--filter", "mediaserver", "exec", "tsx", "src/index.ts"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  caddy:
+    profiles: [deploy]
+    image: samvr-caddy:local
+    build:
+      context: .
+      target: frontend
+      args:
+        EXPOSED_SERVER_URL: ${EXPOSED_SERVER_URL}
+        EXPOSED_PROJECT_NAME: ${EXPOSED_PROJECT_NAME}
+        EXPOSED_APP_NAME: ${EXPOSED_APP_NAME:-SamVR}
+        EXPOSED_AUTH_PATH: ${EXPOSED_AUTH_PATH:-/auth}
+        EXPOSED_MEDIASOUP_PATH: ${EXPOSED_MEDIASOUP_PATH:-/socket}
+        EXPOSED_FILESERVER_PATH: ${EXPOSED_FILESERVER_PATH:-/files}
+    environment:
+      EXPOSED_SERVER_URL: ${EXPOSED_SERVER_URL}
+      EXPOSED_AUTH_PATH: ${EXPOSED_AUTH_PATH:-/auth}
+      EXPOSED_MEDIASOUP_PATH: ${EXPOSED_MEDIASOUP_PATH:-/socket}
+      EXPOSED_FILESERVER_PATH: ${EXPOSED_FILESERVER_PATH:-/files}
+      EXPOSED_AUTH_PORT: ${EXPOSED_AUTH_PORT:-3333}
+      EXPOSED_MEDIASOUP_PORT: ${EXPOSED_MEDIASOUP_PORT:-9001}
+      EXPOSED_FILESERVER_PORT: ${EXPOSED_FILESERVER_PORT:-9002}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - auth
+      - fileserver
+      - mediaserver
+    restart: unless-stopped
+
+volumes:
+  uploads:
+  caddy_data:
+  caddy_config:
