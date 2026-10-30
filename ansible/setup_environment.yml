@@ -5,7 +5,10 @@
   vars:
     pnpm_home: "{{ ansible_env.PNPM_HOME | default(fallback_pnpm_home) }}"
     fallback_pnpm_home: "{{ansible_env.HOME}}/.local/share/pnpm"
-    nvm_source: '. "{{ ansible_env.HOME }}/.nvm/nvm.sh"'
+    nvm_load: '. "{{ ansible_env.HOME }}/.nvm/nvm.sh"'
+    nvm_source: |
+      {{ nvm_load }}
+      nvm use "$(< {{ (playbook_dir ~ '/../.nvmrc') | quote }})" > /dev/null || exit 1
     # fallback_pnpm_home: "FALLLABACK"
 
   tasks:
@@ -35,16 +38,13 @@
 
         - name: Install node
           shell: |
-            {{ nvm_source }}
-            nvm install {{ item }}
+            {{ nvm_load }}
+            nvm install
           args:
             executable: /bin/bash
-            chdir: "{{ ansible_env.HOME }}"
-            # creates: "{{ ansible_env.HOME }}/.nvm/versions/node/{{ item }}"
+            chdir: "{{ playbook_dir }}/.."
           register: nvm_install_response
           changed_when: "'already installed' not in nvm_install_response.stderr"
-          loop:
-            - 22
         - name: Get node path
           shell: |
             {{ nvm_source }}
@@ -55,7 +55,7 @@
           changed_when: false
         - name: Store node path in a fact
           set_fact:
-            node_path: "{{ node_path.stdout | trim }}"
+            node_path: "{{ (node_path.stdout | trim) | dirname }}"
     - name: Setup pnpm
       block:
         - name: Get and register node version
@@ -114,14 +114,6 @@
         PNPM_HOME: "{{ pnpm_home }}"
         PATH: "{{node_path}}:{{pnpm_home}}:{{ansible_env.PATH}}"
       block:
-        - name: Add dotenv-cli
-          ansible.builtin.shell: |
-            {{ nvm_source }}
-            pnpm add -g dotenv-cli
-          args:
-            executable: /bin/bash
-          register: dotenv_install_status
-          changed_when: "'Already up to date' not in dotenv_install_status.stdout"
         - name: Add pm2
           ansible.builtin.shell: |
             {{ nvm_source }}

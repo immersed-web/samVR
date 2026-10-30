@@ -2,7 +2,9 @@
 - name: Node dependencies
   hosts: localhost
   vars:
-    nvm_source: '. "{{ ansible_env.HOME }}/.nvm/nvm.sh"'
+    nvm_source: |
+      . "{{ ansible_env.HOME }}/.nvm/nvm.sh"
+      nvm use "$(< {{ (playbook_dir ~ '/../.nvmrc') | quote }})" > /dev/null || exit 1
   environment:
     CI: "true" # Make pnpm not touch lockfile when running from ansible
   tasks:
@@ -23,7 +25,9 @@
   vars:
     pnpm_home: "{{ ansible_env.PNPM_HOME | default(fallback_pnpm_home) }}"
     fallback_pnpm_home: "{{ansible_env.HOME}}/.local/share/pnpm"
-    nvm_source: '. "{{ ansible_env.HOME }}/.nvm/nvm.sh"'
+    nvm_source: |
+      . "{{ ansible_env.HOME }}/.nvm/nvm.sh"
+      nvm use "$(< {{ (playbook_dir ~ '/../.nvmrc') | quote }})" > /dev/null || exit 1
     # fallback_pnpm_home: "FALLLABACK"
   environment:
     CI: "true" # Make pnpm not touch lockfile when running from ansible
@@ -70,7 +74,9 @@
   vars:
     # pnpm_home: "{{ ansible_env.PNPM_HOME | default(fallback_pnpm_home) }}"
     # fallback_pnpm_home: "{{ansible_env.HOME}}/.local/share/pnpm"
-    nvm_source: '. "{{ ansible_env.HOME }}/.nvm/nvm.sh"'
+    nvm_source: |
+      . "{{ ansible_env.HOME }}/.nvm/nvm.sh"
+      nvm use "$(< {{ (playbook_dir ~ '/../.nvmrc') | quote }})" > /dev/null || exit 1
     # fallback_pnpm_home: "FALLLABACK"
   environment:
     CI: "true" # Make pnpm not touch lockfile when running from ansible

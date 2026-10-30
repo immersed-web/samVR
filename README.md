@@ -16,6 +16,12 @@ Additionally this project use the tool [Ansible](https://www.ansible.com/) to in
 To install ansible follow these instructions:
 https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html
 
+The project uses the Node.js version in the root `.nvmrc` (currently Node 24).
+The environment playbook installs it with nvm. For local development, install
+[nvm](https://github.com/nvm-sh/nvm) and run `nvm install` from the project
+directory; in a new shell, run `nvm use` before starting project commands.
+nvm also finds the root `.nvmrc` from project subdirectories.
+
 ### 1. Download the repository from github
 To install SamVR and run it on your own server, you first need to retrieve the repository from github.
 Using the terminal, go to your home folder on the server:
@@ -74,8 +80,9 @@ Go back to project root folder
 ```bash
 cd ..
 ```
-Run pm2 process manager in the project root (pm2 will pick up the file named ecosystem.config.js in the root, which specifies how to start and run the required processes)
+Select the project Node version and run pm2 process manager in the project root (pm2 will pick up the file named ecosystem.config.js in the root, which specifies how to start and run the required processes)
 ```bash
+nvm use
 pm2 start
 ```
 
@@ -86,13 +93,18 @@ password: **`<ADMIN_PASSWORD you have configured in the .env file earlier>`**
 
 ## Update to new version
 - start in project root
-- stop all the processes: `pm2 delete all`
+- stop all the processes and the existing PM2 daemon: `pm2 delete all` then `pm2 kill`
 - go to ansible directory: `cd ansible`
 - run the update script: `ansible-playbook dangerous_sync_to_github_version.yml`
 - for good measure run: `ansible-playbook setup_environment.yml` (should usually not be needed, but in rare cases some edits are made to the environment/global dependencies)
 - run the project setup: `ansible-playbook setup_project.yml`
 - go to project root directory: `cd ..`
-- run the processes: `pm2 start`
+- select the project Node version: `nvm use`
+- verify the selected version with `node --version`, then start the processes: `pm2 start`
+
+Stopping the PM2 daemon is important when upgrading Node: otherwise an existing
+daemon can continue running with the previous Node environment. Verify the
+running processes after restarting with `pm2 list` and `pm2 logs`.
 
 > [!NOTE]
 > Note: The file is named **dangerous**_sync_to_github_version.yml because it throws away any local additions/edits to the codebase (including not yet pushed commits). Thus it's only "dangerous" for a development environment and not a production server simply running the application.
