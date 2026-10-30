@@ -38,11 +38,25 @@ run_with_progress() {
 root=$(dirname "$(dirname "$(realpath "$0")")")
 cd "$root"
 
-if [[ $# -gt 1 ]]; then
-  printf 'Usage: bash scripts/migrate-host-to-compose.sh [uploads-directory]\n' >&2
-  exit 1
-fi
-uploads=${1:-"$root/backend/fileserver/uploads"}
+skip_upload_backup=false
+uploads=''
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --skip-upload-backup) skip_upload_backup=true ;;
+    -h|--help)
+      printf 'Usage: bash scripts/migrate-host-to-compose.sh [--skip-upload-backup] [uploads-directory]\n'
+      exit 0 ;;
+    -*) printf 'Unknown option: %s\n' "$1" >&2; exit 1 ;;
+    *)
+      if [[ -n "$uploads" ]]; then
+        printf 'Only one uploads directory may be provided.\n' >&2
+        exit 1
+      fi
+      uploads=$1 ;;
+  esac
+  shift
+done
+uploads=${uploads:-"$root/backend/fileserver/uploads"}
 if [[ ! -d "$uploads" ]]; then
   printf 'Uploads directory does not exist: %s\n' "$uploads" >&2
   exit 1
@@ -150,6 +164,17 @@ if (( version < 160000 || version >= 170000 )); then
   exit 1
 fi
 
+if [[ "$skip_upload_backup" == false && -t 0 ]]; then
+  while true; do
+    read -r -p 'Create a separate compressed uploads backup? [Y/n] ' answer
+    case "$answer" in
+      ''|[Yy]|[Yy][Ee][Ss]) break ;;
+      [Nn]|[Nn][Oo]) skip_upload_backup=true; break ;;
+      *) printf 'Please answer yes or no.\n' ;;
+    esac
+  done
+fi
+
 if [[ -z "$token" ]]; then
   state_staging=$(mktemp -d "$backup_root/.host-to-compose-state-XXXXXXXX")
   token=$(python3 -c 'import uuid; print(uuid.uuid4())')
@@ -175,8 +200,12 @@ trap cleanup EXIT
 
 run_with_progress 'Backing up the database' \
   docker exec "$database_container" sh -c 'exec pg_dump -U postgres -d "$POSTGRES_DB" -Fc' > "$backup/database.dump"
-run_with_progress 'Archiving uploads (compression can take time for large files)' \
-  tar -C "$uploads" -czf "$backup/uploads.tar.gz" .
+if [[ "$skip_upload_backup" == true ]]; then
+  printf 'Skipping the separate uploads archive; original uploads remain untouched.\n'
+else
+  run_with_progress 'Archiving uploads (compression can take time for large files)' \
+    tar -C "$uploads" -czf "$backup/uploads.tar.gz" .
+fi
 
 printf 'Creating destination volumes...\n'
 check_destination_volumes

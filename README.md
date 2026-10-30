@@ -212,10 +212,17 @@ or other cluster-wide objects; it copies the configured application database.
 
    The argument can be omitted for the default location. The command stops if
    a destination volume exists that was not created by this migration. It stores
-   a PostgreSQL dump and uploads archive in a new directory under `db_backups/`, restores the dump to
+   a PostgreSQL dump in a new directory under `db_backups/`, restores the dump to
    the named database volume, and copies and compares uploads. It leaves the
    original database volume and host upload directory untouched. Keep a copy
    of the backups outside the host as well.
+
+   The script asks whether to create an additional compressed uploads archive;
+   the default is yes. Use `--skip-upload-backup` to skip the archive without a
+   prompt, for example when disk space is limited. The original uploads are
+   still copied directly to the volume and left untouched. Non-interactive runs
+   create the archive unless the flag is provided. The database dump is always
+   created.
 3. Start the new deployment using `docker compose --profile deploy up -d --build`.
    Check logs, log in, open existing assets, upload a new file and test WebRTC
    media between clients before returning traffic. Verify backups and establish
