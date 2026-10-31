@@ -2,7 +2,6 @@ FROM node:24-trixie-slim AS workspace
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-pip make g++ git ca-certificates && rm -rf /var/lib/apt/lists/*
 RUN corepack enable
-ENV CYPRESS_INSTALL_BINARY=0
 COPY . .
 RUN pnpm install --frozen-lockfile
 RUN pnpm --filter './packages/**' -r build
