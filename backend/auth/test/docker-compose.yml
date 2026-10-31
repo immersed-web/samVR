@@ -1,0 +1,66 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: test-database-password
+      POSTGRES_DB: samvr_auth_test
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d $$POSTGRES_DB"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  migrate:
+    image: samvr-auth-test:local
+    build:
+      context: ../../..
+      target: backend
+    environment:
+      DATABASE_URL: postgresql://postgres:test-database-password@db:5432/samvr_auth_test
+      ADMIN_PASSWORD: test-god-password
+    command:
+      - sh
+      - -c
+      - pnpm --filter database exec drizzle-kit migrate && pnpm --filter database exec tsx src/seed.ts
+    depends_on:
+      db:
+        condition: service_healthy
+
+  auth:
+    image: samvr-auth-test:local
+    build:
+      context: ../../..
+      target: backend
+    environment:
+      DATABASE_URL: postgresql://postgres:test-database-password@db:5432/samvr_auth_test
+      DATABASE_HOST: db
+      DATABASE_PASSWORD: test-database-password
+      DATABASE_NAME: samvr_auth_test
+      EXPOSED_AUTH_PORT: "3333"
+      EXPOSED_PROJECT_NAME: SamVRAuthTest
+      EXPOSED_LOCAL: "true"
+      SESSION_KEY: test-session-key
+      JWT_SECRET: test-jwt-secret
+      JWT_ISSUER: samvr-auth-test
+      JWT_AUDIENCE: samvr-auth-test
+    command: ["pnpm", "--filter", "auth", "exec", "tsx", "src/index.ts"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3333/health').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  tests:
+    image: samvr-auth-test:local
+    build:
+      context: ../../..
+      target: backend
+    environment:
+      AUTH_TEST_URL: http://auth:3333
+    command: ["node", "--test", "/app/backend/auth/test/account-update.test.mjs"]
+    depends_on:
+      auth:
+        condition: service_healthy

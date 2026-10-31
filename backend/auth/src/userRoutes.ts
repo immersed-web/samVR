@@ -3,9 +3,9 @@ import bcrypt from 'bcrypt';
 import { createJwt } from 'shared-modules/jwtUtils';
 import { exclude, extractMessageFromCatch } from 'shared-modules/utilFns';
 import { isLoggedIn } from './utils.js';
-import { StreamId, UserId, UserRole, allRolesBelow, hasAtLeastSecurityRole, roleHierarchy, throwIfUnauthorized } from 'schemas';
+import { StreamId, UserId, UserIdSchema, UserRole, allRolesBelow, hasAtLeastSecurityRole, roleHierarchy, throwIfUnauthorized } from 'schemas';
 import { basicUserSelect, db, schema, userSelectExcludePassword } from 'database';
-import { and, inArray, eq, getTableColumns } from 'drizzle-orm';
+import { and, asc, inArray, eq, getTableColumns } from 'drizzle-orm';
 import * as _ from 'lodash-es'
 
 const index: RequestHandler = (req, res) => {
@@ -150,50 +150,58 @@ interface UpdateUserRequest extends ExpressReq {
 }
 
 const updateUser: RequestHandler = async (req: UpdateUserRequest, res) => {
-  const userData = req.session.user;
+  const callerId = req.session.userId;
   const payload = req.body;
-  console.log(payload);
-  try {
-    if (!userData || !userData.role) {
-      throw new Error('no userdata/session present. You are not authorized / logged in!');
-    }
-    if(!payload.userId) throw Error('no userId provided in payload. Invalid request!');
-  } catch (e) {
-    const msg = extractMessageFromCatch(e, 'provided data is no good!');
-    res.status(400).send(msg);
+  if (!callerId) {
+    res.status(403).send('not authorized');
     return;
   }
-  try {
-    if (payload.role) {
-      const clientSecurityLevel = roleHierarchy.indexOf(userData.role);
-      const updatedUserSecurityLevel = roleHierarchy.indexOf(payload.role);
-      if (clientSecurityLevel > updatedUserSecurityLevel) {
-        throw new Error('cant update a user with higher or same security level as yourself!!');
-      }
-    }
-    throwIfUnauthorized(userData.role, 'moderator');
-  } catch (e) {
-    const msg = extractMessageFromCatch(e, 'failed to update user!');
-    res.status(403).send(msg);
+  if (!payload || !UserIdSchema.safeParse(payload.userId).success
+    || (payload.role !== undefined && !roleHierarchy.includes(payload.role))
+    || (payload.username !== undefined && typeof payload.username !== 'string')
+    || (payload.password !== undefined && typeof payload.password !== 'string')
+    || (payload.role === undefined && payload.username === undefined && !payload.password)) {
+    res.status(400).send('invalid user update');
     return;
   }
-  let hashedPassword = undefined;
-  if (payload.password) {
-    hashedPassword = await bcrypt.hash(payload.password, 10);
-  }
-  const userUpdate = {
-    username: payload.username,
-    password: hashedPassword,
-    role: payload.role,
-  };
 
   try {
-    const [result] = await db.update(schema.users)
-      .set(userUpdate)
-      .where(eq(schema.users.userId, payload.userId))
-      .returning();
-    const resultWithoutPassword = exclude(result, 'password');
-    res.status(201).send(resultWithoutPassword);
+    // Lock both accounts in a consistent order so role changes cannot race the authorization check.
+    const result = await db.transaction(async (tx) => {
+      const accounts = await tx.select({ userId: schema.users.userId, role: schema.users.role })
+        .from(schema.users)
+        .where(inArray(schema.users.userId, [callerId, payload.userId]))
+        .orderBy(asc(schema.users.userId))
+        .for('update');
+      const caller = accounts.find(account => account.userId === callerId);
+      const target = accounts.find(account => account.userId === payload.userId);
+      if (!caller || !hasAtLeastSecurityRole(caller.role, 'moderator')) {
+        return { status: 403 as const, message: 'not authorized' };
+      }
+      if (!target) {
+        return { status: 404 as const, message: 'user not found' };
+      }
+      const callerLevel = roleHierarchy.indexOf(caller.role);
+      if (callerLevel >= roleHierarchy.indexOf(target.role)
+        || (payload.role !== undefined && callerLevel >= roleHierarchy.indexOf(payload.role))) {
+        return { status: 403 as const, message: 'cannot update a user with equal or higher privileges' };
+      }
+
+      const [updatedUser] = await tx.update(schema.users)
+        .set({
+          username: payload.username,
+          password: payload.password ? await bcrypt.hash(payload.password, 10) : undefined,
+          role: payload.role,
+        })
+        .where(eq(schema.users.userId, target.userId))
+        .returning();
+      return { status: 201 as const, user: exclude(updatedUser, 'password') };
+    });
+    if (result.status !== 201) {
+      res.status(result.status).send(result.message);
+      return;
+    }
+    res.status(201).send(result.user);
     return;
   } catch (e) {
     const errorMsg = extractMessageFromCatch(e, 'failed to update user!');
