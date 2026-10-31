@@ -10,7 +10,7 @@ import { AvatarDesignSchema, LocalClientInitDataSchema, PermissionDeleteSchema, 
 import { Stream, VrSpace } from 'classes/InternalClasses.js';
 import { and, eq } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { requirePermissionManagement } from '../modules/permissionAuthorization.js';
+import { authorizeResource } from '../modules/resourceAccess.js';
 
 export const userRouter = router({
   // getClientState: p.query(({ctx}) => {
@@ -83,7 +83,7 @@ export const userRouter = router({
       ? { type: 'stream' as const, id: input.targetId as StreamId }
       : { type: 'vrSpace' as const, id: input.targetId as VrSpaceId };
     const dbResponse = await db.transaction(async tx => {
-      const callerPermission = await requirePermissionManagement(tx, ctx.userId, target);
+      const callerPermission = await authorizeResource(tx, ctx, target, 'edit', { forUpdate: true });
       const condition = and(
         eq(schema.permissions.userId, input.userId),
         eq(schema.permissions.targetType, input.targetType),
@@ -100,13 +100,18 @@ export const userRouter = router({
     });
     try {
       if (isStreamPermission(dbResponse) && Stream.streamIsLoaded({ streamId: dbResponse.targetId })) {
-        await Stream.getStream(dbResponse.targetId).reloadDbData('permission was deleted');
+        await Stream.getStream(dbResponse.targetId).reloadDbData('permission was deleted', true);
       } else if (isVrSpacePermission(dbResponse)) {
-        await VrSpace.getVrSpace(dbResponse.targetId)?.reloadDbData('permission was deleted');
+        await VrSpace.getVrSpace(dbResponse.targetId)?.reloadDbData('permission was deleted', true);
       }
     } catch (error) {
       // Deletion has committed; the resource may have unloaded or been deleted meanwhile.
       log.warn('Failed to refresh resource after permission removal', error);
+      if (isVrSpacePermission(dbResponse)) {
+        VrSpace.getVrSpace(dbResponse.targetId)?.unload();
+      } else if (isStreamPermission(dbResponse) && Stream.streamIsLoaded({ streamId: dbResponse.targetId })) {
+        Stream.getStream(dbResponse.targetId).unload();
+      }
     }
     return dbResponse;
   })

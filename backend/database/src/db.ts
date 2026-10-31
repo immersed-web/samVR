@@ -16,6 +16,7 @@ export const db = drizzle({
   },
   schema,
 });
+export type DatabaseTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 type UserQueryInput = NonNullable<Required<Parameters<typeof db.query.users.findFirst>[0]>>;
 type userQueryColumnInput = UserQueryInput['columns'];
@@ -141,36 +142,40 @@ export async function getPermissionLevelForTarget(targetType: PermissionTargetTy
   // return permission.permissionLevel;
 }
 
+const streamRelations = {
+  cameras: {
+    columns: {
+      cameraId: true,
+    },
+  },
+  mainCamera: {
+    columns: {
+      cameraId: true,
+    },
+  },
+  owner: {
+    columns: basicUserSelect,
+  },
+  allowedUsers: {
+    where: eq(schema.permissions.targetType, 'stream'),
+    columns: {
+      permissionLevel: true,
+    },
+    with: {
+      user: {
+        columns: basicUserSelect,
+      }
+    }
+  },
+} as const;
 export const queryStreamWithIncludes = db.query.streams.findFirst({
   where: (stream, { eq }) => eq(stream.streamId, sql.placeholder('streamId')),
-  with: {
-    cameras: {
-      columns: {
-        cameraId: true,
-      }
-    },
-    mainCamera: {
-      columns: {
-        cameraId: true,
-      }
-    },
-    owner: {
-      columns: basicUserSelect,
-    },
-    allowedUsers: {
-      where: eq(schema.permissions.targetType, 'stream'),
-      columns: {
-        permissionLevel: true,
-      },
-      with: {
-        user: {
-          columns: basicUserSelect
-        }
-      }
-    },
-  }
+  with: streamRelations,
 }).prepare('queryStreamWithIncludes');
 export type StreamWithIncludes = NonNullable<Awaited<ReturnType<typeof queryStreamWithIncludes.execute>>>;
+export function getStreamWithIncludes(tx: DatabaseTransaction, streamId: StreamId) {
+  return tx.query.streams.findFirst({ where: eq(schema.streams.streamId, streamId), with: streamRelations });
+}
 
 export const queryCameraWithIncludes = db.query.cameras.findFirst({
   where: (camera, { eq }) => eq(camera.cameraId, sql.placeholder('cameraId')),
@@ -187,63 +192,67 @@ export const queryCameraWithIncludes = db.query.cameras.findFirst({
 }).prepare('queryCameraWithIncludes')
 export type CameraWithIncludes = NonNullable<Awaited<ReturnType<typeof queryCameraWithIncludes.execute>>>;
 
+const vrSpaceRelations = {
+  worldModelAsset: true,
+  navMeshAsset: true,
+  panoramicPreview: true,
+  placedObjects: {
+    columns: {
+      placedObjectId: true,
+      position: true,
+      orientation: true,
+      type: true,
+      scale: true,
+      objectSettings: true,
+      objectId: true,
+      updatedAt: true,
+    },
+    with: {
+      vrPortal: {
+        columns: {
+          vrSpaceId: true,
+          name: true,
+          visibility: true,
+        },
+        with: {
+          panoramicPreview: true,
+          allowedUsers: {
+            columns: {
+              permissionLevel: true,
+              userId: true,
+            }
+          },
+          owner: {
+            columns: {
+              userId: true,
+            }
+          },
+        }
+      },
+      asset: true,
+      streamPortal: true,
+    }
+  },
+  allowedUsers: {
+    where: eq(schema.permissions.targetType, 'vrSpace'),
+    columns: {
+      permissionLevel: true,
+    },
+    with: {
+      user: {
+        columns: basicUserSelect
+      }
+    },
+  },
+} as const;
 export const queryVrSpaceWithIncludes = db.query.vrSpaces.findFirst({
   where: (vrSpace, { eq }) => eq(vrSpace.vrSpaceId, sql.placeholder('vrSpaceId')),
-  with: {
-    worldModelAsset: true,
-    navMeshAsset: true,
-    panoramicPreview: true,
-    placedObjects: {
-      columns: {
-        placedObjectId: true,
-        position: true,
-        orientation: true,
-        type: true,
-        scale: true,
-        objectSettings: true,
-        objectId: true,
-        updatedAt: true,
-      },
-      with: {
-        vrPortal: {
-          columns: {
-            vrSpaceId: true,
-            name: true,
-            visibility: true,
-          },
-          with: {
-            panoramicPreview: true,
-            allowedUsers: {
-              columns: {
-                permissionLevel: true,
-                userId: true,
-              }
-            },
-            owner: {
-              columns: {
-                userId: true,
-              }
-            },
-          }
-        },
-        asset: true,
-        streamPortal: true,
-      }
-    },
-    allowedUsers: {
-      where: eq(schema.permissions.targetType, 'vrSpace'),
-      columns: {
-        permissionLevel: true,
-      },
-      with: {
-        user: {
-          columns: basicUserSelect
-        }
-      }
-    },
-  }
+  with: vrSpaceRelations,
 }).prepare('queryVrSpaceWithIncludes');
 export type VrSpaceWithIncludes = NonNullable<Awaited<ReturnType<typeof queryVrSpaceWithIncludes.execute>>>
+export function getVrSpaceWithIncludes(tx: DatabaseTransaction, vrSpaceId: VrSpaceId) {
+  return tx.query.vrSpaces.findFirst({ where: eq(schema.vrSpaces.vrSpaceId, vrSpaceId), with: vrSpaceRelations });
+}
 export type PlacedObjectWithIncludes = VrSpaceWithIncludes['placedObjects'][number];
 // type dd = PlacedObjectWithIncludes['position']
 // type dd = PlacedObjectWithIncludes['orientation']

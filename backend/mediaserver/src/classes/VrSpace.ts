@@ -4,10 +4,12 @@ import { throttle, pick } from 'lodash-es';
 import type { UserClient, Stream } from './InternalClasses.js';
 
 import { Log } from 'debug-level';
-import { VrSpaceWithIncludes, db, queryVrSpaceWithIncludes, schema } from 'database';
+import { VrSpaceWithIncludes, db, getVrSpaceWithIncludes, queryVrSpaceWithIncludes, schema, type DatabaseTransaction } from 'database';
 import { getMediasoupWorker } from 'modules/soupWorkers.js';
 import mediasoupConfig from 'soupConfig.js';
 import { ProducerId } from 'schemas/mediasoup';
+import { TRPCError } from '@trpc/server';
+import { withResourceAccess } from '../modules/resourceAccess.js';
 const log = new Log('VR:Space');
 process.env.DEBUG = 'VR:Space*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
@@ -127,21 +129,49 @@ export class VrSpace {
     // log.info(this.dbData);
   }
 
-  async reloadDbData(reason?: string) {
+  async reloadDbData(reason?: string, revalidateAccess = false) {
     const dbResponse = await queryVrSpaceWithIncludes.execute({ vrSpaceId: this.vrSpaceId });
     if (!dbResponse) {
       throw Error('No vrSpace with that vrSpaceId in db');
     }
     this.dbData = dbResponse;
+    if (revalidateAccess && !(await this.revalidateClientAccess())) return;
     this._notifyStateUpdated(reason ?? 'dbData was reloaded');
+  }
+
+  private async revalidateClientAccess() {
+    let removed = false;
+    for (const client of [...this.clients.values()]) {
+      try {
+        await withResourceAccess(client.jwtUserData, { type: 'vrSpace', id: this.vrSpaceId }, 'view', async () => {});
+      } catch (error) {
+        if (!(error instanceof TRPCError) || !['FORBIDDEN', 'NOT_FOUND'].includes(error.code)) {
+          log.warn('Failed to revalidate VR-space access; disconnecting client', error);
+        }
+        if (!this.clients.has(client.connectionId)) continue;
+        this.clients.delete(client.connectionId);
+        client._setVrSpace(undefined);
+        client.eventSender.vrSpace.vrSpaceWasUnloaded({ vrSpaceId: this.vrSpaceId });
+        client.closeAllProducers();
+        client.closeAllConsumers();
+        client.closeAllTransports();
+        client._onClientStateUpdated('access to VR space revoked');
+        removed = true;
+      }
+    }
+    if (removed && this.clients.size === 0) {
+      this.unload();
+      return false;
+    }
+    return true;
   }
 
   // Static stuff for global housekeeping
   private static vrSpaces: Map<VrSpaceId, VrSpace> = new Map();
 
-  static async loadVrSpace(vrSpaceId: VrSpaceId, worker?: soupTypes.Worker) {
+  static async loadVrSpace(vrSpaceId: VrSpaceId, worker?: soupTypes.Worker, tx?: DatabaseTransaction) {
     log.info(`loading vrSpace ${vrSpaceId}`);
-    const dbResponse = await queryVrSpaceWithIncludes.execute({ vrSpaceId });
+    const dbResponse = tx ? await getVrSpaceWithIncludes(tx, vrSpaceId) : await queryVrSpaceWithIncludes.execute({ vrSpaceId });
   // const response = await prismaClient.virtualSpace.findUnique({
   //   where: {
   //     vrId: vrSpaceId,

@@ -9,7 +9,7 @@ import { getMediasoupWorker } from '../modules/soupWorkers.js';
 import { types as soupTypes } from 'mediasoup';
 import { ConnectionId, UserId, StreamId, CameraId, StreamUpdate, SenderId, hasAtLeastSecurityRole, Prettify } from 'schemas';
 
-import { db, schema, queryStreamWithIncludes, basicUserSelect, CameraWithIncludes, StreamWithIncludes, queryCameraWithIncludes } from 'database';
+import { db, schema, getStreamWithIncludes, queryStreamWithIncludes, basicUserSelect, CameraWithIncludes, StreamWithIncludes, queryCameraWithIncludes, type DatabaseTransaction } from 'database';
 // import { } from 'drizzle-orm'
 
 import { Camera, VrSpace, type UserClient, SenderClient, BaseClient, PublicProducers } from './InternalClasses.js';
@@ -17,6 +17,8 @@ import { computed, ref, shallowReactive, effect } from '@vue/reactivity';
 import { ProducerId } from 'schemas/mediasoup';
 import { isPast } from 'date-fns';
 import { and, eq } from 'drizzle-orm';
+import { TRPCError } from '@trpc/server';
+import { withResourceAccess } from '../modules/resourceAccess.js';
 
 
 // type StreamQueryInput = NonNullable<Required<Parameters<typeof db.query.streams.findFirst>[0]>>;
@@ -213,16 +215,36 @@ export class Stream {
     log.info('Update stream db data', input);
     this.dbData = { ...this.dbData, ...input };
     const dbResponse = await db.update(schema.streams).set(this.dbData).where(eq(schema.streams.streamId, this.dbData.streamId)).returning();
+    if (input.visibility !== undefined || input.ownerUserId !== undefined) await this.revalidateClientAccess();
     return dbResponse
   }
 
-  async reloadDbData(reason?: string) {
+  async reloadDbData(reason?: string, revalidateAccess = false) {
     const dbResponse = await queryStreamWithIncludes.execute({ streamId: this.streamId });
     if (!dbResponse) {
       throw Error('No stream with that streamId in db');
     }
     this.dbData = dbResponse;
+    if (revalidateAccess && !(await this.revalidateClientAccess())) return;
     this._notifyStateUpdated(reason ?? 'dbData was updated');
+  }
+
+  private async revalidateClientAccess() {
+    let removed = false;
+    for (const client of [...this.clients.values(), ...this.senderClients.values()]) {
+      try {
+        await withResourceAccess(client.jwtUserData, { type: 'stream', id: this.streamId }, 'view', async () => {});
+      } catch (error) {
+        if (!(error instanceof TRPCError) || !['FORBIDDEN', 'NOT_FOUND'].includes(error.code)) {
+          log.warn('Failed to revalidate stream access; disconnecting client', error);
+        }
+        if (!this.clients.has(client.connectionId) && !this.senderClients.has(client.connectionId)) continue;
+        client.eventSender.stream.streamWasUnloaded({ streamId: this.streamId });
+        client.leaveCurrentStream();
+        removed = true;
+      }
+    }
+    return !removed || !this._isEmpty;
   }
 
   _notifyStateUpdated(reason?: string) {
@@ -241,8 +263,15 @@ export class Stream {
     const data = this.getAdminOnlyState();
     this.clients.forEach(c => {
       if (hasAtLeastSecurityRole(c.role, 'moderator')) {
-        log.info(`notifying adminOnlyVenuestate (${reason}) to client ${c.username} (${c.connectionId})`);
-        c.eventSender.stream.streamStateUpdatedAdminOnly({ data, reason });
+        void withResourceAccess(c.jwtUserData, { type: 'stream', id: this.streamId }, 'admin', async () => {
+          if (this.clients.get(c.connectionId) === c) {
+            c.eventSender.stream.streamStateUpdatedAdminOnly({ data, reason });
+          }
+        }).catch(error => {
+          if (!(error instanceof TRPCError) || !['FORBIDDEN', 'NOT_FOUND'].includes(error.code)) {
+            log.warn('Failed to authorize admin-only stream state', error);
+          }
+        });
       }
     });
   }
@@ -536,7 +565,7 @@ export class Stream {
     return deletedStream;
   }
 
-  static async loadStream(streamId: StreamId, ownerUserId: UserId, worker?: soupTypes.Worker) {
+  static async loadStream(streamId: StreamId, ownerUserId: UserId, worker?: soupTypes.Worker, tx?: DatabaseTransaction) {
     log.info(`*****TRYING TO LOAD STREAM: ${streamId}`);
     try {
       const loadedStream = Stream.streams.get(streamId);
@@ -544,7 +573,7 @@ export class Stream {
         log.warn('Stream with that streamId already loaded');
         return loadedStream;
       }
-      const dbResponse = await queryStreamWithIncludes.execute({ streamId });
+      const dbResponse = tx ? await getStreamWithIncludes(tx, streamId) : await queryStreamWithIncludes.execute({ streamId });
       if (!dbResponse) {
         throw Error('No stream with that streamId in db');
       }

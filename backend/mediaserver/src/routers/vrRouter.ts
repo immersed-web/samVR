@@ -11,19 +11,20 @@ import { db, schema } from 'database';
 import { eq, and, or, not, sql } from 'drizzle-orm';
 import { PermissionLevel } from 'database/schema';
 import { TRPCError } from '@trpc/server';
-import { requireVrSpacePermission } from '../modules/vrSpaceAuthorization.js';
+import { authorizeResource, withResourceAccess } from '../modules/resourceAccess.js';
 import type { VrSpaceId } from 'schemas';
 
 type PermLev = typeof PermissionLevel.enumValues[number] | 'owner' | undefined;
 
-async function refreshLoadedVrSpace(vrSpaceId: VrSpaceId, reason: string) {
+async function refreshLoadedVrSpace(vrSpaceId: VrSpaceId, reason: string, revalidateAccess = false) {
   const space = VrSpace.getVrSpace(vrSpaceId);
   if (!space) return;
   try {
-    await space.reloadDbData(reason);
+    await space.reloadDbData(reason, revalidateAccess);
   } catch (error) {
     // The mutation is already committed; the space may have been unloaded or deleted meanwhile.
     log.warn('Failed to refresh loaded VR space', error);
+    if (revalidateAccess && VrSpace.getVrSpace(vrSpaceId) === space) space.unload();
   }
 }
 
@@ -60,7 +61,11 @@ export const vrRouter = router({
         )
       ));
 
-      if (hasAtLeastSecurityRole(ctx.role, 'superadmin')) {
+      const caller = ctx.role === 'guest' ? undefined : await db.query.users.findFirst({
+        columns: { role: true }, where: eq(schema.users.userId, ctx.userId),
+      });
+      if (ctx.role !== 'guest' && !caller) throw new TRPCError({ code: 'FORBIDDEN', message: 'Account not found' });
+      if (caller && hasAtLeastSecurityRole(caller.role, 'superadmin')) {
         return await unfilteredQuery;
       } else {
         const filteredQuery = unfilteredQuery.where(or(
@@ -72,6 +77,7 @@ export const vrRouter = router({
       }
     } catch (e) {
       log.error(e);
+      throw e;
     }
   }),
   createVrSpace: atLeastUserP.use(isUserClientM).input(z.object({ name: z.string() })).mutation(async ({ ctx, input }) => {
@@ -80,7 +86,7 @@ export const vrRouter = router({
   }),
   deleteVrSpace: atLeastUserP.use(isUserClientM).input(z.object({ vrSpaceId: VrSpaceIdSchema })).mutation(async ({ ctx, input }) => {
     const { deleted, portalSpaces } = await db.transaction(async tx => {
-      await requireVrSpacePermission(tx, ctx.userId, input.vrSpaceId, 'admin');
+      await authorizeResource(tx, ctx, { type: 'vrSpace', id: input.vrSpaceId }, 'admin', { forUpdate: true });
       const portals = await tx.delete(schema.placedObjects).where(and(
         eq(schema.placedObjects.type, 'vrPortal'),
         eq(schema.placedObjects.objectId, input.vrSpaceId),
@@ -109,10 +115,10 @@ export const vrRouter = router({
     // if(!ctx.venue.doorsAreOpen){
     //   throw new TRPCError({code: 'FORBIDDEN', message: 'The vr space is not opened to users at this point. Very sad!'});
     // }
-    await ctx.client.enterVrSpace(input.vrSpaceId);
-    const vrSpace = ctx.client.vrSpace!;
-    // log.info('entering vrSpace', vrSpace);
-    return vrSpace.getPublicState();
+    return withResourceAccess(ctx, { type: 'vrSpace', id: input.vrSpaceId }, 'view', async tx => {
+      await ctx.client.enterVrSpace(input.vrSpaceId, tx);
+      return ctx.client.vrSpace!.getPublicState();
+    });
   }),
   leaveVrSpace: userClientP.mutation(({ ctx }) => {
     ctx.client.leaveCurrentVrSpace();
@@ -122,10 +128,10 @@ export const vrRouter = router({
     log.info('updating vrSpace', input);
     const { vrSpaceId, reason, ...data } = input;
     await db.transaction(async tx => {
-      await requireVrSpacePermission(tx, ctx.userId, vrSpaceId, 'edit');
+      await authorizeResource(tx, ctx, { type: 'vrSpace', id: vrSpaceId }, 'edit', { forUpdate: true });
       await tx.update(schema.vrSpaces).set(data).where(eq(schema.vrSpaces.vrSpaceId, vrSpaceId));
     });
-    await refreshLoadedVrSpace(vrSpaceId, reason ?? 'dbData updated. Reloading');
+    await refreshLoadedVrSpace(vrSpaceId, reason ?? 'dbData updated. Reloading', data.visibility !== undefined);
   }),
   upsertPlacedObject: atLeastUserP.use(isUserClientM).input(PlacedObjectInsertSchema).mutation(async ({ ctx, input }) => {
     log.info(`upserting placedObject (${input.placedObjectId}): pos: ${input.position}, rot: ${input.orientation}`);
@@ -137,7 +143,7 @@ export const vrRouter = router({
         : [];
       const sourceId = existing?.vrSpaceId;
       const targetIds = [...new Set([input.vrSpaceId, ...(sourceId ? [sourceId] : [])])].sort();
-      for (const vrSpaceId of targetIds) await requireVrSpacePermission(tx, ctx.userId, vrSpaceId, 'edit');
+      for (const vrSpaceId of targetIds) await authorizeResource(tx, ctx, { type: 'vrSpace', id: vrSpaceId }, 'edit', { forUpdate: true });
       const [updated] = await tx.insert(schema.placedObjects).values(data).onConflictDoUpdate({
         target: [schema.placedObjects.placedObjectId],
         set: data,
@@ -156,7 +162,7 @@ export const vrRouter = router({
       const [object] = await tx.select({ vrSpaceId: schema.placedObjects.vrSpaceId }).from(schema.placedObjects)
         .where(eq(schema.placedObjects.placedObjectId, input.placedObjectId)).for('update');
       if (!object) throw new TRPCError({ code: 'NOT_FOUND', message: 'Placed object not found' });
-      await requireVrSpacePermission(tx, ctx.userId, object.vrSpaceId, 'edit');
+      await authorizeResource(tx, ctx, { type: 'vrSpace', id: object.vrSpaceId }, 'edit', { forUpdate: true });
       await tx.delete(schema.placedObjects).where(eq(schema.placedObjects.placedObjectId, input.placedObjectId));
       return object.vrSpaceId;
     });

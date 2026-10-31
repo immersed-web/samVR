@@ -11,6 +11,7 @@ import { atLeastModeratorP, currentVenueAdminP, isUserClientM, isVenueOwnerM, pr
 import { db, schema } from 'database';
 import { and, eq } from 'drizzle-orm';
 import * as _ from 'lodash-es';
+import { withResourceAccess } from '../modules/resourceAccess.js';
 
 export const adminRouter = router({
   createNewStream: atLeastModeratorP.use(isUserClientM).input(z.object({
@@ -41,14 +42,17 @@ export const adminRouter = router({
     return deletedVenue.streamId;
   }),
   loadStream: atLeastModeratorP.input(z.object({ streamId: StreamIdSchema })).mutation(async ({ input, ctx }) => {
-    const stream = await Stream.loadStream(input.streamId, ctx.userId);
-    return { publicVenueState: stream.getPublicState(), adminOnlyVenueState: stream.getAdminOnlyState() };
+    return withResourceAccess(ctx, { type: 'stream', id: input.streamId }, 'admin', async tx => {
+      const stream = await Stream.loadStream(input.streamId, ctx.userId, undefined, tx);
+      return { publicVenueState: stream.getPublicState(), adminOnlyVenueState: stream.getAdminOnlyState() };
+    });
   }),
   loadAndJoinStream: atLeastModeratorP.input(z.object({ streamId: StreamIdSchema })).mutation(async ({ input, ctx }) => {
-    const stream = await Stream.loadStream(input.streamId, ctx.userId);
-    const vState = await ctx.client.joinStream(input.streamId);
-    const adminOnlyState = stream.getAdminOnlyState();
-    return { publicStreamState: vState, adminOnlyStramState: adminOnlyState };
+    return withResourceAccess(ctx, { type: 'stream', id: input.streamId }, 'admin', async tx => {
+      const stream = await Stream.loadStream(input.streamId, ctx.userId, undefined, tx);
+      const vState = await ctx.client.joinStream(input.streamId);
+      return { publicStreamState: vState, adminOnlyStramState: stream.getAdminOnlyState() };
+    });
   }),
   listMyStreams: atLeastModeratorP.query(async ({ ctx }) => {
     return ctx.client.ownedStreams.value.map(({ streamId, name }) => ({ streamId, name }));

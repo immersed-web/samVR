@@ -10,6 +10,7 @@ import { procedure as p, router, isInVenueM, clientInVenueP } from '../trpc/trpc
 import { UserClient, Stream } from '../classes/InternalClasses.js';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
+import { withResourceAccess } from '../modules/resourceAccess.js';
 
 export const streamRouter = router({
   listPublicStreams: p.query(async ({ ctx }) => {
@@ -22,14 +23,11 @@ export const streamRouter = router({
   getStreamListInfo: p.input(z.object({
     streamId: StreamIdSchema,
   })).query(async ({ input, ctx }) => {
-    try {
-      return await db.query.streams.findFirst({
+    return withResourceAccess(ctx, { type: 'stream', id: input.streamId }, 'view', async tx => {
+      return await tx.query.streams.findFirst({
         where: eq(schema.streams.streamId, input.streamId),
-      })
-    } catch (e) {
-      log.error(e);
-      throw new TRPCError({ code: 'NOT_FOUND', message: 'didn\'t find that Venue' });
-    }
+      });
+    });
   }),
   // listLoadedVenues: p.query(({ctx}) => {
   //   return Venue.getLoadedVenues();
@@ -38,9 +36,10 @@ export const streamRouter = router({
   //   return Venue.getLoadedVenuesPublicState();
   // }),
   loadAndJoinStream: p.input(z.object({ streamId: StreamIdSchema })).mutation(async ({ input, ctx }) => {
-    await Stream.loadStream(input.streamId, ctx.userId);
-    const vState = await ctx.client.joinStream(input.streamId);
-    return vState;
+    return withResourceAccess(ctx, { type: 'stream', id: input.streamId }, 'view', async tx => {
+      await Stream.loadStream(input.streamId, ctx.userId, undefined, tx);
+      return ctx.client.joinStream(input.streamId);
+    });
   }),
   joinStream: p.input(
     z.object({
@@ -48,8 +47,9 @@ export const streamRouter = router({
     })
   ).mutation(async ({ input, ctx }) => {
     log.info(`request received to join venue as ${ctx.client.clientType}:`, input.streamId);
-    const vState = await ctx.client.joinStream(input.streamId);
-    return vState;
+    return withResourceAccess(ctx, { type: 'stream', id: input.streamId }, 'view', async () => {
+      return ctx.client.joinStream(input.streamId);
+    });
   }),
   getStreamState: clientInVenueP.query(({ ctx }) => {
     return ctx.stream.getPublicState();
@@ -60,4 +60,3 @@ export const streamRouter = router({
     }
   })
 });
-

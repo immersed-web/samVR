@@ -9,6 +9,7 @@ import { effect } from '@vue/reactivity';
 import { EventSender, Payload } from 'ts-event-bridge/sender';
 import { MyWebsocketType } from 'index.js';
 import { pick } from 'lodash-es';
+import type { DatabaseTransaction } from 'database';
 
 type EventMapAdditions = {
   vrSpace: {
@@ -172,7 +173,7 @@ export class UserClient extends BaseClient {
   /**
    * joins the given vrSpace, trying to load/instantiate it if needed
    */
-  async enterVrSpace(vrSpaceId: VrSpaceId) {
+  async enterVrSpace(vrSpaceId: VrSpaceId, tx?: DatabaseTransaction) {
     if (this.stream) {
       this.leaveCurrentStream();
     }
@@ -182,7 +183,7 @@ export class UserClient extends BaseClient {
     let vrSpace = VrSpace.getVrSpace(vrSpaceId);
     if (!vrSpace) {
       log.info(`vrSpace (${vrSpaceId}) wasnt loaded yet. loading it now.`);
-      vrSpace = await VrSpace.loadVrSpace(vrSpaceId);
+      vrSpace = await VrSpace.loadVrSpace(vrSpaceId, undefined, tx);
     }
     vrSpace.addClient(this);
     this._onClientStateUpdated('user client joined vrSpace');
