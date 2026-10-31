@@ -80,7 +80,6 @@ export default async function () {
   bvh();
   sceneCleanup();
 
-  // import('aframe-orbit-controls');
   // We had to tweak the orbit controls to avoid grab cursor leaking outside canvas element. Pull request is submitted to superframe.
   orbitControls();
   cameraControls();

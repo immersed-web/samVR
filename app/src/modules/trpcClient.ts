@@ -1,7 +1,7 @@
 import { createTRPCProxyClient, TRPCClientError, wsLink, type CreateTRPCProxyClient } from '@trpc/client';
 import type { inferRouterOutputs, inferRouterInputs } from '@trpc/server';
 import type { inferObservableValue } from '@trpc/server/observable';
-import { createWSClient, wsLink as customWsLink } from './customWsLink';
+import { createWSClient } from './customWsLink';
 import type { AppRouter } from 'mediaserver';
 import type { UserClientEventMap } from 'mediaserver/user-events'
 import type { ClientType, Prettify } from 'schemas';
@@ -105,7 +105,6 @@ export const createTrpcClient = (getToken: () => string, clientType: ClientType 
     // },
     links: [
       // devtoolsLink(),
-      // customWsLink({ client: _wsClient }),
       wsLink({client: _wsClient}),
     ],
   });
