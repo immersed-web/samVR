@@ -3,17 +3,29 @@ const log = new Log('Router:VR');
 process.env.DEBUG = 'Router:VR*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
-import { ClientRealtimeDataSchema, hasAtLeastSecurityRole, PlacedObjectIdSchema, PlacedObjectInsertSchema, ScreenShareSchema, TransformSchema, VrSpaceIdSchema, VrSpaceUpdateSchema } from 'schemas';
-import { procedure as p, router, isUserClientM, userClientP, atLeastUserP, userInVrSpaceP, userWithEditRightsToVrSpace, userWithAdminRightsToVrSpace } from '../trpc/trpc.js';
+import { ClientRealtimeDataSchema, hasAtLeastSecurityRole, PlacedObjectIdSchema, PlacedObjectInsertSchema, ScreenShareSchema, VrSpaceIdSchema, VrSpaceUpdateSchema } from 'schemas';
+import { router, isUserClientM, userClientP, atLeastUserP, userInVrSpaceP, userWithEditRightsToVrSpace } from '../trpc/trpc.js';
 import { VrSpace } from 'classes/VrSpace.js';
 import { z } from 'zod';
-import { db, schema, } from 'database';
+import { db, schema } from 'database';
 import { eq, and, or, not, sql } from 'drizzle-orm';
 import { PermissionLevel } from 'database/schema';
-import { ProducerIdSchema } from 'schemas/mediasoup';
 import { TRPCError } from '@trpc/server';
+import { requireVrSpacePermission } from '../modules/vrSpaceAuthorization.js';
+import type { VrSpaceId } from 'schemas';
 
 type PermLev = typeof PermissionLevel.enumValues[number] | 'owner' | undefined;
+
+async function refreshLoadedVrSpace(vrSpaceId: VrSpaceId, reason: string) {
+  const space = VrSpace.getVrSpace(vrSpaceId);
+  if (!space) return;
+  try {
+    await space.reloadDbData(reason);
+  } catch (error) {
+    // The mutation is already committed; the space may have been unloaded or deleted meanwhile.
+    log.warn('Failed to refresh loaded VR space', error);
+  }
+}
 
 export const vrRouter = router({
   listAvailableVrSpaces: userClientP.query(async ({ ctx }) => {
@@ -66,9 +78,26 @@ export const vrRouter = router({
     const vrSpaceId = await VrSpace.createNewVrSpace(input.name, ctx.userId);
     return vrSpaceId
   }),
-  deleteVrSpace: userWithAdminRightsToVrSpace.input(z.object({ vrSpaceId: VrSpaceIdSchema })).mutation(async ({ ctx, input }) => {
-    const deletedVrSpace = await VrSpace.deleteVrSpace(input.vrSpaceId);
-    return deletedVrSpace;
+  deleteVrSpace: atLeastUserP.use(isUserClientM).input(z.object({ vrSpaceId: VrSpaceIdSchema })).mutation(async ({ ctx, input }) => {
+    const { deleted, portalSpaces } = await db.transaction(async tx => {
+      await requireVrSpacePermission(tx, ctx.userId, input.vrSpaceId, 'admin');
+      const portals = await tx.delete(schema.placedObjects).where(and(
+        eq(schema.placedObjects.type, 'vrPortal'),
+        eq(schema.placedObjects.objectId, input.vrSpaceId),
+      )).returning({ vrSpaceId: schema.placedObjects.vrSpaceId });
+      await tx.delete(schema.permissions).where(and(
+        eq(schema.permissions.targetType, 'vrSpace'),
+        eq(schema.permissions.targetId, input.vrSpaceId),
+      ));
+      const [deleted] = await tx.delete(schema.vrSpaces)
+        .where(eq(schema.vrSpaces.vrSpaceId, input.vrSpaceId)).returning();
+      return { deleted, portalSpaces: portals.map(portal => portal.vrSpaceId) };
+    });
+    VrSpace.getVrSpace(input.vrSpaceId)?.unload();
+    for (const vrSpaceId of new Set(portalSpaces)) {
+      if (vrSpaceId !== input.vrSpaceId) await refreshLoadedVrSpace(vrSpaceId, 'portal target deleted');
+    }
+    return deleted;
   }),
   // openVrSpace: currentVenueAdminP.use(isVenueOwnerM).use(currentVenueHasVrSpaceM).mutation(({ctx}) => {
   //   ctx.vrSpace.open();
@@ -89,31 +118,49 @@ export const vrRouter = router({
     ctx.client.leaveCurrentVrSpace();
     // ctx.vrSpace.removeClient(ctx.client);
   }),
-  updateVrSpace: userWithEditRightsToVrSpace.input(VrSpaceUpdateSchema).mutation(async ({ ctx, input }) => {
+  updateVrSpace: atLeastUserP.use(isUserClientM).input(VrSpaceUpdateSchema).mutation(async ({ ctx, input }) => {
     log.info('updating vrSpace', input);
     const { vrSpaceId, reason, ...data } = input;
-    const [dbResponse] = await db.update(schema.vrSpaces).set(data).where(eq(schema.vrSpaces.vrSpaceId, vrSpaceId)).returning();
-    log.info('db insert response: ', dbResponse);
-    const vrSpace = VrSpace.getVrSpace(vrSpaceId);
-    if (!vrSpace) return;
-    vrSpace.reloadDbData(reason ?? 'dbData updated. Reloading');
+    await db.transaction(async tx => {
+      await requireVrSpacePermission(tx, ctx.userId, vrSpaceId, 'edit');
+      await tx.update(schema.vrSpaces).set(data).where(eq(schema.vrSpaces.vrSpaceId, vrSpaceId));
+    });
+    await refreshLoadedVrSpace(vrSpaceId, reason ?? 'dbData updated. Reloading');
   }),
-  upsertPlacedObject: userWithEditRightsToVrSpace.input(PlacedObjectInsertSchema).mutation(async ({ ctx, input }) => {
+  upsertPlacedObject: atLeastUserP.use(isUserClientM).input(PlacedObjectInsertSchema).mutation(async ({ ctx, input }) => {
     log.info(`upserting placedObject (${input.placedObjectId}): pos: ${input.position}, rot: ${input.orientation}`);
     const { reason, ...data } = input;
-    const [dbResponse] = await db.insert(schema.placedObjects).values(data).onConflictDoUpdate({
-      target: [schema.placedObjects.placedObjectId],
-      set: data,
-    }).returning();
-    const vrSpace = VrSpace.getVrSpace(input.vrSpaceId);
-    if (!vrSpace) return;
-    vrSpace.reloadDbData(reason ?? 'placedObject created/updated. Reloading');
-    return dbResponse;
+    const { updated, sourceId } = await db.transaction(async tx => {
+      const [existing] = data.placedObjectId
+        ? await tx.select({ vrSpaceId: schema.placedObjects.vrSpaceId }).from(schema.placedObjects)
+          .where(eq(schema.placedObjects.placedObjectId, data.placedObjectId)).for('update')
+        : [];
+      const sourceId = existing?.vrSpaceId;
+      const targetIds = [...new Set([input.vrSpaceId, ...(sourceId ? [sourceId] : [])])].sort();
+      for (const vrSpaceId of targetIds) await requireVrSpacePermission(tx, ctx.userId, vrSpaceId, 'edit');
+      const [updated] = await tx.insert(schema.placedObjects).values(data).onConflictDoUpdate({
+        target: [schema.placedObjects.placedObjectId],
+        set: data,
+        // If another transaction inserted this ID after our lookup, do not overwrite an object in another space.
+        setWhere: eq(schema.placedObjects.vrSpaceId, sourceId ?? input.vrSpaceId),
+      }).returning();
+      if (!updated) throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized to modify this object' });
+      return { updated, sourceId };
+    });
+    await refreshLoadedVrSpace(input.vrSpaceId, reason ?? 'placedObject created/updated. Reloading');
+    if (sourceId && sourceId !== input.vrSpaceId) await refreshLoadedVrSpace(sourceId, 'placedObject moved');
+    return updated;
   }),
-  removePlacedObject: userWithEditRightsToVrSpace.input(z.object({ placedObjectId: PlacedObjectIdSchema })).mutation(async ({ ctx, input }) => {
-    console.log('gonna remove placedObject', input.placedObjectId);
-    const [dbResponse] = await db.delete(schema.placedObjects).where(eq(schema.placedObjects.placedObjectId, input.placedObjectId)).returning();
-    ctx.vrSpace.reloadDbData('placedObject removed');
+  removePlacedObject: atLeastUserP.use(isUserClientM).input(z.object({ placedObjectId: PlacedObjectIdSchema })).mutation(async ({ ctx, input }) => {
+    const vrSpaceId = await db.transaction(async tx => {
+      const [object] = await tx.select({ vrSpaceId: schema.placedObjects.vrSpaceId }).from(schema.placedObjects)
+        .where(eq(schema.placedObjects.placedObjectId, input.placedObjectId)).for('update');
+      if (!object) throw new TRPCError({ code: 'NOT_FOUND', message: 'Placed object not found' });
+      await requireVrSpacePermission(tx, ctx.userId, object.vrSpaceId, 'edit');
+      await tx.delete(schema.placedObjects).where(eq(schema.placedObjects.placedObjectId, input.placedObjectId));
+      return object.vrSpaceId;
+    });
+    await refreshLoadedVrSpace(vrSpaceId, 'placedObject removed');
   }),
   reloadVrSpaceFromDB: userWithEditRightsToVrSpace.query(async ({ ctx }) => {
     await ctx.vrSpace.reloadDbData();
