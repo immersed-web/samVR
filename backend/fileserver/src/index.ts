@@ -52,33 +52,30 @@ const maxAge = 4 * 24 * 60 * 60;
 const publicRoutes = new Hono();
 publicRoutes.get('/file/:filename',
   compress(),
+  async (c, next) => {
+    const scaledown = Number.parseInt(c.req.query('scaledown') ?? '', 10);
+    const filename = c.req.param('filename');
+    const imageMatch = /^[a-f0-9-]{36}\.(png|jpe?g|webp)$/i.exec(filename);
+    if (!scaledown || scaledown < 1 || !imageMatch) return next();
+
+    const imagePath = path.join(savePathAbsolute, filename);
+    if (!fs.existsSync(imagePath)) return next();
+    const imgHandler = sharp(imagePath);
+    const metadata = await imgHandler.metadata();
+    if (!metadata.width) return next();
+    const newWidth = Math.max(1, Math.round(metadata.width / scaledown));
+    const resized = await imgHandler.resize({ withoutEnlargement: true, width: newWidth }).toBuffer();
+    const format = imageMatch[1].toLowerCase();
+    return c.body(resized, 200, {
+      'Cache-Control': `public, immutable, max-age=${maxAge}`,
+      'Content-Type': `image/${format === 'jpg' ? 'jpeg' : format}`,
+    });
+  },
   serveStatic({
     // precompressed: true,
     onFound: async (path, c) => {
       c.header('Cache-Control', `public, immutable, max-age=${maxAge}`)
 
-      const scaledownString = c.req.query('scaledown')
-      if (!scaledownString) return;
-      const scaledown = Number.parseInt(scaledownString);
-
-      if (!scaledown || scaledown === 0) return;
-      // do downscaling here
-      const scaleFactor = 1.0 / scaledown;
-      // console.log('downscaled version requested. scaleFactor: ', scaleFactor);
-      const imgHandler = sharp(path);
-      const metadata = (await imgHandler.metadata());
-      // console.log('image metadata:', metadata);
-      const originalWidth = metadata.width;
-      if (!originalWidth) return;
-      const newWidth = originalWidth * scaleFactor;
-      // console.log('newWidth:', newWidth);
-      const newImg = await imgHandler.resize({ withoutEnlargement: true, width: newWidth }).toBuffer();
-      // console.log('successfully scaled down the image!');
-      c.res = new Response(newImg, {
-        status: 200, headers: {
-          'Cache-Control': `public, immutable, max-age=${maxAge}`,
-        }
-      });
     },
     rewriteRequestPath: (path) => {
       // strip the "file/"-part of the path as we use that in the root instead.
@@ -97,7 +94,7 @@ const privateRoutes = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
   .use((c, next) => {
     const { JWT_SECRET } = env<{ JWT_SECRET: string }>(c);
     // console.log(c.env);
-    const mw = jwt({ secret: JWT_SECRET });
+    const mw = jwt({ secret: JWT_SECRET, alg: 'HS256' });
 
     return mw(c, next);
   })

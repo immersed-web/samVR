@@ -21,12 +21,12 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/jsonwebtoken": "^8.5.8",
+    "@types/jsonwebtoken": "^9.0.10",
     "database": "workspace:*",
-    "jsonwebtoken": "^8.5.1"
+    "jsonwebtoken": "^9.0.3"
   },
   "dependencies": {
-    "drizzle-orm": "^0.38.3",
+    "drizzle-orm": "^0.45.4",
     "drizzle-zod": "^0.5.1"
   }
 }

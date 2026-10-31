@@ -9,14 +9,14 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@hono/node-server": "^1.14.2",
+    "@hono/node-server": "^2.1.5",
     "@hono/zod-validator": "^0.2.2",
     "database": "workspace:*",
-    "drizzle-orm": "^0.38.3",
-    "hono": "^4.6.10",
+    "drizzle-orm": "^0.45.4",
+    "hono": "^4.13.14",
     "http-status-ts": "^2.0.1",
     "schemas": "workspace:*",
-    "sharp": "^0.33.5"
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "@types/node": "^20.11.17"

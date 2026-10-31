@@ -8,12 +8,12 @@ if (!process.env.JWT_ISSUER || !process.env.JWT_AUDIENCE || !process.env.JWT_SEC
 }
 const envJwtSecret = process.env.JWT_SECRET;
 
-const jwtSignOptions: jwt.SignOptions = {
+const jwtVerifyOptions: jwt.VerifyOptions = {
   // jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
   issuer: process.env.JWT_ISSUER,
   audience: process.env.JWT_AUDIENCE,
   // secretOrKey: JWT_SECRET,
-  algorithm: 'HS256',
+  algorithms: ['HS256'],
 };
 
 export function createJwt(userObj: JwtUserData, expiresInSeconds: number | undefined = undefined, jwtId?: string, secret?: string) {
@@ -39,7 +39,7 @@ export function verifyJwtToken(token: string, secret?: string) {
   if (!secret) {
     secret = envJwtSecret;
   }
-  const decoded = jwt.verify(token, secret, jwtSignOptions);
+  const decoded = jwt.verify(token, secret, jwtVerifyOptions);
   const validJwt: JwtPayload = JwtPayloadSchema.parse(decoded);
   return validJwt;
 }

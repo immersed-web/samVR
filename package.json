@@ -3,11 +3,11 @@
     "madge": "madge ./app/"
   },
   "dependencies": {
-    "@trpc/client": "10.45.2",
-    "@trpc/server": "10.45.2",
+    "@trpc/client": "10.45.3",
+    "@trpc/server": "10.45.3",
     "@types/lodash-es": "^4.17.12",
     "dotenv-cli": "^11.0.0",
-    "lodash-es": "^4.17.21",
+    "lodash-es": "^4.18.1",
     "mediasoup": "^3.13.16",
     "mediasoup-client": "^3.7.2",
     "tsup": "^8.0.1",
@@ -17,6 +17,12 @@
   "devDependencies": {
     "madge": "^7.0.0",
     "typescript": "^5.3.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "express>proxy-addr": "^2.0.8",
+      "mediasoup>tar": "^7.5.22"
+    }
   },
   "packageManager": "pnpm@9.15.5+sha512.845196026aab1cc3f098a0474b64dfbab2afe7a1b4e91dd86895d8e4aa32a7a6d03049e2d0ad770bbe4de023a7122fb68c1a1d6e0d033c7076085f9d5d4800d4"
 }

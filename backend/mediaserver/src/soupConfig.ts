@@ -1,5 +1,5 @@
 import { types as mediasoupTypes } from 'mediasoup';
-import ip from 'ip';
+import { networkInterfaces } from 'node:os';
 import { ProfileLevelId, Profile, Level, profileLevelIdToString } from 'h264-profile-level-id';
 
 const h264_Baseline_Max_Level = profileLevelIdToString(new ProfileLevelId(Profile.Baseline, Level.L5));
@@ -13,7 +13,9 @@ let internalIp = process.env.INTERNAL_IP;
 let listenIps: mediasoupTypes.WebRtcTransportOptions['listenIps'];
 
 if(!internalIp){
-  internalIp = ip.address();
+  internalIp = Object.values(networkInterfaces())
+    .flatMap(addresses => addresses ?? [])
+    .find(address => address.family === 'IPv4' && !address.internal)?.address ?? '127.0.0.1';
 }
 
 if(!publicIp){
