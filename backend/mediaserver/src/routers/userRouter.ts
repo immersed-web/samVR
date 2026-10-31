@@ -3,7 +3,7 @@ const log = new Log('Router:User');
 process.env.DEBUG = 'Router:User*, ' + process.env.DEBUG;
 log.enable(process.env.DEBUG);
 
-import { db, getPermissionLevelForTarget, groupUserPermissions, queryUserWithIncludes, schema } from 'database';
+import { db, getPermissionLevelForTarget, groupUserPermissions, queryUserWithIncludes, schema, userSelectExcludePassword } from 'database';
 import { procedure as p, router, atLeastUserP, isUserClientM } from '../trpc/trpc.js';
 import { z } from 'zod';
 import { AvatarDesignSchema, LocalClientInitDataSchema, PermissionDeleteSchema, PermissionInsertSchema, UuidSchema, hasAtLeastPermissionLevel, hasAtLeastSecurityRole, isStreamPermission, isVrSpacePermission } from 'schemas';
@@ -37,6 +37,7 @@ export const userRouter = router({
   }),
   getAllUsers: atLeastUserP.use(isUserClientM).query(async ({ ctx }) => {
     const dbResponse = await db.query.users.findMany({
+      columns: userSelectExcludePassword,
       with: {
         permissions: true
       }
