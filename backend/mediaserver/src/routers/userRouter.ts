@@ -6,9 +6,11 @@ log.enable(process.env.DEBUG);
 import { db, getPermissionLevelForTarget, groupUserPermissions, queryUserWithIncludes, schema, userSelectExcludePassword } from 'database';
 import { procedure as p, router, atLeastUserP, isUserClientM } from '../trpc/trpc.js';
 import { z } from 'zod';
-import { AvatarDesignSchema, LocalClientInitDataSchema, PermissionDeleteSchema, PermissionInsertSchema, UuidSchema, hasAtLeastPermissionLevel, hasAtLeastSecurityRole, isStreamPermission, isVrSpacePermission } from 'schemas';
+import { AvatarDesignSchema, LocalClientInitDataSchema, PermissionDeleteSchema, PermissionInsertSchema, UuidSchema, hasAtLeastPermissionLevel, hasAtLeastSecurityRole, isStreamPermission, isVrSpacePermission, type StreamId, type VrSpaceId } from 'schemas';
 import { Stream, VrSpace } from 'classes/InternalClasses.js';
 import { and, eq } from 'drizzle-orm';
+import { TRPCError } from '@trpc/server';
+import { requirePermissionManagement } from '../modules/permissionAuthorization.js';
 
 export const userRouter = router({
   // getClientState: p.query(({ctx}) => {
@@ -77,21 +79,34 @@ export const userRouter = router({
     return dbResponse
   }),
   removePermission: atLeastUserP.use(isUserClientM).input(PermissionDeleteSchema).mutation(async ({ ctx, input }) => {
-
-    //TODO: Check permission to delete permission :-P
-    const [dbResponse] = await db.delete(schema.permissions).where(
-      and(
+    const target = input.targetType === 'stream'
+      ? { type: 'stream' as const, id: input.targetId as StreamId }
+      : { type: 'vrSpace' as const, id: input.targetId as VrSpaceId };
+    const dbResponse = await db.transaction(async tx => {
+      const callerPermission = await requirePermissionManagement(tx, ctx.userId, target);
+      const condition = and(
         eq(schema.permissions.userId, input.userId),
         eq(schema.permissions.targetType, input.targetType),
-        eq(schema.permissions.targetId, input.targetId)
-      )
-    ).returning();
-    if (isStreamPermission(dbResponse)) {
-      const stream = Stream.getStream(dbResponse.targetId);
-      if (stream) stream.reloadDbData('permission was deleted');
-    } else if (isVrSpacePermission(dbResponse)) {
-      const vrSpace = VrSpace.getVrSpace(dbResponse.targetId);
-      if (vrSpace) vrSpace.reloadDbData('permission was deleted');
+        eq(schema.permissions.targetId, input.targetId),
+      );
+      const [permission] = await tx.select({ level: schema.permissions.permissionLevel })
+        .from(schema.permissions).where(condition).for('update');
+      if (!permission) throw new TRPCError({ code: 'NOT_FOUND', message: 'Permission not found' });
+      if (!hasAtLeastPermissionLevel(callerPermission, permission.level)) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Cannot remove a higher permission than your own' });
+      }
+      const [deleted] = await tx.delete(schema.permissions).where(condition).returning();
+      return deleted;
+    });
+    try {
+      if (isStreamPermission(dbResponse) && Stream.streamIsLoaded({ streamId: dbResponse.targetId })) {
+        await Stream.getStream(dbResponse.targetId).reloadDbData('permission was deleted');
+      } else if (isVrSpacePermission(dbResponse)) {
+        await VrSpace.getVrSpace(dbResponse.targetId)?.reloadDbData('permission was deleted');
+      }
+    } catch (error) {
+      // Deletion has committed; the resource may have unloaded or been deleted meanwhile.
+      log.warn('Failed to refresh resource after permission removal', error);
     }
     return dbResponse;
   })
