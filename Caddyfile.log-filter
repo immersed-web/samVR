@@ -1,0 +1,7 @@
+format filter {
+	request>uri query {
+		replace token REDACTED
+		replace prevToken REDACTED
+	}
+	request>headers>Referer regexp "[?].*" "?REDACTED"
+}

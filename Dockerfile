@@ -23,3 +23,4 @@ CMD ["pnpm", "--filter", "auth", "exec", "tsx", "src/index.ts"]
 FROM caddy:2 AS frontend
 COPY --from=frontend-build /app/app/dist /srv
 COPY Caddyfile.docker /etc/caddy/Caddyfile
+COPY Caddyfile.log-filter /etc/caddy/Caddyfile.log-filter

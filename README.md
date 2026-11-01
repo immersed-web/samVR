@@ -111,6 +111,12 @@ running processes after restarting with `pm2 list` and `pm2 logs`.
 
 
 ## Monitoring
+Both Caddy configurations redact the `token` and `prevToken` query parameters
+and query strings in `Referer` headers from access and runtime logs. Restart or
+reload Caddy after changing its configuration. This does not modify older logs
+or logs produced by other proxies. To verify the configurations with Docker,
+run `node --test scripts/test-caddy-logging.test.mjs` from the project root.
+
 The applications are run with a tool called pm2 that gets installed by the `setup-environment.yml` ansible script. You can interact directly with pm2 using the command line. Here's a few examples:
 
 To list the processes managed by pm2 and their status:

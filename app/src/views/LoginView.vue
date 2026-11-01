@@ -94,7 +94,6 @@ onMounted(() => {
 const error = autoResetRef<Error | undefined>(undefined, 5000);
 
 const login = async (username: string, password: string) => {
-  console.log('Login called with credentials:', username, password);
   try {
     await authStore.login(username, password);
     console.log('Logged in as role', authStore.role);
@@ -123,4 +122,3 @@ function navigate() {
 }
 
 </script>
-

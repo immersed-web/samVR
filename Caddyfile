@@ -1,3 +1,9 @@
+{
+	log {
+		import Caddyfile.log-filter
+	}
+}
+
 (development) {
 	reverse_proxy /* localhost:5173
 }
@@ -38,5 +44,7 @@
 
 		import {$ENVIRONMENT:production}
 	}
-	log
+	log {
+		import Caddyfile.log-filter
+	}
 }

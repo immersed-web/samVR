@@ -110,7 +110,6 @@ const createSenderForVenue: RequestHandler = async (req : CreateSenderRequest, r
   const userData = req.session.user
   // console.log(userData);
   const { password, username, streamId } = req.body 
-  console.log(req.body);
   try {
     throwIfUnauthorized(userData!.role, 'admin');
     if (!streamId || !username || !password) {

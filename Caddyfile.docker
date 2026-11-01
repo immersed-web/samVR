@@ -1,3 +1,9 @@
+{
+  log {
+    import Caddyfile.log-filter
+  }
+}
+
 {$EXPOSED_SERVER_URL} {
   route {
     handle_path {$EXPOSED_AUTH_PATH}* {
@@ -13,5 +19,7 @@
     try_files {path} /index.html
     file_server
   }
-  log
+  log {
+    import Caddyfile.log-filter
+  }
 }
