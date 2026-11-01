@@ -43,6 +43,7 @@ services:
     environment:
       DATABASE_HOST: db
       EXPOSED_LOCAL: "false"
+      EXPOSED_MAX_UPLOAD_BYTES: ${EXPOSED_MAX_UPLOAD_BYTES:-}
     command: ["pnpm", "--filter", "fileserver", "exec", "tsx", "src/index.ts"]
     volumes:
       - uploads:/app/backend/fileserver/uploads
@@ -80,6 +81,7 @@ services:
         EXPOSED_AUTH_PATH: ${EXPOSED_AUTH_PATH:-/auth}
         EXPOSED_MEDIASOUP_PATH: ${EXPOSED_MEDIASOUP_PATH:-/socket}
         EXPOSED_FILESERVER_PATH: ${EXPOSED_FILESERVER_PATH:-/files}
+        EXPOSED_MAX_UPLOAD_BYTES: ${EXPOSED_MAX_UPLOAD_BYTES:-}
     environment:
       EXPOSED_SERVER_URL: ${EXPOSED_SERVER_URL}
       EXPOSED_AUTH_PATH: ${EXPOSED_AUTH_PATH:-/auth}

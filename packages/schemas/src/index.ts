@@ -234,7 +234,17 @@ export const AssetTypeSchema = z.enum(schema.AssetTypeEnum.enumValues);
 export type AssetType = z.infer<typeof AssetTypeSchema>;
 
 export const maxFileSize = 50 * 1024 * 1024;
-export const maxFileSizeSchema = z.number().max(maxFileSize);
+
+/** Resolve the public upload limit consistently in the browser and fileserver. */
+export function resolveMaxUploadBytes(value: string | undefined): number {
+  if (value === undefined || value === '') return maxFileSize;
+  if (!/^[1-9]\d*$/.test(value)) throw new Error('EXPOSED_MAX_UPLOAD_BYTES must be a positive integer');
+  const bytes = Number(value);
+  if (!Number.isSafeInteger(bytes) || !Number.isSafeInteger(bytes + 1024 * 1024)) {
+    throw new Error('EXPOSED_MAX_UPLOAD_BYTES is too large');
+  }
+  return bytes;
+}
 
 const Vector2TupleSchema = z.tuple([z.number(), z.number()]);
 const Vector3TupleSchema = z.tuple([z.number(), z.number(), z.number()]);

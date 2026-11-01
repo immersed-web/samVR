@@ -11,7 +11,8 @@ import { HTTPException } from 'hono/http-exception'
 import { jwt } from 'hono/jwt';
 import { env } from 'hono/adapter';
 import { randomUUID } from 'crypto'
-import { Stream, pipeline } from 'node:stream';
+import { Readable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 import type { ReadableStream } from 'node:stream/web';
 import fs from 'fs'
 import promise from 'fs/promises';
@@ -20,12 +21,13 @@ import { hc, InferRequestType, InferResponseType } from 'hono/client'
 
 
 import { db, schema } from 'database'
-import { AssetIdSchema, AssetType, AssetTypeSchema, JwtPayload, UserId, assetTypesToExtensionsMap, createFileExtensionSchema, getAssetTypeFromExtension } from 'schemas'
+import { AssetIdSchema, AssetType, AssetTypeSchema, JwtPayload, JwtPayloadSchema, hasAtLeastSecurityRole, resolveMaxUploadBytes, assetTypesToExtensionsMap, createFileExtensionSchema, getAssetTypeFromExtension } from 'schemas'
 import { and, eq } from 'drizzle-orm';
 import path from 'path';
 import { z } from 'zod';
 import { compress } from 'hono/compress';
 import sharp from 'sharp';
+import { bodyLimit } from 'hono/body-limit';
 // import { createBrotliCompress } from 'node:zlib';
 // const brotli = createBrotliCompress();
 
@@ -33,6 +35,8 @@ const savePathAbsolute = path.resolve('.', 'uploads')
 const savePathRelative = './uploads/'
 const devMode = process.env.DEVELOPMENT === 'true';
 const localMode = process.env.EXPOSED_LOCAL === 'true';
+const maxUploadBytes = resolveMaxUploadBytes(process.env.EXPOSED_MAX_UPLOAD_BYTES);
+const maxUploadBodyBytes = maxUploadBytes + 1024 * 1024;
 
 await promise.mkdir(savePathAbsolute, { recursive: true });
 
@@ -137,7 +141,23 @@ const privateRoutes = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
     console.log('file deleted:', deleteResponse);
     return c.text('file deleted', HttpStatus.OK);
   })
-  .post('/upload', zValidator('form', z.object({
+  .post('/upload', async (c, next) => {
+    const parsedUser = JwtPayloadSchema.safeParse(c.get('jwtPayload'));
+    if (!parsedUser.success || !hasAtLeastSecurityRole(parsedUser.data.role, 'user')) {
+      return c.json({ error: 'not authorized to upload' }, HttpStatus.FORBIDDEN);
+    }
+    const user = await db.query.users.findFirst({
+      columns: { role: true },
+      where: eq(schema.users.userId, parsedUser.data.userId),
+    });
+    if (!user || !hasAtLeastSecurityRole(user.role, 'user')) {
+      return c.json({ error: 'not authorized to upload' }, HttpStatus.FORBIDDEN);
+    }
+    await next();
+  }, bodyLimit({
+    maxSize: maxUploadBodyBytes,
+    onError: c => c.json({ error: 'upload too large' }, HttpStatus.PAYLOAD_TOO_LARGE, { Connection: 'close' }),
+  }), zValidator('form', z.object({
     file: z.instanceof(File),
     assetType: AssetTypeSchema.optional(),
     showInUserLibrary: z.preprocess(v => {
@@ -147,6 +167,9 @@ const privateRoutes = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
   })), async (c, next) => {
     let { file, assetType, showInUserLibrary } = c.req.valid('form');
     const user = c.get('jwtPayload');
+    if (file.size > maxUploadBytes) {
+      return c.json({ error: 'upload too large' }, HttpStatus.PAYLOAD_TOO_LARGE);
+    }
     console.log('showInUserLibrary', showInUserLibrary);
     // console.log(file.type);
     const incomingExtension = file.name.slice((file.name.lastIndexOf(".") - 1 >>> 0) + 2).toLowerCase();
@@ -164,45 +187,45 @@ const privateRoutes = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
     }
     const uuid = randomUUID();
     const generatedName = `${uuid}.${validatedExtension.data}`;
-    const fileStream = file.stream() as ReadableStream<any>;
-
-
-    const nodeReadStream = Stream.Readable.fromWeb(fileStream);
-    const writeStream = fs.createWriteStream(`${savePathAbsolute}/${generatedName}`);
-    // pipeline(nodeReadStream, brotli, writeStream, (err) => {
-    //   if (err) {
-    //     console.error(err);
-    //     return c.json({ error: 'stream pipeline failed' as const }, HttpStatus.INTERNAL_SERVER_ERROR);
-    //   }
-    // });
-    nodeReadStream.pipe(writeStream);
-
-    let resolve: Parameters<ConstructorParameters<typeof Promise<void>>[0]>[0];
-    let reject: Parameters<ConstructorParameters<typeof Promise<void>>[0]>[1];
-    const fileWritePromise = new Promise((res, rej) => {
-      resolve = res;
-      reject = rej;
-    });
-    writeStream.on('finish', () => {
-      resolve();
-    });
-    writeStream.on('error', (err) => {
-      console.error(err);
-      // c.text('upload failed', HttpStatus.INTERNAL_SERVER_ERROR);
-      c.json({ error: 'upload failed' as const }, HttpStatus.INTERNAL_SERVER_ERROR);
-      reject(err);
-    });
-    await fileWritePromise;
-    const [dbResponse] = await db.insert(schema.assets).values({
-      assetType,
-      assetFileExtension: validatedExtension.data,
-      generatedName: generatedName,
-      size: file.size,
-      mimeType: file.type,
-      originalFileName: file.name,
-      ownerUserId: user.userId,
-      showInUserLibrary
-    }).returning();
+    const filePath = path.join(savePathAbsolute, generatedName);
+    let createdFile = false;
+    let fileHandle: Awaited<ReturnType<typeof promise.open>> | undefined;
+    let dbResponse;
+    try {
+      if (c.req.raw.signal.aborted) throw new Error('upload request aborted');
+      fileHandle = await promise.open(filePath, 'wx', 0o600);
+      createdFile = true;
+      await pipeline(
+        Readable.fromWeb(file.stream() as ReadableStream<any>),
+        fileHandle.createWriteStream(),
+        { signal: c.req.raw.signal },
+      );
+      fileHandle = undefined;
+      if (c.req.raw.signal.aborted) throw new Error('upload request aborted');
+      [dbResponse] = await db.transaction(async tx => {
+        const [owner] = await tx.select({ role: schema.users.role }).from(schema.users)
+          .where(eq(schema.users.userId, user.userId)).for('share');
+        if (!owner || !hasAtLeastSecurityRole(owner.role, 'user')) {
+          throw new HTTPException(HttpStatus.FORBIDDEN, { message: 'not authorized to upload' });
+        }
+        return tx.insert(schema.assets).values({
+          assetType,
+          assetFileExtension: validatedExtension.data,
+          generatedName,
+          size: file.size,
+          mimeType: file.type,
+          originalFileName: file.name,
+          ownerUserId: user.userId,
+          showInUserLibrary
+        }).returning();
+      });
+    } catch (error) {
+      if (fileHandle) await fileHandle.close().catch(closeError => console.error('failed to close upload', closeError));
+      if (createdFile) await promise.unlink(filePath).catch(cleanupError => console.error('failed to remove incomplete upload', cleanupError));
+      if (error instanceof HTTPException) throw error;
+      console.error('upload failed', error);
+      return c.json({ error: 'upload failed' as const }, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
     console.log('file uploaded. db entry:', dbResponse);
     return c.json(dbResponse, HttpStatus.OK);

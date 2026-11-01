@@ -1,0 +1,42 @@
+services:
+  fileserver:
+    image: samvr-auth-test:local
+    build:
+      context: ../../..
+      target: backend
+    environment:
+      DATABASE_URL: postgresql://postgres:test-database-password@db:5432/samvr_auth_test
+      EXPOSED_FILESERVER_PORT: "9002"
+      EXPOSED_LOCAL: "true"
+      EXPOSED_MAX_UPLOAD_BYTES: "1024"
+      JWT_SECRET: test-jwt-secret
+      JWT_ISSUER: samvr-auth-test
+      JWT_AUDIENCE: samvr-auth-test
+    command: ["pnpm", "--filter", "fileserver", "exec", "tsx", "src/index.ts"]
+    volumes:
+      - test_uploads:/app/backend/fileserver/uploads
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:9002/test').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  tests:
+    environment:
+      FILESERVER_TEST_URL: http://fileserver:9002
+      DATABASE_URL: postgresql://postgres:test-database-password@db:5432/samvr_auth_test
+      JWT_SECRET: test-jwt-secret
+      JWT_ISSUER: samvr-auth-test
+      JWT_AUDIENCE: samvr-auth-test
+    volumes:
+      - test_uploads:/app/backend/fileserver/uploads:ro
+    command: ["node", "--test", "/app/backend/fileserver/test/upload-security.test.mjs"]
+    depends_on:
+      fileserver:
+        condition: service_healthy
+
+volumes:
+  test_uploads:

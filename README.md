@@ -191,6 +191,14 @@ The fileserver uses the `uploads` volume, while Caddy's certificate and config
 data use `caddy_data` and `caddy_config`. Avoid `docker compose down -v` unless
 you intend to delete the Compose-managed data volumes.
 
+The frontend and fileserver limit uploaded files to 50 MiB by default. Set the
+optional `EXPOSED_MAX_UPLOAD_BYTES` environment variable to a positive integer
+to change both limits. Multipart request bodies may be up to 1 MiB larger to
+allow for form metadata. The frontend value is compiled at build time: rebuild
+the frontend and restart the fileserver after changing it (or restart Vite and
+the fileserver in development). Multipart bodies are buffered in memory; account
+for concurrent uploads when choosing the limit.
+
 ### Migrating an existing host-based deployment
 
 Do this **before** running `docker compose up` with the new configuration,

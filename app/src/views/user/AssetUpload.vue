@@ -48,7 +48,7 @@ import { ref, computed, shallowRef, type DeepReadonly, watch } from 'vue';
 import { autoResetRef, useTransition, useFileDialog } from '@vueuse/core';
 import type { ExtractSuccessResponse, UploadResponse } from 'fileserver';
 import { useAuthStore } from '@/stores/authStore';
-import { type AssetType, maxFileSizeSchema, maxFileSize, createFileExtensionSchema, assetTypeListToExtensionList, getAssetTypeFromExtension, type Asset } from 'schemas';
+import { type AssetType, resolveMaxUploadBytes, createFileExtensionSchema, assetTypeListToExtensionList, getAssetTypeFromExtension, type Asset } from 'schemas';
 import { deleteAsset, uploadFileData } from '@/modules/utils';
 
 
@@ -71,6 +71,7 @@ const emit = defineEmits<{
 // export type AssetUploadEmitTypes = typeof emit;
 
 const authStore = useAuthStore();
+const maxUploadBytes = resolveMaxUploadBytes(import.meta.env.EXPOSED_MAX_UPLOAD_BYTES);
 
 const acceptedExtensions = computed(() => {
   return assetTypeListToExtensionList(props.acceptedAssetTypes);
@@ -110,16 +111,6 @@ const pickedFile = computed(() => {
 })
 
 
-// const fileSizeAllowed = computed(() => {
-//   if(!pickedFile.value) return undefined;
-//   const parseresult = maxFileSizeSchema.safeParse(pickedFile.value.size);
-//   if (parseresult.error) {
-//     // errorMessage.value = `maxstorlek (${maxFileSize / 1024 / 1024}MB) överskriden`;
-//     return false;
-//   }
-//   return true;
-// })
-
 // const extensionOfPickedFile = computed(() => {
 //   if(!pickedFile.value) return undefined;
 //   const ext = pickedFile.value.name.split('.').pop();
@@ -151,9 +142,8 @@ onFilesPicked((files) => {
 
   const file = files[0];
 
-  const parseresult = maxFileSizeSchema.safeParse(file.size);
-  if (parseresult.error) {
-    errorMessage.value = `maxstorlek (${maxFileSize / 1024 / 1024}MB) överskriden`;
+  if (file.size > maxUploadBytes) {
+    errorMessage.value = `maxstorlek (${maxUploadBytes / 1024 / 1024} MiB) överskriden`;
     return;
   }
 
