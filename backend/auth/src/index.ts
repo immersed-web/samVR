@@ -29,9 +29,6 @@ const app = express();
 // We need to trust first proxy. Foremost to get secure cookie to function  properly
 app.set('trust proxy', 1);
 
-// TODO: We should not allow reading cookie from javascript.
-// Find a way to make our auth flow work without this set to false
-let cookieHttpOnly = false;
 let cookieSecure = true;
 let originUrls: string[] = [];
 if (localMode) {
@@ -40,7 +37,6 @@ if (localMode) {
   console.log('allowing cors for local development: ', originUrls);
 
   console.log('allowing cookie despite not https');
-  cookieHttpOnly = false;
   cookieSecure = false;
 } else {
   if (!process.env.EXPOSED_SERVER_URL) {
@@ -82,7 +78,7 @@ const pgSession = connectPgSimple(session);
 app.use(session({
   secret: process.env.SESSION_KEY,
   cookie: {
-    httpOnly: cookieHttpOnly,
+    httpOnly: true,
     secure: cookieSecure,
     maxAge: 7 * 24 * 60 * 60 * 1000 // ms
   },

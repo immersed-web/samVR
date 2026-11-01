@@ -79,6 +79,7 @@ const handleResponse = async <ReturnType>(apiCall: () => Promise<AxiosResponse<R
 };
 
 export const login = async (username: string, password: string) => {
+  stopTokenRefresh();
   try {
     await authEndpoint.post('/user/login', {
       username,
@@ -106,7 +107,29 @@ let latestJwtToken: string | undefined;
 
 
 let nrOfRetries = 0;
-const autoFetchJwt = async (assignFn: (receivedToken: string) => void, fetchFn: () => Promise<string>, failRecoveryFn?: () => Promise<string>) => {
+let refreshGeneration = 0;
+
+export function stopTokenRefresh() {
+  refreshGeneration++;
+  clearTimeout(activeTimeout);
+  activeTimeout = undefined;
+  latestJwtToken = undefined;
+  nrOfRetries = 0;
+}
+
+export function isMissingSession(error: unknown) {
+  return axios.isAxiosError(error) && (error.response?.status === 401 || error.response?.status === 403);
+}
+
+const autoFetchJwt = async (
+  assignFn: (receivedToken: string) => void,
+  fetchFn: () => Promise<string>,
+  failRecoveryFn?: () => Promise<string>,
+  initial = false,
+  generation = refreshGeneration,
+  onSessionExpired?: () => void,
+) => {
+  if (generation !== refreshGeneration) return;
   if(activeTimeout){
     // console.log('cleared old jwt autofetch timeout');
     clearTimeout(activeTimeout);
@@ -119,6 +142,7 @@ const autoFetchJwt = async (assignFn: (receivedToken: string) => void, fetchFn: 
     } else {
       receivedToken = await fetchFn();
     }
+    if (generation !== refreshGeneration) return;
     const decodedToken = decodeJwt<JwtPayload>(receivedToken);
     if(!decodedToken.exp) {
       throw Error('no exp key found in token');
@@ -132,22 +156,29 @@ const autoFetchJwt = async (assignFn: (receivedToken: string) => void, fetchFn: 
     // console.log('UTC now is:', new Date().toUTCString());
     const refetchIn = expInMillis > 2000 ? expInMillis - 1500 : expInMillis * 0.7;
     activeTimeout = setTimeout(() => {
-      autoFetchJwt(assignFn, fetchFn, failRecoveryFn);
+      void autoFetchJwt(assignFn, fetchFn, failRecoveryFn, false, generation, onSessionExpired);
     }, refetchIn);
   } catch (e) {
+    if (generation !== refreshGeneration) return;
+    if (initial) throw e;
+    if (!failRecoveryFn && isMissingSession(e)) {
+      stopTokenRefresh();
+      onSessionExpired?.();
+      return;
+    }
     console.error(e);
     const retryIn = 5;
     nrOfRetries++;
     console.log('nrOfRetries:', nrOfRetries);
     console.error(`Something seems wrong with jwt fetching. Retrying in ${retryIn} seconds`);
     activeTimeout = setTimeout(() => {
-      autoFetchJwt(assignFn, fetchFn, failRecoveryFn);
+      void autoFetchJwt(assignFn, fetchFn, failRecoveryFn, false, generation, onSessionExpired);
     }, retryIn * 1000);
   }
 };
 
 export const guestAutoToken =  async (assignFn?: (receivedToken: string) => void, username?: string) => {
-  latestJwtToken = undefined;
+  stopTokenRefresh();
   const combinedAssigner = (t: string) => {
     username = undefined;
     if(assignFn){
@@ -164,7 +195,8 @@ export const guestAutoToken =  async (assignFn?: (receivedToken: string) => void
   // return latestJwtToken;
 };
 
-export const userAutoToken = async (assignFn?: (receivedToken: string) => void) => {
+export const userAutoToken = async (assignFn?: (receivedToken: string) => void, onSessionExpired?: () => void) => {
+  stopTokenRefresh();
 
   const combinedAssigner = (t: string) => {
     if(assignFn){
@@ -172,7 +204,7 @@ export const userAutoToken = async (assignFn?: (receivedToken: string) => void) 
     }
     latestJwtToken = t;
   };
-  return await autoFetchJwt(combinedAssigner, getJwt);
+  return await autoFetchJwt(combinedAssigner, getJwt, undefined, true, refreshGeneration, onSessionExpired);
 };
 
 /**
@@ -203,9 +235,9 @@ export const guestJwt = (params?: {requestedUsername?: string, previousToken?: s
   }
   return handleResponse<string>(() => authEndpoint.get('/guest-jwt'));
 };
-export const getJwt = () => handleResponse<string>(() => authEndpoint.get('user/jwt'));
+export const getJwt = async () => (await authEndpoint.get<string>('user/jwt')).data;
 export const getMe = () => handleResponse<JwtUserData>(() => authEndpoint.get('user/me'));
 export const logout = () => {
-  clearTimeout(activeTimeout);
+  stopTokenRefresh();
   return handleResponse<void>(() => authEndpoint.get('user/logout'));
 };

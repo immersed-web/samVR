@@ -11,5 +11,13 @@ docker compose -p samvr-auth-regression -f backend/auth/test/docker-compose.yml 
 docker compose -p samvr-auth-regression -f backend/auth/test/docker-compose.yml down -v
 ```
 
+To test HttpOnly cookie behavior in local and production configurations:
+
+```bash
+node --test app/test/session-restoration.test.mjs
+docker compose -p samvr-auth-session -f backend/auth/test/docker-compose.yml -f backend/auth/test/session-compose.yml run --build --rm tests
+docker compose -p samvr-auth-session -f backend/auth/test/docker-compose.yml -f backend/auth/test/session-compose.yml down -v
+```
+
 Use a dedicated Compose project name: `down -v` deletes that project's test
 database volume.

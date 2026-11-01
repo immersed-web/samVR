@@ -1,22 +1,25 @@
 import { defineStore } from 'pinia';
-import { logout as authLogout, login as authLogin, userAutoToken, guestAutoToken } from '@/modules/authClient';
+import { logout as authLogout, login as authLogin, userAutoToken, guestAutoToken, isMissingSession, stopTokenRefresh } from '@/modules/authClient';
 import { hasAtLeastSecurityRole, type JwtPayload } from 'schemas';
 import jwtDecode from 'jwt-decode';
 import { computed, ref } from 'vue';
 
-const browserHasCookie = () => {
-  const cookieValue = document.cookie
-    .split('; ')
-    .find((row) => row.startsWith(`${import.meta.env.EXPOSED_PROJECT_NAME}=`))
-    ?.split('=')[1];
-  return !!cookieValue;
-};
-
-
 export const useAuthStore = defineStore('auth', () => {
+  let sessionChecked = false;
+  let sessionGeneration = 0;
+  let pendingRestore: Promise<boolean> | undefined;
+  let pendingLogout: Promise<void> | undefined;
+  let pendingLogin: Promise<void> | undefined;
+
+  function markSessionChecked() {
+    sessionChecked = true;
+    sessionGeneration++;
+    pendingRestore = undefined;
+    return sessionGeneration;
+  }
+
   const _reset = () => {
     token.value = undefined;
-    hasCookie.value = browserHasCookie();
     persistedUsername.value = undefined;
   };
 
@@ -28,8 +31,6 @@ export const useAuthStore = defineStore('auth', () => {
     }
     return token.value;
   };
-  const hasCookie = ref<boolean>(browserHasCookie());
-
   const userData = computed(() => {
     try {
       if (!token.value) {
@@ -59,29 +60,78 @@ export const useAuthStore = defineStore('auth', () => {
   const isLoggedIn = computed(() => isAuthenticated.value && hasAtLeastSecurityRole(role.value, 'user'));
   const routePrefix = computed(() => role.value && hasAtLeastSecurityRole(role.value, 'admin') ? 'admin' : 'user');
   async function autoGuest(username?: string) {
+    const generation = markSessionChecked();
+    if (pendingLogout) await pendingLogout;
+    if (generation !== sessionGeneration) return;
     await guestAutoToken((t) => {
-      token.value = t;
+      if (generation === sessionGeneration) token.value = t;
     }, username);
   }
   async function restoreFromSession() {
-    if (!hasCookie.value) {
-      console.warn('You will need to have a cookie set in order to restore a persisted login session');
+    if (sessionChecked) return false;
+    if (pendingRestore) return pendingRestore;
+    const generation = sessionGeneration;
+    const restore = (async () => {
+      try {
+        await userAutoToken(t => {
+          if (generation === sessionGeneration) token.value = t;
+        }, () => {
+          if (generation === sessionGeneration) token.value = undefined;
+        });
+        if (generation !== sessionGeneration) return false;
+        sessionChecked = true;
+        return !!token.value;
+      } catch (error) {
+        if (generation !== sessionGeneration) return false;
+        if (!isMissingSession(error)) throw error;
+        sessionChecked = true;
+        return false;
+      }
+    })();
+    pendingRestore = restore;
+    try {
+      return await restore;
+    } finally {
+      if (pendingRestore === restore) pendingRestore = undefined;
     }
-    await userAutoToken((t) => token.value = t);
-
   }
   async function logout() {
-    await authLogout();
+    if (pendingLogout) return pendingLogout;
+    markSessionChecked();
+    stopTokenRefresh();
+    const loginRequest = pendingLogin;
+    const logoutRequest = (async () => {
+      // Login may still set a cookie, even after local authentication is cleared.
+      if (loginRequest) await loginRequest.catch(() => {});
+      await authLogout();
+    })();
+    pendingLogout = logoutRequest;
     console.log('removing guestAvatarSettings')
     localStorage.removeItem('guestAvatarSettings')
     _reset();
+    try {
+      await logoutRequest;
+    } finally {
+      if (pendingLogout === logoutRequest) pendingLogout = undefined;
+    }
   }
   async function login(username: string, password: string) {
-    await authLogin(username, password);
-    hasCookie.value = browserHasCookie();
+    const generation = markSessionChecked();
+    if (pendingLogout) await pendingLogout;
+    if (generation !== sessionGeneration) return;
+    const loginRequest = authLogin(username, password);
+    pendingLogin = loginRequest;
+    try {
+      await loginRequest;
+    } finally {
+      if (pendingLogin === loginRequest) pendingLogin = undefined;
+    }
+    if (generation !== sessionGeneration) return;
     await userAutoToken((t) => {
       // console.log('new token! ', t);
-      token.value = t;
+      if (generation === sessionGeneration) token.value = t;
+    }, () => {
+      if (generation === sessionGeneration) token.value = undefined;
     });
   }
 
@@ -90,7 +140,6 @@ export const useAuthStore = defineStore('auth', () => {
     isNotGuest: isLoggedIn,
     token,
     tokenOrThrow,
-    hasCookie,
     userData,
     isGuest,
     userId,

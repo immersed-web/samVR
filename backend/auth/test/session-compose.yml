@@ -1,0 +1,17 @@
+services:
+  auth-production:
+    extends:
+      file: docker-compose.yml
+      service: auth
+    environment:
+      EXPOSED_LOCAL: "false"
+      EXPOSED_SERVER_URL: example.test
+      EXPOSED_PROJECT_NAME: SamVRProductionAuthTest
+
+  tests:
+    environment:
+      AUTH_TEST_PROD_URL: http://auth-production:3333
+    command: ["node", "--test", "/app/backend/auth/test/session-cookie.test.mjs"]
+    depends_on:
+      auth-production:
+        condition: service_healthy

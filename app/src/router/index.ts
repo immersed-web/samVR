@@ -232,10 +232,14 @@ router.beforeEach(async (to, from) => {
   windowTitle.value = 'SamVR';
 
   if (to.meta.requiredRole) {
-    // if not logged in we can try to restore from session
-    if(!authStore.isAuthenticated && authStore.hasCookie) {
-      console.log('some kind of user role required. Found cookie. Trying to restore session.');
-      await authStore.restoreFromSession();
+    // An HttpOnly session cookie can only be checked by the auth server.
+    if (!authStore.isAuthenticated) {
+      try {
+        await authStore.restoreFromSession();
+      } catch (error) {
+        console.error('Failed to restore the login session:', error);
+        return false;
+      }
     }
     if(!authStore.isAuthenticated && to.meta.requiredRole === 'guest'){
       if(authStore.persistedUsername !== undefined){

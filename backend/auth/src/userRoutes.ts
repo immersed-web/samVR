@@ -437,14 +437,13 @@ const logoutUser: RequestHandler = async (req, res) => {
     req.user = undefined;
   }
   if (req.session.userId) {
-    req.session.userId = undefined;
-    req.session.destroy((err) => {
-      if (err) {
-        console.error(err);
-        res.status(501).send({ message: 'failed to destroy session' });
-        return;
-      }
-    });
+    try {
+      await new Promise<void>((resolve, reject) => req.session.destroy(err => err ? reject(err) : resolve()));
+    } catch (err) {
+      console.error(err);
+      res.status(501).send({ message: 'failed to destroy session' });
+      return;
+    }
   }
   const projectName = process.env.EXPOSED_PROJECT_NAME;
   if(projectName){
