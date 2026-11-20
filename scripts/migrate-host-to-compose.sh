@@ -65,7 +65,7 @@ uploads=$(realpath "$uploads")
 
 printf 'Checking Compose configuration, source database and destination volumes...\n'
 # Resolve Compose's actual project and volume names without exposing its environment.
-mapfile -t compose_names < <(docker compose --profile deploy config --format json | python3 -c '
+mapfile -t compose_names < <(docker compose config --format json | python3 -c '
 import json, sys
 config = json.load(sys.stdin)
 print(config["name"])
@@ -248,5 +248,5 @@ run_with_progress 'Copying uploads and comparing them with the source' \
 
 touch "$state_dir/completed"
 printf '\nMigration data prepared. The old database and uploads were not removed.\n'
-printf 'Start the new stack with: docker compose --profile deploy up -d --build\n'
+printf 'Start the new stack with: docker compose up -d --build\n'
 printf 'Verify the deployment before discarding the old data or backups.\n'

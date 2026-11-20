@@ -151,15 +151,23 @@ The following ports are required to be opened on the server:
 
 ## Docker Compose deployment
 
-The default Compose configuration remains database-only for local development:
+The default `docker-compose.yml` runs the full deployment. For local development,
+start only PostgreSQL using the standalone development configuration, then run
+the applications directly in terminals in dev mode for hot reload:
 
 ```bash
-docker compose up -d
+docker compose -f docker-compose.dev.yml up -d
 ```
 
-For a Linux production host, the `deploy` profile also starts auth, fileserver,
-mediaserver and Caddy. Caddy serves the built frontend and proxies the APIs;
-the mediaserver uses host networking for WebRTC. Docker Engine and the Compose
+The development and deployment configurations retain the same database volume
+name within the same Compose project; they are alternative modes, not isolated
+stacks. Use a different project name (`-p`) and database port configuration if
+you need both on the same host at once.
+
+For a Linux production host, the default configuration starts PostgreSQL,
+migrations, auth, fileserver, mediaserver and Caddy. Caddy serves the built
+frontend and proxies the APIs; the mediaserver uses host networking for WebRTC.
+Docker Engine and the Compose
 plugin are required. This deployment is separate from the PM2/Ansible process
 setup above: stop any existing PM2 services before starting it, since they use
 the same ports. Postgres and uploads use named volumes. Existing deployments
@@ -178,7 +186,7 @@ stack; otherwise Compose starts a fresh database in the named volume.
 4. Build and start the stack:
 
    ```bash
-   docker compose --profile deploy up -d --build
+   docker compose up -d --build
    ```
 
    The migration service waits for Postgres, applies migrations and seeds the
@@ -187,11 +195,11 @@ stack; otherwise Compose starts a fresh database in the named volume.
    existing account unchanged; changing `ADMIN_PASSWORD` does not change its
    stored password.
 
-Use `docker compose --profile deploy ps` and `docker compose --profile deploy
-logs -f` to inspect the deployment. Rebuild and recreate the stack with the
-same `up -d --build` command after updates; frontend `EXPOSED_*` values are
+Use `docker compose ps` and `docker compose logs -f` to inspect the deployment.
+Rebuild and recreate the stack with the same `up -d --build` command after
+updates; frontend `EXPOSED_*` values are
 compiled into the frontend image, so rebuild when changing them. For an
-explicit migration and seed run, use `docker compose --profile deploy run --rm migrate`.
+explicit migration and seed run, use `docker compose run --rm migrate`.
 
 The fileserver uses the `uploads` volume, while Caddy's certificate and config
 data use `caddy_data` and `caddy_config`. Avoid `docker compose down -v` unless
@@ -237,7 +245,7 @@ or other cluster-wide objects; it copies the configured application database.
    still copied directly to the volume and left untouched. Non-interactive runs
    create the archive unless the flag is provided. The database dump is always
    created.
-3. Start the new deployment using `docker compose --profile deploy up -d --build`.
+3. Start the new deployment using `docker compose up -d --build`.
    Check logs, log in, open existing assets, upload a new file and test WebRTC
    media between clients before returning traffic. Verify backups and establish
    recurring database **and** upload backups; the Compose setup does not yet

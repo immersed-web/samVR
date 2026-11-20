@@ -5,7 +5,7 @@
     - name: Compose up
       ansible.builtin.command:
         chdir: "{{ playbook_dir }}/.."
-        cmd: docker compose --ansi never --progress plain up -d
+        cmd: docker compose -f docker-compose.dev.yml --ansi never --progress plain up -d
       register: temp_compose_up
       changed_when: "'Started' in temp_compose_up.stdout or 'Started' in temp_compose_up.stderr"
     - name: Wait for postgres to be ready
