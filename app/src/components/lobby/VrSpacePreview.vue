@@ -15,11 +15,26 @@
         </div>
         <div class="contents" v-if="placedObjectPosition">
           <span class="-mt-1">x</span>
-          <OffsetSlider inverted v-model.number="placedObjectPosition[0]" />
+          <NumberSliderToggle 
+            v-model.number="placedObjectPosition[0]" 
+            :min="worldPositionBounds.min" :max="worldPositionBounds.max" :step="0.01"
+          >
+            <OffsetSlider v-model.number="placedObjectPosition[0]" />
+          </NumberSliderToggle>
           <span class="-mt-1">y</span>
-          <OffsetSlider v-model.number="placedObjectPosition[1]" />
+          <NumberSliderToggle 
+            v-model.number="placedObjectPosition[1]" 
+            :min="worldPositionBounds.min" :max="worldPositionBounds.max" :step="0.01"
+          >
+            <OffsetSlider v-model.number="placedObjectPosition[1]" />
+          </NumberSliderToggle>
           <span class="-mt-1">z</span>
-          <OffsetSlider v-model.number="placedObjectPosition[2]" />
+          <NumberSliderToggle 
+            v-model.number="placedObjectPosition[2]" 
+            :min="worldPositionBounds.min" :max="worldPositionBounds.max" :step="0.01"
+          >
+            <OffsetSlider v-model.number="placedObjectPosition[2]" />
+          </NumberSliderToggle>
         </div>
         <template v-if="transformedSelectedObject.type !== 'vrPortal'">
           <div class="col-span-2 justify-self-stretch flex items-center gap-2 justify-between">
@@ -27,8 +42,13 @@
             <button class="btn btn-xs btn-circle material-icons" @click="placedObjectScale = undefined">replay</button>
           </div>
           <div class="contents">
-            <span class=" material-icons">zoom_out_map</span>
-            <OffsetSlider :offset="0.7" v-model.number="uniformScale" />
+            <span class="material-icons">zoom_out_map</span>
+            <NumberSliderToggle 
+              v-model.number="uniformScale" 
+              :min="0.01" :max="10" :step="0.01"
+            >
+              <OffsetSlider :offset="0.7" v-model.number="uniformScale" />
+            </NumberSliderToggle>
           </div>
           <div class="col-span-2 justify-self-stretch flex items-center gap-2 justify-between">
             <span class="grow self-center divider divider-start text-xs m-0">Rotation</span>
@@ -37,13 +57,28 @@
           </div>
           <div class="contents" v-if="placedObjectRotation">
             <span class="material-icons">360</span>
-            <input type="range" class="accent-primary" min="-180" max="180" v-model.number="placedObjectRotation[1]">
+            <NumberSliderToggle 
+              v-model.number="placedObjectRotation[1]" 
+              :min="-180" :max="180" :step="1"
+            >
+              <input type="range" class="accent-primary" min="-180" max="180" v-model.number="placedObjectRotation[1]" />
+            </NumberSliderToggle>
             <!-- <OffsetSlider :offset="90" v-model.number="placedObjectRotation[1]" /> -->
             <span class="rotate-90 material-icons">360</span>
-            <input type="range" class="accent-primary" min="-90" max="90" v-model.number="placedObjectRotation[0]">
+            <NumberSliderToggle 
+              v-model.number="placedObjectRotation[0]" 
+              :min="-90" :max="90" :step="1"
+            >
+              <input type="range" class="accent-primary" min="-90" max="90" v-model.number="placedObjectRotation[0]" />
+            </NumberSliderToggle>
             <!-- <OffsetSlider :offset="90" v-model.number="placedObjectRotation[0]" /> -->
             <span class="material-icons">refresh</span>
-            <input type="range" class="accent-primary" min="-180" max="180" v-model.number="placedObjectRotation[2]">
+            <NumberSliderToggle 
+              v-model.number="placedObjectRotation[2]" 
+              :min="-180" :max="180" :step="1"
+            >
+              <input type="range" class="accent-primary" min="-180" max="180" v-model.number="placedObjectRotation[2]" />
+            </NumberSliderToggle>
             <!-- <OffsetSlider :offset="90" v-model.number="placedObjectRotation[2]" /> -->
           </div>
         </template>
@@ -100,6 +135,7 @@ import { defaultHeightOverGround } from 'schemas';
 import { useCurrentCursorIntersection, useSelectedPlacedObject, useCurrentlyMovedObject } from '@/composables/vrSpaceComposables';
 import OffsetSlider from '@/components/OffsetSlider.vue';
 import { arrToCoordString, attachOrbitControls } from '@/modules/3DUtils';
+import NumberSliderToggle from '@/components/NumberSliderToggle.vue';
 
 const vrSpaceStore = useVrSpaceStore();
 
@@ -124,6 +160,18 @@ const uniformScale = computed<number>({
   },
   set(newValue: number) {
     placedObjectScale.value = [newValue, newValue, newValue];
+  }
+})
+
+const worldPositionBounds = computed(() => {
+  if (!modelTag.value) return { min: -1000, max: 1000 }
+  
+  const obj3D = modelTag.value.getObject3D('mesh') as THREE.Object3D
+  const bbox = new THREE.Box3().setFromObject(obj3D)
+  
+  return {
+    min: bbox.min.x - bbox.getSize(new THREE.Vector3()).x * 0.5,
+    max: bbox.max.x + bbox.getSize(new THREE.Vector3()).x * 0.5
   }
 })
 
