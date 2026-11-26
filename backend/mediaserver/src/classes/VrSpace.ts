@@ -9,6 +9,7 @@ import { getMediasoupWorker } from 'modules/soupWorkers.js';
 import mediasoupConfig from 'soupConfig.js';
 import { ProducerId } from 'schemas/mediasoup';
 import { TRPCError } from '@trpc/server';
+import { eq } from 'drizzle-orm';
 import { withResourceAccess } from '../modules/resourceAccess.js';
 const log = new Log('VR:Space');
 process.env.DEBUG = 'VR:Space*, ' + process.env.DEBUG;
@@ -195,10 +196,22 @@ export class VrSpace {
   static async createNewVrSpace(name: string, ownerUserId: UserId) {
     log.info(`creating new vrSpace ${name} for user ${ownerUserId}`);
     try {
+      // A space made by someone who belongs to exactly one organization belongs to that organization.
+      // (Someone in several organizations moves it to the right one in the space settings.)
+      const memberships = await db.select({ organizationId: schema.organizationMembers.organizationId, role: schema.organizationMembers.role })
+        .from(schema.organizationMembers).where(eq(schema.organizationMembers.userId, ownerUserId));
+      // The lowest organization role ("Användare", 'basic') may visit environments but not create them.
+      // That holds when someone has that role in every organization they belong to; a full member
+      // somewhere else may still create.
+      if (memberships.length > 0 && memberships.every(m => m.role === 'basic')) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Din roll i organisationen tillåter inte att skapa VR-miljöer' });
+      }
+      const organizationId = memberships.length === 1 ? memberships[0].organizationId : null;
       const [response] = await db.insert(schema.vrSpaces).values({
         name,
         ownerUserId,
-        visibility: 'private'
+        visibility: 'private',
+        organizationId,
       }).returning()
       return response.vrSpaceId;
     } catch (e) {

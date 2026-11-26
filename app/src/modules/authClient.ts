@@ -177,7 +177,12 @@ const autoFetchJwt = async (
   }
 };
 
-export const guestAutoToken =  async (assignFn?: (receivedToken: string) => void, username?: string) => {
+/**
+ * Keeps a guest token fresh. `firstToken` lets the caller start from an already issued token,
+ * for example the one-space token from the public gallery (refreshes keep its limit on the server).
+ */
+export const guestAutoToken =  async (assignFn?: (receivedToken: string) => void, username?: string, firstToken?: string) => {
+  let pendingFirstToken = firstToken;
   stopTokenRefresh();
   const combinedAssigner = (t: string) => {
     username = undefined;
@@ -188,7 +193,14 @@ export const guestAutoToken =  async (assignFn?: (receivedToken: string) => void
   };
   return await autoFetchJwt(
     combinedAssigner,
-    async () => await guestJwt({previousToken: latestJwtToken, requestedUsername: username}),
+    async () => {
+      if (pendingFirstToken) {
+        const t = pendingFirstToken;
+        pendingFirstToken = undefined;
+        return t;
+      }
+      return await guestJwt({previousToken: latestJwtToken, requestedUsername: username});
+    },
     async () => await guestJwt(),
   );
 
@@ -240,4 +252,185 @@ export const getMe = () => handleResponse<JwtUserData>(() => authEndpoint.get('u
 export const logout = () => {
   stopTokenRefresh();
   return handleResponse<void>(() => authEndpoint.get('user/logout'));
+};
+
+// ---------------------------------------------------------------------------
+// Organizations (municipalities, companies, ...) and their units
+// ---------------------------------------------------------------------------
+export type OrgType = 'municipality' | 'company' | 'other';
+export type OrgRole = 'basic' | 'member' | 'org_admin';
+export type UnitRole = 'unit_admin' | 'member';
+export type OrganizationListItem = { organizationId: string, name: string, type: OrgType, memberCount?: number, unitCount?: number, myRole?: OrgRole, logoVersion: number | null };
+export type OrganizationDetails = {
+  organization: { organizationId: string, name: string, type: OrgType, logoVersion: number | null },
+  units: { unitId: string, name: string }[],
+  members: { userId: string, username: string, role: OrgRole }[],
+  unitMembers: { unitId: string, userId: string, role: UnitRole }[],
+  departments: { departmentId: string, unitId: string, name: string }[],
+  departmentMembers: { departmentId: string, userId: string, unitId: string }[],
+};
+
+/** Pull the server's message out of a failed request so it can be shown to the user. */
+export function orgErrorMessage(error: unknown) {
+  if (axios.isAxiosError(error)) {
+    const message = (error.response?.data as { message?: string } | undefined)?.message;
+    if (message) return message;
+    if (error.response?.status === 403) return 'Du har inte behörighet att göra detta.';
+  }
+  return 'Något gick fel. Försök igen.';
+}
+
+export type AssignableOrganization = { organizationId: string, name: string, units: { unitId: string, name: string }[] };
+
+export const orgApi = {
+  list: async () => (await authEndpoint.get<OrganizationListItem[]>('/org/list')).data,
+  get: async (organizationId: string) => (await authEndpoint.get<OrganizationDetails>(`/org/${organizationId}`)).data,
+  create: (name: string, type: OrgType) => authEndpoint.post('/org/create', { name, type }),
+  remove: (organizationId: string) => authEndpoint.post('/org/delete', { organizationId }),
+  createUnit: (organizationId: string, name: string) => authEndpoint.post('/org/unit/create', { organizationId, name }),
+  removeUnit: (unitId: string) => authEndpoint.post('/org/unit/delete', { unitId }),
+  setMember: (organizationId: string, userId: string, role: OrgRole) => authEndpoint.post('/org/member/set', { organizationId, userId, role }),
+  removeMember: (organizationId: string, userId: string) => authEndpoint.post('/org/member/remove', { organizationId, userId }),
+  setUnitMember: (unitId: string, userId: string, role: UnitRole) => authEndpoint.post('/org/unit/member/set', { unitId, userId, role }),
+  removeUnitMember: (unitId: string, userId: string) => authEndpoint.post('/org/unit/member/remove', { unitId, userId }),
+  createUser: (payload: { organizationId: string, username: string, password: string, role: OrgRole, unitIds: string[], departmentIds?: string[] }) => authEndpoint.post('/org/user/create', payload),
+  createDepartment: async (unitId: string, name: string) => (await authEndpoint.post<{ departmentId: string, unitId: string, name: string }>('/org/department/create', { unitId, name })).data,
+  deleteDepartment: (departmentId: string) => authEndpoint.post('/org/department/delete', { departmentId }),
+  setDepartmentMember: (departmentId: string, userId: string) => authEndpoint.post('/org/department/member/set', { departmentId, userId }),
+  removeDepartmentMember: (departmentId: string, userId: string) => authEndpoint.post('/org/department/member/remove', { departmentId, userId }),
+  setLogo: (organizationId: string, image: string) => authEndpoint.post('/org/logo', { organizationId, image }),
+  removeLogo: (organizationId: string) => authEndpoint.post('/org/logo/remove', { organizationId }),
+  setUserPassword: (payload: { organizationId: string, userId: string, password: string }) => authEndpoint.post('/org/user/password', payload),
+  deleteUser: (payload: { organizationId: string, userId: string }) => authEndpoint.post('/org/user/delete', payload),
+  importUsers: async (payload: { organizationId: string, dryRun: boolean, createMissing?: boolean, rows: { row: number, username: string, password: string, role: string, units: string, departments: string }[] }) =>
+    (await authEndpoint.post<{ dryRun: boolean, created: number, results: { row: number, username: string, status: 'ok' | 'error', message?: string }[], newUnits: string[], newDepartments: string[] }>('/org/user/import', payload)).data,
+  assignable: async () => (await authEndpoint.get<AssignableOrganization[]>('/org/assignable')).data,
+  assign: (payload: { type: 'vrSpace' | 'stream' | 'asset', id: string, organizationId: string | null, unitId: string | null }) => authEndpoint.post('/org/resource/assign', payload),
+};
+
+// ---------------------------------------------------------------------------
+// Onboarding: organization requests and invitations
+// ---------------------------------------------------------------------------
+export type OrganizationRequest = {
+  requestId: string, organizationName: string, organizationType: OrgType, contactName: string, contactEmail: string,
+  expectedUsers: number | null, message: string | null, status: 'requested' | 'approved' | 'rejected', createdAt: string | null, handledAt: string | null,
+};
+export type InvitationPreview = { organizationName: string, unitName: string | null, organizationRole: OrgRole, expiresAt: string, loggedIn: boolean, username: string | null };
+export type InvitationListItem = {
+  invitationId: string, unitId: string | null, organizationRole: OrgRole, unitRole: UnitRole, note: string | null,
+  maxUses: number, usedCount: number, expiresAt: string, revokedAt: string | null, createdAt: string | null,
+};
+
+export const onboardingApi = {
+  submitRequest: (payload: { organizationName: string, organizationType: OrgType, contactName: string, contactEmail: string, expectedUsers?: number, message?: string, website?: string }) =>
+    authEndpoint.post('/onboarding/request', payload),
+  previewInvitation: async (token: string) => (await authEndpoint.get<InvitationPreview>(`/onboarding/invitation/${encodeURIComponent(token)}`)).data,
+  acceptInvitation: async (payload: { token: string, username?: string, password?: string }) =>
+    (await authEndpoint.post<{ ok: true, organizationName: string, createdAccount: boolean, username: string }>('/onboarding/accept', payload)).data,
+  listRequests: async (status?: OrganizationRequest['status']) => (await authEndpoint.get<OrganizationRequest[]>('/onboarding/requests', { params: status ? { status } : undefined })).data,
+  approveRequest: async (requestId: string, organizationName?: string) =>
+    (await authEndpoint.post<{ organization: { organizationId: string, name: string }, contactEmail: string, contactName: string, token: string, expiresInDays: number }>('/onboarding/requests/approve', { requestId, organizationName })).data,
+  rejectRequest: (requestId: string) => authEndpoint.post('/onboarding/requests/reject', { requestId }),
+  createInvitation: async (payload: { organizationId: string, unitId?: string | null, organizationRole?: OrgRole, unitRole?: UnitRole, expiresInDays?: number, maxUses?: number, note?: string }) =>
+    (await authEndpoint.post<{ invitationId: string, expiresAt: string, token: string }>('/onboarding/invitations/create', payload)).data,
+  listInvitations: async (organizationId: string) => (await authEndpoint.get<InvitationListItem[]>(`/onboarding/invitations/${organizationId}`)).data,
+  revokeInvitation: (invitationId: string) => authEndpoint.post('/onboarding/invitations/revoke', { invitationId }),
+};
+
+// ---------------------------------------------------------------------------
+// Public guest gallery (no login needed)
+// ---------------------------------------------------------------------------
+export type GalleryOrganization = { organizationId: string, name: string, type: OrgType, spaceCount: number, logoVersion: number | null };
+
+/** Public URL of an organization's logo. `version` changes whenever the logo does, so browsers never show a stale one. */
+export const orgLogoUrl = (organizationId: string, version: number | null | undefined) =>
+  version ? `${completeAuthUrl}/gallery/logo/${organizationId}?v=${version}` : undefined;
+export type GallerySpace = { vrSpaceId: string, name: string, description: string | null };
+
+export const galleryApi = {
+  organizations: async (kind?: 'municipality' | 'company') =>
+    (await authEndpoint.get<GalleryOrganization[]>('/gallery/organizations', { params: kind ? { kind } : undefined })).data,
+  organization: async (organizationId: string) =>
+    (await authEndpoint.get<{ organization: { name: string, type: OrgType, logoVersion: number | null }, spaces: GallerySpace[] }>(`/gallery/organizations/${organizationId}`)).data,
+  personal: async (offset: number, limit = 24) =>
+    (await authEndpoint.get<{ spaces: GallerySpace[], hasMore: boolean }>('/gallery/personal', { params: { offset, limit } })).data,
+  /** A guest token that is only valid for this one VR space. */
+  enter: async (vrSpaceId: string, username?: string) =>
+    (await authEndpoint.post<string>('/gallery/enter', { vrSpaceId, username: username || undefined })).data,
+};
+
+// ---------------------------------------------------------------------------
+// Platform user management (platform administrators) and the users' inbox
+// ---------------------------------------------------------------------------
+export type ManagedUser = {
+  userId: string, username: string, role: UserRole, createdAt: string | null, lastLoginAt: string | null,
+  blockedAt: string | null, blockedReason: string | null, spaceCount: number,
+  organizations: { organizationId: string, name: string, role: OrgRole }[],
+};
+export type ManageUsersQuery = {
+  search?: string, role?: UserRole, status?: 'all' | 'active' | 'blocked', org?: string,
+  sort?: 'username' | 'createdAt' | 'lastLoginAt' | 'role', order?: 'asc' | 'desc', offset?: number, limit?: number,
+};
+export type ManagedUserDetails = {
+  user: Omit<ManagedUser, 'organizations' | 'spaceCount'>,
+  organizations: { organizationId: string, name: string, role: OrgRole }[],
+  units: { name: string, organizationId: string, role: UnitRole }[],
+  departments: { name: string, unitId: string }[],
+  spaces: { vrSpaceId: string, name: string, visibility: string, organizationId: string | null }[],
+  messages: { received: number, unread: number },
+  canManage: boolean,
+  assignableRoles: UserRole[],
+};
+export type UsersSummary = {
+  total: number, blocked: number, withoutOrganization: number, neverLoggedIn: number,
+  byRole: { role: UserRole, count: number }[], organizations: { organizationId: string, name: string }[],
+};
+
+export const manageUsersApi = {
+  list: async (query: ManageUsersQuery) => (await authEndpoint.get<{ total: number, users: ManagedUser[] }>('/manage/users', { params: query })).data,
+  summary: async () => (await authEndpoint.get<UsersSummary>('/manage/users/summary')).data,
+  get: async (userId: string) => (await authEndpoint.get<ManagedUserDetails>(`/manage/users/${userId}`)).data,
+  create: async (payload: { username: string, role: UserRole, password?: string }) =>
+    (await authEndpoint.post<{ userId: string, username: string, password?: string }>('/manage/users/create', payload)).data,
+  update: (payload: { userId: string, username?: string, role?: UserRole }) => authEndpoint.post('/manage/users/update', payload),
+  resetPassword: async (userId: string, password?: string) =>
+    (await authEndpoint.post<{ password?: string }>('/manage/users/password', { userId, password })).data,
+  block: (userId: string, blocked: boolean, reason?: string) => authEndpoint.post('/manage/users/block', { userId, blocked, reason }),
+  remove: (userId: string) => authEndpoint.post('/manage/users/delete', { userId }),
+  message: async (payload: { userIds?: string[], organizationId?: string, subject: string, body: string }) =>
+    (await authEndpoint.post<{ sent: number }>('/manage/users/message', payload)).data,
+};
+
+export type InboxMessage = { messageId: string, subject: string, body: string, createdAt: string, readAt: string | null, from: string | null };
+export const messagesApi = {
+  summary: async () => (await authEndpoint.get<{ unread: number }>('/messages/summary')).data,
+  list: async () => (await authEndpoint.get<{ unread: number, messages: InboxMessage[] }>('/messages')).data,
+  markRead: (messageId?: string) => authEndpoint.post('/messages/read', { messageId }),
+  remove: (messageId: string) => authEndpoint.post('/messages/delete', { messageId }),
+};
+
+// ---------------------------------------------------------------------------
+// "Hantera användare" for an organization's own administrators (scoped to one organization)
+// ---------------------------------------------------------------------------
+export type OrgManagedUser = {
+  userId: string, username: string, orgRole: OrgRole, createdAt: string | null, lastLoginAt: string | null, blockedAt: string | null,
+  units: string[], departments: string[],
+  /** Why this account cannot be changed by the caller; null when it can. */
+  manageReason: string | null,
+};
+export type OrgUsersQuery = {
+  search?: string, role?: OrgRole, status?: 'all' | 'active' | 'blocked',
+  sort?: 'username' | 'role' | 'createdAt' | 'lastLoginAt', order?: 'asc' | 'desc', offset?: number, limit?: number,
+};
+export const orgUsersApi = (organizationId: string) => {
+  const base = `/manage/org/${organizationId}/users`;
+  return {
+    list: async (query: OrgUsersQuery) => (await authEndpoint.get<{ total: number, users: OrgManagedUser[] }>(base, { params: query })).data,
+    summary: async () => (await authEndpoint.get<{ total: number, blocked: number, neverLoggedIn: number, byRole: { role: OrgRole, count: number }[] }>(`${base}/summary`)).data,
+    resetPassword: async (userId: string, password?: string) => (await authEndpoint.post<{ password?: string }>(`${base}/password`, { userId, password })).data,
+    block: (userId: string, blocked: boolean, reason?: string) => authEndpoint.post(`${base}/block`, { userId, blocked, reason }),
+    remove: (userId: string) => authEndpoint.post(`${base}/delete`, { userId }),
+    message: async (payload: { userIds?: string[], everyone?: boolean, subject: string, body: string }) =>
+      (await authEndpoint.post<{ sent: number }>(`${base}/message`, payload)).data,
+  };
 };

@@ -5,7 +5,7 @@ import { exclude, extractMessageFromCatch } from 'shared-modules/utilFns';
 import { isLoggedIn } from './utils.js';
 import { StreamId, UserId, UserIdSchema, UserRole, allRolesBelow, hasAtLeastSecurityRole, roleHierarchy, throwIfUnauthorized } from 'schemas';
 import { basicUserSelect, db, schema, userSelectExcludePassword } from 'database';
-import { and, asc, inArray, eq, getTableColumns } from 'drizzle-orm';
+import { and, asc, inArray, eq, getTableColumns, sql } from 'drizzle-orm';
 import * as _ from 'lodash-es'
 
 const index: RequestHandler = (req, res) => {
@@ -19,6 +19,16 @@ interface CreateUserRequest extends ExpressReq {
     password?: string,
   }
 }
+
+const platformAdminOnly: RequestHandler = async (req, res, next) => {
+  const userId = req.session.userId;
+  const [caller] = userId ? await db.select({ role: schema.users.role }).from(schema.users).where(eq(schema.users.userId, userId)) : [];
+  if (!caller || !hasAtLeastSecurityRole(caller.role, 'superadmin')) {
+    res.status(403).send('Only platform administrators can manage accounts platform-wide. Use your organization page instead.');
+    return;
+  }
+  next();
+};
 
 const createUser: RequestHandler = async (req: CreateUserRequest, res) => {
   const userData = req.session.user;
@@ -92,7 +102,7 @@ const createUser: RequestHandler = async (req: CreateUserRequest, res) => {
   } catch (e) {
     console.error('database error when creating user');
     console.error(e);
-    res.status(501).send(e);
+    res.status(501).send('failed to create user');
     return;
   }
 };
@@ -205,7 +215,7 @@ const updateUser: RequestHandler = async (req: UpdateUserRequest, res) => {
   } catch (e) {
     const errorMsg = extractMessageFromCatch(e, 'failed to update user!');
     console.error(errorMsg);
-    res.status(501).send(errorMsg);
+    res.status(501).send('failed to update user');
     return;
   }
 };
@@ -398,10 +408,27 @@ const getAllowedUsersForStream: RequestHandler = async (req: GetSenderRequest, r
   }
 }
 
+// Brute-force guard: only FAILED logins count, per IP + username, so normal use is never throttled.
+const LOGIN_MAX_FAILURES = 10;
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const loginFailures = new Map<string, number[]>();
+const loginKey = (req: ExpressReq, username: unknown) => `${req.ip}|${String(username).toLowerCase().slice(0, 100)}`;
+const recentFailures = (key: string) => {
+  const now = Date.now();
+  const recent = (loginFailures.get(key) ?? []).filter(t => now - t < LOGIN_WINDOW_MS);
+  if (recent.length) loginFailures.set(key, recent); else loginFailures.delete(key);
+  return recent;
+};
+
 const loginUser: RequestHandler = async (req, res) => {
   // console.log('login req received');
   const username = req.body.username;
   const password = req.body.password;
+  const failKey = loginKey(req, username);
+  if (recentFailures(failKey).length >= LOGIN_MAX_FAILURES) {
+    res.status(429).send('För många misslyckade försök. Vänta en stund och försök igen.');
+    return;
+  }
   try {
     const foundUser = await db.query.users.findFirst({
       where: eq(schema.users.username, username),
@@ -411,6 +438,11 @@ const loginUser: RequestHandler = async (req, res) => {
     }
     const correct = await bcrypt.compare(password, foundUser.password);
     if (correct) {
+      if (foundUser.blockedAt) {
+        res.status(403).send('Kontot är spärrat. Kontakta administratören.');
+        return;
+      }
+      await db.update(schema.users).set({ lastLoginAt: sql`(now() at time zone 'utc')` as unknown as Date }).where(eq(schema.users.userId, foundUser.userId));
       req.session.userId = foundUser.userId;
       const pickedUserData = _.pick(foundUser, ['userId', 'username', 'role']);
       req.session.user = pickedUserData;
@@ -422,6 +454,8 @@ const loginUser: RequestHandler = async (req, res) => {
   } catch (e) {
     console.error(e);
     if (e instanceof Error && e.message === 'no user with that username and password found!') {
+      loginFailures.set(failKey, [...recentFailures(failKey), Date.now()]);
+      if (loginFailures.size > 10_000) for (const k of [...loginFailures.keys()]) recentFailures(k);
       res.status(401).send('User with that username or password not found');
     } else {
       res.status(501).send('failed when trying to login');
@@ -479,10 +513,12 @@ export default function createUserRouter(): Router {
   userRouter.post('/login', loginUser);
   userRouter.get('/logout', logoutUser);
 
-  userRouter.post('/create', isLoggedIn, createUser);
-  userRouter.post('/update', isLoggedIn, updateUser);
-  userRouter.post('/delete', isLoggedIn, deleteUser);
-  userRouter.get('/get-users', isLoggedIn, getUsers);
+  // Platform-wide account management is for platform administrators only.
+  // Organizations manage their own users through /org/ instead.
+  userRouter.post('/create', isLoggedIn, platformAdminOnly, createUser);
+  userRouter.post('/update', isLoggedIn, platformAdminOnly, updateUser);
+  userRouter.post('/delete', isLoggedIn, platformAdminOnly, deleteUser);
+  userRouter.get('/get-users', isLoggedIn, platformAdminOnly, getUsers);
   userRouter.get('/get-admins', isLoggedIn, getAdmins);
   userRouter.post('/get-sender', isLoggedIn, getAllowedUsersForStream);
   userRouter.post('/create-sender', isLoggedIn, createSenderForVenue);

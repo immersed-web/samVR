@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { logout as authLogout, login as authLogin, userAutoToken, guestAutoToken, isMissingSession, stopTokenRefresh } from '@/modules/authClient';
+import { logout as authLogout, login as authLogin, userAutoToken, guestAutoToken, isMissingSession, stopTokenRefresh, galleryApi } from '@/modules/authClient';
 import { hasAtLeastSecurityRole, type JwtPayload } from 'schemas';
 import jwtDecode from 'jwt-decode';
 import { computed, ref } from 'vue';
@@ -46,6 +46,8 @@ export const useAuthStore = defineStore('auth', () => {
     }
   });
   const isGuest = computed(() => userData.value?.role === 'guest');
+  /** Set when this guest came in through the public gallery and may only enter this one VR space. */
+  const guestVrSpaceId = computed(() => userData.value?.guestVrSpaceId);
   const userId = computed(() => userData.value?.userId);
   const username = computed(() => userData.value?.username);
   const persistedUsername = ref<string>();
@@ -66,6 +68,16 @@ export const useAuthStore = defineStore('auth', () => {
     await guestAutoToken((t) => {
       if (generation === sessionGeneration) token.value = t;
     }, username);
+  }
+  /** Sign in as a guest who may only visit one VR space (from the public gallery). */
+  async function enterGalleryGuest(vrSpaceId: string, username?: string) {
+    const generation = markSessionChecked();
+    if (pendingLogout) await pendingLogout;
+    if (generation !== sessionGeneration) return;
+    const firstToken = await galleryApi.enter(vrSpaceId, username);
+    await guestAutoToken((t) => {
+      if (generation === sessionGeneration) token.value = t;
+    }, undefined, firstToken);
   }
   async function restoreFromSession() {
     if (sessionChecked) return false;
@@ -147,6 +159,8 @@ export const useAuthStore = defineStore('auth', () => {
     username,
     persistedUsername,
     autoGuest,
+    enterGalleryGuest,
+    guestVrSpaceId,
     restoreFromSession,
     logout,
     login,

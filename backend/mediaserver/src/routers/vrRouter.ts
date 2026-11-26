@@ -8,7 +8,7 @@ import { router, isUserClientM, userClientP, atLeastUserP, userInVrSpaceP, userW
 import { VrSpace } from 'classes/VrSpace.js';
 import { z } from 'zod';
 import { db, schema } from 'database';
-import { eq, and, or, not, sql } from 'drizzle-orm';
+import { eq, and, or, not, sql, isNull, isNotNull, inArray } from 'drizzle-orm';
 import { PermissionLevel } from 'database/schema';
 import { TRPCError } from '@trpc/server';
 import { authorizeResource, withResourceAccess } from '../modules/resourceAccess.js';
@@ -36,6 +36,14 @@ export const vrRouter = router({
     // log.debug('user: ', user);
     try {
 
+      // Membership checks against the space's organization/unit (correlated subqueries)
+      const orgMemberRole = (role?: 'org_admin') => sql`exists (select 1 from "OrganizationMembers" m where m."userId" = ${ctx.userId} and m."organizationId" = ${schema.vrSpaces.organizationId} ${role ? sql`and m."role" = ${role}` : sql``})`;
+      const unitMemberRole = (role?: 'unit_admin') => sql`exists (select 1 from "UnitMembers" m where m."userId" = ${ctx.userId} and m."unitId" = ${schema.vrSpaces.unitId} ${role ? sql`and m."role" = ${role}` : sql``})`;
+      const orgMember = orgMemberRole();
+      const orgAdmin = orgMemberRole('org_admin');
+      const unitMember = unitMemberRole();
+      const unitAdmin = unitMemberRole('unit_admin');
+
       let unfilteredQuery = db.select({
       vrSpaceId: schema.vrSpaces.vrSpaceId,
       name: schema.vrSpaces.name,
@@ -43,9 +51,14 @@ export const vrRouter = router({
       visibility: schema.vrSpaces.visibility,
       ownerUserId: schema.vrSpaces.ownerUserId,
       description: schema.vrSpaces.description,
+      organizationId: schema.vrSpaces.organizationId,
+      // Version of the owning organization's logo (null = no logo); the app builds the image URL from it
+      organizationLogoVersion: sql<number | null>`(select l."version" from "OrganizationLogos" l where l."organizationId" = ${schema.vrSpaces.organizationId})`,
       // permisions: schema.permissions,
       permissionLevel: sql<PermLev>`case
-          when ${schema.vrSpaces.ownerUserId} = ${ctx.userId} then 'owner'
+          when ${schema.vrSpaces.organizationId} is null and ${schema.vrSpaces.ownerUserId} = ${ctx.userId} then 'owner'
+          when ${schema.vrSpaces.organizationId} is not null and (${orgAdmin} or ${unitAdmin}) then 'admin'
+          when ${schema.vrSpaces.organizationId} is not null and ${schema.vrSpaces.ownerUserId} = ${ctx.userId} and ${orgMember} then 'owner'
           else ${schema.permissions.permissionLevel}::TEXT
           end`.as('permissionLevel'),
       // when ${schema.permissions.permissionLevel} is NULL then 'unauthorized'
@@ -56,7 +69,7 @@ export const vrRouter = router({
         and(
           // we dont want duplicates. So join only if not already owner
           eq(schema.permissions.userId, ctx.userId),
-          not(eq(schema.vrSpaces.ownerUserId, ctx.userId)),
+          or(isNotNull(schema.vrSpaces.organizationId), not(eq(schema.vrSpaces.ownerUserId, ctx.userId))),
           eq(schema.permissions.targetId, schema.vrSpaces.vrSpaceId)
         )
       ));
@@ -65,13 +78,29 @@ export const vrRouter = router({
         columns: { role: true }, where: eq(schema.users.userId, ctx.userId),
       });
       if (ctx.role !== 'guest' && !caller) throw new TRPCError({ code: 'FORBIDDEN', message: 'Account not found' });
+      if (ctx.guestVrSpaceId) {
+        // A gallery guest only ever sees the one space they were let in to
+        return await unfilteredQuery.where(and(
+          eq(schema.vrSpaces.vrSpaceId, ctx.guestVrSpaceId),
+          or(eq(schema.vrSpaces.visibility, 'public'), eq(schema.vrSpaces.visibility, 'unlisted')),
+        ));
+      }
       if (caller && hasAtLeastSecurityRole(caller.role, 'superadmin')) {
         return await unfilteredQuery;
       } else {
         const filteredQuery = unfilteredQuery.where(or(
         eq(schema.permissions.userId, ctx.userId),
-        eq(schema.vrSpaces.ownerUserId, ctx.userId),
-        eq(schema.vrSpaces.visibility, 'public'),
+        and(isNull(schema.vrSpaces.organizationId), eq(schema.vrSpaces.ownerUserId, ctx.userId)),
+        // Other people's public spaces are deliberately NOT listed here: they are found through the
+        // public guest gallery or a direct link, so users only see their own, their organization's and shared spaces.
+        // Organization/unit spaces follow the caller's current memberships
+        and(isNotNull(schema.vrSpaces.organizationId), or(
+          orgAdmin,
+          unitAdmin,
+          and(eq(schema.vrSpaces.ownerUserId, ctx.userId), orgMember),
+          and(inArray(schema.vrSpaces.visibility, ['public', 'organization']), orgMember), // members also see their organization's public spaces
+          and(eq(schema.vrSpaces.visibility, 'unit'), unitMember),
+        )),
       ));
         return await filteredQuery;
       }

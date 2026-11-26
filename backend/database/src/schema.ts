@@ -1,9 +1,9 @@
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
-import { pgTable, pgEnum, varchar, timestamp, text, integer, uniqueIndex, uuid, boolean, json, jsonb, foreignKey, real, doublePrecision, index, primaryKey } from "drizzle-orm/pg-core"
+import { pgTable, pgEnum, varchar, timestamp, text, integer, uniqueIndex, uuid, boolean, json, jsonb, foreignKey, real, doublePrecision, index, primaryKey, unique, check, customType } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 import { relations } from "drizzle-orm/relations";
 
-import type { StreamId, UserId, VrSpaceId, AssetId, CameraId, PlacedObjectId, SenderId, AllFileExtensions, AvatarDesign } from 'schemas';
+import type { OrganizationId, UnitId, DepartmentId, StreamId, UserId, VrSpaceId, AssetId, CameraId, PlacedObjectId, SenderId, AllFileExtensions, AvatarDesign } from 'schemas';
 
 export const CameraTypeEnum = pgEnum("CameraType", ['panoramic360', 'normal'])
 // export const AssetFileFormat = pgEnum("AssetFileFormat", ['glb', 'png', 'jpg', 'jpeg', 'pdf',])
@@ -13,7 +13,11 @@ export const AssetTypeEnum = pgEnum("AssetType", ['image', 'video', 'model', 'na
 export const PlacedObjectTypeEnum = pgEnum("PlacedObjectType", ['asset', 'vrPortal', 'streamPortal', 'externalLinkPortal', 'pointLight', 'directionalLight', 'ambientLight']);
 // export const PortalType = pgEnum("PortalType", ['vrSpace', 'stream', 'externalUrl']);
 export const RoleEnum = pgEnum("Role", ['god', 'superadmin', 'admin', 'moderator', 'user', 'guest'])
-export const VisibilityEnum = pgEnum("Visibility", ['private', 'unlisted', 'public'])
+export const VisibilityEnum = pgEnum("Visibility", ['private', 'unlisted', 'public', 'organization', 'unit'])
+export const OrganizationTypeEnum = pgEnum("OrganizationType", ['municipality', 'company', 'other'])
+export const OrganizationRoleEnum = pgEnum("OrganizationRole", ['org_admin', 'member', 'basic'])
+export const UnitRoleEnum = pgEnum("UnitRole", ['unit_admin', 'member'])
+export const RequestStatusEnum = pgEnum("RequestStatus", ['requested', 'approved', 'rejected'])
 
 const createdAndUpdatedAt = {
 	createdAt: timestamp("createdAt", { precision: 3, mode: 'date' }).defaultNow(),
@@ -76,6 +80,10 @@ export const users = pgTable("Users", {
 	password: text("password").notNull(),
 	role: RoleEnum("role").default('user').notNull(),
 	avatarDesign: json("avatarDesign").$type<AvatarDesign>(),
+	// Blocked accounts cannot log in or keep a session. Set by a platform administrator.
+	blockedAt: timestamp("blockedAt", { precision: 3, mode: 'date' }),
+	blockedReason: text("blockedReason"),
+	lastLoginAt: timestamp("lastLoginAt", { precision: 3, mode: 'date' }),
 },
 	(table) => {
 		return {
@@ -84,12 +92,200 @@ export const users = pgTable("Users", {
 	});
 export type User = typeof users.$inferSelect;
 
+// Messages from administrators to users, shown inside SamVR (accounts have no e-mail address).
+export const userMessages = pgTable("UserMessages", {
+	messageId: uuid("messageId").defaultRandom().primaryKey().notNull(),
+	userId: uuid("userId").notNull().$type<UserId>().references(() => users.userId, { onDelete: "cascade", onUpdate: "cascade" }),
+	fromUserId: uuid("fromUserId").$type<UserId>().references(() => users.userId, { onDelete: "set null", onUpdate: "cascade" }),
+	subject: text("subject").notNull(),
+	body: text("body").notNull(),
+	createdAt: timestamp("createdAt", { precision: 3, mode: 'date' }).defaultNow().notNull(),
+	readAt: timestamp("readAt", { precision: 3, mode: 'date' }),
+},
+	(table) => ({
+		inbox_idx: index("UserMessages_user_created_idx").on(table.userId, table.createdAt),
+	}));
+
 export const usersRelations = relations(users, ({ many }) => ({
 	assets: many(assets),
 	ownedStreams: many(streams),
 	ownedVrSpaces: many(vrSpaces),
 	permissions: many(permissions),
 }));
+
+
+// ---------------------------------------------------------------------------
+// Organizations (municipalities, companies, ...) and their units.
+// A user with no membership is an individual user. A unit always belongs to
+// exactly one organization, and a unit member must also be an organization member.
+// ---------------------------------------------------------------------------
+export const organizations = pgTable("Organizations", {
+	organizationId: uuid("organizationId").defaultRandom().primaryKey().notNull().$type<OrganizationId>(),
+	name: text("name").notNull(),
+	type: OrganizationTypeEnum("type").default('other').notNull(),
+	// Free-form settings, e.g. display name for "unit" (school, department, team)
+	settings: jsonb("settings").$type<Record<string, unknown>>().default({}).notNull(),
+	...createdAndUpdatedAt,
+},
+	(table) => ({
+		organization_name_key: uniqueIndex("Organization_name_key").on(table.name),
+	}));
+export type Organization = typeof organizations.$inferSelect;
+
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({ dataType() { return 'bytea'; } });
+
+// The organization's logo, kept apart from Organizations so that ordinary organization queries never load the image bytes.
+export const organizationLogos = pgTable("OrganizationLogos", {
+	organizationId: uuid("organizationId").primaryKey().notNull().$type<OrganizationId>()
+		.references(() => organizations.organizationId, { onDelete: "cascade", onUpdate: "cascade" }),
+	data: bytea("data").notNull(),
+	mimeType: text("mimeType").notNull(),
+	// Bumped on every change so browsers fetch the new image instead of a cached one.
+	version: integer("version").default(1).notNull(),
+});
+
+export const units = pgTable("Units", {
+	unitId: uuid("unitId").defaultRandom().primaryKey().notNull().$type<UnitId>(),
+	organizationId: uuid("organizationId").notNull().$type<OrganizationId>().references(() => organizations.organizationId, { onDelete: "cascade", onUpdate: "cascade" }),
+	name: text("name").notNull(),
+	...createdAndUpdatedAt,
+},
+	(table) => ({
+		unit_name_per_org_key: uniqueIndex("Unit_name_per_org_key").on(table.organizationId, table.name),
+		// Needed so other tables can reference (unitId, organizationId) and stay consistent
+		unit_id_org_key: unique("Unit_id_org_key").on(table.unitId, table.organizationId),
+	}));
+export type Unit = typeof units.$inferSelect;
+
+export const organizationMembers = pgTable("OrganizationMembers", {
+	userId: uuid("userId").notNull().$type<UserId>().references(() => users.userId, { onDelete: "cascade", onUpdate: "cascade" }),
+	organizationId: uuid("organizationId").notNull().$type<OrganizationId>().references(() => organizations.organizationId, { onDelete: "cascade", onUpdate: "cascade" }),
+	role: OrganizationRoleEnum("role").default('member').notNull(),
+	...createdAndUpdatedAt,
+},
+	(table) => ({
+		pk: primaryKey({ columns: [table.userId, table.organizationId], name: "organization_members_pkey" }),
+		org_idx: index("OrganizationMembers_org_idx").on(table.organizationId),
+	}));
+
+export const unitMembers = pgTable("UnitMembers", {
+	userId: uuid("userId").notNull().$type<UserId>(),
+	unitId: uuid("unitId").notNull().$type<UnitId>(),
+	organizationId: uuid("organizationId").notNull().$type<OrganizationId>(),
+	role: UnitRoleEnum("role").default('member').notNull(),
+	...createdAndUpdatedAt,
+},
+	(table) => ({
+		pk: primaryKey({ columns: [table.userId, table.unitId], name: "unit_members_pkey" }),
+		unit_idx: index("UnitMembers_unit_idx").on(table.unitId),
+		// The unit must belong to the stated organization ...
+		unit_fk: foreignKey({ columns: [table.unitId, table.organizationId], foreignColumns: [units.unitId, units.organizationId], name: "unit_members_unit_org_fkey" }).onDelete("cascade").onUpdate("cascade"),
+		// ... and the user must be a member of that organization.
+		org_member_fk: foreignKey({ columns: [table.userId, table.organizationId], foreignColumns: [organizationMembers.userId, organizationMembers.organizationId], name: "unit_members_org_member_fkey" }).onDelete("cascade").onUpdate("cascade"),
+	}));
+
+// A department (class, team, group) inside a unit. Organization > unit (e.g. a school) > department (e.g. a class).
+export const departments = pgTable("Departments", {
+	departmentId: uuid("departmentId").defaultRandom().primaryKey().notNull().$type<DepartmentId>(),
+	unitId: uuid("unitId").notNull().$type<UnitId>(),
+	organizationId: uuid("organizationId").notNull().$type<OrganizationId>(),
+	name: text("name").notNull(),
+	...createdAndUpdatedAt,
+},
+	(table) => ({
+		department_name_per_unit_key: uniqueIndex("Department_name_per_unit_key").on(table.unitId, table.name),
+		// Needed so DepartmentMembers can reference (departmentId, unitId) and stay consistent
+		department_id_unit_key: unique("Department_id_unit_key").on(table.departmentId, table.unitId),
+		unit_fk: foreignKey({ columns: [table.unitId, table.organizationId], foreignColumns: [units.unitId, units.organizationId], name: "departments_unit_org_fkey" }).onDelete("cascade").onUpdate("cascade"),
+	}));
+
+// Who is in a department. A person must already be a member of the department's unit.
+export const departmentMembers = pgTable("DepartmentMembers", {
+	departmentId: uuid("departmentId").notNull().$type<DepartmentId>(),
+	userId: uuid("userId").notNull().$type<UserId>(),
+	unitId: uuid("unitId").notNull().$type<UnitId>(),
+	...createdAndUpdatedAt,
+},
+	(table) => ({
+		pk: primaryKey({ columns: [table.departmentId, table.userId], name: "department_members_pkey" }),
+		user_idx: index("DepartmentMembers_user_idx").on(table.userId),
+		department_fk: foreignKey({ columns: [table.departmentId, table.unitId], foreignColumns: [departments.departmentId, departments.unitId], name: "department_members_department_fkey" }).onDelete("cascade").onUpdate("cascade"),
+		unit_member_fk: foreignKey({ columns: [table.userId, table.unitId], foreignColumns: [unitMembers.userId, unitMembers.unitId], name: "department_members_unit_member_fkey" }).onDelete("cascade").onUpdate("cascade"),
+	}));
+
+export const organizationsRelations = relations(organizations, ({ many }) => ({
+	units: many(units),
+	members: many(organizationMembers),
+}));
+export const unitsRelations = relations(units, ({ one, many }) => ({
+	organization: one(organizations, { fields: [units.organizationId], references: [organizations.organizationId] }),
+	members: many(unitMembers),
+}));
+export const organizationMembersRelations = relations(organizationMembers, ({ one }) => ({
+	user: one(users, { fields: [organizationMembers.userId], references: [users.userId] }),
+	organization: one(organizations, { fields: [organizationMembers.organizationId], references: [organizations.organizationId] }),
+}));
+export const unitMembersRelations = relations(unitMembers, ({ one }) => ({
+	user: one(users, { fields: [unitMembers.userId], references: [users.userId] }),
+	unit: one(units, { fields: [unitMembers.unitId], references: [units.unitId] }),
+}));
+
+// ---------------------------------------------------------------------------
+// Requests from prospective organizations (public form) and invitations to join.
+// ---------------------------------------------------------------------------
+export const organizationRequests = pgTable("OrganizationRequests", {
+	requestId: uuid("requestId").defaultRandom().primaryKey().notNull(),
+	organizationName: text("organizationName").notNull(),
+	organizationType: OrganizationTypeEnum("organizationType").default('other').notNull(),
+	contactName: text("contactName").notNull(),
+	contactEmail: text("contactEmail").notNull(),
+	expectedUsers: integer("expectedUsers"),
+	message: text("message"),
+	status: RequestStatusEnum("status").default('requested').notNull(),
+	// Set when the request is approved
+	createdOrganizationId: uuid("createdOrganizationId").$type<OrganizationId>().references(() => organizations.organizationId, { onDelete: "set null", onUpdate: "cascade" }),
+	handledByUserId: uuid("handledByUserId").$type<UserId>().references(() => users.userId, { onDelete: "set null", onUpdate: "cascade" }),
+	handledAt: timestamp("handledAt", { precision: 3, mode: 'date' }),
+	...createdAndUpdatedAt,
+},
+	(table) => ({
+		status_idx: index("OrganizationRequests_status_idx").on(table.status),
+	}));
+
+export const invitations = pgTable("Invitations", {
+	invitationId: uuid("invitationId").defaultRandom().primaryKey().notNull(),
+	// Only a hash of the secret code is stored. The code itself is shown once when the invitation is created.
+	tokenHash: text("tokenHash").notNull(),
+	organizationId: uuid("organizationId").notNull().$type<OrganizationId>().references(() => organizations.organizationId, { onDelete: "cascade", onUpdate: "cascade" }),
+	unitId: uuid("unitId").$type<UnitId>(),
+	organizationRole: OrganizationRoleEnum("organizationRole").default('member').notNull(),
+	unitRole: UnitRoleEnum("unitRole").default('member').notNull(),
+	// Free-text note for the inviter ("who is this for"). Not used for sending anything.
+	note: text("note"),
+	maxUses: integer("maxUses").default(1).notNull(),
+	usedCount: integer("usedCount").default(0).notNull(),
+	expiresAt: timestamp("expiresAt", { precision: 3, mode: 'date' }).notNull(),
+	revokedAt: timestamp("revokedAt", { precision: 3, mode: 'date' }),
+	createdByUserId: uuid("createdByUserId").$type<UserId>().references(() => users.userId, { onDelete: "set null", onUpdate: "cascade" }),
+	...createdAndUpdatedAt,
+},
+	(table) => ({
+		token_hash_key: uniqueIndex("Invitation_tokenHash_key").on(table.tokenHash),
+		org_idx: index("Invitations_org_idx").on(table.organizationId),
+		unit_org_fk: foreignKey({ columns: [table.unitId, table.organizationId], foreignColumns: [units.unitId, units.organizationId], name: "invitations_unit_org_fkey" }).onDelete("cascade").onUpdate("cascade"),
+		uses_check: check("invitations_uses_check", sql`${table.usedCount} >= 0 AND ${table.usedCount} <= ${table.maxUses} AND ${table.maxUses} >= 1`),
+	}));
+
+// Shared columns/constraints for resources that can belong to an organization or a unit.
+// Both null = personal resource owned by ownerUserId (the old behaviour).
+const scopeConstraints = (table: { unitId: AnyPgColumn, organizationId: AnyPgColumn }, name: string) => ({
+	[`${name}_unit_org_fkey`]: foreignKey({ columns: [table.unitId, table.organizationId], foreignColumns: [units.unitId, units.organizationId], name: `${name}_unit_org_fkey` }).onDelete("restrict").onUpdate("cascade"),
+	[`${name}_unit_requires_org`]: check(`${name}_unit_requires_org`, sql`${table.unitId} IS NULL OR ${table.organizationId} IS NOT NULL`),
+});
+const scopeColumns = () => ({
+	organizationId: uuid("organizationId").$type<OrganizationId>().references(() => organizations.organizationId, { onDelete: "restrict", onUpdate: "cascade" }),
+	unitId: uuid("unitId").$type<UnitId>(),
+});
 
 export const PermissionTargetType = pgEnum("PermissionTargetType", ['stream', 'vrSpace'])
 export const PermissionLevel = pgEnum("PermissionLevel", ['admin', 'edit', 'view'])
@@ -136,12 +332,14 @@ export const streams = pgTable("Streams", {
 	// extraSettings: jsonb("extraSettings"),
 	visibility: VisibilityEnum("visibility").default('public').notNull(),
 	mainCameraId: uuid("mainCameraId").references((): AnyPgColumn => cameras.cameraId).$type<CameraId>(),
+	...scopeColumns(),
 	// vrSpaceId: uuid("vrSpaceId").references((): AnyPgColumn => vrSpaces.vrSpaceId).$type<VrSpaceId>(),
 	...createdAndUpdatedAt,
 },
 	(table) => {
 		return {
 			name_key: uniqueIndex("Stream_name_key").on(table.name),
+			...scopeConstraints(table, "streams"),
 		}
 	});
 
@@ -250,10 +448,14 @@ export const assets = pgTable("Assets", {
 	mimeType: text("mimeType"),
 	showInUserLibrary: boolean("showInUserLibrary").default(true).notNull(),
 	assetFileExtension: text("assetFileExtension").notNull().$type<AllFileExtensions>(),
+	...scopeColumns(),
 	ownerUserId: uuid("ownerUserId").notNull().references(() => users.userId, { onDelete: "cascade", onUpdate: "cascade" }).$type<UserId>(),
 	// extraSettings: jsonb("extraSettings"),
 	...createdAndUpdatedAt,
-})
+},
+	(table) => ({
+		...scopeConstraints(table, "assets"),
+	}))
 
 export const assetsRelations = relations(assets, ({ one, many }) => ({
 	owner: one(users, {
@@ -284,8 +486,14 @@ export const vrSpaces = pgTable("VrSpaces", {
 	spawnPosition: real("spawnPosition").array().$type<NumberTuble3>(),
 	spawnRadius: doublePrecision("spawnRadius"),
 	skyColor: text("skyColor"),
+	// Opt-in: show this space in the public guest gallery (only effective while visibility is public/unlisted).
+	listedInGallery: boolean("listedInGallery").default(false).notNull(),
+	...scopeColumns(),
 	...createdAndUpdatedAt,
-});
+},
+	(table) => ({
+		...scopeConstraints(table, "vr_spaces"),
+	}));
 
 export const vrSpacesRelations = relations(vrSpaces, ({ one, many }) => ({
 	owner: one(users, {

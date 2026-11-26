@@ -14,6 +14,7 @@ import { withResourceAccess } from '../modules/resourceAccess.js';
 
 export const streamRouter = router({
   listPublicStreams: p.query(async ({ ctx }) => {
+    if (ctx.guestVrSpaceId) return []; // gallery guests are limited to one VR space
     const publicStreams = await db.query.streams.findMany({
       where: eq(schema.streams.visibility, 'public'),
     })
