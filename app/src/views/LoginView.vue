@@ -1,57 +1,30 @@
 <template>
-  <div>
-    <!-- <div class="min-h-screen hero bg-base-200"> -->
-    <div class="flex flex-col md:flex-row min-h-screen" :style="`background-image: url(${unsplashBackground});`">
-      <!-- <div class="flex-row lg:flex-row gap-10 "> -->
+  <div class="min-h-screen flex flex-col items-center justify-center gap-4 p-4 bg-cover bg-center"
+    :style="`background-image: url(${unsplashBackground});`">
 
-      <!-- Info text -->
-      <div class="flex-1 hero text-neutral-content">
-        <div class="card">
-          <div class="card-body">
-            <div v-if="redirectIsActive" role="alert" class="alert bg-transparent text-neutral-content">
-              <span class="material-icons">info</span>
-              <span>Du försökte nå en sida som kräver inloggning. Fortsätt som gäst eller logga in, så slussas du
-                därefter vidare till den sida du var på väg till.
-              </span>
-            </div>
-            <h1 class="mb-2">
-              Sam<span class="bg-clip-text text-transparent bg-gradient-to-b from-primary to-secondary">VR</span>
-            </h1>
-            <div>
-              <p class="font-bold mb-2">
-                En säker plats för elever att utforska, lära och skapa utan bekymmer om personlig integritet.
-              </p>
-              <p>
-                SamVR låter elever interagera med olika objekt såsom bilder, text, filmer, länkar och till
-                och med dela sina skärmar - allt med GDPR-säkerhet i åtanke. Kliv in i ett galleri där du och dina
-                klasskamrater kan ta del av och lära sig av varandras redovisningar på ett helt nytt sätt!
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+    <RouterLink :to="{ name: 'landing' }" class="text-3xl font-bold text-neutral-content" title="Till startsidan">
+      Sam<span class="bg-clip-text text-transparent bg-gradient-to-b from-primary to-secondary">VR</span>
+    </RouterLink>
 
-      <!-- Login -->
-      <div class="flex-1 hero">
-        <div class="hero-content max-w-md p-8 flex-col">
-          <div class="card w-full bg-base-100 shadow-2xl">
-            <div class="card-body">
-
-              <h2 class="text-lg">Fortsätt som gäst</h2>
-              <GuestBox @continue="navigate" />
-            </div>
-          </div>
-          <div class="divider my-2 divider-secondary text-neutral-content">eller</div>
-          <LoginBox @submit="login" description="aslkasdjf" :error="error" title="Logga in" />
-        </div>
-        <p class="z-30 self-end text-base-300/40 justify-self-end text-xs m-2">Bakgrundsbild skapad av <a class="link"
-            href="https://unsplash.com/@fakurian?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Milad
-            Fakurian</a> på <a class="link"
-            href="https://unsplash.com/photos/an-abstract-purple-background-with-wavy-lines-DX7pT_guAyE?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Unsplash</a>
-        </p>
-      </div>
+    <div v-if="redirectIsActive" role="alert" class="alert alert-info w-full max-w-sm text-sm">
+      <span class="material-icons">info</span>
+      <span>Du försökte nå en sida som kräver inloggning. Logga in, så kommer du vidare till sidan du
+        var på väg till.</span>
     </div>
-    <!-- </div> -->
+
+    <LoginBox @submit="login" :error="error" title="Logga in" />
+
+    <div class="flex flex-col items-center gap-1 text-sm text-neutral-content">
+      <RouterLink :to="{ name: 'landing' }" class="link">← Tillbaka till startsidan</RouterLink>
+      <RouterLink :to="{ name: 'guestGallery' }" class="link">Besök en miljö som gäst</RouterLink>
+      <span>Kommun eller företag? <RouterLink :to="{ name: 'requestOrganization' }" class="link">Skicka en förfrågan</RouterLink></span>
+    </div>
+
+    <p class="text-neutral-content/50 text-xs">Bakgrundsbild av <a class="link"
+        href="https://unsplash.com/@fakurian?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Milad
+        Fakurian</a> på <a class="link"
+        href="https://unsplash.com/photos/an-abstract-purple-background-with-wavy-lines-DX7pT_guAyE?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Unsplash</a>
+    </p>
   </div>
 </template>
 
@@ -66,9 +39,6 @@ import { hasAtLeastSecurityRole, type UserRole } from 'schemas';
 import { useConnectionStore } from '@/stores/connectionStore';
 import LoginBox from '@/components/LoginBox.vue';
 import { autoResetRef } from '@vueuse/core';
-import GuestBox from '@/components/GuestBox.vue';
-
-const showDevLoginButtons = import.meta.env.DEV;
 
 // Router
 const router = useRouter();

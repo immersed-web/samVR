@@ -27,6 +27,8 @@ import { applyWSHandler } from './trpc/ws-adapter.js';
 import { appRouter, AppRouter } from './routers/appRouter.js';
 import { loadUserDBData, SenderClient, UserClient } from './classes/InternalClasses.js';
 import { Context } from 'trpc/trpc.js';
+import { db, schema } from 'database';
+import { and, inArray, isNotNull } from 'drizzle-orm';
 
 export type MyWebsocketType = WebSocket<WSUserData>;
 
@@ -34,6 +36,23 @@ export type MyWebsocketType = WebSocket<WSUserData>;
 // Privileged users might be allowed to have several connections active simultaneously
 const connectedUsers: Map<UserId, MyWebsocketType[]> = new Map();
 const clientConnections: Map<MyWebsocketType, UserClient | SenderClient> = new Map();
+
+// Accounts that get blocked while connected are disconnected within half a minute.
+setInterval(async () => {
+  try {
+    const ids = [...connectedUsers.keys()];
+    if (!ids.length) return;
+    const blocked = await db.select({ userId: schema.users.userId }).from(schema.users)
+      .where(and(inArray(schema.users.userId, ids), isNotNull(schema.users.blockedAt)));
+    for (const { userId } of blocked) {
+      for (const socket of connectedUsers.get(userId) ?? []) {
+        try { socket.end(4003, 'blocked'); } catch { /* already closed */ }
+      }
+    }
+  } catch (e) {
+    console.error('blocked-account sweep failed:', e);
+  }
+}, 20_000);
 
 createWorkers();
 
@@ -164,6 +183,11 @@ app.ws<WSUserData>('/*', {
       if(wsUserData.jwtUserData.role !== 'guest'){
         try {
           dbResponse = await loadUserDBData(wsUserData.jwtUserData.userId);
+          if ((dbResponse as { blockedAt?: Date | null } | undefined)?.blockedAt) {
+            logUws.error('refusing a blocked account');
+            if (!upgradeState.aborted) res.cork(() => res.writeStatus('403 Forbidden').end('Kontot är spärrat', true));
+            return;
+          }
           wsUserData.dbData = dbResponse;
           // log.debug('loaded userdata from db: ', dbResponse);
         } catch(e) {

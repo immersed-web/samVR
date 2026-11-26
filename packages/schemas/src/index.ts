@@ -197,6 +197,10 @@ export function translateVisibility(visibitity: Visibility) {
       return 'olistad';
     case 'public':
       return 'offentlig';
+    case 'organization':
+      return 'organisation';
+    case 'unit':
+      return 'enhet';
     default:
       console.warn('switch not exhausted when translating visibility');
       break;
@@ -387,6 +391,14 @@ export type ConnectionId = z.TypeOf<typeof ConnectionIdSchema>;
 export const UserIdSchema = UuidSchema.brand<'UserId'>();
 export type UserId = z.TypeOf<typeof UserIdSchema>;
 
+export const OrganizationIdSchema = UuidSchema.brand<'OrganizationId'>();
+export type OrganizationId = z.TypeOf<typeof OrganizationIdSchema>;
+
+export const UnitIdSchema = UuidSchema.brand<'UnitId'>();
+export type UnitId = z.TypeOf<typeof UnitIdSchema>;
+export const DepartmentIdSchema = UuidSchema.brand<'DepartmentId'>();
+export type DepartmentId = z.TypeOf<typeof DepartmentIdSchema>;
+
 export const StreamIdSchema = UuidSchema.brand<'StreamId'>();
 export type StreamId = z.TypeOf<typeof StreamIdSchema>;
 
@@ -426,7 +438,8 @@ export const StreamInsertSchema = createInsertSchema(schema.streams, {
 export type StreamInsert = z.TypeOf<typeof StreamInsertSchema>;
 
 // TODO: Refactor so we always use insert schemas instead of special schema for update vs create
-export const StreamUpdateSchema = StreamInsertSchema.omit({ streamId: true }).partial();
+// organizationId/unitId are never client-settable: only organization administration may move resources between scopes.
+export const StreamUpdateSchema = StreamInsertSchema.omit({ streamId: true, organizationId: true, unitId: true }).partial();
 export type StreamUpdate = z.TypeOf<typeof StreamUpdateSchema>;
 
 
@@ -466,7 +479,7 @@ export const VrSpaceInserSchema = createInsertSchema(schema.vrSpaces, {
   panoramicPreviewAssetId: AssetIdSchema.optional(),
 })
   .omit(timestampKeys)
-  .omit({ ownerUserId: true })
+  .omit({ ownerUserId: true, organizationId: true, unitId: true })
   .merge(optionalReason);
 
 
@@ -571,6 +584,8 @@ export const JwtUserDataSchema = z.object({
   userId: UserIdSchema,
   username: z.string(),
   role: UserRoleSchema,
+  /** Set on guest tokens issued from the public gallery: the guest may only enter this one VR space. */
+  guestVrSpaceId: VrSpaceIdSchema.optional(),
 })
 export type JwtUserData = z.TypeOf<typeof JwtUserDataSchema>;
 
@@ -659,7 +674,7 @@ const literalArray = skinParts.map(s => z.literal(s))
 function partSchemaCreator<T extends ZodUnion<ZodUnionOptions>>(modelSchema: T) {
   return z.object({
     model: modelSchema,
-    colors: z.array(z.string()),
+    colors: z.array(z.string().max(100)).max(100),
   })
 }
 

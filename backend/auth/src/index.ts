@@ -3,6 +3,12 @@ import cors from 'cors';
 import { randomUUID } from 'crypto';
 import { createJwt, verifyJwtToken } from 'shared-modules/jwtUtils';
 import createUserRouter from './userRoutes.js';
+import createOrganizationRouter from './organizationRoutes.js';
+import createOnboardingRouter, { rateLimit } from './onboardingRoutes.js';
+import createGalleryRouter from './galleryRoutes.js';
+import createAdminUserRouter from './adminUserRoutes.js';
+import createMessageRouter from './messageRoutes.js';
+import createOrgUserRouter from './orgUserRoutes.js';
 import {default as Haikunator} from 'haikunator';
 import wordlist from './haikunator-wordlist.js';
 import { extractMessageFromCatch } from 'shared-modules/utilFns';
@@ -11,7 +17,7 @@ import session from 'express-session';
 import pg from 'pg';
 const { Pool } = pg;
 import connectPgSimple from "connect-pg-simple";
-import { JwtUserData, UserIdSchema } from 'schemas';
+import { JwtUserData, UserIdSchema, type VrSpaceId } from 'schemas';
 
 const haikunator = new Haikunator({
   adjectives: wordlist.adjectives,
@@ -44,17 +50,28 @@ if (localMode) {
     process.exit(1);
   }
   originUrls = [`https://${process.env.EXPOSED_SERVER_URL}`];
+  // Production guard: never run a public server in dev mode or with weak secrets.
+  if (devMode) {
+    console.error('DEVELOPMENT is set while EXPOSED_LOCAL is not "true". Refusing to start a public server in dev mode.');
+    process.exit(1);
+  }
+  for (const name of ['SESSION_KEY', 'JWT_SECRET'] as const) {
+    if ((process.env[name] ?? '').length < 32) {
+      console.error(`${name} must be at least 32 characters in production.`);
+      process.exit(1);
+    }
+  }
   console.log('restricting CORS for https:', originUrls);
 }
 
 app.use(cors({ credentials: true, origin: originUrls }));
 
 app.use((req, res, next) => {
-  return parseJsonBody()(req, res, (err) => {
+  return parseJsonBody({ limit: '1mb' })(req, res, (err) => { // 1 MB: user import can carry up to 500 rows
     if (err) {
       //There was error!!
-      const msg = extractMessageFromCatch(err, 'failed to parse your shitty request!');
-      res.status(400).send(`You suck!!! ${msg}`);
+      const msg = extractMessageFromCatch(err, 'failed to parse request');
+      res.status(400).send({ message: 'Ogiltig förfrågan' }); console.error('bad request body:', msg);
     } else {
       next();
     }
@@ -68,7 +85,7 @@ if (!process.env.SESSION_KEY) {
 
 // TODO: use a store for persisting sessions, preferably compatible with drizzle
 const sessionDBAccess = new Pool({
-  user: 'postgres',
+  user: process.env.DATABASE_USER || 'postgres',
   password: process.env.DATABASE_PASSWORD,
   host: process.env.DATABASE_HOST || 'localhost',
   port: 5432,
@@ -94,6 +111,12 @@ app.use(session({
 );
 const userRouter = createUserRouter();
 app.use('/user/', userRouter);
+app.use('/org/', createOrganizationRouter());
+app.use('/onboarding/', createOnboardingRouter());
+app.use('/gallery/', createGalleryRouter());
+app.use('/manage/users', createAdminUserRouter());
+app.use('/messages/', createMessageRouter());
+app.use('/manage/org/:organizationId/users', createOrgUserRouter());
 
 // const apiRouter = createApiRouter();
 // app.use('/', apiRouter);
@@ -105,10 +128,11 @@ app.get('/health', (req, res) => {
   });
 });
 
-app.get('/guest-jwt', (req, res) => {
+app.get('/guest-jwt', rateLimit('guest-jwt', 60, 10 * 60 * 1000), (req, res) => {
 
   let haikuName = haikunator.haikunate();
   let userId = UserIdSchema.parse(randomUUID());
+  let guestVrSpaceId: VrSpaceId | undefined; // set for guests who came in through the public gallery
   if(req.query && req.query['prevToken']){
     try {
 
@@ -122,6 +146,7 @@ app.get('/guest-jwt', (req, res) => {
       }
       userId = decoded.userId;
       haikuName = decoded.username;
+      guestVrSpaceId = decoded.guestVrSpaceId; // a refreshed token must keep its one-space limit
     } catch(e){
       console.error((e as Error).message);
       res.status(400).send('no bueno! The old token you gave was no good');
@@ -134,7 +159,11 @@ app.get('/guest-jwt', (req, res) => {
       if(typeof requestedName !== 'string'){
         throw new Error('invalid username provided! Please stop this madness😥😥');
       }
-      haikuName = requestedName;
+      const trimmedName = requestedName.trim();
+      if(trimmedName.length < 1 || trimmedName.length > 40){
+        throw new Error('username must be 1-40 characters');
+      }
+      haikuName = trimmedName;
     } catch(e: unknown){
       console.error((e as Error).message);
       // console.error('failed to parse incoming jwt, is it expired?');
@@ -146,8 +175,8 @@ app.get('/guest-jwt', (req, res) => {
     username: haikuName,
     role: 'guest',
     userId,
+    ...(guestVrSpaceId ? { guestVrSpaceId } : {}),
   };
-  console.log('sending a guest jwt:', guestObject);
   const jwt = createJwt(guestObject, 120);
   
   //TEMP DEBUG 

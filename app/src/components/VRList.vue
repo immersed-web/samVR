@@ -15,8 +15,13 @@
     </div> -->
     <div class="w-full grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-4 items-stretch">
       <div v-for="space in listedVrSpaces" :key="space.vrSpaceId" class="card card-compact w-full shadow-xl">
-        <figure class="w-full h-32" style="background-size: cover"
-          :style="{ 'background-image': 'url(' + (space.image ? `${getAssetUrl(space.image)}?scaledown=8` : 'https://plus.unsplash.com/premium_photo-1663091704223-cc051e0f0c47?q=80&w=2073&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D') + ')' }" />
+        <figure class="w-full h-32 relative" style="background-size: cover"
+          :style="{ 'background-image': 'url(' + (space.image ? `${getAssetUrl(space.image)}?scaledown=8` : 'https://plus.unsplash.com/premium_photo-1663091704223-cc051e0f0c47?q=80&w=2073&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D') + ')' }">
+          <!-- The organization's logo, when the space belongs to an organization that has one -->
+          <img v-if="space.organizationId && space.organizationLogoVersion"
+            :src="orgLogoUrl(space.organizationId, space.organizationLogoVersion)" alt="" loading="lazy"
+            class="absolute top-2 left-2 h-10 max-w-[60%] object-contain rounded-lg bg-base-100/90 p-1 shadow">
+        </figure>
         <div class="card-body bg-base-400 ">
           <h2 class="card-title">
             {{ space.name }}
@@ -54,6 +59,7 @@ import { type VrSpaceId, hasAtLeastPermissionLevel, hasAtLeastSecurityRole, tran
 import { onBeforeMount, ref, computed } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
 import { getAssetUrl } from '@/modules/utils';
+import { orgLogoUrl } from '@/modules/authClient';
 import { useAuthStore } from '@/stores/authStore';
 
 const connection = useConnectionStore();

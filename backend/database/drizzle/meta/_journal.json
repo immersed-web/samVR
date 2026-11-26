@@ -15,6 +15,13 @@
       "when": 1740761650572,
       "tag": "0001_dapper_proteus",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795246412272,
+      "tag": "0002_organizations_and_user_admin",
+      "breakpoints": true
     }
   ]
 }

@@ -21,12 +21,38 @@
             <div class="space-y-4">
               <div class="form-control">
                 <div class="font-semibold">Miljöns namn</div>
-                <input class="input input-bordered input-sm" v-model="vrSpaceStore.writableVrSpaceDbData.name">
+                <input class="input input-bordered input-sm" v-model="vrSpaceStore.writableVrSpaceDbData.name" maxlength="100">
+                <span class="label-text-alt text-base-content/60 mt-1">Döp om miljön när du vill. Namnet visas för besökare, även i gästgalleriet.</span>
               </div>
               <div class="form-control">
                 <div class="font-semibold">Beskrivning</div>
                 <textarea rows=5 class="textarea textarea-bordered " placeholder="beskriv din vr-miljö"
                   v-model="vrSpaceStore.writableVrSpaceDbData.description"></textarea>
+              </div>
+              <div v-if="scopeLabel || assignableTargets.length" class="form-control">
+                <div class="font-semibold">Tillhör</div>
+                <p v-if="scopeLabel" class="text-sm">
+                  Den här miljön tillhör <strong>{{ scopeLabel }}</strong>. Medlemmar där når den enligt
+                  inställningen för delning.
+                </p>
+                <template v-else>
+                  <p class="text-sm text-base-content/60">
+                    Just nu är miljön personlig. Du kan lägga den hos en organisation eller enhet du tillhör, så att
+                    deras medlemmar kan hitta den. Det går inte att ångra själv, utan då behövs en administratör.
+                  </p>
+                  <div class="flex gap-2 items-center flex-wrap">
+                    <select v-model="selectedTarget" class="select select-bordered select-sm">
+                      <option value="">Välj organisation eller enhet…</option>
+                      <option v-for="target in assignableTargets" :key="target.value" :value="target.value">
+                        {{ target.label }}
+                      </option>
+                    </select>
+                    <button class="btn btn-sm btn-primary" :disabled="!selectedTarget || assigning" @click="assignToTarget">
+                      Flytta hit
+                    </button>
+                  </div>
+                  <p v-if="assignError" class="text-error text-sm">{{ assignError }}</p>
+                </template>
               </div>
               <div class="flex items-center gap-4 justify-end">
                 <span class="text-red-600 text-sm">
@@ -63,10 +89,30 @@
                     name="visibility" class="join-item btn btn-sm" aria-label="olistad" />
                   <input type="radio" v-model="vrSpaceStore.writableVrSpaceDbData.visibility" value="public"
                     name="visibility" class="join-item btn btn-sm" aria-label="publik" />
+                  <input v-if="vrSpaceStore.writableVrSpaceDbData.unitId" type="radio"
+                    v-model="vrSpaceStore.writableVrSpaceDbData.visibility" value="unit" name="visibility"
+                    class="join-item btn btn-sm" aria-label="enheten" />
+                  <input v-if="vrSpaceStore.writableVrSpaceDbData.organizationId" type="radio"
+                    v-model="vrSpaceStore.writableVrSpaceDbData.visibility" value="organization" name="visibility"
+                    class="join-item btn btn-sm" aria-label="organisationen" />
                 </div>
 
                 <!-- <input type="checkbox" class="toggle toggle-success" true-value="public" false-value="private"
                   v-model="vrSpaceStore.writableVrSpaceDbData.visibility"> -->
+              </div>
+              <div class="form-control">
+                <label class="label cursor-pointer justify-start gap-3">
+                  <input type="checkbox" class="toggle toggle-success" v-model="vrSpaceStore.writableVrSpaceDbData.listedInGallery"
+                    @change="onGalleryToggle">
+                  <span class="label-text font-semibold">Visa i gästgalleriet</span>
+                </label>
+                <p class="text-sm text-base-content/60">
+                  Då kan vem som helst hitta miljön på den publika gästsidan och besöka den som gäst, utan konto.
+                  Namn och beskrivning visas, men inte vem som äger miljön. Miljön måste vara publik eller olistad.
+                </p>
+                <p v-if="vrSpaceStore.writableVrSpaceDbData.listedInGallery && !guestCanVisit" class="text-sm text-error">
+                  Miljön syns inte i galleriet så länge den är {{ vrSpaceStore.writableVrSpaceDbData.visibility === 'private' ? 'privat' : 'begränsad till en grupp' }}.
+                </p>
               </div>
               <div class="flex items-center gap-1.5">
                 <span class="label-text-alt font-bold flex-nowrap text-nowrap">Delningslänk:</span>
@@ -442,6 +488,7 @@ import AssetUpload, { type AssetUploadEmitUploadedPayload } from './AssetUpload.
 import VrSpacePreview from '@/components/lobby/VrSpacePreview.vue';
 import WaitForAframe from '@/components/WaitForAframe.vue'
 import { ref, watch, onMounted, computed, type ComponentInstance, onBeforeUnmount, reactive } from 'vue';
+import { orgApi, orgErrorMessage, type AssignableOrganization } from '@/modules/authClient';
 import { insertablePermissionHierarchy, type Asset, type VrSpaceId, defaultHeightOverGround, type UserId, type Json, translatePermissionLevelAdjective, translatePermissionLevelVerb, hasAtLeastSecurityRole } from 'schemas';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import { useConnectionStore } from '@/stores/connectionStore';
@@ -537,6 +584,55 @@ const hasAdminRights = computed(() => {
 
   return isSuperAdminOrHigher || isOwner || hasAdminPermission;
 })
+
+// ---- Move the space into an organization/unit ----
+const assignableOrganizations = ref<AssignableOrganization[]>([]);
+const selectedTarget = ref('');
+const assigning = ref(false);
+const assignError = ref('');
+
+const assignableTargets = computed(() => {
+  // Only personal spaces can be moved by their owner. Once filed, an administrator has to change it.
+  if (vrSpaceStore.writableVrSpaceDbData?.organizationId) return [];
+  return assignableOrganizations.value.flatMap(org => [
+    { value: org.organizationId, label: org.name },
+    ...org.units.map(unit => ({ value: `${org.organizationId}:${unit.unitId}`, label: `${org.name} › ${unit.name}` })),
+  ]);
+});
+
+const scopeLabel = computed(() => {
+  const data = vrSpaceStore.writableVrSpaceDbData;
+  if (!data?.organizationId) return '';
+  const org = assignableOrganizations.value.find(o => o.organizationId === data.organizationId);
+  const unit = org?.units.find(u => u.unitId === data.unitId);
+  if (!org) return 'en organisation';
+  return unit ? `${org.name} › ${unit.name}` : org.name;
+});
+
+async function assignToTarget() {
+  if (!selectedTarget.value || !vrSpaceStore.writableVrSpaceDbData) return;
+  const [organizationId, unitId] = selectedTarget.value.split(':');
+  assigning.value = true;
+  assignError.value = '';
+  try {
+    await orgApi.assign({ type: 'vrSpace', id: vrSpaceStore.writableVrSpaceDbData.vrSpaceId, organizationId, unitId: unitId ?? null });
+    selectedTarget.value = '';
+    // The move happened in the auth server, so ask the mediaserver to reload the space from the database.
+    await vrSpaceStore.reloadVrSpaceFromDB();
+  } catch (e) {
+    assignError.value = orgErrorMessage(e);
+  } finally {
+    assigning.value = false;
+  }
+}
+
+onMounted(async () => {
+  try {
+    assignableOrganizations.value = await orgApi.assignable();
+  } catch {
+    assignableOrganizations.value = [];
+  }
+});
 
 const tabs = computed(() => {
   let tabList = [
@@ -782,6 +878,13 @@ async function removeEditPermission(userId: UserId) {
     targetType: 'vrSpace',
     userId,
   })
+}
+
+// Gallery guests can only visit spaces that are public or unlisted.
+const guestCanVisit = computed(() => ['public', 'unlisted'].includes(vrSpaceStore.writableVrSpaceDbData?.visibility ?? ''));
+function onGalleryToggle() {
+  const data = vrSpaceStore.writableVrSpaceDbData;
+  if (data?.listedInGallery && !guestCanVisit.value) data.visibility = 'public';
 }
 
 const allowedVrSpaces = ref<NonNullable<RouterOutputs['vr']['listAvailableVrSpaces']>>([]);

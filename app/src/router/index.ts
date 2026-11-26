@@ -38,9 +38,49 @@ const router = createRouter({
       component: () => import('@/views/test/wallTest.vue'),
     },
     {
+      path: '/gast',
+      name: 'guestGallery',
+      props: { mode: 'organizations', kind: 'municipality' },
+      component: () => import('@/views/GuestGalleryView.vue'),
+    },
+    {
+      path: '/gast/foretag',
+      name: 'guestCompanies',
+      props: { mode: 'organizations', kind: 'company' },
+      component: () => import('@/views/GuestGalleryView.vue'),
+    },
+    {
+      path: '/gast/org/:organizationId',
+      name: 'guestOrganization',
+      props: route => ({ mode: 'organization', organizationId: route.params.organizationId }),
+      component: () => import('@/views/GuestGalleryView.vue'),
+    },
+    {
+      path: '/gast/privat',
+      name: 'guestPersonal',
+      props: { mode: 'personal' },
+      component: () => import('@/views/GuestGalleryView.vue'),
+    },
+    {
+      path: '/om',
+      name: 'landing',
+      component: () => import('@/views/LandingView.vue'),
+    },
+    {
       path: '/login',
       name: 'login',
       component:  () => import('@/views/LoginView.vue'),
+    },
+    {
+      path: '/request',
+      name: 'requestOrganization',
+      component: () => import('@/views/RequestOrganizationView.vue'),
+    },
+    {
+      path: '/invite/:token',
+      name: 'invitation',
+      props: true,
+      component: () => import('@/views/InvitationView.vue'),
     },
     {
       path: '/logout',
@@ -81,6 +121,24 @@ const router = createRouter({
               name: 'library',
               meta: { breadcrumbIgnore: true },
               component: () => import('@/views/user/AssetsView.vue'),
+            },
+            {
+              path: 'organizations',
+              name: 'organizations',
+              meta: { breadcrumb: 'Organisationer' },
+              component: () => import('@/views/user/OrganizationsView.vue'),
+            },
+            {
+              path: 'users',
+              name: 'orgUsers',
+              meta: { requiredRole: 'user', breadcrumb: 'Hantera användare' },
+              component: () => import('@/views/user/OrgUsersView.vue'),
+            },
+            {
+              path: 'messages',
+              name: 'messages',
+              meta: { requiredRole: 'user', breadcrumb: 'Meddelanden' },
+              component: () => import('@/views/user/MessagesView.vue'),
             },
             {
               path: 'avatar',
@@ -171,8 +229,8 @@ const router = createRouter({
         {
           path: 'usermanager',
           name: 'adminUserManager',
-          meta: { breadcrumb: 'Hantera användare' },
-          component: () => import('@/views/admin/AdminUserManagerView.vue'),
+          meta: { requiredRole: 'superadmin', breadcrumb: 'Hantera användare' },
+          component: () => import('@/views/admin/AdminUsersView.vue'),
         },
         {
           path: '',
@@ -246,8 +304,14 @@ router.beforeEach(async (to, from) => {
         console.log('Found a persisted username. Creating a guest with that username');
         await authStore.autoGuest(authStore.persistedUsername);
       } else {
-        return { name: 'login' };
+        // Visitors who open the start page without being logged in get the public landing page.
+        return { name: to.name === 'start' ? 'landing' : 'login' };
       }
+    }
+
+    // A gallery guest may only be in the one VR space they chose (the servers enforce this as well).
+    if (authStore.guestVrSpaceId && !(to.name === 'vrSpace' && to.params.vrSpaceId === authStore.guestVrSpaceId)) {
+      return { name: 'vrSpace', params: { vrSpaceId: authStore.guestVrSpaceId } };
     }
 
     if (!authStore.role || !hasAtLeastSecurityRole(authStore.role, to.meta.requiredRole)) {

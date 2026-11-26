@@ -28,7 +28,7 @@ const DtlsFingerprintSchema = z.object({
 }) satisfies z.ZodType<soupTypes.DtlsFingerprint>
 
 const DtlsParametersSchema = z.object({
-  fingerprints: z.array(DtlsFingerprintSchema),
+  fingerprints: z.array(DtlsFingerprintSchema).max(16),
 }).passthrough() satisfies z.ZodType<soupTypes.DtlsParameters>
 
 export const ConnectTransportPayloadSchema = z.object({
@@ -64,9 +64,9 @@ const RtpCodecParametersSchema = z.object({
     }).passthrough() satisfies z.ZodType<soupTypes.RtpCodecParameters>;
 
 const RtpParametersSchema = z.object({
-  encodings: z.array(RtpEncodingParameters).optional(),
-  headerExtensions: z.array(RtpHeaderExtensionParametersSchema).optional(),
-  codecs: z.array(RtpCodecParametersSchema)
+  encodings: z.array(RtpEncodingParameters).max(16).optional(),
+  headerExtensions: z.array(RtpHeaderExtensionParametersSchema).max(64).optional(),
+  codecs: z.array(RtpCodecParametersSchema).max(64)
   }).passthrough() satisfies z.ZodType<soupTypes.RtpParameters>
 
 

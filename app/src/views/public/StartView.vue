@@ -31,16 +31,29 @@ import VRList from '@/components/VRList.vue';
 import { useVrSpaceStore } from '@/stores/vrSpaceStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useRouter } from 'vue-router';
-import { computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+import { orgApi } from '@/modules/authClient';
 import { hasAtLeastSecurityRole } from 'schemas';
 
 const router = useRouter();
 const authStore = useAuthStore();
 const vrSpaceStore = useVrSpaceStore();
 
+// People whose role is "Användare" in every organization they belong to may visit environments but not create them.
+// The media server enforces this too; this only hides the button.
+const basicOnly = ref(false);
+onMounted(async () => {
+  if (!authStore.role || !hasAtLeastSecurityRole(authStore.role, 'user') || hasAtLeastSecurityRole(authStore.role, 'superadmin')) return;
+  try {
+    const mine = await orgApi.list();
+    basicOnly.value = mine.length > 0 && mine.every(o => o.myRole === 'basic');
+  } catch {
+    basicOnly.value = false;
+  }
+});
 const canCreateVrSpace = computed(() => {
   if (!authStore.role) { return false; }
-  return hasAtLeastSecurityRole(authStore.role, 'user');
+  return hasAtLeastSecurityRole(authStore.role, 'user') && !basicOnly.value;
 });
 async function createVrSpace() {
   const prefix = authStore.username ? authStore.username + 's' : '';

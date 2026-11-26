@@ -22,6 +22,11 @@ import { useRouter } from 'vue-router';
 
 // const appName = import.meta.env.EXPOSED_PROJECT_NAME;
 
+const props = defineProps<{
+  /** When set, "Gå in" signs in as a guest limited to this one VR space (public gallery). */
+  vrSpaceId?: string,
+}>();
+
 const emit = defineEmits<{
   'continue': [],
 }>();
@@ -40,7 +45,11 @@ async function generateUsername() {
 }
 
 const guestContinue = async () => {
-  await authStore.autoGuest(guestUsername.value);
+  if (props.vrSpaceId) {
+    await authStore.enterGalleryGuest(props.vrSpaceId, guestUsername.value?.trim() || undefined);
+  } else {
+    await authStore.autoGuest(guestUsername.value);
+  }
   emit('continue');
   // const connectionStore = useConnectionStore();
   // connectionStore.createUserClient();

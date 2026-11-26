@@ -36,6 +36,7 @@
     "material-icons": "^1.13.12",
     "pinia": "^2.1.7",
     "pinia-plugin-persistedstate": "^3.2.1",
+    "read-excel-file": "^9.3.20",
     "schemas": "workspace:*",
     "superjson": "^1.13.3",
     "three-mesh-bvh": "^0.8.2",
