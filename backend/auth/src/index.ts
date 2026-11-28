@@ -9,6 +9,7 @@ import createGalleryRouter from './galleryRoutes.js';
 import createAdminUserRouter from './adminUserRoutes.js';
 import createMessageRouter from './messageRoutes.js';
 import createOrgUserRouter from './orgUserRoutes.js';
+import createOrgMediaRouter from './orgMediaRoutes.js';
 import {default as Haikunator} from 'haikunator';
 import wordlist from './haikunator-wordlist.js';
 import { extractMessageFromCatch } from 'shared-modules/utilFns';
@@ -117,6 +118,7 @@ app.use('/gallery/', createGalleryRouter());
 app.use('/manage/users', createAdminUserRouter());
 app.use('/messages/', createMessageRouter());
 app.use('/manage/org/:organizationId/users', createOrgUserRouter());
+app.use('/manage/org/:organizationId/media', createOrgMediaRouter());
 
 // const apiRouter = createApiRouter();
 // app.use('/', apiRouter);

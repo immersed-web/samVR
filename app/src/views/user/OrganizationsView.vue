@@ -236,6 +236,12 @@
                 @keyup.enter="createUnit">
               <button class="btn btn-sm btn-primary" :disabled="!newUnitName.trim()" @click="createUnit">Lägg till enhet</button>
             </div>
+            <div class="flex flex-wrap items-center gap-3">
+              <button class="btn btn-sm btn-outline" @click="openMedia('all')">
+                <span class="material-icons">perm_media</span> Mediabibliotek för hela organisationen
+                <span class="badge badge-sm">{{ mediaSummary?.total ?? 0 }}</span>
+              </button>
+            </div>
             <div class="grid gap-4 md:grid-cols-2">
               <div v-for="unit in details.units" :key="unit.unitId" class="card bg-base-200">
                 <div class="card-body p-4 gap-3">
@@ -264,6 +270,10 @@
                     <button class="btn btn-sm btn-primary" :disabled="!(newDepartmentNames[unit.unitId] ?? '').trim()"
                       @click="createDepartment(unit.unitId)">Lägg till</button>
                   </div>
+                  <button class="btn btn-sm btn-outline justify-start" @click="openMedia(unit.unitId)">
+                    <span class="material-icons">perm_media</span> Mediabibliotek
+                    <span class="badge badge-sm">{{ unitMediaCount(unit.unitId) }}</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -427,6 +437,10 @@
           </div>
         </template>
 
+        <!-- Media library of the organization (opens as a large window) -->
+        <OrgMediaLibrary v-if="mediaOpen" :organization-id="details.organization.organizationId" :organization-name="details.organization.name"
+          :units="details.units" :initial-unit="mediaOpen.unit" @close="mediaOpen = undefined" @changed="loadMediaSummary" />
+
         <!-- Change password dialog -->
         <dialog v-if="passwordTarget" class="modal modal-open" @click.self="passwordTarget = undefined">
           <form class="modal-box max-w-sm" @submit.prevent="savePassword">
@@ -450,7 +464,8 @@ import { computed, onBeforeMount, reactive, ref, watch } from 'vue';
 import { hasAtLeastSecurityRole } from 'schemas';
 import MaxWidth7xl from '@/components/layout/MaxWidth7xl.vue';
 import { useAuthStore } from '@/stores/authStore';
-import { onboardingApi, orgApi, orgErrorMessage, orgLogoUrl, type InvitationListItem, type OrgRole, type OrgType, type OrganizationDetails, type OrganizationListItem, type OrganizationRequest, type UnitRole } from '@/modules/authClient';
+import OrgMediaLibrary from '@/components/admin/OrgMediaLibrary.vue';
+import { onboardingApi, orgApi, orgMediaApi, type OrgMediaSummary, orgErrorMessage, orgLogoUrl, type InvitationListItem, type OrgRole, type OrgType, type OrganizationDetails, type OrganizationListItem, type OrganizationRequest, type UnitRole } from '@/modules/authClient';
 
 const authStore = useAuthStore();
 const isPlatformAdmin = computed(() => !!authStore.role && hasAtLeastSecurityRole(authStore.role, 'superadmin'));
@@ -512,6 +527,7 @@ async function loadDetails() {
   try {
     details.value = await orgApi.get(selectedId.value);
     void loadInvitations();
+    void loadMediaSummary();
   } catch (e) {
     details.value = undefined;
     errorMessage.value = orgErrorMessage(e);
@@ -590,6 +606,16 @@ const filteredMembers = computed(() => {
       && d.departments.find(dep => dep.departmentId === dm.departmentId)?.name.toLowerCase().includes(query));
   });
 });
+
+// ---- Media library per unit ----
+const mediaOpen = ref<{ unit: string }>();
+const mediaSummary = ref<OrgMediaSummary>();
+const openMedia = (unit: string) => { mediaOpen.value = { unit }; };
+const unitMediaCount = (unitId: string) => mediaSummary.value?.byUnit.find(r => r.unitId === unitId)?.total ?? 0;
+async function loadMediaSummary() {
+  if (!selectedId.value) return;
+  try { mediaSummary.value = await orgMediaApi(selectedId.value).summary(); } catch { mediaSummary.value = undefined; }
+}
 
 // ---- Departments (classes, teams) inside units ----
 const departmentsOf = (unitId: string) => details.value?.departments.filter(d => d.unitId === unitId) ?? [];

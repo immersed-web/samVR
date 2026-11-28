@@ -135,6 +135,12 @@ const router = createRouter({
               component: () => import('@/views/user/OrgUsersView.vue'),
             },
             {
+              path: 'unit-media',
+              name: 'unitMedia',
+              meta: { requiredRole: 'user', breadcrumb: 'Min enhet' },
+              component: () => import('@/views/user/UnitMediaView.vue'),
+            },
+            {
               path: 'messages',
               name: 'messages',
               meta: { requiredRole: 'user', breadcrumb: 'Meddelanden' },

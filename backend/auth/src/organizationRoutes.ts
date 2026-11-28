@@ -20,7 +20,7 @@ export class HttpError extends Error {
   constructor(public status: number, message: string) { super(message); }
 }
 
-type Caller = { userId: UserId; role: typeof schema.users.$inferSelect['role'] };
+export type Caller = { userId: UserId; role: typeof schema.users.$inferSelect['role'] };
 
 async function loadCaller(req: Request): Promise<Caller> {
   const userId = req.session.userId as UserId | undefined;
@@ -108,6 +108,20 @@ const listOrganizations = wrap(async (_req, caller) => {
     .innerJoin(schema.organizations, eq(schema.organizations.organizationId, schema.organizationMembers.organizationId))
     .where(eq(schema.organizationMembers.userId, caller.userId))
     .orderBy(asc(schema.organizations.name));
+});
+
+/** The units the caller administers (unit administrator), with their organization. */
+const myAdministeredUnits = wrap(async (_req, caller) => {
+  return db.select({
+    organizationId: schema.organizations.organizationId,
+    organizationName: schema.organizations.name,
+    unitId: schema.units.unitId,
+    unitName: schema.units.name,
+  }).from(schema.unitMembers)
+    .innerJoin(schema.units, eq(schema.units.unitId, schema.unitMembers.unitId))
+    .innerJoin(schema.organizations, eq(schema.organizations.organizationId, schema.unitMembers.organizationId))
+    .where(and(eq(schema.unitMembers.userId, caller.userId), eq(schema.unitMembers.role, 'unit_admin')))
+    .orderBy(asc(schema.organizations.name), asc(schema.units.name));
 });
 
 const getOrganization = wrap(async (req, caller) => {
@@ -647,6 +661,7 @@ export default function createOrganizationRouter(): Router {
   router.post('/user/password', isLoggedIn, setOrgUserPassword);
   router.post('/user/delete', isLoggedIn, deleteOrgUser);
   router.post('/resource/assign', isLoggedIn, assignResource);
+  router.get('/my-units', isLoggedIn, myAdministeredUnits);
   // Keep the parameterised route last so it does not shadow the fixed ones above.
   router.get('/:organizationId', isLoggedIn, getOrganization);
   return router;

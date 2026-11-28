@@ -81,14 +81,22 @@ const isAtLeastUser = computed(() => {
 // Show the organizations link to platform admins and to people who administer an organization.
 // The server decides what they may actually see and do there.
 const managesOrganizations = ref(false);
+// Unit administrators get a "Min enhet" page with their unit's media library (read only)
+const administersUnit = ref(false);
 watch(() => [authStore.userId, authStore.role] as const, async ([userId, role]) => {
   managesOrganizations.value = false;
+  administersUnit.value = false;
   if (!userId || !role || !hasAtLeastSecurityRole(role, 'user')) return;
   if (hasAtLeastSecurityRole(role, 'superadmin')) { managesOrganizations.value = true; return; }
   try {
     managesOrganizations.value = (await orgApi.list()).some(o => o.myRole === 'org_admin');
   } catch {
     managesOrganizations.value = false;
+  }
+  try {
+    administersUnit.value = (await orgApi.myUnits()).length > 0;
+  } catch {
+    administersUnit.value = false;
   }
 }, { immediate: true });
 
@@ -113,6 +121,9 @@ const mainMenu = computed(() => {
     routes.push(
       { name: 'library', label: 'Mediabibliotek' },
     );
+  }
+  if (administersUnit.value && !managesOrganizations.value) {
+    routes.push({ name: 'unitMedia', label: 'Min enhet' });
   }
   if (managesOrganizations.value) {
     // Platform admins see every organization; an organization admin only has their own.

@@ -121,7 +121,15 @@ const privateRoutes = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
         throw new HTTPException(HttpStatus.NOT_FOUND, { message: 'no asset found in db' });
       }
       if (foundAsset.ownerUserId !== user.userId) {
-        throw new HTTPException(HttpStatus.FORBIDDEN, { message: 'not allowed' });
+        // Not the owner: allowed for an administrator of the organization the file belongs to, and for platform administrators.
+        const [caller] = await tx.select({ role: schema.users.role }).from(schema.users).where(eq(schema.users.userId, user.userId));
+        let allowed = !!caller && hasAtLeastSecurityRole(caller.role, 'superadmin');
+        if (!allowed && foundAsset.organizationId) {
+          const [membership] = await tx.select({ role: schema.organizationMembers.role }).from(schema.organizationMembers)
+            .where(and(eq(schema.organizationMembers.userId, user.userId), eq(schema.organizationMembers.organizationId, foundAsset.organizationId)));
+          allowed = membership?.role === 'org_admin';
+        }
+        if (!allowed) throw new HTTPException(HttpStatus.FORBIDDEN, { message: 'not allowed' });
       }
 
       const filePath = `${savePathAbsolute}/${foundAsset.generatedName}`
@@ -208,7 +216,17 @@ const privateRoutes = new Hono<{ Variables: { jwtPayload: JwtPayload } }>()
         if (!owner || !hasAtLeastSecurityRole(owner.role, 'user')) {
           throw new HTTPException(HttpStatus.FORBIDDEN, { message: 'not authorized to upload' });
         }
+        // Someone who belongs to exactly one organization uploads into it, and into their unit when they have exactly one there.
+        // Anyone else (several or no organizations) uploads a personal file. Administrators can move files between units.
+        const memberships = await tx.select({ organizationId: schema.organizationMembers.organizationId }).from(schema.organizationMembers)
+          .where(eq(schema.organizationMembers.userId, user.userId));
+        const organizationId = memberships.length === 1 ? memberships[0].organizationId : null;
+        const unitMemberships = organizationId ? await tx.select({ unitId: schema.unitMembers.unitId }).from(schema.unitMembers)
+          .where(and(eq(schema.unitMembers.userId, user.userId), eq(schema.unitMembers.organizationId, organizationId))) : [];
+        const unitId = unitMemberships.length === 1 ? unitMemberships[0].unitId : null;
         return tx.insert(schema.assets).values({
+          organizationId,
+          unitId,
           assetType,
           assetFileExtension: validatedExtension.data,
           generatedName,

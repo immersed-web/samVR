@@ -258,6 +258,8 @@ export const logout = () => {
 // Organizations (municipalities, companies, ...) and their units
 // ---------------------------------------------------------------------------
 export type OrgType = 'municipality' | 'company' | 'other';
+/** A unit the logged-in person administers (unit administrator). */
+export type AdministeredUnit = { organizationId: string, organizationName: string, unitId: string, unitName: string };
 export type OrgRole = 'basic' | 'member' | 'org_admin';
 export type UnitRole = 'unit_admin' | 'member';
 export type OrganizationListItem = { organizationId: string, name: string, type: OrgType, memberCount?: number, unitCount?: number, myRole?: OrgRole, logoVersion: number | null };
@@ -304,6 +306,7 @@ export const orgApi = {
   deleteUser: (payload: { organizationId: string, userId: string }) => authEndpoint.post('/org/user/delete', payload),
   importUsers: async (payload: { organizationId: string, dryRun: boolean, createMissing?: boolean, rows: { row: number, username: string, password: string, role: string, units: string, departments: string }[] }) =>
     (await authEndpoint.post<{ dryRun: boolean, created: number, results: { row: number, username: string, status: 'ok' | 'error', message?: string }[], newUnits: string[], newDepartments: string[] }>('/org/user/import', payload)).data,
+  myUnits: async () => (await authEndpoint.get<AdministeredUnit[]>('/org/my-units')).data,
   assignable: async () => (await authEndpoint.get<AssignableOrganization[]>('/org/assignable')).data,
   assign: (payload: { type: 'vrSpace' | 'stream' | 'asset', id: string, organizationId: string | null, unitId: string | null }) => authEndpoint.post('/org/resource/assign', payload),
 };
@@ -432,5 +435,30 @@ export const orgUsersApi = (organizationId: string) => {
     remove: (userId: string) => authEndpoint.post(`${base}/delete`, { userId }),
     message: async (payload: { userIds?: string[], everyone?: boolean, subject: string, body: string }) =>
       (await authEndpoint.post<{ sent: number }>(`${base}/message`, payload)).data,
+  };
+};
+
+// ---------------------------------------------------------------------------
+// The media library of an organization (administrators). Files are shown per unit.
+// ---------------------------------------------------------------------------
+export type MediaType = 'image' | 'video' | 'model' | 'document';
+export type OrgMediaFile = {
+  assetId: string, assetType: MediaType, originalFileName: string, generatedName: string, assetFileExtension: string,
+  size: number | null, mimeType: string | null, createdAt: string | null,
+  unitId: string | null, unitName: string | null, uploader: string | null,
+  /** In how many places the file is used (placed in a VR space, or used as its model or preview). */
+  usedIn: number,
+};
+export type OrgMediaQuery = { unit?: string, type?: MediaType, search?: string, offset?: number, limit?: number };
+export type OrgMediaSummary = {
+  total: number, bytes: number,
+  byUnit: { unitId: string | null, total: number, bytes: number, image: number, video: number, model: number, document: number }[],
+};
+export const orgMediaApi = (organizationId: string) => {
+  const base = `/manage/org/${organizationId}/media`;
+  return {
+    list: async (query: OrgMediaQuery) => (await authEndpoint.get<{ total: number, assets: OrgMediaFile[] }>(base, { params: query })).data,
+    summary: async () => (await authEndpoint.get<OrgMediaSummary>(`${base}/summary`)).data,
+    move: (assetId: string, unitId: string | null) => authEndpoint.post(`${base}/move`, { assetId, unitId }),
   };
 };
